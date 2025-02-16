@@ -1,4 +1,19 @@
-const fastify = require("fastify")({ logger: true });
+const fastify = require("fastify")({
+	logger: {
+		level: "info",
+		transport:
+			process.env.NODE_ENV === "development"
+				? {
+						target: "pino-pretty",
+						options: {
+							colorize: true,
+							translateTime: "SYS:standard",
+							ignore: "pid,hostname",
+						},
+				  }
+				: undefined,
+	},
+});
 const { configs, keywords } = require("./configs");
 const { connectDB } = require("./models/connectDB");
 const { getErrorHandler } = require("./plugins/errorHandler");

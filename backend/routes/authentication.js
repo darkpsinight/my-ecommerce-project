@@ -24,7 +24,7 @@ const {
 	attachUserWithPassword,
 	checkPasswordLength,
 	checkMailingDisabled,
-	hCaptchaVerification,
+	recaptchaVerification,
 } = require("../plugins/authHelperPlugins");
 const { tokenCheck } = require("../plugins/tokenCheck");
 const { authenticationSchema } = require("./schemas/authSchema");
@@ -38,7 +38,7 @@ const authenticationRoutes = async (fastify, opts) => {
 			method: "POST",
 			url: "/signup",
 			schema: authenticationSchema.signup,
-			preHandler: [hCaptchaVerification],
+			preHandler: [recaptchaVerification],
 			handler: registerUser,
 		});
 
@@ -46,7 +46,7 @@ const authenticationRoutes = async (fastify, opts) => {
 			method: "POST",
 			url: "/signin",
 			preHandler: [
-				hCaptchaVerification,
+				recaptchaVerification,
 				attachUserWithPassword(true),
 				checkDeactivated,
 				checkEmailConfirmed,
@@ -70,7 +70,7 @@ const authenticationRoutes = async (fastify, opts) => {
 			url: "/resetPassword",
 			schema: authenticationSchema.resetPasswordPost,
 			preHandler: [
-				hCaptchaVerification,
+				recaptchaVerification,
 				checkMailingDisabled,
 				attachUser(true),
 				checkDeactivated,
@@ -118,7 +118,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		url: "/confirmEmail",
 		schema: authenticationSchema.confirmEmailPost,
 		preHandler: [
-			hCaptchaVerification,
+			recaptchaVerification,
 			checkMailingDisabled,
 			attachUser(true),
 			checkDeactivated,
@@ -130,7 +130,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		method: "POST",
 		url: "/emailLogin",
 		schema: authenticationSchema.loginWithEmailPost,
-		preHandler: [hCaptchaVerification, checkMailingDisabled],
+		preHandler: [recaptchaVerification, checkMailingDisabled],
 		handler: requestLoginWithEmail,
 	});
 

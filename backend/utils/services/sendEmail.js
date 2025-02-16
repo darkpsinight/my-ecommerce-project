@@ -1,13 +1,14 @@
 const nodemailer = require("nodemailer");
 const { configs } = require("../../configs");
 const mustache = require("mustache");
-const { newLoginTemplate } = require("../emailTemplates/newLoginEmail");
+const { newLoginEmailTemplate } = require("../emailTemplates/newLoginEmail");
 const {
 	passwordChangedTemplate,
 } = require("../emailTemplates/passwordChanged");
 const { confirmEmailTemplate } = require("../emailTemplates/confirmEmail");
 const { resetPasswordTemplate } = require("../emailTemplates/resetPassword");
 const loginWithEmailTemplate = require("../emailTemplates/loginwithemail");
+const { getLocationFromIP } = require("./ipGeolocation");
 
 const sendEmail = async (options) => {
 	if (configs.DISABLE_MAIL) {
@@ -139,6 +140,9 @@ const passwordChangedEmailAlert = async (user, request) => {
 
 const sendNewLoginEmail = async (user, request) => {
 	if (configs.SEND_NEW_LOGIN_EMAIL) {
+		const reportUrl = `${configs.APP_DOMAIN}/security/report`;
+		const location = await getLocationFromIP(request.ipAddress);
+		
 		return await sendEmail({
 			email: user.email,
 			subject: `Important : New Login to your ${
@@ -151,8 +155,13 @@ const sendNewLoginEmail = async (user, request) => {
 					appDomain: configs.APP_DOMAIN,
 					ip: request.ipAddress,
 					ua: request.headers["user-agent"],
+					time: new Date().toLocaleString(),
+					ipAddress: request.ipAddress,
+					location: location,
+					device: request.headers["user-agent"],
+					buttonHREF: reportUrl
 				},
-				newLoginTemplate
+				newLoginEmailTemplate
 			),
 		});
 	}

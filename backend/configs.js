@@ -11,7 +11,7 @@ const configs = {
 	JWT_KEY: process.env.JWT_KEY,
 	REFRESH_KEY: process.env.REFRESH_KEY,
 	COOKIE_SECRET: process.env.COOKIE_SECRET,
-	PORT: process.env.PORT || 5000,
+	PORT: Number(process.env.PORT) || 5000,
 	AUTH_SERVICE_HOST:
 		process.env.AUTH_SERVICE_HOST ||
 		`http://localhost:${process.env.PORT || 5000}`,
@@ -27,18 +27,13 @@ const configs = {
 	FROM_EMAIL: process.env.FROM_EMAIL,
 	DISABLE_MAIL: process.env.DISABLE_MAIL === "1" ? true : false,
 
-	HCAPTCHA_SECRET: process.env.HCAPTCHA_SECRET,
-	PROVIDER_LOGIN_EMAIL_CONFIRMATION_REQUIRED:
-		process.env.PROVIDER_LOGIN_EMAIL_CONFIRMATION_REQUIRED === "0"
-			? false
-			: true,
+	RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
+	RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
 	DISABLE_CAPTCHA:
-		process.env.DISABLE_CAPTCHA === "1" || !process.env.HCAPTCHA_SECRET
+		process.env.DISABLE_CAPTCHA === "1" || !process.env.RECAPTCHA_SECRET_KEY
 			? true
 			: false,
-
-	DISABLE_EMAIL_LOGIN: process.env.DISABLE_EMAIL_LOGIN === "1" ? true : false,
-	HCAPTCHA_VERIFY_URL: "https://hcaptcha.com/siteverify",
+	RECAPTCHA_VERIFY_URL: "https://www.google.com/recaptcha/api/siteverify",
 
 	IS_SMTP_CONFIGURED: false,
 	APP_NAME: process.env.APP_NAME || "",
@@ -54,6 +49,9 @@ const configs = {
 		process.env.APP_RESET_PASSWORD_REDIRECT
 			? true
 			: false,
+
+	// IP Geolocation
+	IPGEOLOCATION_API_KEY: process.env.IPGEOLOCATION_API_KEY,
 
 	// Internal Oauth2 provider configs
 	PROVIDER_GITHUB: "github",

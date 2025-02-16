@@ -107,30 +107,31 @@ const checkMailingDisabled = async (request, reply) => {
 };
 
 /**
- *
- * Function used to verify hcaptcha token
+ * Function used to verify reCAPTCHA token
  * @returns
  */
-const hCaptchaVerification = async (request, reply) => {
-	request.log.info("Verifying hcaptcha token");
+const recaptchaVerification = async (request, reply) => {
+	request.log.info("Verifying reCAPTCHA token");
 	if (!configs.DISABLE_CAPTCHA) {
-		if (!configs.HCAPTCHA_SECRET) {
+		if (!configs.RECAPTCHA_SECRET_KEY) {
 			return sendErrorResponse(
 				reply,
 				500,
-				"Robot verification not configured in the server (hCaptcha)"
+				"Robot verification not configured in the server (reCAPTCHA)"
 			);
 		}
-		const hToken = request.body.hToken;
-		must(reply, hToken, "Robot verification token missing");
+		const recaptchaToken = request.body.recaptchaToken;
+		must(reply, recaptchaToken, "Robot verification token missing");
+		
 		const tokenVerify = await axios({
 			method: "POST",
-			url: configs.HCAPTCHA_VERIFY_URL,
-			headers: { "Content-Type": "application/x-www-form-urlencoded" },
-			data: `response=${encodeURIComponent(hToken)}&secret=${encodeURIComponent(
-				configs.HCAPTCHA_SECRET
-			)}`,
+			url: configs.RECAPTCHA_VERIFY_URL,
+			params: {
+				secret: configs.RECAPTCHA_SECRET_KEY,
+				response: recaptchaToken
+			}
 		});
+		
 		if (!tokenVerify.data.success) {
 			return sendErrorResponse(reply, 400, "Robot verification unsuccessful");
 		}
@@ -163,6 +164,6 @@ module.exports = {
 	attachUserWithPassword,
 	checkPasswordLength,
 	checkMailingDisabled,
-	hCaptchaVerification,
+	recaptchaVerification,
 	//checkEmailLoginDisabled,
 };

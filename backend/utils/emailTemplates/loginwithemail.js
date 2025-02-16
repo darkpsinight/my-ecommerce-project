@@ -26,8 +26,7 @@ SOFTWARE.
 
 */
 
-const loginWithEmailTemplate = `
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -35,28 +34,26 @@ const loginWithEmailTemplate = `
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<meta name="color-scheme" content="light dark" />
 		<meta name="supported-color-schemes" content="light dark" />
-		<title></title>
+		<title>Login to Your Account</title>
 		<style type="text/css" rel="stylesheet" media="all">
-			/* Base ------------------------------ */
-
-			@import url("https://fonts.googleapis.com/css?family=Nunito+Sans:400,700&amp;display=swap");
+			@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 			body {
 				width: 100% !important;
 				height: 100%;
 				margin: 0;
 				-webkit-text-size-adjust: none;
+				font-family: "Inter", Helvetica, Arial, sans-serif;
+				background-color: #f4f7fa;
+				color: #333;
 			}
 
 			a {
-				color: #3869d4;
+				color: #2563eb;
+				text-decoration: none;
 			}
 
-			a img {
-				border: none;
-			}
-
-			td {
-				word-break: break-word;
+			a:hover {
+				text-decoration: underline;
 			}
 
 			.preheader {
@@ -70,796 +67,195 @@ const loginWithEmailTemplate = `
 				opacity: 0;
 				overflow: hidden;
 			}
-			/* Type ------------------------------ */
-
-			body,
-			td,
-			th {
-				font-family: "Nunito Sans", Helvetica, Arial, sans-serif;
-			}
-
-			h1 {
-				margin-top: 0;
-				color: #333333;
-				font-size: 22px;
-				font-weight: bold;
-				text-align: left;
-			}
-
-			h2 {
-				margin-top: 0;
-				color: #333333;
-				font-size: 16px;
-				font-weight: bold;
-				text-align: left;
-			}
-
-			h3 {
-				margin-top: 0;
-				color: #333333;
-				font-size: 14px;
-				font-weight: bold;
-				text-align: left;
-			}
-
-			td,
-			th {
-				font-size: 16px;
-			}
-
-			p,
-			ul,
-			ol,
-			blockquote {
-				margin: 0.4em 0 1.1875em;
-				font-size: 16px;
-				line-height: 1.625;
-			}
-
-			p.sub {
-				font-size: 13px;
-			}
-			/* Utilities ------------------------------ */
-
-			.align-right {
-				text-align: right;
-			}
-
-			.align-left {
-				text-align: left;
-			}
-
-			.align-center {
-				text-align: center;
-			}
-			/* Buttons ------------------------------ */
-
-			.button {
-				background-color: #3869d4;
-				border-top: 10px solid #3869d4;
-				border-right: 18px solid #3869d4;
-				border-bottom: 10px solid #3869d4;
-				border-left: 18px solid #3869d4;
-				display: inline-block;
-				color: #fff;
-				text-decoration: none;
-				border-radius: 3px;
-				box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16);
-				-webkit-text-size-adjust: none;
-				box-sizing: border-box;
-			}
-
-			.button--green {
-				background-color: #22bc66;
-				border-top: 10px solid #22bc66;
-				border-right: 18px solid #22bc66;
-				border-bottom: 10px solid #22bc66;
-				border-left: 18px solid #22bc66;
-			}
-
-			.button--red {
-				background-color: #ff6136;
-				border-top: 10px solid #ff6136;
-				border-right: 18px solid #ff6136;
-				border-bottom: 10px solid #ff6136;
-				border-left: 18px solid #ff6136;
-			}
-
-			@media only screen and (max-width: 500px) {
-				.button {
-					width: 100% !important;
-					text-align: center !important;
-				}
-			}
-			/* Attribute list ------------------------------ */
-
-			.attributes {
-				margin: 0 0 21px;
-			}
-
-			.attributes_content {
-				background-color: #f4f4f7;
-				padding: 16px;
-			}
-
-			.attributes_item {
-				padding: 0;
-			}
-			/* Related Items ------------------------------ */
-
-			.related {
-				width: 100%;
-				margin: 0;
-				padding: 25px 0 0 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-			}
-
-			.related_item {
-				padding: 10px 0;
-				color: #cbcccf;
-				font-size: 15px;
-				line-height: 18px;
-			}
-
-			.related_item-title {
-				display: block;
-				margin: 0.5em 0 0;
-			}
-
-			.related_item-thumb {
-				display: block;
-				padding-bottom: 10px;
-			}
-
-			.related_heading {
-				border-top: 1px solid #cbcccf;
-				text-align: center;
-				padding: 25px 0 10px;
-			}
-			/* Discount Code ------------------------------ */
-
-			.discount {
-				width: 100%;
-				margin: 0;
-				padding: 24px;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #f4f4f7;
-				border: 2px dashed #cbcccf;
-			}
-
-			.discount_heading {
-				text-align: center;
-			}
-
-			.discount_body {
-				text-align: center;
-				font-size: 15px;
-			}
-			/* Social Icons ------------------------------ */
-
-			.social {
-				width: auto;
-			}
-
-			.social td {
-				padding: 0;
-				width: auto;
-			}
-
-			.social_icon {
-				height: 20px;
-				margin: 0 8px 10px 8px;
-				padding: 0;
-			}
-			/* Data table ------------------------------ */
-
-			.purchase {
-				width: 100%;
-				margin: 0;
-				padding: 35px 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-			}
-
-			.purchase_content {
-				width: 100%;
-				margin: 0;
-				padding: 25px 0 0 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-			}
-
-			.purchase_item {
-				padding: 10px 0;
-				color: #51545e;
-				font-size: 15px;
-				line-height: 18px;
-			}
-
-			.purchase_heading {
-				padding-bottom: 8px;
-				border-bottom: 1px solid #eaeaec;
-			}
-
-			.purchase_heading p {
-				margin: 0;
-				color: #85878e;
-				font-size: 12px;
-			}
-
-			.purchase_footer {
-				padding-top: 15px;
-				border-top: 1px solid #eaeaec;
-			}
-
-			.purchase_total {
-				margin: 0;
-				text-align: right;
-				font-weight: bold;
-				color: #333333;
-			}
-
-			.purchase_total--label {
-				padding: 0 15px 0 0;
-			}
-
-			body {
-				background-color: #f4f4f7;
-				color: #51545e;
-			}
-
-			p {
-				color: #51545e;
-			}
-
-			p.sub {
-				color: #6b6e76;
-			}
 
 			.email-wrapper {
 				width: 100%;
-				margin: 0;
-				padding: 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #f4f4f7;
+				background-color: #f4f7fa;
+				padding: 20px 0;
 			}
 
 			.email-content {
 				width: 100%;
-				margin: 0;
-				padding: 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
+				max-width: 600px;
+				margin: 0 auto;
+				background-color: #ffffff;
+				border-radius: 8px;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+				overflow: hidden;
 			}
-			/* Masthead ----------------------- */
 
 			.email-masthead {
+				background: linear-gradient(to right, #2563eb, #1e40af);
 				padding: 25px 0;
 				text-align: center;
 			}
 
-			.email-masthead_logo {
-				width: 94px;
-			}
-
 			.email-masthead_name {
-				font-size: 16px;
-				font-weight: bold;
-				color: #a8aaaf;
+				font-size: 20px;
+				font-weight: 700;
+				color: #ffffff;
 				text-decoration: none;
-				text-shadow: 0 1px 0 white;
+				text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+				letter-spacing: -0.5px;
 			}
-			/* Body ------------------------------ */
 
 			.email-body {
-				width: 100%;
-				margin: 0;
-				padding: 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #ffffff;
+				padding: 40px;
 			}
 
 			.email-body_inner {
-				width: 570px;
-				margin: 0 auto;
-				padding: 0;
-				-premailer-width: 570px;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #ffffff;
+				width: 100%;
+			}
+
+			h1 {
+				margin: 0;
+				font-size: 24px;
+				font-weight: 700;
+				color: #1a1a1a;
+				letter-spacing: -0.5px;
+				line-height: 1.3;
+			}
+
+			.welcome-message {
+				margin-top: 15px;
+				font-size: 16px;
+				line-height: 1.6;
+				color: #4b5563;
+			}
+
+			.login-box {
+				margin: 30px 0;
+				padding: 25px;
+				background-color: #f8fafc;
+				border-radius: 6px;
+				border: 1px solid #e5e7eb;
+			}
+
+			.login-text {
+				margin: 0 0 20px;
+				font-size: 15px;
+				line-height: 1.6;
+				color: #4b5563;
+			}
+
+			.button {
+				display: inline-block;
+				padding: 12px 24px;
+				background-color: #2563eb;
+				color: #ffffff !important;
+				font-weight: 600;
+				font-size: 15px;
+				border-radius: 6px;
+				text-decoration: none;
+				text-align: center;
+				transition: background-color 0.2s;
+			}
+
+			.button:hover {
+				background-color: #1e40af;
+				text-decoration: none;
+			}
+
+			.help-text {
+				margin-top: 30px;
+				padding-top: 20px;
+				border-top: 1px solid #e5e7eb;
+				font-size: 14px;
+				color: #6b7280;
+				line-height: 1.6;
 			}
 
 			.email-footer {
-				width: 570px;
-				margin: 0 auto;
-				padding: 0;
-				-premailer-width: 570px;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
+				padding: 25px 0;
 				text-align: center;
+				background-color: #f8fafc;
 			}
 
 			.email-footer p {
-				color: #6b6e76;
+				margin: 0;
+				font-size: 13px;
+				color: #6b7280;
 			}
-
-			.body-action {
-				width: 100%;
-				margin: 30px auto;
-				padding: 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				text-align: center;
-			}
-
-			.body-sub {
-				margin-top: 25px;
-				padding-top: 25px;
-				border-top: 1px solid #eaeaec;
-			}
-
-			.content-cell {
-				padding: 35px;
-			}
-			/*Media Queries ------------------------------ */
 
 			@media only screen and (max-width: 600px) {
-				.email-body_inner,
-				.email-footer {
-					width: 100% !important;
+				.email-body {
+					padding: 25px;
 				}
 			}
 
 			@media (prefers-color-scheme: dark) {
-				body,
-				.email-body,
-				.email-body_inner,
-				.email-content,
-				.email-wrapper,
-				.email-masthead,
+				body, .email-wrapper {
+					background-color: #1a1a1a !important;
+				}
+				.email-content {
+					background-color: #262626 !important;
+				}
+				.email-masthead {
+					background: linear-gradient(to right, #1e40af, #1e3a8a) !important;
+				}
+				h1 {
+					color: #ffffff !important;
+				}
+				.welcome-message, .login-text {
+					color: #d1d5db !important;
+				}
+				.login-box {
+					background-color: #333333 !important;
+					border-color: #404040 !important;
+				}
+				.help-text {
+					border-color: #404040 !important;
+					color: #9ca3af !important;
+				}
 				.email-footer {
 					background-color: #333333 !important;
-					color: #fff !important;
 				}
-				p,
-				ul,
-				ol,
-				blockquote,
-				h1,
-				h2,
-				h3,
-				span,
-				.purchase_item {
-					color: #fff !important;
+				.email-footer p {
+					color: #9ca3af !important;
 				}
-				.attributes_content,
-				.discount {
-					background-color: #222 !important;
-				}
-				.email-masthead_name {
-					text-shadow: none !important;
-				}
-			}
-
-			:root {
-				color-scheme: light dark;
-				supported-color-schemes: light dark;
-			}
-		</style>
-		<!--[if mso]>
-			<style type="text/css">
-				.f-fallback {
-					font-family: Arial, sans-serif;
-				}
-			</style>
-		<![endif]-->
-		<style type="text/css" rel="stylesheet" media="all">
-			body {
-				width: 100% !important;
-				height: 100%;
-				margin: 0;
-				-webkit-text-size-adjust: none;
-			}
-
-			body {
-				font-family: "Nunito Sans", Helvetica, Arial, sans-serif;
-			}
-
-			body {
-				background-color: #f4f4f7;
-				color: #51545e;
 			}
 		</style>
 	</head>
-	<body
-		style="
-			width: 100% !important;
-			height: 100%;
-			-webkit-text-size-adjust: none;
-			font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-			background-color: #f4f4f7;
-			color: #51545e;
-			margin: 0;
-		"
-		bgcolor="#F4F4F7"
-	>
-		<span
-			class="preheader"
-			style="
-				display: none !important;
-				visibility: hidden;
-				mso-hide: all;
-				font-size: 1px;
-				line-height: 1px;
-				max-height: 0;
-				max-width: 0;
-				opacity: 0;
-				overflow: hidden;
-			"
-			>Use this link to login. The link is only valid for 10 minutes.</span
-		>
-		<table
-			class="email-wrapper"
-			width="100%"
-			cellpadding="0"
-			cellspacing="0"
-			role="presentation"
-			style="
-				width: 100%;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #f4f4f7;
-				margin: 0;
-				padding: 0;
-			"
-			bgcolor="#F4F4F7"
-		>
-			<tr>
-				<td
-					align="center"
-					style="
-						word-break: break-word;
-						font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-						font-size: 16px;
-					"
-				>
-					<table
-						class="email-content"
-						width="100%"
-						cellpadding="0"
-						cellspacing="0"
-						role="presentation"
-						style="
-							width: 100%;
-							-premailer-width: 100%;
-							-premailer-cellpadding: 0;
-							-premailer-cellspacing: 0;
-							margin: 0;
-							padding: 0;
-						"
-					>
-						<tr>
-							<td
-								class="email-masthead"
-								style="
-									word-break: break-word;
-									font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-									font-size: 16px;
-									text-align: center;
-									padding: 25px 0;
-								"
-								align="center"
-							>
-								<a
-									href="{{appDomain}}"
-									class="f-fallback email-masthead_name"
-									style="
-										color: #a8aaaf;
-										font-size: 16px;
-										font-weight: bold;
-										text-decoration: none;
-										text-shadow: 0 1px 0 white;
-									"
-								>
-									{{appName}}
-								</a>
-							</td>
-						</tr>
-						<!-- Email Body -->
-						<tr>
-							<td
-								class="email-body"
-								width="100%"
-								cellpadding="0"
-								cellspacing="0"
-								style="
-									word-break: break-word;
-									margin: 0;
-									padding: 0;
-									font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-									font-size: 16px;
-									width: 100%;
-									-premailer-width: 100%;
-									-premailer-cellpadding: 0;
-									-premailer-cellspacing: 0;
-									background-color: #ffffff;
-								"
-								bgcolor="#FFFFFF"
-							>
-								<table
-									class="email-body_inner"
-									align="center"
-									width="570"
-									cellpadding="0"
-									cellspacing="0"
-									role="presentation"
-									style="
-										width: 570px;
-										-premailer-width: 570px;
-										-premailer-cellpadding: 0;
-										-premailer-cellspacing: 0;
-										background-color: #ffffff;
-										margin: 0 auto;
-										padding: 0;
-									"
-									bgcolor="#FFFFFF"
-								>
-									<!-- Body content -->
-									<tr>
-										<td
-											class="content-cell"
-											style="
-												word-break: break-word;
-												font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-												font-size: 16px;
-												padding: 35px;
-											"
-										>
-											<div class="f-fallback">
-												<h1
-													style="
-														margin-top: 0;
-														color: #333333;
-														font-size: 22px;
-														font-weight: bold;
-														text-align: left;
-													"
-													align="left"
-												>
-													Hi {{username}},
-												</h1>
-												<p
-													style="
-														font-size: 16px;
-														line-height: 1.625;
-														color: #51545e;
-														margin: 0.4em 0 1.1875em;
-													"
-												>
-													Click here to login.
-													<strong
-														>This link will be valid for the next 10
-														minutes</strong
-													>
-												</p>
-												<!-- Action -->
-												<table
-													class="body-action"
-													align="center"
-													width="100%"
-													cellpadding="0"
-													cellspacing="0"
-													role="presentation"
-													style="
-														width: 100%;
-														-premailer-width: 100%;
-														-premailer-cellpadding: 0;
-														-premailer-cellspacing: 0;
-														text-align: center;
-														margin: 30px auto;
-														padding: 0;
-													"
-												>
-													<tr>
-														<td
-															align="center"
-															style="
-																word-break: break-word;
-																font-family: 'Nunito Sans', Helvetica, Arial,
-																	sans-serif;
-																font-size: 16px;
-															"
-														>
-															<!-- Border based button
-             https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
-															<table
-																width="100%"
-																border="0"
-																cellspacing="0"
-																cellpadding="0"
-																role="presentation"
-															>
-																<tr>
-																	<td
-																		align="center"
-																		style="
-																			word-break: break-word;
-																			font-family: 'Nunito Sans', Helvetica,
-																				Arial, sans-serif;
-																			font-size: 16px;
-																		"
-																	>
-																		<a
-																			href="{{buttonHREF}}"
-																			class="f-fallback button button--green"
-																			target="_blank"
-																			style="
-																				color: #fff;
-																				border-color: #22bc66;
-																				border-style: solid;
-																				border-width: 10px 18px;
-																				background-color: #22bc66;
-																				display: inline-block;
-																				text-decoration: none;
-																				border-radius: 3px;
-																				box-shadow: 0 2px 3px
-																					rgba(0, 0, 0, 0.16);
-																				-webkit-text-size-adjust: none;
-																				box-sizing: border-box;
-																			"
-																			>Login</a
-																		>
-																	</td>
-																</tr>
-															</table>
-														</td>
-													</tr>
-												</table>
-												<p
-													style="
-														font-size: 16px;
-														line-height: 1.625;
-														color: #51545e;
-														margin: 0.4em 0 1.1875em;
-													"
-												></p>
-												<p
-													style="
-														font-size: 16px;
-														line-height: 1.625;
-														color: #51545e;
-														margin: 0.4em 0 1.1875em;
-													"
-												>
-													Thanks, <br />The {{appName}} Team
-												</p>
-												<!-- Sub copy -->
-												<table
-													class="body-sub"
-													role="presentation"
-													style="
-														margin-top: 25px;
-														padding-top: 25px;
-														border-top-width: 1px;
-														border-top-color: #eaeaec;
-														border-top-style: solid;
-													"
-												>
-													<tr>
-														<td
-															style="
-																word-break: break-word;
-																font-family: 'Nunito Sans', Helvetica, Arial,
-																	sans-serif;
-																font-size: 16px;
-															"
-														>
-															<p
-																class="f-fallback sub"
-																style="
-																	font-size: 13px;
-																	line-height: 1.625;
-																	color: #6b6e76;
-																	margin: 0.4em 0 1.1875em;
-																"
-															>
-																If you’re having trouble with the button above,
-																copy and paste the URL below into your web
-																browser.
-															</p>
-															<p
-																class="f-fallback sub"
-																style="
-																	font-size: 13px;
-																	line-height: 1.625;
-																	color: #6b6e76;
-																	margin: 0.4em 0 1.1875em;
-																"
-															>
-																{{buttonHREF}}
-															</p>
-														</td>
-													</tr>
-												</table>
-											</div>
-										</td>
-									</tr>
-								</table>
-							</td>
-						</tr>
-						<tr>
-							<td
-								style="
-									word-break: break-word;
-									font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-									font-size: 16px;
-								"
-							>
-								<table
-									class="email-footer"
-									align="center"
-									width="570"
-									cellpadding="0"
-									cellspacing="0"
-									role="presentation"
-									style="
-										width: 570px;
-										-premailer-width: 570px;
-										-premailer-cellpadding: 0;
-										-premailer-cellspacing: 0;
-										text-align: center;
-										margin: 0 auto;
-										padding: 0;
-									"
-								>
-									<tr>
-										<td
-											class="content-cell"
-											align="center"
-											style="
-												word-break: break-word;
-												font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-												font-size: 16px;
-												padding: 35px;
-											"
-										>
-											<p
-												class="f-fallback sub align-center"
-												style="
-													font-size: 13px;
-													line-height: 1.625;
-													text-align: center;
-													color: #6b6e76;
-													margin: 0.4em 0 1.1875em;
-												"
-												align="center"
-											>
-												© {{appName}}. All rights reserved.
-											</p>
-										</td>
-									</tr>
-								</table>
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-		</table>
+	<body>
+		<span class="preheader">Use this link to log in to your account. This link will expire in 10 minutes.</span>
+		<div class="email-wrapper">
+			<div class="email-content">
+				<div class="email-masthead">
+					<a href="{{appDomain}}" class="email-masthead_name">
+						{{appName}}
+					</a>
+				</div>
+				<div class="email-body">
+					<div class="email-body_inner">
+						<h1>Login to Your Account</h1>
+						<p class="welcome-message">
+							Hi {{username}}, use the button below to securely log in to your account.
+						</p>
+						<div class="login-box">
+							<p class="login-text">
+								We received a login request for your account. Click the button below to securely log in. This link will expire in 10 minutes for security reasons.
+							</p>
+							<a href="{{buttonHREF}}" class="button" target="_blank">
+								Log In to Account
+							</a>
+						</div>
+						<div class="help-text">
+							<p>If you did not request this login link, please ignore this email or contact <a href="{{appDomain}}">{{appName}}</a> support if you have concerns.</p>
+							<p style="margin-top: 10px;">If you're having trouble clicking the button, copy and paste this URL into your web browser:</p>
+							<p style="margin-top: 5px; word-break: break-all;">
+								<a href="{{buttonHREF}}" style="color: #6b7280; font-size: 13px;">{{buttonHREF}}</a>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="email-footer">
+					<p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
+				</div>
+			</div>
+		</div>
 	</body>
-</html>
-`;
+</html>`;
 
-module.exports = loginWithEmailTemplate;
+module.exports = {
+	loginWithEmailTemplate,
+};

@@ -24,9 +24,9 @@ const authenticationSchema = {
 					format: "email",
 				},
 				password: { type: "string", example: "asdhfgjkfhey%&6da" },
-				hToken: {
+				recaptchaToken: {
 					type: "string",
-					example: "10000000-aaaa-bbbb-cccc-000000000001",
+					example: "03AGdBq24PSkOhZe_DxnCjh..."
 				},
 			},
 			required: ["name", "email", "password"],
@@ -58,9 +58,9 @@ const authenticationSchema = {
 					format: "email",
 				},
 				password: { type: "string", example: "asdhfgjkfhey%&6da" },
-				hToken: {
+				recaptchaToken: {
 					type: "string",
-					example: "10000000-aaaa-bbbb-cccc-000000000001",
+					example: "03AGdBq24PSkOhZe_DxnCjh..."
 				},
 			},
 			required: ["email", "password"],
@@ -148,9 +148,9 @@ const authenticationSchema = {
 					example: "example@example.com",
 					format: "email",
 				},
-				hToken: {
+				recaptchaToken: {
 					type: "string",
-					example: "10000000-aaaa-bbbb-cccc-000000000001",
+					example: "03AGdBq24PSkOhZe_DxnCjh..."
 				},
 			},
 			required: ["email"],
@@ -176,9 +176,9 @@ const authenticationSchema = {
 					example: "example@example.com",
 					format: "email",
 				},
-				hToken: {
+				recaptchaToken: {
 					type: "string",
-					example: "10000000-aaaa-bbbb-cccc-000000000001",
+					example: "03AGdBq24PSkOhZe_DxnCjh..."
 				},
 				name: {
 					type: "string",
@@ -207,9 +207,9 @@ const authenticationSchema = {
 					example: "example@example.com",
 					format: "email",
 				},
-				hToken: {
+				recaptchaToken: {
 					type: "string",
-					example: "10000000-aaaa-bbbb-cccc-000000000001",
+					example: "03AGdBq24PSkOhZe_DxnCjh..."
 				},
 			},
 			required: ["email"],

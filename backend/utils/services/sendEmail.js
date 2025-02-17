@@ -8,7 +8,7 @@ const {
 } = require("../emailTemplates/passwordChanged");
 const { confirmEmailTemplate } = require("../emailTemplates/confirmEmail");
 const { resetPasswordTemplate } = require("../emailTemplates/resetPassword");
-const { loginWithEmailTemplate }= require("../emailTemplates/loginwithemail");
+const { loginWithEmailTemplate }= require("../emailTemplates/loginWithEmail");
 const { getLocationFromIP } = require("./ipGeolocation");
 
 const sendEmail = async (options) => {

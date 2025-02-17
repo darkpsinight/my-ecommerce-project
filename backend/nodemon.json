@@ -1,0 +1,23 @@
+{
+    "watch": [
+        "server.js",
+        ".env",
+        "routes/",
+        "models/",
+        "utils/",
+        "handlers/",
+        "plugins/"
+    ],
+    "ext": "js,json,env",
+    "ignore": [
+        "node_modules/",
+        ".git/",
+        "dist/",
+        "coverage/",
+        "logs/"
+    ],
+    "env": {
+        "NODE_ENV": "development"
+    },
+    "verbose": true
+} 

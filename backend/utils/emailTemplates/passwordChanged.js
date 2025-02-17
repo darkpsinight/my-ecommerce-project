@@ -145,6 +145,8 @@ const passwordChangedTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tr
             .detail-label {
                 font-weight: 600;
                 color: #374151;
+                display: inline-block;
+                min-width: 100px;
             }
 
             .button {
@@ -272,7 +274,7 @@ const passwordChangedTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tr
                     </div>
                 </div>
                 <div class="email-footer">
-                    <p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
+                    <p>&copy; {{currentYear}} {{appName}}. All rights reserved.</p>
                 </div>
             </div>
         </div>

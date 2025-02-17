@@ -8,7 +8,7 @@ const {
 } = require("../emailTemplates/passwordChanged");
 const { confirmEmailTemplate } = require("../emailTemplates/confirmEmail");
 const { resetPasswordTemplate } = require("../emailTemplates/resetPassword");
-const loginWithEmailTemplate = require("../emailTemplates/loginwithemail");
+const { loginWithEmailTemplate }= require("../emailTemplates/loginwithemail");
 const { getLocationFromIP } = require("./ipGeolocation");
 
 const sendEmail = async (options) => {
@@ -99,6 +99,8 @@ const confirmationEmailHelper = async (user, request, confirmationToken) => {
 		request.hostname
 	}/api/v1/auth/confirmEmail?token=${confirmationToken}`;
 
+	const currentYear = new Date().getFullYear();
+
 	return await sendEmail({
 		email: user.email,
 		subject: `Confirm your email address ${
@@ -110,6 +112,7 @@ const confirmationEmailHelper = async (user, request, confirmationToken) => {
 				buttonHREF: confirmationUrl,
 				appName: configs.APP_NAME,
 				appDomain: configs.APP_DOMAIN,
+				currentYear
 			},
 			confirmEmailTemplate
 		),
@@ -122,6 +125,10 @@ const loginWithEmailHelper = async (user, request, loginToken) => {
 		request.hostname
 	}/api/v1/auth/emailLogin?token=${loginToken}`;
 
+	const location = await getLocationFromIP(request.ipAddress);
+	const { browser, device } = parseUserAgent(request.headers["user-agent"]);
+	const currentYear = new Date().getFullYear();
+
 	return await sendEmail({
 		email: user.email,
 		subject: `Login your email address ${
@@ -133,8 +140,15 @@ const loginWithEmailHelper = async (user, request, loginToken) => {
 				buttonHREF: loginUrl,
 				appName: configs.APP_NAME,
 				appDomain: configs.APP_DOMAIN,
+				time: new Date().toLocaleString(),
+				location: location || "Unknown Location",
+				device: device,
+				browser: browser,
+				ipAddress: formatIPAddress(request.ipAddress),
+				supportEmail: configs.SUPPORT_EMAIL || configs.FROM_EMAIL,
+				currentYear
 			},
-			loginWithEmailTemplate
+			loginWithEmailTemplate.html
 		),
 	});
 };
@@ -179,6 +193,7 @@ const passwordChangedEmailAlert = async (user, request) => {
 	const reportUrl = `${configs.APP_DOMAIN}/security/report`;
 	const location = await getLocationFromIP(request.ipAddress);
 	const { browser, device } = parseUserAgent(request.headers["user-agent"]);
+	const currentYear = new Date().getFullYear();
 	
 	return await sendEmail({
 		email: user.email,
@@ -195,6 +210,7 @@ const passwordChangedEmailAlert = async (user, request) => {
 				reportUrl: reportUrl,
 				browser: browser,
 				supportEmail: configs.SUPPORT_EMAIL || configs.FROM_EMAIL,
+				currentYear
 			},
 			passwordChangedTemplate
 		),
@@ -206,6 +222,7 @@ const sendNewLoginEmail = async (user, request) => {
 		const reportUrl = `${configs.APP_DOMAIN}/security/report`;
 		const location = await getLocationFromIP(request.ipAddress);
 		const { browser, device } = parseUserAgent(request.headers["user-agent"]);
+		const currentYear = new Date().getFullYear();
 		
 		return await sendEmail({
 			email: user.email,
@@ -223,6 +240,7 @@ const sendNewLoginEmail = async (user, request) => {
 					device: device,
 					browser: browser,
 					buttonHREF: reportUrl,
+					currentYear
 				},
 				newLoginEmailTemplate
 			),

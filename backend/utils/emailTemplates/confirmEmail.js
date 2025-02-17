@@ -249,7 +249,7 @@ const confirmEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Trans
                     </div>
                 </div>
                 <div class="email-footer">
-                    <p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
+                    <p>&copy; {{currentYear}} {{appName}}. All rights reserved.</p>
                 </div>
             </div>
         </div>

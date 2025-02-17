@@ -145,6 +145,8 @@ const resetPasswordTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
 			.detail-label {
 				font-weight: 600;
 				color: #374151;
+				display: inline-block;
+				min-width: 100px;
 			}
 
 			.button {
@@ -288,13 +290,15 @@ const resetPasswordTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
 						<div class="help-text">
 							<p>For your security, this request was received from a {{device}} using {{browser}}. The reset link can only be used once and will lead you to a page where you can set a new password.</p>
 							<p>If you're having trouble with the button above, copy and paste this URL into your browser:</p>
-							<p style="word-break: break-all; font-size: 13px; color: #6b7280;">{{resetLink}}</p>
+							<p style="margin-top: 5px; word-break: break-all;">
+								<a href="{{resetLink}}" style="color: #6b7280; font-size: 13px;">{{resetLink}}</a>
+							</p>
 							<p>Need help or have questions? Contact our support team at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>. We're here to help!</p>
 						</div>
 					</div>
 				</div>
 				<div class="email-footer">
-                    <p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
+                    <p>&copy; {{currentYear}} {{appName}}. All rights reserved.</p>
                 </div>
 			</div>
 		</div>

@@ -145,6 +145,8 @@ const newLoginEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
             .detail-label {
                 font-weight: 600;
                 color: #374151;
+                display: inline-block;
+                min-width: 100px;
             }
 
             .button {
@@ -265,16 +267,14 @@ const newLoginEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
                             Report Suspicious Activity
                         </a>
                         <div class="help-text">
-                            <p>If this was you, you can safely ignore this email. If you did not log in to your <a href="
-                            {{appDomain}}">{{appName}}</a> account, please change your password immediately and contact our 
-                            support team.</p>
+                            <p>If this was you, you can safely ignore this email. If you did not log in to your <a href="{{appDomain}}">{{appName}}</a> account, please change your password immediately and contact our support team.</p>
                             <p style="margin-top: 10px;">For security tips and best practices, please visit our <a href="
                             {{appDomain}}/security">Security Center</a>.</p>
                         </div>
                     </div>
                 </div>
                 <div class="email-footer">
-                    <p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
+                    <p>&copy; {{currentYear}} {{appName}}. All rights reserved.</p>
                 </div>
             </div>
         </div>
@@ -282,5 +282,5 @@ const newLoginEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
 </html>`;
 
 module.exports = {
-    newLoginEmailTemplate,
+  newLoginEmailTemplate,
 };

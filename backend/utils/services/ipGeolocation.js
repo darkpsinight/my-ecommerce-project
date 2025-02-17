@@ -1,6 +1,11 @@
 const { configs } = require("../../configs");
 
 const getLocationFromIP = async (ip) => {
+    // Check if IP geolocation is disabled
+    if (configs.DISABLE_IP_GEOLOCATION === "1") {
+        return "Location Service Disabled";
+    }
+
     try {
         // Skip API call for localhost/development IPs
         if (ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.")) {

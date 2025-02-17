@@ -26,7 +26,8 @@ SOFTWARE.
 
 */
 
-const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+const loginWithEmailTemplate = {
+  html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -123,6 +124,27 @@ const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tra
 				color: #4b5563;
 			}
 
+			.login-details {
+				margin: 20px 0;
+				padding: 20px;
+				background-color: #f8fafc;
+				border-radius: 6px;
+				border: 1px solid #e5e7eb;
+			}
+
+			.detail-item {
+				margin: 8px 0;
+				font-size: 15px;
+				color: #4b5563;
+			}
+
+			.detail-label {
+				font-weight: 600;
+				color: #374151;
+				display: inline-block;
+				min-width: 100px;
+			}
+
 			.login-box {
 				margin: 30px 0;
 				padding: 25px;
@@ -196,10 +218,13 @@ const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tra
 				h1 {
 					color: #ffffff !important;
 				}
-				.welcome-message, .login-text {
+				.welcome-message, .login-text, .detail-item {
 					color: #d1d5db !important;
 				}
-				.login-box {
+				.detail-label {
+					color: #e5e7eb !important;
+				}
+				.login-box, .login-details {
 					background-color: #333333 !important;
 					border-color: #404040 !important;
 				}
@@ -228,7 +253,7 @@ const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tra
 				<div class="email-body">
 					<div class="email-body_inner">
 						<h1>Login Request</h1>
-						<p class="alert-message">
+						<p class="welcome-message">
 							Hi {{username}}, we received a login request for your account. Here are the details of this request:
 						</p>
 						<div class="login-details">
@@ -248,19 +273,16 @@ const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tra
 								<span class="detail-label">IP Address:</span> {{ipAddress}}
 							</p>
 						</div>
-						<p class="welcome-message">
-							Hi {{username}}, use the button below to securely log in to your account.
-						</p>
 						<div class="login-box">
 							<p class="login-text">
-								We received a login request for your account. Click the button below to securely log in. This link will expire in 10 minutes for security reasons.
+								Click the button below to securely log in. This link will expire in 10 minutes for security reasons.
 							</p>
 							<a href="{{buttonHREF}}" class="button" target="_blank">
 								Log In to Account
 							</a>
 						</div>
 						<div class="help-text">
-							<p>If you did not request this login link, please ignore this email or contact <a href="{{appDomain}}">{{appName}}</a> support if you have concerns.</p>
+							<p>If you did not request this login link, please ignore this email or Contact our support team at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a> if you have concerns.</p>
 							<p style="margin-top: 10px;">If you're having trouble clicking the button, copy and paste this URL into your web browser:</p>
 							<p style="margin-top: 5px; word-break: break-all;">
 								<a href="{{buttonHREF}}" style="color: #6b7280; font-size: 13px;">{{buttonHREF}}</a>
@@ -269,13 +291,12 @@ const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tra
 					</div>
 				</div>
 				<div class="email-footer">
-                    <p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
-                </div>
+					<p>&copy; {{currentYear}} {{appName}}. All rights reserved.</p>
+				</div>
 			</div>
 		</div>
 	</body>
-</html>`;
-
-module.exports = {
-	loginWithEmailTemplate,
+</html>`,
 };
+
+module.exports = { loginWithEmailTemplate };

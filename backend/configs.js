@@ -4,6 +4,7 @@ const configs = {
 	MONGO_URI: process.env.MONGO_URI,
 	ENVIRONMENT: process.env.ENVIRONMENT || keywords.DEVELOPMENT_ENV,
 	CHECK_ADMIN: process.env.CHECK_ADMIN === "0" ? false : true,
+	DISABLE_IP_GEOLOCATION: process.env.DISABLE_IP_GEOLOCATION || "0",
 	// Fastify will run on 127.0.0.1 if not set
 	// Set this to 0.0.0.0 when deploying using docker
 	// Check https://www.fastify.io/docs/latest/Getting-Started/#your-first-server

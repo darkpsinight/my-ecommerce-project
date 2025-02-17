@@ -15,18 +15,21 @@
 		"fastify-rate-limit": "^5.7.0",
 		"fastify-swagger": "^4.9.1",
 		"jsonwebtoken": "^9.0.0",
-		"mongoose": "^6.12.0",
+		"mongoose": "^7.0.0",
 		"mustache": "^4.2.0",
 		"node-cron": "^3.0.0",
-		"nodemailer": "^6.6.3"
+		"nodemailer": "^6.6.3",
+		"ua-parser-js": "^2.0.2"
 	},
 	"devDependencies": {
+		"cross-env": "^7.0.3",
+		"nodemon": "^3.1.9",
 		"pino-pretty": "^13.0.0"
 	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "set NODE_ENV=production && node server.js",
-		"dev": "set NODE_ENV=development && node server.js"
+		"start": "cross-env NODE_ENV=production && node server.js",
+		"dev": "cross-env NODE_ENV=development nodemon server.js"
 	},
 	"repository": {
 		"type": "git",

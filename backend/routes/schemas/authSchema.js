@@ -17,7 +17,7 @@ const authenticationSchema = {
 		body: {
 			type: "object",
 			properties: {
-				name: { type: "string", example: "Akshay" },
+				name: { type: "string", example: "Jhon" },
 				email: {
 					type: "string",
 					example: "example@example.com",

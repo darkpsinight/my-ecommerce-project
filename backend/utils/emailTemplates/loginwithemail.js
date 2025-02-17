@@ -93,7 +93,7 @@ const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tra
 			.email-masthead_name {
 				font-size: 20px;
 				font-weight: 700;
-				color: #ffffff;
+				color: #ffffff !important;
 				text-decoration: none;
 				text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 				letter-spacing: -0.5px;
@@ -227,7 +227,27 @@ const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tra
 				</div>
 				<div class="email-body">
 					<div class="email-body_inner">
-						<h1>Login to Your Account</h1>
+						<h1>Login Request</h1>
+						<p class="alert-message">
+							Hi {{username}}, we received a login request for your account. Here are the details of this request:
+						</p>
+						<div class="login-details">
+							<p class="detail-item">
+								<span class="detail-label">Time:</span> {{time}}
+							</p>
+							<p class="detail-item">
+								<span class="detail-label">Location:</span> {{location}}
+							</p>
+							<p class="detail-item">
+								<span class="detail-label">Device:</span> {{device}}
+							</p>
+							<p class="detail-item">
+								<span class="detail-label">Browser:</span> {{browser}}
+							</p>
+							<p class="detail-item">
+								<span class="detail-label">IP Address:</span> {{ipAddress}}
+							</p>
+						</div>
 						<p class="welcome-message">
 							Hi {{username}}, use the button below to securely log in to your account.
 						</p>
@@ -249,8 +269,8 @@ const loginWithEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tra
 					</div>
 				</div>
 				<div class="email-footer">
-					<p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
-				</div>
+                    <p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
+                </div>
 			</div>
 		</div>
 	</body>

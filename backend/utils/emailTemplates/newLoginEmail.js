@@ -93,7 +93,7 @@ const newLoginEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
             .email-masthead_name {
                 font-size: 20px;
                 font-weight: 700;
-                color: #ffffff;
+                color: #ffffff !important;
                 text-decoration: none;
                 text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
                 letter-spacing: -0.5px;
@@ -240,16 +240,13 @@ const newLoginEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
                 </div>
                 <div class="email-body">
                     <div class="email-body_inner">
-                        <h1>New Login Alert</h1>
+                        <h1>New Login Detected</h1>
                         <p class="alert-message">
-                            Hi {{username}}, we detected a new login to your account. Here are the details of the login:
+                            Hi {{username}}, we detected a new login to your account. Here are the details of this login:
                         </p>
                         <div class="login-details">
                             <p class="detail-item">
                                 <span class="detail-label">Time:</span> {{time}}
-                            </p>
-                            <p class="detail-item">
-                                <span class="detail-label">IP Address:</span> {{ipAddress}}
                             </p>
                             <p class="detail-item">
                                 <span class="detail-label">Location:</span> {{location}}
@@ -257,13 +254,22 @@ const newLoginEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
                             <p class="detail-item">
                                 <span class="detail-label">Device:</span> {{device}}
                             </p>
-                            <a href="{{buttonHREF}}" class="button" target="_blank">
-                                Report Suspicious Activity
-                            </a>
+                            <p class="detail-item">
+                                <span class="detail-label">Browser:</span> {{browser}}
+                            </p>
+                            <p class="detail-item">
+                                <span class="detail-label">IP Address:</span> {{ipAddress}}
+                            </p>
                         </div>
+                        <a href="{{buttonHREF}}" class="button" target="_blank">
+                            Report Suspicious Activity
+                        </a>
                         <div class="help-text">
-                            <p>If this was you, you can safely ignore this email. If you did not log in to your <a href="{{appDomain}}">{{appName}}</a> account, please change your password immediately and contact our support team.</p>
-                            <p style="margin-top: 10px;">For security tips and best practices, please visit our <a href="{{appDomain}}/security">Security Center</a>.</p>
+                            <p>If this was you, you can safely ignore this email. If you did not log in to your <a href="
+                            {{appDomain}}">{{appName}}</a> account, please change your password immediately and contact our 
+                            support team.</p>
+                            <p style="margin-top: 10px;">For security tips and best practices, please visit our <a href="
+                            {{appDomain}}/security">Security Center</a>.</p>
                         </div>
                     </div>
                 </div>

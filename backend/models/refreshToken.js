@@ -70,18 +70,18 @@ const getRefreshToken = async (user, requestIp) => {
 };
 
 const getRefreshTokenOptns = () => {
-	const options = {
-		expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-		httpOnly: true,
-		path: "/api/v1/auth/refresh",
-		signed: true,
-		sameSite: "none",
-	};
-	if (configs.ENVIRONMENT === keywords.PRODUCTION_ENV) {
-		options.secure = true;
-	}
-	return options;
+    const options = {
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        httpOnly: true,
+        path: "/api/v1/auth/refresh",
+        signed: true,
+        sameSite: "none",
+        secure: configs.ENVIRONMENT === keywords.PRODUCTION_ENV, // Ensures secure cookies in production
+    };
+
+    return options;
 };
+
 
 const getRftById = async (rtid) => {
 	return await RefreshToken.findOne({

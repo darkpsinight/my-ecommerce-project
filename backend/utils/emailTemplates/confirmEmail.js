@@ -93,7 +93,7 @@ const confirmEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Trans
             .email-masthead_name {
                 font-size: 20px;
                 font-weight: 700;
-                color: #ffffff;
+                color: #ffffff !important;
                 text-decoration: none;
                 text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
                 letter-spacing: -0.5px;

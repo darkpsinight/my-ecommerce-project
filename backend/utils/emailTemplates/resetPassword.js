@@ -34,28 +34,26 @@ const resetPasswordTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<meta name="color-scheme" content="light dark" />
 		<meta name="supported-color-schemes" content="light dark" />
-		<title></title>
+		<title>Reset Your Password</title>
 		<style type="text/css" rel="stylesheet" media="all">
-			/* Base ------------------------------ */
-
-			@import url("https://fonts.googleapis.com/css?family=Nunito+Sans:400,700&amp;display=swap");
+			@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 			body {
 				width: 100% !important;
 				height: 100%;
 				margin: 0;
 				-webkit-text-size-adjust: none;
+				font-family: "Inter", Helvetica, Arial, sans-serif;
+				background-color: #f4f7fa;
+				color: #333;
 			}
 
 			a {
-				color: #3869d4;
+				color: #2563eb;
+				text-decoration: none;
 			}
 
-			a img {
-				border: none;
-			}
-
-			td {
-				word-break: break-word;
+			a:hover {
+				text-decoration: underline;
 			}
 
 			.preheader {
@@ -69,800 +67,238 @@ const resetPasswordTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
 				opacity: 0;
 				overflow: hidden;
 			}
-			/* Type ------------------------------ */
-
-			body,
-			td,
-			th {
-				font-family: "Nunito Sans", Helvetica, Arial, sans-serif;
-			}
-
-			h1 {
-				margin-top: 0;
-				color: #333333;
-				font-size: 22px;
-				font-weight: bold;
-				text-align: left;
-			}
-
-			h2 {
-				margin-top: 0;
-				color: #333333;
-				font-size: 16px;
-				font-weight: bold;
-				text-align: left;
-			}
-
-			h3 {
-				margin-top: 0;
-				color: #333333;
-				font-size: 14px;
-				font-weight: bold;
-				text-align: left;
-			}
-
-			td,
-			th {
-				font-size: 16px;
-			}
-
-			p,
-			ul,
-			ol,
-			blockquote {
-				margin: 0.4em 0 1.1875em;
-				font-size: 16px;
-				line-height: 1.625;
-			}
-
-			p.sub {
-				font-size: 13px;
-			}
-			/* Utilities ------------------------------ */
-
-			.align-right {
-				text-align: right;
-			}
-
-			.align-left {
-				text-align: left;
-			}
-
-			.align-center {
-				text-align: center;
-			}
-			/* Buttons ------------------------------ */
-
-			.button {
-				background-color: #3869d4;
-				border-top: 10px solid #3869d4;
-				border-right: 18px solid #3869d4;
-				border-bottom: 10px solid #3869d4;
-				border-left: 18px solid #3869d4;
-				display: inline-block;
-				color: #fff;
-				text-decoration: none;
-				border-radius: 3px;
-				box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16);
-				-webkit-text-size-adjust: none;
-				box-sizing: border-box;
-			}
-
-			.button--green {
-				background-color: #22bc66;
-				border-top: 10px solid #22bc66;
-				border-right: 18px solid #22bc66;
-				border-bottom: 10px solid #22bc66;
-				border-left: 18px solid #22bc66;
-			}
-
-			.button--red {
-				background-color: #ff6136;
-				border-top: 10px solid #ff6136;
-				border-right: 18px solid #ff6136;
-				border-bottom: 10px solid #ff6136;
-				border-left: 18px solid #ff6136;
-			}
-
-			@media only screen and (max-width: 500px) {
-				.button {
-					width: 100% !important;
-					text-align: center !important;
-				}
-			}
-			/* Attribute list ------------------------------ */
-
-			.attributes {
-				margin: 0 0 21px;
-			}
-
-			.attributes_content {
-				background-color: #f4f4f7;
-				padding: 16px;
-			}
-
-			.attributes_item {
-				padding: 0;
-			}
-			/* Related Items ------------------------------ */
-
-			.related {
-				width: 100%;
-				margin: 0;
-				padding: 25px 0 0 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-			}
-
-			.related_item {
-				padding: 10px 0;
-				color: #cbcccf;
-				font-size: 15px;
-				line-height: 18px;
-			}
-
-			.related_item-title {
-				display: block;
-				margin: 0.5em 0 0;
-			}
-
-			.related_item-thumb {
-				display: block;
-				padding-bottom: 10px;
-			}
-
-			.related_heading {
-				border-top: 1px solid #cbcccf;
-				text-align: center;
-				padding: 25px 0 10px;
-			}
-			/* Discount Code ------------------------------ */
-
-			.discount {
-				width: 100%;
-				margin: 0;
-				padding: 24px;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #f4f4f7;
-				border: 2px dashed #cbcccf;
-			}
-
-			.discount_heading {
-				text-align: center;
-			}
-
-			.discount_body {
-				text-align: center;
-				font-size: 15px;
-			}
-			/* Social Icons ------------------------------ */
-
-			.social {
-				width: auto;
-			}
-
-			.social td {
-				padding: 0;
-				width: auto;
-			}
-
-			.social_icon {
-				height: 20px;
-				margin: 0 8px 10px 8px;
-				padding: 0;
-			}
-			/* Data table ------------------------------ */
-
-			.purchase {
-				width: 100%;
-				margin: 0;
-				padding: 35px 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-			}
-
-			.purchase_content {
-				width: 100%;
-				margin: 0;
-				padding: 25px 0 0 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-			}
-
-			.purchase_item {
-				padding: 10px 0;
-				color: #51545e;
-				font-size: 15px;
-				line-height: 18px;
-			}
-
-			.purchase_heading {
-				padding-bottom: 8px;
-				border-bottom: 1px solid #eaeaec;
-			}
-
-			.purchase_heading p {
-				margin: 0;
-				color: #85878e;
-				font-size: 12px;
-			}
-
-			.purchase_footer {
-				padding-top: 15px;
-				border-top: 1px solid #eaeaec;
-			}
-
-			.purchase_total {
-				margin: 0;
-				text-align: right;
-				font-weight: bold;
-				color: #333333;
-			}
-
-			.purchase_total--label {
-				padding: 0 15px 0 0;
-			}
-
-			body {
-				background-color: #f4f4f7;
-				color: #51545e;
-			}
-
-			p {
-				color: #51545e;
-			}
-
-			p.sub {
-				color: #6b6e76;
-			}
 
 			.email-wrapper {
 				width: 100%;
-				margin: 0;
-				padding: 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #f4f4f7;
+				background-color: #f4f7fa;
+				padding: 20px 0;
 			}
 
 			.email-content {
 				width: 100%;
-				margin: 0;
-				padding: 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
+				max-width: 600px;
+				margin: 0 auto;
+				background-color: #ffffff;
+				border-radius: 8px;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+				overflow: hidden;
 			}
-			/* Masthead ----------------------- */
 
 			.email-masthead {
-				padding: 25px 0;
-				text-align: center;
-			}
+                background: linear-gradient(to right, #2563eb, #1e40af);
+                padding: 25px 0;
+                text-align: center;
+            }
 
-			.email-masthead_logo {
-				width: 94px;
-			}
-
-			.email-masthead_name {
-				font-size: 16px;
-				font-weight: bold;
-				color: #a8aaaf;
-				text-decoration: none;
-				text-shadow: 0 1px 0 white;
-			}
-			/* Body ------------------------------ */
+            .email-masthead_name {
+                font-size: 20px;
+                font-weight: 700;
+                color: #ffffff !important;
+                text-decoration: none;
+                text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+                letter-spacing: -0.5px;
+            }
 
 			.email-body {
-				width: 100%;
-				margin: 0;
-				padding: 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #ffffff;
+				padding: 40px;
 			}
 
 			.email-body_inner {
-				width: 570px;
-				margin: 0 auto;
-				padding: 0;
-				-premailer-width: 570px;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #ffffff;
+				width: 100%;
+			}
+
+			h1 {
+				margin: 0;
+				font-size: 24px;
+				font-weight: 700;
+				color: #1a1a1a;
+				letter-spacing: -0.5px;
+				line-height: 1.3;
+			}
+
+			.alert-message {
+				margin-top: 15px;
+				font-size: 16px;
+				line-height: 1.6;
+				color: #4b5563;
+			}
+
+			.reset-details {
+				margin: 30px 0;
+				padding: 25px;
+				background-color: #f8fafc;
+				border-radius: 6px;
+				border: 1px solid #e5e7eb;
+			}
+
+			.detail-item {
+				margin: 0 0 12px;
+				font-size: 15px;
+				line-height: 1.6;
+				color: #4b5563;
+			}
+
+			.detail-item:last-child {
+				margin-bottom: 0;
+			}
+
+			.detail-label {
+				font-weight: 600;
+				color: #374151;
+			}
+
+			.button {
+				display: inline-block;
+				margin-top: 25px;
+				padding: 12px 24px;
+				background-color: #2563eb;
+				color: #ffffff !important;
+				font-weight: 600;
+				font-size: 15px;
+				border-radius: 6px;
+				text-decoration: none;
+				text-align: center;
+				transition: background-color 0.2s;
+			}
+
+			.button:hover {
+				background-color: #1e40af;
+				text-decoration: none;
+			}
+
+			.security-notice {
+				margin-top: 30px;
+				padding: 15px;
+				background-color: #fff7ed;
+				border: 1px solid #ffedd5;
+				border-radius: 6px;
+				color: #c2410c;
+			}
+
+			.help-text {
+				margin-top: 30px;
+				padding-top: 20px;
+				border-top: 1px solid #e5e7eb;
+				font-size: 14px;
+				color: #6b7280;
+				line-height: 1.6;
 			}
 
 			.email-footer {
-				width: 570px;
-				margin: 0 auto;
-				padding: 0;
-				-premailer-width: 570px;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
+				padding: 25px 0;
 				text-align: center;
+				background-color: #f8fafc;
 			}
 
 			.email-footer p {
-				color: #6b6e76;
+				margin: 0;
+				font-size: 13px;
+				color: #6b7280;
 			}
-
-			.body-action {
-				width: 100%;
-				margin: 30px auto;
-				padding: 0;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				text-align: center;
-			}
-
-			.body-sub {
-				margin-top: 25px;
-				padding-top: 25px;
-				border-top: 1px solid #eaeaec;
-			}
-
-			.content-cell {
-				padding: 35px;
-			}
-			/*Media Queries ------------------------------ */
 
 			@media only screen and (max-width: 600px) {
-				.email-body_inner,
-				.email-footer {
-					width: 100% !important;
+				.email-body {
+					padding: 25px;
 				}
 			}
 
 			@media (prefers-color-scheme: dark) {
-				body,
-				.email-body,
-				.email-body_inner,
-				.email-content,
-				.email-wrapper,
-				.email-masthead,
+				body, .email-wrapper {
+					background-color: #1a1a1a !important;
+				}
+				.email-content {
+					background-color: #262626 !important;
+				}
+				.email-masthead {
+					background: linear-gradient(to right, #1e40af, #1e3a8a) !important;
+				}
+				h1 {
+					color: #ffffff !important;
+				}
+				.alert-message, .detail-item {
+					color: #d1d5db !important;
+				}
+				.detail-label {
+					color: #e5e7eb !important;
+				}
+				.reset-details {
+					background-color: #333333 !important;
+					border-color: #404040 !important;
+				}
+				.security-notice {
+					background-color: #422006 !important;
+					border-color: #9a3412 !important;
+					color: #fed7aa !important;
+				}
+				.help-text {
+					border-color: #404040 !important;
+					color: #9ca3af !important;
+				}
 				.email-footer {
 					background-color: #333333 !important;
-					color: #fff !important;
 				}
-				p,
-				ul,
-				ol,
-				blockquote,
-				h1,
-				h2,
-				h3,
-				span,
-				.purchase_item {
-					color: #fff !important;
+				.email-footer p {
+					color: #9ca3af !important;
 				}
-				.attributes_content,
-				.discount {
-					background-color: #222 !important;
-				}
-				.email-masthead_name {
-					text-shadow: none !important;
-				}
-			}
-
-			:root {
-				color-scheme: light dark;
-				supported-color-schemes: light dark;
-			}
-		</style>
-		<!--[if mso]>
-			<style type="text/css">
-				.f-fallback {
-					font-family: Arial, sans-serif;
-				}
-			</style>
-		<![endif]-->
-		<style type="text/css" rel="stylesheet" media="all">
-			body {
-				width: 100% !important;
-				height: 100%;
-				margin: 0;
-				-webkit-text-size-adjust: none;
-			}
-
-			body {
-				font-family: "Nunito Sans", Helvetica, Arial, sans-serif;
-			}
-
-			body {
-				background-color: #f4f4f7;
-				color: #51545e;
 			}
 		</style>
 	</head>
-	<body
-		style="
-			width: 100% !important;
-			height: 100%;
-			-webkit-text-size-adjust: none;
-			font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-			background-color: #f4f4f7;
-			color: #51545e;
-			margin: 0;
-		"
-		bgcolor="#F4F4F7"
-	>
-		<span
-			class="preheader"
-			style="
-				display: none !important;
-				visibility: hidden;
-				mso-hide: all;
-				font-size: 1px;
-				line-height: 1px;
-				max-height: 0;
-				max-width: 0;
-				opacity: 0;
-				overflow: hidden;
-			"
-			>Use this link to reset your password. The link is only valid for 30
-			minutes.</span
-		>
-		<table
-			class="email-wrapper"
-			width="100%"
-			cellpadding="0"
-			cellspacing="0"
-			role="presentation"
-			style="
-				width: 100%;
-				-premailer-width: 100%;
-				-premailer-cellpadding: 0;
-				-premailer-cellspacing: 0;
-				background-color: #f4f4f7;
-				margin: 0;
-				padding: 0;
-			"
-			bgcolor="#F4F4F7"
-		>
-			<tr>
-				<td
-					align="center"
-					style="
-						word-break: break-word;
-						font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-						font-size: 16px;
-					"
-				>
-					<table
-						class="email-content"
-						width="100%"
-						cellpadding="0"
-						cellspacing="0"
-						role="presentation"
-						style="
-							width: 100%;
-							-premailer-width: 100%;
-							-premailer-cellpadding: 0;
-							-premailer-cellspacing: 0;
-							margin: 0;
-							padding: 0;
-						"
-					>
-						<tr>
-							<td
-								class="email-masthead"
-								style="
-									word-break: break-word;
-									font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-									font-size: 16px;
-									text-align: center;
-									padding: 25px 0;
-								"
-								align="center"
-							>
-								<a
-									href="{{appDomain}}"
-									class="f-fallback email-masthead_name"
-									style="
-										color: #a8aaaf;
-										font-size: 16px;
-										font-weight: bold;
-										text-decoration: none;
-										text-shadow: 0 1px 0 white;
-									"
-								>
-									{{appName}}
-								</a>
-							</td>
-						</tr>
-						<!-- Email Body -->
-						<tr>
-							<td
-								class="email-body"
-								width="100%"
-								cellpadding="0"
-								cellspacing="0"
-								style="
-									word-break: break-word;
-									margin: 0;
-									padding: 0;
-									font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-									font-size: 16px;
-									width: 100%;
-									-premailer-width: 100%;
-									-premailer-cellpadding: 0;
-									-premailer-cellspacing: 0;
-									background-color: #ffffff;
-								"
-								bgcolor="#FFFFFF"
-							>
-								<table
-									class="email-body_inner"
-									align="center"
-									width="570"
-									cellpadding="0"
-									cellspacing="0"
-									role="presentation"
-									style="
-										width: 570px;
-										-premailer-width: 570px;
-										-premailer-cellpadding: 0;
-										-premailer-cellspacing: 0;
-										background-color: #ffffff;
-										margin: 0 auto;
-										padding: 0;
-									"
-									bgcolor="#FFFFFF"
-								>
-									<!-- Body content -->
-									<tr>
-										<td
-											class="content-cell"
-											style="
-												word-break: break-word;
-												font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-												font-size: 16px;
-												padding: 35px;
-											"
-										>
-											<div class="f-fallback">
-												<h1
-													style="
-														margin-top: 0;
-														color: #333333;
-														font-size: 22px;
-														font-weight: bold;
-														text-align: left;
-													"
-													align="left"
-												>
-													Hi {{username}},
-												</h1>
-												<p
-													style="
-														font-size: 16px;
-														line-height: 1.625;
-														color: #51545e;
-														margin: 0.4em 0 1.1875em;
-													"
-												>
-													You recently requested to reset your password for your
-													account. Use the button below to reset it.
-													<strong
-														>This password reset is only valid for the next 30
-														minutes.</strong
-													>
-												</p>
-												<!-- Action -->
-												<table
-													class="body-action"
-													align="center"
-													width="100%"
-													cellpadding="0"
-													cellspacing="0"
-													role="presentation"
-													style="
-														width: 100%;
-														-premailer-width: 100%;
-														-premailer-cellpadding: 0;
-														-premailer-cellspacing: 0;
-														text-align: center;
-														margin: 30px auto;
-														padding: 0;
-													"
-												>
-													<tr>
-														<td
-															align="center"
-															style="
-																word-break: break-word;
-																font-family: 'Nunito Sans', Helvetica, Arial,
-																	sans-serif;
-																font-size: 16px;
-															"
-														>
-															<!-- Border based button
-             https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
-															<table
-																width="100%"
-																border="0"
-																cellspacing="0"
-																cellpadding="0"
-																role="presentation"
-															>
-																<tr>
-																	<td
-																		align="center"
-																		style="
-																			word-break: break-word;
-																			font-family: 'Nunito Sans', Helvetica,
-																				Arial, sans-serif;
-																			font-size: 16px;
-																		"
-																	>
-																		<a
-																			href="{{buttonHREF}}"
-																			class="f-fallback button button--green"
-																			target="_blank"
-																			style="
-																				color: #fff;
-																				border-color: #22bc66;
-																				border-style: solid;
-																				border-width: 10px 18px;
-																				background-color: #22bc66;
-																				display: inline-block;
-																				text-decoration: none;
-																				border-radius: 3px;
-																				box-shadow: 0 2px 3px
-																					rgba(0, 0, 0, 0.16);
-																				-webkit-text-size-adjust: none;
-																				box-sizing: border-box;
-																			"
-																			>Reset your password</a
-																		>
-																	</td>
-																</tr>
-															</table>
-														</td>
-													</tr>
-												</table>
-												<p
-													style="
-														font-size: 16px;
-														line-height: 1.625;
-														color: #51545e;
-														margin: 0.4em 0 1.1875em;
-													"
-												>
-													If you did not request a password reset, please ignore
-													this email .
-												</p>
-												<p
-													style="
-														font-size: 16px;
-														line-height: 1.625;
-														color: #51545e;
-														margin: 0.4em 0 1.1875em;
-													"
-												>
-													Thanks, <br />The {{appName}} Team
-												</p>
-												<!-- Sub copy -->
-												<table
-													class="body-sub"
-													role="presentation"
-													style="
-														margin-top: 25px;
-														padding-top: 25px;
-														border-top-width: 1px;
-														border-top-color: #eaeaec;
-														border-top-style: solid;
-													"
-												>
-													<tr>
-														<td
-															style="
-																word-break: break-word;
-																font-family: 'Nunito Sans', Helvetica, Arial,
-																	sans-serif;
-																font-size: 16px;
-															"
-														>
-															<p
-																class="f-fallback sub"
-																style="
-																	font-size: 13px;
-																	line-height: 1.625;
-																	color: #6b6e76;
-																	margin: 0.4em 0 1.1875em;
-																"
-															>
-																If you’re having trouble with the button above,
-																copy and paste the URL below into your web
-																browser.
-															</p>
-															<p
-																class="f-fallback sub"
-																style="
-																	font-size: 13px;
-																	line-height: 1.625;
-																	color: #6b6e76;
-																	margin: 0.4em 0 1.1875em;
-																"
-															>
-																{{buttonHREF}}
-															</p>
-														</td>
-													</tr>
-												</table>
-											</div>
-										</td>
-									</tr>
-								</table>
-							</td>
-						</tr>
-						<tr>
-							<td
-								style="
-									word-break: break-word;
-									font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-									font-size: 16px;
-								"
-							>
-								<table
-									class="email-footer"
-									align="center"
-									width="570"
-									cellpadding="0"
-									cellspacing="0"
-									role="presentation"
-									style="
-										width: 570px;
-										-premailer-width: 570px;
-										-premailer-cellpadding: 0;
-										-premailer-cellspacing: 0;
-										text-align: center;
-										margin: 0 auto;
-										padding: 0;
-									"
-								>
-									<tr>
-										<td
-											class="content-cell"
-											align="center"
-											style="
-												word-break: break-word;
-												font-family: 'Nunito Sans', Helvetica, Arial, sans-serif;
-												font-size: 16px;
-												padding: 35px;
-											"
-										>
-											<p
-												class="f-fallback sub align-center"
-												style="
-													font-size: 13px;
-													line-height: 1.625;
-													text-align: center;
-													color: #6b6e76;
-													margin: 0.4em 0 1.1875em;
-												"
-												align="center"
-											>
-												© {{appName}}. All rights reserved.
-											</p>
-										</td>
-									</tr>
-								</table>
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-		</table>
+	<body>
+		<span class="preheader">Use this link to reset your password. For your account's security, this link will expire in 24 hours.</span>
+		<div class="email-wrapper">
+			<div class="email-content">
+				<div class="email-masthead">
+                    <a href="{{appDomain}}" class="email-masthead_name">
+                        {{appName}}
+                    </a>
+                </div>
+				<div class="email-body">
+					<div class="email-body_inner">
+						<h1>Reset Your Password</h1>
+						<p class="alert-message">
+							Hi {{username}}, we received a request to reset your password for your {{appName}} account. For your security, here are the details of this request:
+						</p>
+						<div class="reset-details">
+							<p class="detail-item">
+								<span class="detail-label">Time:</span> {{time}}
+							</p>
+							<p class="detail-item">
+								<span class="detail-label">Location:</span> {{location}}
+							</p>
+							<p class="detail-item">
+								<span class="detail-label">Device:</span> {{device}}
+							</p>
+							<p class="detail-item">
+								<span class="detail-label">Browser:</span> {{browser}}
+							</p>
+							<p class="detail-item">
+								<span class="detail-label">IP Address:</span> {{ipAddress}}
+							</p>
+						</div>
+						<p class="alert-message">
+							Click the button below to securely reset your password. This link will expire in 24 hours for security reasons.
+						</p>
+						<a href="{{resetLink}}" class="button" target="_blank">Reset Your Password</a>
+						<div class="security-notice">
+							<p>⚠️ If you did not request this password reset, please take immediate action:</p>
+							<p>1. Leave this link unused (it will expire in 24 hours)</p>
+							<p>2. Log in to your account and change your password</p>
+							<p>3. Contact our support team immediately</p>
+						</div>
+						<div class="help-text">
+							<p>For your security, this request was received from a {{device}} using {{browser}}. The reset link can only be used once and will lead you to a page where you can set a new password.</p>
+							<p>If you're having trouble with the button above, copy and paste this URL into your browser:</p>
+							<p style="word-break: break-all; font-size: 13px; color: #6b7280;">{{resetLink}}</p>
+							<p>Need help or have questions? Contact our support team at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>. We're here to help!</p>
+						</div>
+					</div>
+				</div>
+				<div class="email-footer">
+                    <p>&copy; {{new Date().getFullYear()}} {{appName}}. All rights reserved.</p>
+                </div>
+			</div>
+		</div>
 	</body>
-</html>
-`;
+</html>`;
+
 module.exports = { resetPasswordTemplate };

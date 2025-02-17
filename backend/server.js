@@ -1,19 +1,21 @@
 const fastify = require("fastify")({
-	logger: {
-		level: "info",
-		transport:
-			process.env.NODE_ENV === "development"
-				? {
-						target: "pino-pretty",
-						options: {
-							colorize: true,
-							translateTime: "SYS:standard",
-							ignore: "pid,hostname",
-						},
-				  }
-				: undefined,
-	},
+  logger: {
+    level: "info",
+    transport:
+      process.env.NODE_ENV === "development"
+        ? {
+            target: "pino-pretty",
+            options: {
+              colorize: true,
+              translateTime: "SYS:standard",
+              ignore: "pid,hostname",
+            },
+          }
+        : undefined,
+    stream: process.stdout,
+  },
 });
+
 const { configs, keywords } = require("./configs");
 const { connectDB } = require("./models/connectDB");
 const { getErrorHandler } = require("./plugins/errorHandler");
@@ -28,52 +30,52 @@ const fastifyCsrf = require("fastify-csrf");
 const fastifyCookie = require("fastify-cookie");
 
 // fastify-helmet adds various HTTP headers for security
-if (!configs.ENVIRONMENT === keywords.DEVELOPMENT_ENV) {
-	// https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
-	fastify.register(helmet, { contentSecurityPolicy: false });
+if (configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV) {
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
+  fastify.register(helmet, { contentSecurityPolicy: false });
 }
 
 if (configs.COOKIE_SECRET) {
-	fastify.register(fastifyCookie, {
-		secret: configs.COOKIE_SECRET, // For signing cookies
-	});
-	fastify.register(fastifyCsrf, {
-		cookieOpts: getRefreshTokenOptns(),
-	});
+  fastify.register(fastifyCookie, {
+    secret: configs.COOKIE_SECRET, // For signing cookies
+  });
+  fastify.register(fastifyCsrf, {
+    cookieOpts: getRefreshTokenOptns(),
+  });
 }
 
 // Enable swagger ui in development environment
 if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
-	fastify.register(require("fastify-swagger"), getSwaggerOptions());
+  fastify.register(require("fastify-swagger"), getSwaggerOptions());
 }
 
 // If cors is enabled then register CORS origin
 if (configs.ALLOW_CORS_ORIGIN) {
-	fastify.register(require("fastify-cors"), {
-		origin: configs.ALLOW_CORS_ORIGIN.split(","),
-		credentials: true,
-	});
+  fastify.register(require("fastify-cors"), {
+    origin: configs.ALLOW_CORS_ORIGIN.split(","),
+    credentials: true,
+  });
 }
 
 // Use real IP address if x-real-ip header is present
 fastify.addHook("onRequest", async (request, reply) => {
-	request.ipAddress =
-		request.headers["x-real-ip"] || // nginx
-		request.headers["x-client-ip"] || // apache
-		request.ip;
+  request.ipAddress =
+    request.headers["x-real-ip"] || // nginx
+    request.headers["x-client-ip"] || // apache
+    request.ip;
 });
 
 // Rate limits based on IP address
 fastify.register(require("fastify-rate-limit"), {
-	max: 100,
-	timeWindow: "1 minute",
-	keyGenerator: function (req) {
-		return (
-			req.headers["x-real-ip"] || // nginx
-			req.headers["x-client-ip"] || // apache
-			req.ip // fallback to default
-		);
-	},
+  max: 100,
+  timeWindow: "1 minute",
+  keyGenerator: function (req) {
+    return (
+      req.headers["x-real-ip"] || // nginx
+      req.headers["x-client-ip"] || // apache
+      req.ip // fallback to default
+    );
+  },
 });
 
 // Set error Handler
@@ -90,33 +92,33 @@ fastify.register(adminRoutes, { prefix: "api/v1/admin" });
 
 // Auth Service health check
 fastify.get("/", async (request, reply) => {
-	sendSuccessResponse(reply, {
-		statusCode: 200,
-		message: "Application is running",
-	});
+  sendSuccessResponse(reply, {
+    statusCode: 200,
+    message: "Application is running",
+  });
 });
 
 // Start the server
 const start = async () => {
-	try {
-		if (
-			configs.JWT_KEY &&
-			configs.MONGO_URI &&
-			configs.COOKIE_SECRET &&
-			configs.REFRESH_KEY
-		) {
-			// Connect to MongoDB Database
-			connectDB(fastify);
-			await fastify.listen(configs.PORT, configs.HOST);
-			if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
-				fastify.swagger();
-			}
-		} else {
-			fastify.log.error("Please configure the required environment variables");
-		}
-	} catch (err) {
-		fastify.log.error(err);
-		process.exit(1);
-	}
+  try {
+    if (
+      configs.JWT_KEY &&
+      configs.MONGO_URI &&
+      configs.COOKIE_SECRET &&
+      configs.REFRESH_KEY
+    ) {
+      // Connect to MongoDB Database
+      await connectDB(fastify);
+      await fastify.listen(configs.PORT, configs.HOST);
+      if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
+        fastify.swagger();
+      }
+    } else {
+      fastify.log.error("Please configure the required environment variables");
+    }
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
 };
 start();

@@ -1,6 +1,7 @@
 const nodemailer = require("nodemailer");
 const { configs } = require("../../configs");
 const mustache = require("mustache");
+const UAParser = require("ua-parser-js");
 const { newLoginEmailTemplate } = require("../emailTemplates/newLoginEmail");
 const {
 	passwordChangedTemplate,
@@ -49,6 +50,47 @@ const emailStatus = (success, message) => {
 
 const renderTemplate = (view, template) => {
 	return mustache.render(template, view);
+};
+
+// Helper function to parse user agent
+const parseUserAgent = (userAgent) => {
+	if (!userAgent) {
+		return {
+			browser: "Unknown Browser",
+			device: "Unknown Device"
+		};
+	}
+
+	const parser = new UAParser(userAgent);
+	const browserInfo = parser.getBrowser();
+	const osInfo = parser.getOS();
+	const deviceInfo = parser.getDevice();
+
+	const browser = browserInfo.name ? `${browserInfo.name}${browserInfo.version ? ` ${browserInfo.version}` : ''}` : "Unknown Browser";
+	const os = osInfo.name || "Unknown OS";
+	const deviceType = deviceInfo.type || "desktop";
+
+	// Format device info
+	let deviceString;
+	if (deviceType === "desktop") {
+		deviceString = `Desktop (${os})`;
+	} else if (deviceType === "mobile") {
+		deviceString = `Mobile (${os})`;
+	} else if (deviceType === "tablet") {
+		deviceString = `Tablet (${os})`;
+	} else {
+		deviceString = `${os} Device`;
+	}
+	
+	return {
+		browser,
+		device: deviceString
+	};
+};
+
+// Helper function to format IP address
+const formatIPAddress = (ip) => {
+	return ip === "::1" ? "127.0.0.1 (localhost)" : ip;
 };
 
 // Send Email confirmation mail to the user
@@ -103,6 +145,10 @@ const passwordResetEmailHelper = async (user, request, pwResetToken) => {
 		request.hostname
 	}/api/v1/auth/resetPassword?token=${pwResetToken}`;
 
+	const location = await getLocationFromIP(request.ipAddress);
+	const { browser, device } = parseUserAgent(request.headers["user-agent"]);
+	const currentYear = new Date().getFullYear();
+
 	return await sendEmail({
 		email: user.email,
 		subject: `Password Reset Request ${
@@ -111,9 +157,17 @@ const passwordResetEmailHelper = async (user, request, pwResetToken) => {
 		html: renderTemplate(
 			{
 				username: user.name,
-				buttonHREF: resetUrl,
+				resetLink: resetUrl,
 				appName: configs.APP_NAME,
 				appDomain: configs.APP_DOMAIN,
+				time: new Date().toLocaleString(),
+				location: location || "Unknown Location",
+				device: device,
+				ipAddress: formatIPAddress(request.ipAddress),
+				browser: browser,
+				supportEmail: configs.SUPPORT_EMAIL || configs.FROM_EMAIL,
+				appAddress: configs.APP_ADDRESS || configs.APP_DOMAIN,
+				currentYear
 			},
 			resetPasswordTemplate
 		),
@@ -122,6 +176,10 @@ const passwordResetEmailHelper = async (user, request, pwResetToken) => {
 
 // Send password changed email to the user
 const passwordChangedEmailAlert = async (user, request) => {
+	const reportUrl = `${configs.APP_DOMAIN}/security/report`;
+	const location = await getLocationFromIP(request.ipAddress);
+	const { browser, device } = parseUserAgent(request.headers["user-agent"]);
+	
 	return await sendEmail({
 		email: user.email,
 		subject: "Security Alert",
@@ -129,9 +187,14 @@ const passwordChangedEmailAlert = async (user, request) => {
 			{
 				username: user.name,
 				appName: configs.APP_NAME,
-				appDomain: configs.appDomain,
-				ip: request.ipAddress,
-				ua: request.headers["user-agent"],
+				appDomain: configs.APP_DOMAIN,
+				time: new Date().toLocaleString(),
+				location: location || "Unknown Location",
+				device: device,
+				ipAddress: formatIPAddress(request.ipAddress),
+				reportUrl: reportUrl,
+				browser: browser,
+				supportEmail: configs.SUPPORT_EMAIL || configs.FROM_EMAIL,
 			},
 			passwordChangedTemplate
 		),
@@ -142,6 +205,7 @@ const sendNewLoginEmail = async (user, request) => {
 	if (configs.SEND_NEW_LOGIN_EMAIL) {
 		const reportUrl = `${configs.APP_DOMAIN}/security/report`;
 		const location = await getLocationFromIP(request.ipAddress);
+		const { browser, device } = parseUserAgent(request.headers["user-agent"]);
 		
 		return await sendEmail({
 			email: user.email,
@@ -153,13 +217,12 @@ const sendNewLoginEmail = async (user, request) => {
 					username: user.name,
 					appName: configs.APP_NAME,
 					appDomain: configs.APP_DOMAIN,
-					ip: request.ipAddress,
-					ua: request.headers["user-agent"],
 					time: new Date().toLocaleString(),
-					ipAddress: request.ipAddress,
-					location: location,
-					device: request.headers["user-agent"],
-					buttonHREF: reportUrl
+					ipAddress: formatIPAddress(request.ipAddress),
+					location: location || "Unknown Location",
+					device: device,
+					browser: browser,
+					buttonHREF: reportUrl,
 				},
 				newLoginEmailTemplate
 			),

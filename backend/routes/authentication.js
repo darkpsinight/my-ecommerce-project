@@ -15,6 +15,7 @@ const {
 	deleteAccount,
 	requestLoginWithEmail,
 	loginWithEmail,
+	reactivateAccount,
 } = require("../handlers/authenticationHandler");
 const { verifyAuth } = require("../plugins/authVerify");
 const {
@@ -177,6 +178,15 @@ const authenticationRoutes = async (fastify, opts) => {
 		],
 		schema: authenticationSchema.deleteAccount,
 		handler: deleteAccount,
+	});
+
+	// Route to reactivate a deactivated account
+	fastify.route({
+		method: "POST",
+		url: "/reactivate",
+		schema: authenticationSchema.reactivateAccount,
+		preHandler: [recaptchaVerification],
+		handler: reactivateAccount,
 	});
 
 	// Route to get new JWT & refresh token

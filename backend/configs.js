@@ -27,6 +27,18 @@ const configs = {
 	FROM_NAME: process.env.FROM_NAME,
 	FROM_EMAIL: process.env.FROM_EMAIL,
 	DISABLE_MAIL: process.env.DISABLE_MAIL === "1" ? true : false,
+	ACCOUNT_DELETION_DELAY_DAYS: Number(process.env.ACCOUNT_DELETION_DELAY_DAYS) || 10,
+	ACCOUNT_DELETION_DELAY_ONE_MINUTE: Number(process.env.ACCOUNT_DELETION_DELAY_ONE_MINUTE) || 0,
+	ACCOUNT_DELETION_CRON: process.env.ACCOUNT_DELETION_CRON || "0 0 * * *",
+
+	get ACCOUNT_DELETION_DELAY() {
+		// If minutes are specified, use that for testing
+		if (this.ACCOUNT_DELETION_DELAY_ONE_MINUTE > 0) {
+			return this.ACCOUNT_DELETION_DELAY_ONE_MINUTE * 60 * 1000;
+		}
+		// Otherwise use days
+		return this.ACCOUNT_DELETION_DELAY_DAYS * 24 * 60 * 60 * 1000;
+	},
 
 	RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
 	RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
@@ -42,16 +54,17 @@ const configs = {
 	APP_CONFIRM_EMAIL_REDIRECT: process.env.APP_CONFIRM_EMAIL_REDIRECT,
 	APP_RESET_PASSWORD_REDIRECT: process.env.APP_RESET_PASSWORD_REDIRECT,
 	APP_LOGIN_WTH_EMAIL_REDIRECT: process.env.APP_LOGIN_WTH_EMAIL_REDIRECT,
+	APP_REACTIVATE_ACCOUNT_URL: process.env.APP_REACTIVATE_ACCOUNT_URL,
 
 	APP_DETAILS_CONFIGURED:
 		process.env.APP_NAME &&
 		process.env.APP_DOMAIN &&
 		process.env.APP_CONFIRM_EMAIL_REDIRECT &&
-		process.env.APP_RESET_PASSWORD_REDIRECT
+		process.env.APP_RESET_PASSWORD_REDIRECT &&
+		process.env.APP_REACTIVATE_ACCOUNT_URL
 			? true
 			: false,
 
-	// IP Geolocation
 	IPGEOLOCATION_API_KEY: process.env.IPGEOLOCATION_API_KEY,
 
 	// Internal Oauth2 provider configs

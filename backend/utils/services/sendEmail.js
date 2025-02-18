@@ -2,6 +2,7 @@ const nodemailer = require("nodemailer");
 const { configs } = require("../../configs");
 const mustache = require("mustache");
 const UAParser = require("ua-parser-js");
+const { getLocationFromIP } = require("./ipGeolocation");
 const { newLoginEmailTemplate } = require("../emailTemplates/newLoginEmail");
 const {
 	passwordChangedTemplate,
@@ -9,7 +10,7 @@ const {
 const { confirmEmailTemplate } = require("../emailTemplates/confirmEmail");
 const { resetPasswordTemplate } = require("../emailTemplates/resetPassword");
 const { loginWithEmailTemplate }= require("../emailTemplates/loginWithEmail");
-const { getLocationFromIP } = require("./ipGeolocation");
+const { accountDeactivatedTemplate } = require("../emailTemplates/accountDeactivated");
 
 const sendEmail = async (options) => {
 	if (configs.DISABLE_MAIL) {
@@ -249,6 +250,32 @@ const sendNewLoginEmail = async (user, request) => {
 	return emailStatus(false, "New login email is disabled");
 };
 
+const accountDeactivationEmailHelper = async (user, deletionDate) => {
+	const currentYear = new Date().getFullYear();
+	const deactivationDate = new Date().toLocaleString();
+
+	// Use the configured frontend URL for reactivation
+	const reactivationUrl = configs.APP_REACTIVATE_ACCOUNT_URL || 
+		`${configs.APP_DOMAIN}/account/reactivate`;
+
+	return await sendEmail({
+		email: user.email,
+		subject: `Account Deactivation Notice - ${configs.APP_NAME || ""}`,
+		html: renderTemplate(
+			{
+				username: user.name,
+				appName: configs.APP_NAME,
+				deactivationDate,
+				deletionDate: deletionDate.toLocaleString(),
+				deletionDelayDays: configs.ACCOUNT_DELETION_DELAY_DAYS,
+				currentYear,
+				buttonHREF: reactivationUrl
+			},
+			accountDeactivatedTemplate
+		),
+	});
+};
+
 module.exports = {
 	sendEmail,
 	renderTemplate,
@@ -257,4 +284,5 @@ module.exports = {
 	passwordChangedEmailAlert,
 	sendNewLoginEmail,
 	loginWithEmailHelper,
+	accountDeactivationEmailHelper,
 };

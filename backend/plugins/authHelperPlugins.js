@@ -11,7 +11,7 @@ const checkDeactivated = async (request, reply) => {
 	request.log.info("Checking if the user account is deactivated");
 	const user = request.user || request.userModel;
 	if (user.isDeactivated) {
-		return sendErrorResponse(reply, 400, "User account is deactivated");
+		return sendErrorResponse(reply, 400, "User account is deactivated, please reactivate your account by clicking on the link sent to your email address");
 	}
 };
 

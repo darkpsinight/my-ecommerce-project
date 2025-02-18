@@ -327,6 +327,27 @@ const authenticationSchema = {
 			429: errors[429],
 		},
 	},
+	reactivateAccount: {
+		description: "Reactivate a deactivated account within the grace period",
+		tags: ["User"],
+		body: {
+			type: "object",
+			properties: {
+				email: { type: "string", format: "email", example: "user@example.com" },
+				password: { type: "string", example: "asdhfgjkfhey%&6da" },
+			},
+			required: ["email", "password"],
+		},
+		response: {
+			200: getSuccessObject(200, true, "Account successfully reactivated", {
+				token: { type: "string" },
+				verifyToken: { type: "string" }
+			}),
+			400: errors[400],
+			500: errors[500],
+			429: errors[429],
+		},
+	},
 	refreshJWTToken: {
 		description:
 			"Get new JWT token from refresh token in the cookie. Sets new Refresh token in the cookie.\

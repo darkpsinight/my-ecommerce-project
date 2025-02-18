@@ -6,6 +6,8 @@ const {
 	sendNewLoginEmail,
 	passwordResetEmailHelper,
 	loginWithEmailHelper,
+	accountDeactivationEmailHelper,
+	sendEmail,
 } = require("../utils/services/sendEmail");
 const {
 	RefreshToken,
@@ -415,36 +417,198 @@ const getAccount = async (request, reply) => {
 // @desc 	Route used to DELETE user account
 // @access	Private(requires JWT token in header)
 const deleteAccount = async (request, reply) => {
-	request.log.info("handlers/deleteAccount");
-
-	const user = request.userModel;
-	const { password } = request.body;
-	const checkPassword = await user.matchPasswd(password);
-
-	if (!checkPassword) {
-		return sendErrorResponse(
-			reply,
-			400,
-			"We could not delete your account.Your entered the wrong password"
-		);
-	}
-
-	// Log out of all devices
-	await revokeAllRfTokenByUser(user, request.ipAddress);
-
-	// Account is deactivated here, after 10 days
-	// the accounts which are deactivated will be deleted
-	// by the cron job
-	user.isDeactivated = true;
-	user.deactivatedAt = Date.now();
-
-	user.save();
-
-	return sendSuccessResponse(reply, {
-		statusCode: 200,
-		message:
-			"Account deactivated. Your account will be deleted from the database after 10 days",
+	request.log.info({
+		msg: "handlers/deleteAccount",
+		uid: request.userModel.uid,
+		email: request.userModel.email
 	});
+
+	try {
+		const user = request.userModel;
+		const { password } = request.body;
+
+		// Verify password
+		const checkPassword = await user.matchPasswd(password);
+		if (!checkPassword) {
+			request.log.warn({
+				msg: "Failed account deletion attempt - Invalid password",
+				uid: user.uid,
+				email: user.email
+			});
+			return sendErrorResponse(
+				reply,
+				400,
+				"We could not delete your account. You entered the wrong password"
+			);
+		}
+
+		// Log out of all devices first
+		request.log.info({
+			msg: "Revoking all refresh tokens before account deactivation",
+			uid: user.uid
+		});
+		await revokeAllRfTokenByUser(user, request.ipAddress);
+
+		// Calculate deletion date based on configured delay
+		const deactivationTime = Date.now();
+		const deletionDate = new Date(deactivationTime + configs.ACCOUNT_DELETION_DELAY);
+
+		// Deactivate account
+		user.isDeactivated = true;
+		user.deactivatedAt = deactivationTime;
+
+		await user.save();
+
+		// Log the deactivation details
+		request.log.info({
+			msg: "Account deactivated successfully",
+			uid: user.uid,
+			email: user.email,
+			deactivatedAt: new Date(deactivationTime).toISOString(),
+			scheduledDeletionDate: deletionDate.toISOString(),
+			deletionDelay: configs.ACCOUNT_DELETION_DELAY_ONE_MINUTE > 0 
+				? `${configs.ACCOUNT_DELETION_DELAY_ONE_MINUTE} minutes`
+				: `${configs.ACCOUNT_DELETION_DELAY_DAYS} days`
+		});
+
+		// Send email notification about account deactivation
+		const emailStatus = await accountDeactivationEmailHelper(user, deletionDate);
+		
+		if (!emailStatus.success) {
+			request.log.warn({
+				msg: "Failed to send deactivation email",
+				uid: user.uid,
+				email: user.email,
+				emailError: emailStatus.message
+			});
+		}
+
+		const deletionTimeframe = configs.ACCOUNT_DELETION_DELAY_ONE_MINUTE > 0 
+			? `${configs.ACCOUNT_DELETION_DELAY_ONE_MINUTE} minutes`
+			: `${configs.ACCOUNT_DELETION_DELAY_DAYS} days`;
+
+		return sendSuccessResponse(reply, {
+			statusCode: 200,
+			message: `Account deactivated. Your account will be deleted from the database after ${deletionTimeframe}`,
+			details: {
+				deactivatedAt: user.deactivatedAt,
+				scheduledDeletionDate: deletionDate,
+				deletionDelay: deletionTimeframe,
+				canReactivate: true,
+				emailSuccess: emailStatus.success,
+				emailMessage: emailStatus.message
+			}
+		});
+	} catch (error) {
+		request.log.error({
+			msg: "Error during account deactivation",
+			error: error.message,
+			stack: error.stack,
+			uid: request.userModel?.uid,
+			email: request.userModel?.email
+		});
+		return sendErrorResponse(reply, 500, "An error occurred while deactivating your account");
+	}
+};
+
+
+// @route   POST /api/v1/auth/reactivate
+// @desc    Reactivate a deactivated account within the grace period
+// @access  Public
+const reactivateAccount = async (request, reply) => {
+	request.log.info("handlers/reactivateAccount");
+
+	try {
+		const { email, password } = request.body;
+
+		// Find the deactivated user
+		const user = await User.findOne({ email }).select('+password');
+		
+		if (!user) {
+			request.log.warn({
+				msg: "Reactivation attempt for non-existent account",
+				email
+			});
+			return sendErrorResponse(reply, 400, "Invalid credentials");
+		}
+
+		// Check if account is actually deactivated
+		if (!user.isDeactivated) {
+			request.log.warn({
+				msg: "Reactivation attempt for active account",
+				email,
+				uid: user.uid
+			});
+			return sendErrorResponse(reply, 400, "Account is not deactivated");
+		}
+
+		// Verify password
+		const isValidPassword = await user.matchPasswd(password);
+		if (!isValidPassword) {
+			request.log.warn({
+				msg: "Failed reactivation attempt - Invalid password",
+				email,
+				uid: user.uid
+			});
+			return sendErrorResponse(reply, 400, "Invalid credentials");
+		}
+
+		// Check if within grace period
+		const gracePeriod = configs.ACCOUNT_DELETION_DELAY;
+		const now = Date.now();
+		const deactivationTime = user.deactivatedAt.getTime();
+		
+		if (now - deactivationTime >= gracePeriod) {
+			request.log.warn({
+				msg: "Reactivation attempt after grace period",
+				email,
+				uid: user.uid,
+				deactivatedAt: user.deactivatedAt,
+				gracePeriodDays: configs.ACCOUNT_DELETION_DELAY_DAYS
+			});
+			return sendErrorResponse(
+				reply, 
+				400, 
+				`Account cannot be reactivated. The ${configs.ACCOUNT_DELETION_DELAY_DAYS}-day grace period has expired.`
+			);
+		}
+
+		// Reactivate the account
+		user.isDeactivated = false;
+		user.deactivatedAt = undefined;
+		await user.save();
+
+		request.log.info({
+			msg: "Account successfully reactivated",
+			email,
+			uid: user.uid
+		});
+
+		// Generate new tokens
+		const refreshToken = await getRefreshToken(user, request.ipAddress);
+		const verifyToken = await reply.generateCsrf();
+
+		return sendSuccessResponse(
+			reply,
+			{
+				statusCode: 200,
+				message: "Account successfully reactivated",
+				token: user.getJWT(),
+				verifyToken
+			},
+			{
+				refreshToken
+			}
+		);
+
+	} catch (error) {
+		request.log.error({
+			msg: "Error during account reactivation",
+			error: error.message,
+			stack: error.stack
+		});
+		return sendErrorResponse(reply, 500, "An error occurred while reactivating your account");
+	}
 };
 
 // @route 	POST /api/v1/auth/refresh
@@ -570,4 +734,5 @@ module.exports = {
 	deleteAccount,
 	requestLoginWithEmail,
 	loginWithEmail,
+	reactivateAccount,
 };

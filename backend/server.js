@@ -28,6 +28,7 @@ const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
 const fastifyCsrf = require("fastify-csrf");
 const fastifyCookie = require("fastify-cookie");
+const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
 
 // fastify-helmet adds various HTTP headers for security
 if (configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV) {
@@ -110,6 +111,10 @@ const start = async () => {
       // Connect to MongoDB Database
       await connectDB(fastify);
       await fastify.listen(configs.PORT, configs.HOST);
+      
+      // Setup cron jobs
+      setupAccountDeletionCron(fastify);
+      
       if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
         fastify.swagger();
       }

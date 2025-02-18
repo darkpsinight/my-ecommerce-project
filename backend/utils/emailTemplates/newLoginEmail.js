@@ -244,7 +244,10 @@ const newLoginEmailTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Tran
                     <div class="email-body_inner">
                         <h1>New Login Detected</h1>
                         <p class="alert-message">
-                            Hi {{username}}, we detected a new login to your account. Here are the details of this login:
+                            Hi {{username}},
+                        </p>
+                        <p class="alert-message">
+                            we detected a new login to your account. Here are the details of this login:
                         </p>
                         <div class="login-details">
                             <p class="detail-item">

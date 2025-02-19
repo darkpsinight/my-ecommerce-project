@@ -31,6 +31,35 @@ const { tokenCheck } = require("../plugins/tokenCheck");
 const { authenticationSchema } = require("./schemas/authSchema");
 const { configs } = require("../configs");
 const { verifyRefresh } = require("../plugins/refreshVerify");
+const { rateLimiter } = require("../plugins/rateLimiter");
+
+// Rate limit configurations using environment variables
+const rateLimits = {
+	auth: {
+		windowMs: parseInt(configs.RATE_LIMIT_AUTH_WINDOW_MS),
+		max: parseInt(configs.RATE_LIMIT_AUTH_MAX_REQUESTS)
+	},
+	sensitive: {
+		windowMs: parseInt(configs.RATE_LIMIT_SENSITIVE_WINDOW_MS),
+		max: parseInt(configs.RATE_LIMIT_SENSITIVE_MAX_REQUESTS)
+	},
+	email: {
+		windowMs: parseInt(configs.RATE_LIMIT_EMAIL_WINDOW_MS),
+		max: parseInt(configs.RATE_LIMIT_EMAIL_MAX_REQUESTS)
+	},
+	standardRead: {
+		windowMs: parseInt(configs.RATE_LIMIT_STANDARD_READ_WINDOW_MS),
+		max: parseInt(configs.RATE_LIMIT_STANDARD_READ_MAX_REQUESTS)
+	},
+	standardWrite: {
+		windowMs: parseInt(configs.RATE_LIMIT_STANDARD_WRITE_WINDOW_MS),
+		max: parseInt(configs.RATE_LIMIT_STANDARD_WRITE_MAX_REQUESTS)
+	},
+	passwordReset: {
+		windowMs: parseInt(configs.RATE_LIMIT_PASSWORD_RESET_WINDOW_MS),
+		max: parseInt(configs.RATE_LIMIT_PASSWORD_RESET_MAX_REQUESTS)
+	}
+};
 
 const authenticationRoutes = async (fastify, opts) => {
 	if (!configs.DISABLE_EMAIL_LOGIN) {
@@ -39,7 +68,10 @@ const authenticationRoutes = async (fastify, opts) => {
 			method: "POST",
 			url: "/signup",
 			schema: authenticationSchema.signup,
-			preHandler: [recaptchaVerification],
+			preHandler: [
+				rateLimiter(rateLimits.auth),
+				recaptchaVerification
+			],
 			handler: registerUser,
 		});
 
@@ -47,6 +79,7 @@ const authenticationRoutes = async (fastify, opts) => {
 			method: "POST",
 			url: "/signin",
 			preHandler: [
+				rateLimiter(rateLimits.auth),
 				recaptchaVerification,
 				attachUserWithPassword(true),
 				checkDeactivated,
@@ -59,8 +92,11 @@ const authenticationRoutes = async (fastify, opts) => {
 		// Route to check reset password token and redirect to frontend
 		fastify.route({
 			method: "GET",
-			url: "/resetPassword",
-			preHandler: [tokenCheck("password", true)],
+			url: "/reset-password",
+			preHandler: [
+				rateLimiter(rateLimits.standardRead),
+				tokenCheck("password", true)
+			],
 			schema: authenticationSchema.resetPasswordGet,
 			handler: resetPasswordTokenRedirect,
 		});
@@ -68,9 +104,10 @@ const authenticationRoutes = async (fastify, opts) => {
 		// Request for reset password token
 		fastify.route({
 			method: "POST",
-			url: "/resetPassword",
+			url: "/reset-password",
 			schema: authenticationSchema.resetPasswordPost,
 			preHandler: [
+				rateLimiter(rateLimits.passwordReset),  // Use the new password reset specific rate limit
 				recaptchaVerification,
 				checkMailingDisabled,
 				attachUser(true),
@@ -82,9 +119,13 @@ const authenticationRoutes = async (fastify, opts) => {
 		// Route to reset password from token
 		fastify.route({
 			method: "PUT",
-			url: "/resetPassword",
+			url: "/reset-password",
 			schema: authenticationSchema.resetPasswordPut,
-			preHandler: [tokenCheck("password"), checkPasswordLength],
+			preHandler: [
+				rateLimiter(rateLimits.sensitive),
+				tokenCheck("password"),
+				checkPasswordLength
+			],
 			handler: resetPasswordFromToken,
 		});
 
@@ -93,6 +134,7 @@ const authenticationRoutes = async (fastify, opts) => {
 			method: "PUT",
 			url: "/updatePassword",
 			preHandler: [
+				rateLimiter(rateLimits.sensitive),
 				verifyAuth(["admin", "user"]),
 				checkDeactivated,
 				checkEmailConfirmed,
@@ -108,7 +150,10 @@ const authenticationRoutes = async (fastify, opts) => {
 	fastify.route({
 		method: "GET",
 		url: "/confirmEmail",
-		preHandler: tokenCheck("confirmEmail", true),
+		preHandler: [
+			rateLimiter(rateLimits.standardRead),
+			tokenCheck("confirmEmail", true)
+		],
 		schema: authenticationSchema.confirmEmailGet,
 		handler: confirmEmailTokenRedirect,
 	});
@@ -119,6 +164,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		url: "/confirmEmail",
 		schema: authenticationSchema.confirmEmailPost,
 		preHandler: [
+			rateLimiter(rateLimits.email),
 			recaptchaVerification,
 			checkMailingDisabled,
 			attachUser(true),
@@ -131,14 +177,21 @@ const authenticationRoutes = async (fastify, opts) => {
 		method: "POST",
 		url: "/emailLogin",
 		schema: authenticationSchema.loginWithEmailPost,
-		preHandler: [recaptchaVerification, checkMailingDisabled],
+		preHandler: [
+			rateLimiter(rateLimits.email),
+			recaptchaVerification,
+			checkMailingDisabled
+		],
 		handler: requestLoginWithEmail,
 	});
 
 	fastify.route({
 		method: "GET",
 		url: "/emailLogin",
-		preHandler: tokenCheck("loginWithEmail", true),
+		preHandler: [
+			rateLimiter(rateLimits.standardRead),
+			tokenCheck("loginWithEmail", true)
+		],
 		schema: authenticationSchema.loginWithEmailGet,
 		handler: loginWithEmail,
 	});
@@ -147,7 +200,10 @@ const authenticationRoutes = async (fastify, opts) => {
 	fastify.route({
 		method: "PUT",
 		url: "/confirmEmail",
-		preHandler: tokenCheck("confirmEmail"),
+		preHandler: [
+			rateLimiter(rateLimits.standardWrite),
+			tokenCheck("confirmEmail")
+		],
 		schema: authenticationSchema.confirmEmailPut,
 		handler: confirmEmail,
 	});
@@ -157,6 +213,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		method: "GET",
 		url: "/account",
 		preHandler: [
+			rateLimiter(rateLimits.standardRead),
 			verifyAuth(["admin", "user"]),
 			attachUser(false),
 			checkEmailConfirmed,
@@ -171,6 +228,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		method: "DELETE",
 		url: "/account",
 		preHandler: [
+			rateLimiter(rateLimits.sensitive),
 			verifyAuth(["admin", "user"]),
 			checkDeactivated,
 			checkEmailConfirmed,
@@ -185,7 +243,10 @@ const authenticationRoutes = async (fastify, opts) => {
 		method: "POST",
 		url: "/reactivate",
 		schema: authenticationSchema.reactivateAccount,
-		preHandler: [recaptchaVerification],
+		preHandler: [
+			rateLimiter(rateLimits.sensitive),
+			recaptchaVerification
+		],
 		handler: reactivateAccount,
 	});
 
@@ -195,7 +256,10 @@ const authenticationRoutes = async (fastify, opts) => {
 		url: "/refresh",
 		schema: authenticationSchema.refreshJWTToken,
 		preValidation: fastify.csrfProtection,
-		preHandler: verifyRefresh,
+		preHandler: [
+			rateLimiter(rateLimits.auth),
+			verifyRefresh
+		],
 		handler: getJWTFromRefresh,
 	});
 
@@ -205,6 +269,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		schema: authenticationSchema.revokeRefreshToken,
 		preValidation: fastify.csrfProtection,
 		preHandler: [
+			rateLimiter(rateLimits.sensitive),
 			verifyAuth(["admin", "user"]),
 			checkDeactivated,
 			verifyRefresh,
@@ -218,6 +283,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		url: "/revokeAll",
 		schema: authenticationSchema.revokeAll,
 		preHandler: [
+			rateLimiter(rateLimits.sensitive),
 			verifyAuth(["admin", "user"]),
 			checkDeactivated,
 			attachUser(false),

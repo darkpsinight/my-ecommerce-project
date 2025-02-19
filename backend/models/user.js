@@ -108,8 +108,8 @@ userSchema.methods.getPwResetToken = function () {
 		.update(resetToken)
 		.digest("hex");
 
-	// Set token expiration to 30 mins from now
-	this.pwResetExpire = Date.now() + 30 * 60 * 1000;
+	// Set token expiration using config value
+	this.pwResetExpire = Date.now() + configs.PASSWORD_RESET_TOKEN_EXPIRATION;
 
 	return resetToken;
 };
@@ -130,8 +130,8 @@ userSchema.methods.getEmailConfirmationToken = function () {
 		.update(confirmationToken)
 		.digest("hex");
 
-	// Set token expiration to 1 hour from now
-	this.confirmEmailTokenExpire = Date.now() + 60 * 60 * 1000;
+	// Set token expiration using config value
+	this.confirmEmailTokenExpire = Date.now() + configs.EMAIL_CONFIRMATION_TOKEN_EXPIRATION;
 
 	return confirmationToken;
 };
@@ -145,8 +145,8 @@ userSchema.methods.getLoginEmailToken = function () {
 		.update(loginWithEmailToken)
 		.digest("hex");
 
-	// Set token expiration to 10 minutes from now
-	this.loginWithEmailTokenExpire = Date.now() + 10 * 60 * 1000;
+	// Set token expiration using config value
+	this.loginWithEmailTokenExpire = Date.now() + configs.LOGIN_EMAIL_TOKEN_EXPIRATION;
 
 	return loginWithEmailToken;
 };

@@ -40,7 +40,15 @@ const registerUser = async (request, reply) => {
 	});
 
 	if (userExists) {
-		return sendErrorResponse(reply, 400, "Duplicate field value entered");
+		return sendErrorResponse(reply, 409, "Account creation failed", {
+			metadata: {
+				hint: "If you already have an account, try signing in or resetting your password",
+				links: {
+					login: "/api/v1/auth/signin",
+					passwordReset: "/api/v1/auth/forgot-password"
+				}
+			}
+		});
 	}
 
 	password = await hashPasswd(password);
@@ -274,7 +282,7 @@ const requestConfirmationEmail = async (request, reply) => {
 	});
 };
 
-// @route 	 POST /api/v1/auth/resetPassword
+// @route 	 POST /api/v1/auth/reset-password
 // @desc	 Request to send reset password email
 // @access	 Public
 const requestResetPasswordToken = async (request, reply) => {
@@ -286,7 +294,16 @@ const requestResetPasswordToken = async (request, reply) => {
 		return sendErrorResponse(
 			reply,
 			400,
-			"Please check your email, try again later"
+			`A password reset email was recently sent. Please wait ${configs.PASSWORD_RESET_TOKEN_EXPIRATION / (60 * 1000)} minutes before requesting another one.`,
+			{
+				metadata: {
+					hint: "Check your spam/promotions folder if you haven't received the email",
+					links: {
+						login: "/api/v1/auth/signin",
+						support: "/api/v1/support"
+					}
+				}
+			}
 		);
 	}
 	const pwResetToken = user.getPwResetToken();
@@ -310,7 +327,7 @@ const requestResetPasswordToken = async (request, reply) => {
 	});
 };
 
-// @route 	GET /api/v1/auth/resetPassword
+// @route 	GET /api/v1/auth/reset-password
 // @desc  	This is executed when user clicks the link sent via email
 //		  	verifies the token and redirects to frontend
 // @access 	Public
@@ -322,7 +339,7 @@ const resetPasswordTokenRedirect = async (request, reply) => {
 	});
 };
 
-// @route 	PUT /api/v1/auth/resetPassword
+// @route 	PUT /api/v1/auth/reset-password
 // @desc 	Reset password from token (requested from frontend)
 // @access	Public
 const resetPasswordFromToken = async (request, reply) => {

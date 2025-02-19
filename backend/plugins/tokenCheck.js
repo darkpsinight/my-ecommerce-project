@@ -82,7 +82,7 @@ const tokenCheck = (type, shouldRedirect) => {
 		}
 
 		if (check) {
-			return sendErrorResponse(reply, 400, "Link expired", { redirectURL });
+			return sendErrorResponse(reply, 400, "This link has expired. Please request a new one.", { redirectURL });
 		}
 
 		request.userModel = user;

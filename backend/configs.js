@@ -1,5 +1,13 @@
 require("dotenv").config();
+const { Config } = require("./models/config");
+const { configCache } = require("./services/configCache");
 
+const keywords = {
+	DEVELOPMENT_ENV: "development",
+	PRODUCTION_ENV: "production",
+};
+
+// Initial config object from environment variables
 const configs = {
 	MONGO_URI: process.env.MONGO_URI,
 	ENVIRONMENT: process.env.ENVIRONMENT || keywords.DEVELOPMENT_ENV,
@@ -121,34 +129,84 @@ const configs = {
 	LOGIN_EMAIL_TOKEN_EXPIRATION: (parseInt(process.env.LOGIN_EMAIL_TOKEN_EXPIRATION) || 10) * 60 * 1000,
 };
 
-if (
-	configs.SMTP_HOST &&
-	configs.SMTP_PORT &&
-	configs.SMTP_EMAIL &&
-	configs.SMTP_PASSWORD &&
-	configs.FROM_EMAIL &&
-	configs.FROM_NAME
-) {
-	configs.IS_SMTP_CONFIGURED = true;
-}
-
-if (configs.HTTP_PROTOCOL) {
-	configs.HTTP_PROTOCOL = configs.HTTP_PROTOCOL.toLowerCase();
-	if (!["http", "https"].includes(configs.HTTP_PROTOCOL)) {
-		configs.HTTP_PROTOCOL = false;
+// Helper function to convert value based on type
+const convertValue = (value, type) => {
+	switch (type) {
+		case "boolean":
+			return value === "true" || value === "1" || value === true;
+		case "number":
+			return Number(value);
+		case "array":
+			return Array.isArray(value) ? value : JSON.parse(value);
+		case "object":
+			return typeof value === "object" ? value : JSON.parse(value);
+		default:
+			return value;
 	}
-}
+};
 
-const keywords = {
-	DEVELOPMENT_ENV: "development",
-	PRODUCTION_ENV: "production",
+// Function to load configs from database
+const loadConfigsFromDB = async (fastify) => {
+	try {
+		// Initialize the config cache
+		await configCache.initialize(fastify);
+		
+		// Get all configs from cache
+		const cachedConfigs = configCache.getAll();
+		
+		// Override environment configs with cached configs
+		Object.entries(cachedConfigs).forEach(([key, config]) => {
+			const originalValue = configs[key];
+			const valueType = typeof originalValue;
+			configs[key] = convertValue(config.value, valueType);
+		});
+
+		// Update SMTP configuration status
+		if (
+			configs.SMTP_HOST &&
+			configs.SMTP_PORT &&
+			configs.SMTP_EMAIL &&
+			configs.SMTP_PASSWORD &&
+			configs.FROM_EMAIL &&
+			configs.FROM_NAME
+		) {
+			configs.IS_SMTP_CONFIGURED = true;
+		}
+
+		// Update HTTP protocol
+		if (configs.HTTP_PROTOCOL) {
+			configs.HTTP_PROTOCOL = configs.HTTP_PROTOCOL.toLowerCase();
+			if (!["http", "https"].includes(configs.HTTP_PROTOCOL)) {
+				configs.HTTP_PROTOCOL = false;
+			}
+		}
+
+		// Update app details configuration status
+		configs.APP_DETAILS_CONFIGURED =
+			configs.APP_NAME &&
+			configs.APP_DOMAIN &&
+			configs.APP_CONFIRM_EMAIL_REDIRECT &&
+			configs.APP_RESET_PASSWORD_REDIRECT &&
+			configs.APP_REACTIVATE_ACCOUNT_URL
+				? true
+				: false;
+
+		fastify.log.info("Configurations loaded from database successfully");
+	} catch (error) {
+		fastify.log.error({
+			msg: "Error loading configs from database",
+			error: error.message
+		});
+		throw error;
+	}
 };
 
 // To send in root Route
-checkConfigs = {
+const checkConfigs = {
 	isSMTPconfigured: configs.IS_SMTP_CONFIGURED,
 	isOauthProviderConfigured: {
 		github: configs.GITHUB_CONFIGS.CONFIGURED,
+		google: configs.GOOGLE_CONFIGS.CONFIGURED,
 	},
 	isAppDetailsConfigured: configs.APP_DETAILS_CONFIGURED,
 	environment: configs.ENVIRONMENT,
@@ -159,4 +217,5 @@ module.exports = {
 	configs,
 	checkConfigs,
 	keywords,
+	loadConfigsFromDB,
 };

@@ -45,7 +45,7 @@ const registerUser = async (request, reply) => {
 				hint: "If you already have an account, try signing in or resetting your password",
 				links: {
 					login: "/api/v1/auth/signin",
-					passwordReset: "/api/v1/auth/forgot-password"
+					passwordReset: "/api/v1/auth/reset-password"
 				}
 			}
 		});

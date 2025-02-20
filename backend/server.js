@@ -16,7 +16,7 @@ const fastify = require("fastify")({
   },
 });
 
-const { configs, keywords } = require("./configs");
+const { configs, keywords, loadConfigsFromDB } = require("./configs");
 const { connectDB } = require("./models/connectDB");
 const { getErrorHandler } = require("./plugins/errorHandler");
 const { authenticationRoutes } = require("./routes/authentication");
@@ -29,6 +29,7 @@ const { getRefreshTokenOptns } = require("./models/refreshToken");
 const fastifyCsrf = require("fastify-csrf");
 const fastifyCookie = require("fastify-cookie");
 const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
+const { configCache } = require("./services/configCache");
 
 // fastify-helmet adds various HTTP headers for security
 if (configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV) {
@@ -83,13 +84,13 @@ fastify.register(require("fastify-rate-limit"), {
 fastify.setErrorHandler(getErrorHandler(fastify));
 
 // Register Routes required for authentication
-fastify.register(authenticationRoutes, { prefix: "api/v1/auth" });
+fastify.register(authenticationRoutes, { prefix: "/api/v1/auth" });
 
 // Register oauth2 routes
-fastify.register(oauth2Routes, { prefix: "api/v1/auth/oauth" });
+fastify.register(oauth2Routes, { prefix: "/api/v1/auth/oauth" });
 
 // Register admin routes
-fastify.register(adminRoutes, { prefix: "api/v1/admin" });
+fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
 
 // Auth Service health check
 fastify.get("/", async (request, reply) => {
@@ -98,6 +99,30 @@ fastify.get("/", async (request, reply) => {
     message: "Application is running",
   });
 });
+
+// Graceful shutdown handler
+const closeGracefully = async (signal) => {
+  fastify.log.info(`Received signal to terminate: ${signal}`);
+
+  try {
+    // Cleanup config cache and change streams
+    await configCache.cleanup();
+    fastify.log.info("Config cache cleaned up successfully");
+
+    // Close fastify server
+    await fastify.close();
+    fastify.log.info("Fastify server closed successfully");
+
+    process.exit(0);
+  } catch (error) {
+    fastify.log.error("Error during graceful shutdown:", error);
+    process.exit(1);
+  }
+};
+
+// Listen for shutdown signals
+process.on('SIGTERM', () => closeGracefully('SIGTERM'));
+process.on('SIGINT', () => closeGracefully('SIGINT'));
 
 // Start the server
 const start = async () => {
@@ -110,6 +135,10 @@ const start = async () => {
     ) {
       // Connect to MongoDB Database
       await connectDB(fastify);
+
+      // Initialize config cache and load configurations
+      await loadConfigsFromDB(fastify);
+
       await fastify.listen(configs.PORT, configs.HOST);
       
       // Setup cron jobs
@@ -118,6 +147,11 @@ const start = async () => {
       if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
         fastify.swagger();
       }
+
+      // Log all registered routes
+      fastify.log.info("Registered routes:");
+      fastify.log.info(fastify.printRoutes());
+      
     } else {
       fastify.log.error("Please configure the required environment variables");
     }

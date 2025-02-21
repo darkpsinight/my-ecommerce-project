@@ -125,8 +125,13 @@ const deleteConfig = async (request, reply) => {
     try {
         const { key } = request.params;
 
-        // Delete the config from database
-        await Config.deleteOne({ key });
+        // Delete the config from database and get the result
+        const result = await Config.deleteOne({ key });
+
+        // Check if any document was actually deleted
+        if (result.deletedCount === 0) {
+            return sendErrorResponse(reply, 404, `Configuration with key '${key}' not found`);
+        }
 
         // Reset to environment value and update cache
         configs[key] = process.env[key];
@@ -135,6 +140,10 @@ const deleteConfig = async (request, reply) => {
         return sendSuccessResponse(reply, {
             statusCode: 200,
             message: "Configuration reset to default successfully",
+            details: {
+                key,
+                deletedCount: result.deletedCount
+            }
         });
     } catch (error) {
         request.log.error({

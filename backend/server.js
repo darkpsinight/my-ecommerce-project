@@ -9,6 +9,10 @@ const fastify = require("fastify")({
               colorize: true,
               translateTime: "SYS:standard",
               ignore: "pid,hostname",
+              messageFormat: "{msg}",
+              singleLine: true,
+              levelFirst: false,
+              charset: 'utf-8'
             },
           }
         : undefined,
@@ -148,9 +152,24 @@ const start = async () => {
         fastify.swagger();
       }
 
-      // Log all registered routes
+      // Log all registered routes with better formatting
+      const routeTree = fastify.printRoutes();
+      
+      // Format the route tree with proper characters and indentation
+      const formattedRoutes = routeTree
+        .split('\n')
+        .map(line => {
+          return line
+            .replace(/ÔööÔöÇÔöÇ/g, '└──')
+            .replace(/Ôö£ÔöÇÔöÇ/g, '├──')
+            .replace(/Ôöé\s+/g, '│   ')
+            .replace(/ÔöÇ/g, '─');
+        })
+        .join('\n');
+      
       fastify.log.info("Registered routes:");
-      fastify.log.info(fastify.printRoutes());
+      console.log("\nRoute Tree:");
+      console.log(formattedRoutes);
       
     } else {
       fastify.log.error("Please configure the required environment variables");

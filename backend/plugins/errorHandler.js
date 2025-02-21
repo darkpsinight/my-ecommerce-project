@@ -80,10 +80,6 @@ const axiosErrorHandler = (reply, err) => {
     case configs.HCAPTCHA_VERIFY_URL:
       return sendErrorResponse(reply, 400, "Robot verification unsuccessful");
       break;
-    case configs.GITHUB_CONFIGS.ACCESS_TOKEN ||
-      configs.GITHUB_CONFIGS.AUTHORIZE:
-      return sendErrorResponse(reply, 400, "Could not Login with Github");
-      break;
     case configs.GOOGLE_CONFIGS.ACCESS_TOKEN ||
       configs.GOOGLE_CONFIGS.AUTHORIZE:
       return sendErrorResponse(reply, 400, "Could not Login with Google");

@@ -12,7 +12,7 @@ const fastify = require("fastify")({
               messageFormat: "{msg}",
               singleLine: true,
               levelFirst: false,
-              charset: 'utf-8'
+              charset: "utf-8",
             },
           }
         : undefined,
@@ -125,8 +125,8 @@ const closeGracefully = async (signal) => {
 };
 
 // Listen for shutdown signals
-process.on('SIGTERM', () => closeGracefully('SIGTERM'));
-process.on('SIGINT', () => closeGracefully('SIGINT'));
+process.on("SIGTERM", () => closeGracefully("SIGTERM"));
+process.on("SIGINT", () => closeGracefully("SIGINT"));
 
 // Start the server
 const start = async () => {
@@ -144,33 +144,32 @@ const start = async () => {
       await loadConfigsFromDB(fastify);
 
       await fastify.listen(configs.PORT, configs.HOST);
-      
+
       // Setup cron jobs
       setupAccountDeletionCron(fastify);
-      
+
       if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
         fastify.swagger();
       }
 
       // Log all registered routes with better formatting
       const routeTree = fastify.printRoutes();
-      
+
       // Format the route tree with proper characters and indentation
       const formattedRoutes = routeTree
-        .split('\n')
-        .map(line => {
+        .split("\n")
+        .map((line) => {
           return line
-            .replace(/ÔööÔöÇÔöÇ/g, '└──')
-            .replace(/Ôö£ÔöÇÔöÇ/g, '├──')
-            .replace(/Ôöé\s+/g, '│   ')
-            .replace(/ÔöÇ/g, '─');
+            .replace(/ÔööÔöÇÔöÇ/g, "└──")
+            .replace(/Ôö£ÔöÇÔöÇ/g, "├──")
+            .replace(/Ôöé\s+/g, "│   ")
+            .replace(/ÔöÇ/g, "─");
         })
-        .join('\n');
-      
+        .join("\n");
+
       fastify.log.info("Registered routes:");
       console.log("\nRoute Tree:");
       console.log(formattedRoutes);
-      
     } else {
       fastify.log.error("Please configure the required environment variables");
     }

@@ -76,24 +76,9 @@ const configs = {
 	IPGEOLOCATION_API_KEY: process.env.IPGEOLOCATION_API_KEY,
 
 	// Internal Oauth2 provider configs
-	PROVIDER_GITHUB: "github",
 	PROVIDER_GOOGLE: "google",
-	SUPPORTED_PROVIDERS: ["github", "google", "email-passwordless"],
+	SUPPORTED_PROVIDERS: ["google", "email-passwordless"],
 
-	GITHUB_CONFIGS: {
-		ACCESS_TOKEN: "https://github.com/login/oauth/access_token",
-		AUTHORIZE: "https://github.com/login/oauth/authorize",
-		SCOPE: "user:email",
-		CLIENT_ID: process.env.GITHUB_CLIENT_ID,
-		CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-		REDIRECT_URI: process.env.GITHUB_REDIRECT_URI,
-		CONFIGURED:
-			process.env.GITHUB_CLIENT_ID &&
-			process.env.GITHUB_CLIENT_SECRET &&
-			process.env.GITHUB_REDIRECT_URI
-				? true
-				: false,
-	},
 	GOOGLE_CONFIGS: {
 		ACCESS_TOKEN: "https://www.googleapis.com/oauth2/v4/token",
 		AUTHORIZE: "https://accounts.google.com/o/oauth2/v2/auth",
@@ -205,7 +190,6 @@ const loadConfigsFromDB = async (fastify) => {
 const checkConfigs = {
 	isSMTPconfigured: configs.IS_SMTP_CONFIGURED,
 	isOauthProviderConfigured: {
-		github: configs.GITHUB_CONFIGS.CONFIGURED,
 		google: configs.GOOGLE_CONFIGS.CONFIGURED,
 	},
 	isAppDetailsConfigured: configs.APP_DETAILS_CONFIGURED,

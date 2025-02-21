@@ -1,15 +1,4 @@
-const withImages = require('next-images');
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
 
-const redirects = {
-  async redirects() {
-    return [
-      {
-        source: '/dashboards',
-        destination: '/dashboards/crypto',
-        permanent: true
-      }
-    ];
-  }
-};
-
-module.exports = withImages(redirects);
+module.exports = nextConfig;

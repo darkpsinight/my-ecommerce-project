@@ -16,15 +16,6 @@ class OauthProviderLogin {
 
 		let queryParams;
 		switch (this.provider) {
-			// Build queryparams and redirect URI based on the provider
-			case configs.PROVIDER_GITHUB:
-				queryParams = [
-					`client_id=${configs.GITHUB_CONFIGS.CLIENT_ID}`,
-					`redirect_uri=${configs.GITHUB_CONFIGS.REDIRECT_URI}`,
-					`scope=${configs.GITHUB_CONFIGS.SCOPE}`,
-					`state=${state}`,
-				].join("&");
-				return `${configs.GITHUB_CONFIGS.AUTHORIZE}?${queryParams}`;
 			case configs.PROVIDER_GOOGLE:
 				queryParams = [
 					`client_id=${configs.GOOGLE_CONFIGS.CLIENT_ID}`,
@@ -45,8 +36,6 @@ class OauthProviderLogin {
 			return 0;
 		}
 		switch (this.provider) {
-			case configs.PROVIDER_GITHUB:
-				return await getDetailsGithub(code);
 			case configs.PROVIDER_GOOGLE:
 				return await getDetailsGoogle(code);
 			default:
@@ -55,77 +44,7 @@ class OauthProviderLogin {
 	}
 }
 
-// Function to get user details from code returned by github
-const getDetailsGithub = async (code) => {
-	const provider = configs.PROVIDER_GITHUB;
-
-	let email, verified;
-
-	// Iterator for email
-	let i = 0;
-
-	// Request body for access token request
-	const requestBody = {
-		client_id: configs.GITHUB_CONFIGS.CLIENT_ID,
-		client_secret: configs.GITHUB_CONFIGS.CLIENT_SECRET,
-		code: code,
-	};
-
-	// get access token from code
-	const accessTokenResponse = await axios.post(
-		configs.GITHUB_CONFIGS.ACCESS_TOKEN,
-		requestBody,
-		{
-			headers: {
-				Accept: "application/json",
-			},
-		}
-	);
-	if (accessTokenResponse.data.error) {
-		return {
-			error: accessTokenResponse.data.error_description,
-		};
-	}
-
-	const accessToken = accessTokenResponse.data.access_token;
-
-	// Get profile information from access token
-	const profileResponse = await axios.get("https://api.github.com/user", {
-		headers: {
-			Authorization: `token ${accessToken}`,
-		},
-	});
-
-	// Get user emails from access token
-	const emailResponse = await axios.get("https://api.github.com/user/emails", {
-		headers: {
-			Authorization: `token ${accessToken}`,
-		},
-	});
-
-	const { name } = profileResponse.data;
-	const emailList = emailResponse.data;
-
-	// Find primary email from the list of emails
-	for (i = 0; i < emailList.length; i++) {
-		if (emailList[i]["primary"]) break;
-	}
-
-	// Return information if it finds valid user details
-	if (emailList[i]["primary"] && emailList[i]["email"]) {
-		email = emailList[i]["email"];
-		verified = emailList[i]["verified"];
-		return {
-			name,
-			email,
-			provider,
-			verified,
-		};
-	}
-	return 0;
-};
-
-// Function to get user details from code returned by google
+// Function to get user details from Google
 const getDetailsGoogle = async (code) => {
 	const provider = configs.PROVIDER_GOOGLE;
 

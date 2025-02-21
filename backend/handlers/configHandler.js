@@ -139,7 +139,7 @@ const deleteConfig = async (request, reply) => {
 
         return sendSuccessResponse(reply, {
             statusCode: 200,
-            message: "Configuration reset to default successfully",
+            message: "Configuration deleted; system now using environment default value.",
             details: {
                 key,
                 deletedCount: result.deletedCount

@@ -15,9 +15,6 @@ const oauthCheck = async (request, reply) => {
 	};
 
 	switch (provider) {
-		case configs.PROVIDER_GITHUB:
-			if (!configs.GITHUB_CONFIGS.CONFIGURED) sendOauthProviderError();
-			break;
 		case configs.PROVIDER_GOOGLE:
 			if (!configs.GOOGLE_CONFIGS.CONFIGURED) sendOauthProviderError();
 			break;

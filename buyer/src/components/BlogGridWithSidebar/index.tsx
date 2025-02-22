@@ -1,5 +1,4 @@
 import React from "react";
-import Breadcrumb from "../Common/Breadcrumb";
 import BlogItem from "../Blog/BlogItem";
 import blogData from "../BlogGrid/blogData"; 
 import SearchForm from "../Blog/SearchForm"; 
@@ -38,9 +37,7 @@ const BlogGridWithSidebar = () => {
 
   return (
     <>
-      <Breadcrumb title={"Blog Grid Sidebar"} pages={["blog grid sidebar"]} />
-
-      <section className="overflow-hidden py-20 bg-gray-2">
+      <section className="overflow-hidden pt-[95px] py-20 bg-gray-2">
         <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
           <div className="flex flex-col lg:flex-row gap-7.5">
             {/* <!-- blog grid --> */}

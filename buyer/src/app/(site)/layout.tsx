@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import "../css/euclid-circular-a-font.css";
 import "../css/style.css";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import AuthHeader from "@/components/Auth/AuthHeader";
 
 import { ModalProvider } from "../context/QuickViewModalContext";
 import { CartModalProvider } from "../context/CartSidebarModalContext";
@@ -22,6 +24,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [loading, setLoading] = useState<boolean>(true);
+  const pathname = usePathname();
+
+  // Check if current route is an auth route
+  const isAuthRoute = ["/signin", "/signup"].includes(pathname);
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 1000);
@@ -38,7 +44,7 @@ export default function RootLayout({
               <CartModalProvider>
                 <ModalProvider>
                   <PreviewSliderProvider>
-                    <Header />
+                    {isAuthRoute ? <AuthHeader /> : <Header />}
                     {children}
 
                     <QuickViewModal />

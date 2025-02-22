@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Breadcrumb from "../Common/Breadcrumb";
 import CustomSelect from "./CustomSelect";
 import CategoryDropdown from "./CategoryDropdown";
 import GenderDropdown from "./GenderDropdown";
@@ -10,6 +9,7 @@ import PriceDropdown from "./PriceDropdown";
 import shopData from "../Shop/shopData";
 import SingleGridItem from "../Shop/SingleGridItem";
 import SingleListItem from "../Shop/SingleListItem";
+import PageContainer from "../Common/PageContainer";
 
 const ShopWithSidebar = () => {
   const [productStyle, setProductStyle] = useState("grid");
@@ -99,11 +99,8 @@ const ShopWithSidebar = () => {
 
   return (
     <>
-      <Breadcrumb
-        title={"Explore All Products"}
-        pages={["shop", "/", "shop with sidebar"]}
-      />
-      <section className="overflow-hidden relative pb-20 pt-5 lg:pt-20 xl:pt-28 bg-[#f3f4f6]">
+    <PageContainer>
+      <section className="overflow-hidden py-20 bg-gray-2">
         <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
           <div className="flex gap-7.5">
             {/* <!-- Sidebar Start --> */}
@@ -410,6 +407,7 @@ const ShopWithSidebar = () => {
           </div>
         </div>
       </section>
+      </PageContainer>
     </>
   );
 };

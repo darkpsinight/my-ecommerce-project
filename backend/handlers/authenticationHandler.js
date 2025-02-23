@@ -22,6 +22,7 @@ const {
 	sendSuccessResponse,
 	redirectWithToken,
 } = require("../utils/responseHelpers");
+const { validatePassword, getPasswordRequirements } = require("../utils/passwordValidation");
 
 // @route	POST /api/v1/auth/signup
 // @desc	handler for registering user to database, returns
@@ -33,6 +34,20 @@ const registerUser = async (request, reply) => {
 	let { name, email, password } = request.body;
 	let role = "user";
 	let provider = "email";
+
+	// Validate password strength
+	const passwordValidation = validatePassword(password);
+	if (!passwordValidation.isValid) {
+		return sendErrorResponse(reply, 400, "Password does not meet requirements", {
+			metadata: {
+				errors: passwordValidation.errors,
+				requirements: getPasswordRequirements()
+			}
+		});
+	}
+
+	// Use the trimmed password from validation
+	password = passwordValidation.trimmedPassword;
 
 	// Check if there is an account with the same email
 	const userExists = await User.findOne({
@@ -347,30 +362,45 @@ const resetPasswordFromToken = async (request, reply) => {
 
 	const user = request.userModel;
 	let { password, confirmPassword } = request.body;
+
+	// Validate password strength
+	const passwordValidation = validatePassword(password);
+	if (!passwordValidation.isValid) {
+		return sendErrorResponse(reply, 400, "Password does not meet requirements", {
+			metadata: {
+				errors: passwordValidation.errors,
+				requirements: getPasswordRequirements()
+			}
+		});
+	}
+
+	// Use the trimmed password from validation
+	password = passwordValidation.trimmedPassword;
+	
 	if (password !== confirmPassword) {
 		return sendErrorResponse(
 			reply,
 			400,
 			"Password and confirmed password are different"
 		);
-	} else {
-		await revokeAllRfTokenByUser(user, request.ipAddress);
-
-		password = await hashPasswd(password);
-		user.password = password;
-		user.pwResetToken = undefined;
-		user.pwResetExpire = undefined;
-		user.save({ validateBeforeSave: true });
-
-		const emailStatus = await passwordChangedEmailAlert(user, request);
-
-		return sendSuccessResponse(reply, {
-			statusCode: 200,
-			message: "Password Updated",
-			emailSuccess: emailStatus.success,
-			emailMessage: emailStatus.message,
-		});
 	}
+
+	await revokeAllRfTokenByUser(user, request.ipAddress);
+
+	password = await hashPasswd(password);
+	user.password = password;
+	user.pwResetToken = undefined;
+	user.pwResetExpire = undefined;
+	user.save({ validateBeforeSave: true });
+
+	const emailStatus = await passwordChangedEmailAlert(user, request);
+
+	return sendSuccessResponse(reply, {
+		statusCode: 200,
+		message: "Password Updated",
+		emailSuccess: emailStatus.success,
+		emailMessage: emailStatus.message,
+	});
 };
 
 // @route  	PUT /api/v1/auth/updatePassword
@@ -381,12 +411,26 @@ const updatePassword = async (request, reply) => {
 	request.log.info("handlers/updatePassword");
 
 	const user = request.userModel;
-	const { currentPassword, password, confirmPassword } = request.body;
+	let { currentPassword, password, confirmPassword } = request.body;
+	
 	const checkPassword = await user.matchPasswd(currentPassword);
-
 	if (!checkPassword) {
 		return sendErrorResponse(reply, 400, "Your entered the wrong password");
 	}
+
+	// Validate password strength
+	const passwordValidation = validatePassword(password);
+	if (!passwordValidation.isValid) {
+		return sendErrorResponse(reply, 400, "Password does not meet requirements", {
+			metadata: {
+				errors: passwordValidation.errors,
+				requirements: getPasswordRequirements()
+			}
+		});
+	}
+
+	// Use the trimmed password from validation
+	password = passwordValidation.trimmedPassword;
 
 	if (password !== confirmPassword) {
 		return sendErrorResponse(
@@ -399,7 +443,6 @@ const updatePassword = async (request, reply) => {
 	await revokeAllRfTokenByUser(user, request.ipAddress);
 
 	user.password = await hashPasswd(password);
-
 	user.save();
 
 	const emailStatus = await passwordChangedEmailAlert(user, request);

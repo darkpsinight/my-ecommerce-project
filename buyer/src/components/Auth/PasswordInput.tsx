@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
+import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 
 interface PasswordInputProps {
   id: string;
@@ -7,6 +8,11 @@ interface PasswordInputProps {
   label: string;
   placeholder: string;
   isRequired?: boolean;
+  value?: string;
+  error?: string | null;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  showStrengthIndicator?: boolean;
+  showRequirements?: boolean;
 }
 
 const PasswordInput = ({
@@ -15,8 +21,14 @@ const PasswordInput = ({
   label,
   placeholder,
   isRequired,
+  value = '',
+  error,
+  onChange,
+  showStrengthIndicator = true,
+  showRequirements = true,
 }: PasswordInputProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   return (
     <div className="mb-5">
@@ -29,13 +41,16 @@ const PasswordInput = ({
           type={showPassword ? "text" : "password"}
           name={name}
           id={id}
+          value={value}
+          onChange={onChange}
           placeholder={placeholder}
           required={isRequired}
-          autoComplete={
-            name === "re-type-password" ? "new-password" : "current-password"
-          }
-          className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 pr-12"
+          autoComplete="new-password"
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className={`rounded-lg border ${error ? 'border-red' : 'border-gray-3'} bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 pr-12`}
         />
+        
         <button
           type="button"
           aria-label={showPassword ? "Hide password" : "Show password"}
@@ -80,6 +95,14 @@ const PasswordInput = ({
           )}
         </button>
       </div>
+      {error && <div className="text-[#e53e3e] text-sm mt-1">{error}</div>}
+      {showStrengthIndicator && value && (
+        <PasswordStrengthIndicator 
+          password={value} 
+          showRequirements={showRequirements} 
+          isFocused={isFocused}
+        />
+      )}
     </div>
   );
 };

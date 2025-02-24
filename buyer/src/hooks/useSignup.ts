@@ -14,6 +14,14 @@ interface UseSignupReturn {
   emailError: string | null;
   passwordError: string | null;
   confirmPasswordError: string | null;
+  apiError: {
+    message: string;
+    hint?: string;
+    links?: {
+      login?: string;
+      passwordReset?: string;
+    };
+  } | null;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
 }
@@ -31,6 +39,7 @@ export const useSignup = (): UseSignupReturn => {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<UseSignupReturn['apiError']>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -130,6 +139,8 @@ export const useSignup = (): UseSignupReturn => {
     if (!validateForm()) return;
 
     setLoading(true);
+    setApiError(null); // Reset API error on new submission
+    
     try {
       const { confirmPassword, ...signupData } = formData;
       const response = await authApi.signup(signupData);
@@ -145,7 +156,19 @@ export const useSignup = (): UseSignupReturn => {
 
       router.push('/signin?registered=true');
     } catch (err: any) {
-      console.error(err);
+      const errorResponse = err.response?.data;
+      
+      if (errorResponse) {
+        setApiError({
+          message: errorResponse.message || 'Registration failed',
+          hint: errorResponse.metadata?.hint,
+          links: errorResponse.metadata?.links
+        });
+      } else {
+        setApiError({
+          message: 'An unexpected error occurred. Please try again later.'
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -158,6 +181,7 @@ export const useSignup = (): UseSignupReturn => {
     emailError,
     passwordError,
     confirmPasswordError,
+    apiError,
     handleChange,
     handleSubmit,
   };

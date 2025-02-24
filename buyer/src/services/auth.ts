@@ -21,6 +21,26 @@ export interface SignupResponse {
   };
 }
 
+interface ErrorResponse {
+  statusCode: number;
+  error: string;
+  message: string;
+  success: false;
+  metadata?: {
+    hint?: string;
+    links?: {
+      login?: string;
+      passwordReset?: string;
+    }
+  }
+}
+
+const isErrorResponse = (error: any): error is { response: { data: ErrorResponse } } => {
+  return error?.response?.data?.statusCode !== undefined &&
+         error?.response?.data?.error !== undefined &&
+         error?.response?.data?.success === false;
+};
+
 export const authApi = {
   signup: async (data: SignupData): Promise<SignupResponse> => {
     try {
@@ -41,10 +61,19 @@ export const authApi = {
       
       return responseData;
     } catch (error: any) {
-      if (error.response?.data) {
-        throw new Error(error.response.data.message || 'Registration failed');
+      if (isErrorResponse(error)) {
+        throw error;
       }
-      throw new Error('Network error occurred');
+      throw {
+        response: {
+          data: {
+            statusCode: 500,
+            error: 'Internal Server Error',
+            message: 'An unexpected error occurred',
+            success: false
+          } as ErrorResponse
+        }
+      };
     }
   },
 }; 

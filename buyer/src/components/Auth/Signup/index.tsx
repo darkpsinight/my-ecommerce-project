@@ -5,9 +5,10 @@ import React from "react";
 import PasswordInput from "../PasswordInput";
 import { useSignup } from "@/hooks/useSignup";
 import { Spinner } from '@/components/Common/Spinner/index';
+import ErrorAlert from '@/components/Common/ErrorAlert';
 
 const Signup = () => {
-  const { formData, loading, nameError, emailError, passwordError, confirmPasswordError, handleChange, handleSubmit } = useSignup();
+  const { formData, loading, nameError, emailError, passwordError, confirmPasswordError, apiError, handleChange, handleSubmit } = useSignup();
 
   return (
     <section className="overflow-hidden py-20 bg-gray-2">
@@ -15,9 +16,8 @@ const Signup = () => {
         <div className="max-w-[570px] w-full mx-auto rounded-xl bg-white shadow-1 p-4 sm:p-7.5 xl:p-11">
           <div className="text-center mb-11">
             <h2 className="font-semibold text-xl sm:text-2xl xl:text-heading-5 text-dark mb-1.5">
-              Create an Account
+              Create Your Account
             </h2>
-            <p>Its quick and safe.</p>
           </div>
 
           <div className="flex flex-col gap-4.5">
@@ -37,10 +37,10 @@ const Signup = () => {
             </button>
           </div>
 
-          <span className="relative block text-center my-7">
-            <span className="block absolute -z-1 left-0 top-1/2 h-px w-full bg-gray-3"></span>
-            <span className="inline-block px-3 bg-white">Or</span>
-          </span>
+          <span className="relative z-1 block font-medium text-center mt-4.5">
+                  <span className="block absolute -z-1 left-0 top-1/2 h-px w-full bg-gray-3"></span>
+                  <span className="inline-block px-3 bg-white">OR</span>
+                </span>
 
           <div className="mt-5.5">
             <form onSubmit={handleSubmit} noValidate>
@@ -121,6 +121,14 @@ const Signup = () => {
                 </Link>
                 .
               </p>
+
+              {apiError && (
+                <ErrorAlert
+                  message={apiError.message}
+                  hint={apiError.hint}
+                  links={apiError.links}
+                />
+              )}
 
               <button
                 type="submit"

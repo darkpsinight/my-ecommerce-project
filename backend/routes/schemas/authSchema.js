@@ -81,7 +81,7 @@ const authenticationSchema = {
 	},
 	confirmEmailGet: {
 		description:
-			"Check if the confirm email token is valid and redirects to frontend",
+			"Check if the confirm email token is valid, confirm the email and redirect to frontend",
 		tags: ["Confirm Email Address"],
 		querystring: {
 			type: "object",
@@ -93,10 +93,13 @@ const authenticationSchema = {
 		response: {
 			302: {
 				type: "object",
-				description: `Redirects to ${configs.APP_CONFIRM_EMAIL_REDIRECT} .Success response will have success:true\
+				description: `Redirects to ${configs.APP_CONFIRM_EMAIL_REDIRECT}. Success response will have success:true\
 				and token value added as query parameters.\
 				Failure value will have success:false error & message`,
 			},
+			400: errors[400],
+			500: errors[500],
+			429: errors[429],
 		},
 	},
 	loginWithEmailGet: {

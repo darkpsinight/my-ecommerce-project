@@ -43,7 +43,7 @@ const sendErrorResponse = (reply, statusCode, message, options = {}) => {
     reply
       .code(302)
       .redirect(
-        `${options.redirectURL}?error=${error}&message=${message}&success=false`
+        `${options.redirectURL}/confirmation?error=${error}&message=${message}&success=false`
       );
   }
 };
@@ -81,7 +81,7 @@ const sendSuccessResponse = (reply, response, options = {}) => {
 const redirectWithToken = (reply, token, options) => {
   reply
     .code(302)
-    .redirect(`${options.redirectURL}?token=${token}&success=true`);
+    .redirect(`${options.redirectURL}/confirmation?success=true`);
 };
 
 module.exports = {

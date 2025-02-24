@@ -47,7 +47,7 @@ const tokenCheck = (type, shouldRedirect) => {
     }
 
     if (!token) {
-      return sendErrorResponse(reply, 400, "Invalid Token", { redirectURL });
+      return sendErrorResponse(reply, 400, "This link has expired. Enter your email to resend the activation email", { redirectURL });
     }
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -71,7 +71,7 @@ const tokenCheck = (type, shouldRedirect) => {
     }
 
     if (!user) {
-      return sendErrorResponse(reply, 400, "Invalid Token", { redirectURL });
+      return sendErrorResponse(reply, 400, "This link has expired. Enter your email to resend the activation email", { redirectURL });
     }
     if (type === "password") {
       check = user.isPwResetTokenExpired();

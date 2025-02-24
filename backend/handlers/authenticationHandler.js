@@ -23,6 +23,8 @@ const {
 	redirectWithToken,
 } = require("../utils/responseHelpers");
 const { validatePassword, getPasswordRequirements } = require("../utils/passwordValidation");
+const { BlacklistedToken } = require("../models/blacklistedToken");
+const jwt = require("jsonwebtoken");
 
 // @route	POST /api/v1/auth/signup
 // @desc	handler for registering user to database, returns
@@ -59,8 +61,8 @@ const registerUser = async (request, reply) => {
 			metadata: {
 				hint: "If you already have an account, try signing in or resetting your password",
 				links: {
-					login: "/api/v1/auth/signin",
-					passwordReset: "/api/v1/auth/reset-password"
+					login: "/signin",
+					passwordReset: "/reset-password"
 				}
 			}
 		});
@@ -232,29 +234,18 @@ const loginWithEmail = async (request, reply) => {
 };
 
 // @route 	GET /api/v1/auth/confirmEmail
-// @desc	Endpoint to confirm the email of the user
+// @desc	Endpoint to confirm the email of the user and redirect to frontend
 // @access	Public (confirm email with the token . JWT is NOT required)
-const confirmEmailTokenRedirect = async (request, reply) => {
-	request.log.info("handlers/confirmEmailTokenRedirect");
-	return redirectWithToken(reply, request.query.token, {
-		redirectURL: configs.APP_CONFIRM_EMAIL_REDIRECT,
-	});
-};
-
-// @route 	PUT /api/v1/auth/confirmEmail
-// @desc 	Route to confirm email address with the token
-// @access 	Public
 const confirmEmail = async (request, reply) => {
 	request.log.info("handlers/confirmEmail");
 	const user = request.userModel;
 	user.confirmEmailToken = undefined;
 	user.confirmEmailTokenExpire = undefined;
 	user.isEmailConfirmed = true;
-	user.save({ validateBeforeSave: false });
+	await user.save({ validateBeforeSave: false });
 
-	return sendSuccessResponse(reply, {
-		statusCode: 200,
-		message: "Account successfully confirmed",
+	return redirectWithToken(reply, request.query.token, {
+		redirectURL: configs.APP_CONFIRM_EMAIL_REDIRECT,
 	});
 };
 
@@ -777,10 +768,122 @@ const revokeAllRefreshTokens = async (request, reply) => {
 	});
 };
 
+const logout = async (request, reply) => {
+	try {
+		const user = request.user;
+		const refreshToken = request.cookies.refreshToken;
+		const authHeader = request.headers.authorization;
+		
+		if (!authHeader) {
+			return sendErrorResponse(reply, 400, 'Authorization header missing');
+		}
+
+		const token = authHeader.split(' ')[1];
+		if (!token) {
+			return sendErrorResponse(reply, 400, 'Token missing from Authorization header');
+		}
+
+		// Get user email either from token or from database
+		let userEmail;
+		try {
+			const decoded = jwt.decode(token);
+			if (!decoded) {
+				return sendErrorResponse(reply, 400, 'Invalid token format');
+			}
+
+			// If email is not in token, fetch from database
+			if (!decoded.email && decoded.id) {
+				const userFromDb = await User.findById(decoded.id);
+				if (!userFromDb) {
+					return sendErrorResponse(reply, 404, 'User not found');
+				}
+				userEmail = userFromDb.email;
+			} else {
+				userEmail = decoded.email;
+			}
+
+			if (!userEmail) {
+				return sendErrorResponse(reply, 400, 'Could not determine user email');
+			}
+
+			// Log the logout attempt
+			request.log.info(`Logout attempt for user: ${userEmail} with token: ${token.substring(0, 10)}...`);
+
+			// Check if token is already blacklisted
+			const existingBlacklist = await BlacklistedToken.findOne({ token });
+			if (existingBlacklist) {
+				return sendErrorResponse(reply, 400, 'Token already invalidated');
+			}
+
+			// Add token to blacklist
+			const blacklistedToken = await BlacklistedToken.create({
+				token,
+				userEmail,
+				expiresAt: new Date(decoded.exp * 1000)
+			});
+
+			if (!blacklistedToken) {
+				throw new Error('Failed to blacklist token');
+			}
+
+			request.log.info(`Token blacklisted successfully for user: ${userEmail}`);
+
+			// Revoke refresh token if it exists
+			if (refreshToken) {
+				const rft = await getRftById(request.rtid);
+				if (rft) {
+					// Use the existing revoke mechanism
+					rft.revoke(request.ipAddress);
+					await rft.save();
+					request.log.info(`Refresh token revoked successfully for user: ${userEmail}`);
+				}
+			}
+
+			// Clear all cookies
+			reply.clearCookie('refreshToken', {
+				path: '/',
+				httpOnly: true,
+				secure: configs.NODE_ENV === 'production',
+				sameSite: 'lax'
+			});
+			reply.clearCookie('sessionToken', {
+				path: '/',
+				httpOnly: true,
+				secure: configs.NODE_ENV === 'production',
+				sameSite: 'lax'
+			});
+
+			// Verify token was actually blacklisted
+			const verifyBlacklist = await BlacklistedToken.findOne({ token });
+			if (!verifyBlacklist) {
+				request.log.error('Token blacklisting verification failed');
+				return sendErrorResponse(reply, 500, 'Error verifying token invalidation');
+			}
+
+			// Log successful logout
+			request.log.info(`User ${userEmail} successfully logged out`);
+
+			return sendSuccessResponse(reply, {
+				statusCode: 200,
+				message: 'Successfully logged out',
+				details: {
+					accessTokenBlacklisted: true,
+					refreshTokenRevoked: !!refreshToken
+				}
+			});
+		} catch (error) {
+			request.log.error(`Token decode/blacklist error: ${error.message}`);
+			return sendErrorResponse(reply, 500, 'Error processing token');
+		}
+	} catch (error) {
+		request.log.error(`Logout error: ${error.message}`);
+		return sendErrorResponse(reply, 500, 'Error during logout process');
+	}
+};
+
 module.exports = {
 	registerUser,
 	confirmEmail,
-	confirmEmailTokenRedirect,
 	requestConfirmationEmail,
 	requestResetPasswordToken,
 	resetPasswordTokenRedirect,
@@ -795,4 +898,5 @@ module.exports = {
 	requestLoginWithEmail,
 	loginWithEmail,
 	reactivateAccount,
+	logout,
 };

@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { configs } = require("../configs");
 const { sendErrorResponse } = require("../utils/responseHelpers");
+const { BlacklistedToken } = require("../models/blacklistedToken");
 
 /**
  * Plugin to verify if the user is authenticated/authorized to access
@@ -10,42 +11,80 @@ const { sendErrorResponse } = require("../utils/responseHelpers");
  */
 const verifyAuth = (roles = []) => {
 	return async (request, reply) => {
-		request.log.info(`Verifying user auth roles: ${roles}`);
-		request.JWT_TYPE = "auth";
-		// Get the authorization header
-		const authorizationHeader = request.headers["authorization"];
+		try {
+			request.log.info(`Verifying user auth roles: ${roles}`);
+			request.JWT_TYPE = "auth";
+			
+			// Get the authorization header
+			const authorizationHeader = request.headers["authorization"];
 
-		// If the token is not sent in authorization header send error
-		// response
-		if (!authorizationHeader) {
-			return sendErrorResponse(
-				reply,
-				403,
-				"Token in the authorization header missing"
-			);
-		} else if (!authorizationHeader.startsWith("Bearer ")) {
-			// If the header doesnt start with "Bearer " send error response
-			// "Bearer" is recommended but not mandatory (RFC)
-			return sendErrorResponse(
-				reply,
-				403,
-				"Format error . Please send the token as Bearer token"
-			);
-		} else {
+			// If the token is not sent in authorization header send error
+			if (!authorizationHeader) {
+				return sendErrorResponse(
+					reply,
+					401,
+					"Unauthorized: Token in the authorization header missing"
+				);
+			} 
+			
+			if (!authorizationHeader.startsWith("Bearer ")) {
+				return sendErrorResponse(
+					reply,
+					401,
+					"Unauthorized: Invalid token format. Please send the token as Bearer token"
+				);
+			}
+
 			// Get the token from header
-			token = authorizationHeader.substring(7, authorizationHeader.length);
+			const token = authorizationHeader.substring(7, authorizationHeader.length);
 
+			// First verify if the token is valid before checking blacklist
 			const decoded = jwt.verify(token, configs.JWT_KEY);
 
+			// Check if token is blacklisted
+			const isBlacklisted = await BlacklistedToken.findOne({ token });
+			request.log.info(`Checking if token is blacklisted for user: ${decoded.email}`);
+			
+			if (isBlacklisted) {
+				request.log.warn(`Attempt to use blacklisted token by user: ${decoded.email}`);
+				return sendErrorResponse(
+					reply,
+					401,
+					"Unauthorized: Token has been invalidated due to logout"
+				);
+			}
+
 			if (!roles.includes(decoded.role)) {
-				// If the user's role is not authorized to access the endpoint send error
+				request.log.warn(`Unauthorized role access attempt by user: ${decoded.email}`);
 				return sendErrorResponse(
 					reply,
 					403,
-					"You have no permission to view this page"
+					"Forbidden: You have no permission to access this resource"
 				);
 			}
+
 			request.user = decoded;
+		} catch (error) {
+			if (error instanceof jwt.TokenExpiredError) {
+				return sendErrorResponse(
+					reply,
+					401,
+					"Unauthorized: Token has expired"
+				);
+			} else if (error instanceof jwt.JsonWebTokenError) {
+				return sendErrorResponse(
+					reply,
+					401,
+					"Unauthorized: Invalid token"
+				);
+			} else {
+				request.log.error(`Auth verification error: ${error.message}`);
+				return sendErrorResponse(
+					reply,
+					401,
+					"Unauthorized: Token verification failed"
+				);
+			}
 		}
 	};
 };

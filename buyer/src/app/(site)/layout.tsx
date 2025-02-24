@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import "../css/euclid-circular-a-font.css";
 import "../css/style.css";
+import "../nprogress.css";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import AuthHeader from "@/components/Auth/AuthHeader";
+import { NProgressBar } from "@/components/Common/NProgressBar";
 
 import { ModalProvider } from "../context/QuickViewModalContext";
 import { CartModalProvider } from "../context/CartSidebarModalContext";
@@ -27,7 +29,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   // Check if current route is an auth route
-  const isAuthRoute = ["/signin", "/signup"].includes(pathname);
+  const isAuthRoute = ["/signin", "/signup", "/confirmation"].includes(pathname);
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 1000);
@@ -36,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body>
+        <NProgressBar />
         {loading ? (
           <PreLoader />
         ) : (

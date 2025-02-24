@@ -68,6 +68,7 @@ const config: Config = {
         "light-4": "#FDD8D8",
         "light-5": "#FEEBEB",
         "light-6": "#FEF3F3",
+        200: "#FECACA",
       },
       green: {
         DEFAULT: "#22AD5C",

@@ -6,7 +6,6 @@ const {
 	resetPasswordTokenRedirect,
 	resetPasswordFromToken,
 	updatePassword,
-	confirmEmailTokenRedirect,
 	signin,
 	getJWTFromRefresh,
 	revokeRefreshToken,
@@ -16,6 +15,7 @@ const {
 	requestLoginWithEmail,
 	loginWithEmail,
 	reactivateAccount,
+	logout,
 } = require("../handlers/authenticationHandler");
 const { verifyAuth } = require("../plugins/authVerify");
 const {
@@ -155,7 +155,7 @@ const authenticationRoutes = async (fastify, opts) => {
 			tokenCheck("confirmEmail", true)
 		],
 		schema: authenticationSchema.confirmEmailGet,
-		handler: confirmEmailTokenRedirect,
+		handler: confirmEmail,
 	});
 
 	// Route to request to resend confirmation email
@@ -194,18 +194,6 @@ const authenticationRoutes = async (fastify, opts) => {
 		],
 		schema: authenticationSchema.loginWithEmailGet,
 		handler: loginWithEmail,
-	});
-
-	// Route to confirm the email address by sending token
-	fastify.route({
-		method: "PUT",
-		url: "/confirmEmail",
-		preHandler: [
-			rateLimiter(rateLimits.standardWrite),
-			tokenCheck("confirmEmail")
-		],
-		schema: authenticationSchema.confirmEmailPut,
-		handler: confirmEmail,
 	});
 
 	// Route to get account information
@@ -261,6 +249,29 @@ const authenticationRoutes = async (fastify, opts) => {
 			verifyRefresh
 		],
 		handler: getJWTFromRefresh,
+	});
+
+	// Route for user logout
+	fastify.route({
+		method: "POST",
+		url: "/logout",
+		schema: {
+			response: {
+				200: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean' },
+						message: { type: 'string' }
+					}
+				}
+			}
+		},
+		preHandler: [
+			rateLimiter(rateLimits.auth),
+			verifyAuth(["admin", "user"]),
+			attachUser(false)
+		],
+		handler: logout,
 	});
 
 	fastify.route({

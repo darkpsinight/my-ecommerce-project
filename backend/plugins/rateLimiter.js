@@ -64,7 +64,7 @@ const rateLimiter = (options = {}) => {
       reply.header("Retry-After", Math.ceil(remainingMs / 1000));
 
       throw new Error(
-        `Rate limit exceeded. Please wait ${remainingMinutes} minutes before trying again.`
+        `You've exceeded the rate limit. Please wait ${remainingMinutes} minutes before sending another message.`
       );
     }
 

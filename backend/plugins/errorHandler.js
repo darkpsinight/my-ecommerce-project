@@ -33,7 +33,7 @@ const getErrorHandler = (fastify) => {
       // Use the original error message from the rate limiter if it exists
       message =
         err.message ||
-        "Rate limit exceeded. Please wait a few minutes before trying again.";
+        "You've exceeded the rate limit. Please wait a moment before sending another message.";
     }
 
     switch (err.name) {

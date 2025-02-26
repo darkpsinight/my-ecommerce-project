@@ -21,6 +21,24 @@ export interface SignupResponse {
   };
 }
 
+export interface SigninData {
+  email: string;
+  password: string;
+}
+
+export interface SigninResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    user: {
+      name: string;
+      email: string;
+      // Add other user fields as needed
+    };
+    token: string;
+  };
+}
+
 interface ErrorResponse {
   statusCode: number;
   error: string;
@@ -76,4 +94,39 @@ export const authApi = {
       };
     }
   },
+  
+  signin: async (data: SigninData): Promise<SigninResponse> => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/signin`, data, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const rawData = response.data as any;
+ 
+      // Ensure the response matches the SigninResponse interface
+      const responseData: SigninResponse = {
+        success: rawData.success ?? true,
+        message: rawData.message ?? 'Login successful',
+        data: rawData.data
+      };
+      
+      return responseData;
+    } catch (error: any) {
+      if (isErrorResponse(error)) {
+        throw error;
+      }
+      throw {
+        response: {
+          data: {
+            statusCode: 500,
+            error: 'Internal Server Error',
+            message: 'An unexpected error occurred',
+            success: false
+          } as ErrorResponse
+        }
+      };
+    }
+  }
 }; 

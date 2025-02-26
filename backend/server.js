@@ -28,6 +28,7 @@ const { oauth2Routes } = require("./routes/oauth2Provider");
 const { getSwaggerOptions } = require("./utils/utils");
 const helmet = require("fastify-helmet");
 const { adminRoutes } = require("./routes/admin");
+const publicRoutes = require("./routes/public");
 const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
 const fastifyCsrf = require("fastify-csrf");
@@ -95,6 +96,9 @@ fastify.register(oauth2Routes, { prefix: "/api/v1/auth/oauth" });
 
 // Register admin routes
 fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
+
+// Register public routes
+fastify.register(publicRoutes, { prefix: "/api/v1/public" });
 
 // Auth Service health check
 fastify.get("/", async (request, reply) => {

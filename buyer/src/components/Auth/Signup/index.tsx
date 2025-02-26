@@ -4,11 +4,25 @@ import Link from "next/link";
 import React from "react";
 import PasswordInput from "../PasswordInput";
 import { useSignup } from "@/hooks/useSignup";
-import { Spinner } from '@/components/Common/Spinner/index';
-import ErrorAlert from '@/components/Common/ErrorAlert';
+import { Spinner } from "@/components/Common/Spinner/index";
+import ErrorAlert from "@/components/Common/ErrorAlert";
 
-const Signup = () => {
-  const { formData, loading, nameError, emailError, passwordError, confirmPasswordError, apiError, handleChange, handleSubmit } = useSignup();
+interface SignupProps {
+  appName: string;
+}
+
+const Signup = ({ appName }: SignupProps) => {
+  const {
+    formData,
+    loading,
+    nameError,
+    emailError,
+    passwordError,
+    confirmPasswordError,
+    apiError,
+    handleChange,
+    handleSubmit,
+  } = useSignup();
 
   return (
     <section className="overflow-hidden py-20 bg-gray-2">
@@ -38,9 +52,9 @@ const Signup = () => {
           </div>
 
           <span className="relative z-1 block font-medium text-center mt-4.5">
-                  <span className="block absolute -z-1 left-0 top-1/2 h-px w-full bg-gray-3"></span>
-                  <span className="inline-block px-3 bg-white">OR</span>
-                </span>
+            <span className="block absolute -z-1 left-0 top-1/2 h-px w-full bg-gray-3"></span>
+            <span className="inline-block px-3 bg-white">OR</span>
+          </span>
 
           <div className="mt-5.5">
             <form onSubmit={handleSubmit} noValidate>
@@ -56,9 +70,13 @@ const Signup = () => {
                   onChange={handleChange}
                   placeholder="Enter your full name"
                   required
-                  className={`rounded-lg border ${nameError ? 'border-red' : 'border-gray-3'} bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20`}
+                  className={`rounded-lg border ${
+                    nameError ? "border-red" : "border-gray-3"
+                  } bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20`}
                 />
-                {nameError && <div className="text-[#e53e3e] text-sm mt-1">{nameError}</div>}
+                {nameError && (
+                  <div className="text-[#e53e3e] text-sm mt-1">{nameError}</div>
+                )}
               </div>
 
               <div className="mb-5">
@@ -74,9 +92,15 @@ const Signup = () => {
                   placeholder="Enter your email address"
                   required
                   autoComplete="email"
-                  className={`rounded-lg border ${emailError ? 'border-red' : 'border-gray-3'} bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20`}
+                  className={`rounded-lg border ${
+                    emailError ? "border-red" : "border-gray-3"
+                  } bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20`}
                 />
-                {emailError && <div className="text-[#e53e3e] text-sm mt-1">{emailError}</div>}
+                {emailError && (
+                  <div className="text-[#e53e3e] text-sm mt-1">
+                    {emailError}
+                  </div>
+                )}
               </div>
 
               <PasswordInput
@@ -103,7 +127,7 @@ const Signup = () => {
               />
 
               <p className="text-dark-4 text-sm mt-4 mb-6">
-                By creating an account, you agree to CodeSale&apos;s{" "}
+                By creating an account, you agree to {appName}&apos;s{" "}
                 <Link href="/conditions" className="text-blue hover:underline">
                   Conditions of Use & Sale
                 </Link>

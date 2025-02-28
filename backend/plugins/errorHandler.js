@@ -62,6 +62,13 @@ const getErrorHandler = (fastify) => {
         message = err.message;
         statusCode = 403;
         break;
+      case "TypeError":
+        // Handle the case where verifyPassword is called on undefined
+        if (err.message === "Illegal arguments: string, undefined") {
+          message = "This account was created with Google Sign-In. Please use the 'Sign in with Google' button instead of email/password.";
+          statusCode = 400;
+        }
+        break;
     }
 
     // MONGODB : unique key violation

@@ -82,7 +82,7 @@ const configs = {
 	GOOGLE_CONFIGS: {
 		ACCESS_TOKEN: "https://www.googleapis.com/oauth2/v4/token",
 		AUTHORIZE: "https://accounts.google.com/o/oauth2/v2/auth",
-		SCOPE: "profile email",
+		SCOPE: "profile email openid",
 		CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
 		CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 		REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,

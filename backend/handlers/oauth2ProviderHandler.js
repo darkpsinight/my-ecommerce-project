@@ -41,27 +41,64 @@ const postOauthProviderLogin = async (request, reply) => {
 	const provider = request.provider;
 	const { code } = request.body;
 	const oauthHandler = new OauthProviderLogin(provider);
-	const userDetails = await oauthHandler.getUserDetails(code);
-	let role;
-	if (!userDetails || userDetails.error) {
-		return sendErrorResponse(
-			reply,
-			userDetails.error ? 400 : 404,
-			userDetails.error ||
-				"Could not get the required details from Oauth provider."
-		);
-	}
-	if (configs.CHECK_ADMIN) {
-		const count = await User.countDocuments();
-		if (!count) {
-			role = "admin";
-		}
-	}
+	try {
+		const userDetails = await oauthHandler.getUserDetails(code);
+		let role;
 
-	await oauthLoginHelper(request, reply, {
-		...userDetails,
-		role,
-	});
+		if (!userDetails || userDetails.error) {
+			return sendErrorResponse(
+				reply,
+				userDetails.error ? 400 : 404,
+				userDetails.error ||
+					"Could not get the required details from Oauth provider."
+			);
+		}
+
+		// Check if the user already exists
+		let user = await User.findOne({ email: userDetails.email });
+
+		if (user) {
+			// User exists, log them in
+			const refreshToken = await getRefreshToken(user, request.ipAddress);
+			// Log before setting the cookie
+			console.log('Setting refresh token cookie:', refreshToken);
+			// Set refresh token in cookie with expiration and path
+			reply.setCookie('refreshToken', refreshToken, {
+				signed: true,
+				httpOnly: true,
+				secure: process.env.NODE_ENV === 'production',
+				sameSite: 'lax',
+				expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+				path: '/', // Available across the entire application
+			});
+			// Generate CSRF token
+			const verifyToken = await reply.generateCsrf();
+			return sendSuccessResponse(
+				reply,
+				{
+					statusCode: 200,
+					message: "Logged in successfully",
+					token: user.getJWT(),
+					verifyToken,
+				},
+			);
+		} else {
+			// User does not exist, proceed with registration
+			if (configs.CHECK_ADMIN) {
+				const count = await User.countDocuments();
+				if (!count) {
+					role = "admin";
+				}
+			}
+			await oauthLoginHelper(request, reply, {
+				...userDetails,
+				role,
+			});
+		}
+	} catch (error) {
+		reply.log.error('Error during OAuth process:', error);
+		return sendErrorResponse(reply, 500, 'Internal Server Error');
+	}
 };
 
 /**

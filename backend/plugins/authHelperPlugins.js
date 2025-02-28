@@ -42,6 +42,7 @@ const attachUser = (byEmail) => {
 		request.log.info(
 			`Attaching user by ${byEmail ? "email" : "user id in the token"}`
 		);
+		let user;
 		if (!byEmail) {
 			user = await User.findOne({
 				uid: request.user.uid,
@@ -51,7 +52,18 @@ const attachUser = (byEmail) => {
 				email: request.body.email,
 			});
 		}
-		must(reply, user, "User not found");
+		if (!user) {
+			return sendErrorResponse(reply, 400, "User not found", {
+				metadata: {
+					hint: "Please check your credentials or consider creating an account",
+					links: {
+						signup: "/signup",
+						oauth: "/auth/google",
+						forgotPassword: "/forgot-password"
+					}
+				}
+			});
+		}
 		request.userModel = user;
 	};
 };
@@ -79,7 +91,17 @@ const attachUserWithPassword = (byEmail) => {
 				email: request.body.email,
 			}).select("+password");
 		}
-		must(reply, user, "User not found");
+		request.log.info(`User retrieved: ${JSON.stringify(user)}`);
+		if (!user) {
+			return sendErrorResponse(reply, 401, "User not found", {
+				metadata: {
+					hint: `Please check your email address and password or consider creating an account.`,
+					links: {
+						oauth: `/auth`
+					}
+				}
+			});
+		}
 		request.userModel = user;
 	};
 };
@@ -157,6 +179,89 @@ const must = (reply, parameter, message) => {
 	}
 };
 
+const handleSignIn = async (request, reply) => {
+    const { email, password } = request.body;
+    request.log.info(`Sign-in attempt with email: ${email}`);
+
+    // Check if the user exists
+    const user = await User.findOne({ email }).select('+password');
+    request.log.info(`User found: ${user ? 'Yes' : 'No'}`);
+    if (!user) {
+        sendErrorResponse(reply, 401, "Invalid credentials", {
+            metadata: {
+                hint: "Please check your email and password",
+                links: {
+                    forgotPassword: "/forgot-password",
+                    signup: "/signup"
+                }
+            }
+        });
+        return null;
+    }
+
+    // Check if the user is trying to log in with a Google account
+    if (user.provider === 'google') {
+        request.log.warn(`OAuth user attempted password login: ${email}`);
+        return sendErrorResponse(reply, 401, "Invalid login method", {
+            metadata: {
+                hint: `This account uses ${user.provider} authentication. Please sign in with ${user.provider}.`,
+                links: {
+                    oauth: `/auth/${user.provider}`
+                }
+            }
+        });
+        return null;
+    }
+
+    // For non-Google users, verify the password
+    if (!user.password) {
+        request.log.error(`User ${email} has no password set`);
+        return sendErrorResponse(reply, 401, "Invalid login method for this account");
+    }
+
+    // Check if the password is correct
+    const isPasswordValid = await user.matchPasswd(password);
+    request.log.info(`Password validation result for ${email}: ${isPasswordValid}`);
+    
+    if (!isPasswordValid) {
+        sendErrorResponse(reply, 401, "Invalid credentials", {
+            metadata: {
+                hint: "Please check your email and password",
+                links: {
+                    forgotPassword: "/forgot-password",
+                    signup: "/signup"
+                }
+            }
+        });
+        return null;
+    }
+
+    // Check if account is deactivated
+    if (user.isDeactivated) {
+        sendErrorResponse(reply, 403, "Account is deactivated", {
+            metadata: {
+                hint: "Please contact support to reactivate your account"
+            }
+        });
+        return null;
+    }
+
+    // Check if email is confirmed for email-based accounts
+    if (user.provider === "email" && !user.isEmailConfirmed) {
+        sendErrorResponse(reply, 403, "Email not verified", {
+            metadata: {
+                hint: "Please verify your email before signing in",
+                links: {
+                    resendVerification: "/resend-verification"
+                }
+            }
+        });
+        return null;
+    }
+
+    return user;
+};
+
 module.exports = {
 	checkDeactivated,
 	checkEmailConfirmed,
@@ -166,4 +271,5 @@ module.exports = {
 	checkMailingDisabled,
 	recaptchaVerification,
 	//checkEmailLoginDisabled,
+	handleSignIn,
 };

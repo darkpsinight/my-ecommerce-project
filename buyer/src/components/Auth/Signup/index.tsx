@@ -6,12 +6,14 @@ import PasswordInput from "../PasswordInput";
 import { useSignup } from "@/hooks/useSignup";
 import { Spinner } from "@/components/Common/Spinner/index";
 import ErrorAlert from "@/components/Common/ErrorAlert";
+import { useRouter } from "next/navigation";
 
 interface SignupProps {
   appName: string;
 }
 
 const Signup = ({ appName }: SignupProps) => {
+  const router = useRouter();
   const {
     formData,
     loading,
@@ -24,6 +26,26 @@ const Signup = ({ appName }: SignupProps) => {
     handleSubmit,
   } = useSignup();
 
+  const handleGoogleLogin = () => {
+    // Redirect to Google OAuth URL
+    const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    const params = {
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      redirect_uri: process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI,
+      response_type: 'code',
+      scope: 'email profile',
+    };
+    
+    Object.entries(params).forEach(([key, value]) => 
+      googleAuthUrl.searchParams.append(key, value as string)
+    );
+
+    // Log the constructed Google OAuth URL
+    console.log('Google OAuth URL:', googleAuthUrl.toString());
+    
+    window.location.href = googleAuthUrl.toString();
+  };
+
   return (
     <section className="overflow-hidden py-20 bg-gray-2">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
@@ -35,19 +57,29 @@ const Signup = ({ appName }: SignupProps) => {
           </div>
 
           <div className="flex flex-col gap-4.5">
-            <button className="flex justify-center items-center gap-3.5 rounded-lg border border-gray-3 bg-gray-1 p-3 ease-out duration-200 hover:bg-gray-2">
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="flex justify-start items-center gap-3.5 rounded-lg border border-gray-3 bg-gray-1 p-3 ease-out duration-200 hover:bg-gray-2 relative"
+            >
               <GoogleIcon />
-              Sign Up with Google
+              <span className="flex-grow text-center">Sign Up with Google</span>
             </button>
 
-            <button className="flex justify-center items-center gap-3.5 rounded-lg border border-gray-3 bg-gray-1 p-3 ease-out duration-200 hover:bg-gray-2">
+            <button
+              type="button"
+              className="flex justify-start items-center gap-3.5 rounded-lg border border-gray-3 bg-gray-1 p-3 ease-out duration-200 hover:bg-gray-2 relative"
+            >
               <FacebookIcon />
-              Sign Up with Facebook
+              <span className="flex-grow text-center">Sign Up with Facebook</span>
             </button>
 
-            <button className="flex justify-center items-center gap-3.5 rounded-lg border border-gray-3 bg-gray-1 p-3 ease-out duration-200 hover:bg-gray-2">
+            <button
+              type="button"
+              className="flex justify-start items-center gap-3.5 rounded-lg border border-gray-3 bg-gray-1 p-3 ease-out duration-200 hover:bg-gray-2 relative"
+            >
               <XIcon />
-              Sign Up with X
+              <span className="flex-grow text-center">Sign Up with X</span>
             </button>
           </div>
 

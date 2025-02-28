@@ -119,33 +119,103 @@ const registerUser = async (request, reply) => {
 // @desc	 Validates username and password and send a
 //			 response with JWT and Refresh token
 // @access 	 Public
+// Helper function to handle sign-in process
+const handleSignIn = async (request, reply) => {
+    const { email, password } = request.body;
+
+    // Find user by email
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user) {
+        sendErrorResponse(reply, 401, "Invalid credentials", {
+            metadata: {
+                hint: "Please check your email and password",
+                links: {
+                    forgotPassword: "/forgot-password",
+                    signup: "/signup"
+                }
+            }
+        });
+        return null;
+    }
+
+    // If user signed up with OAuth, prevent password login
+    if (user.provider !== "email") {
+        sendErrorResponse(reply, 401, "Invalid login method", {
+            metadata: {
+                hint: `This account uses ${user.provider} authentication. Please sign in with ${user.provider}.`,
+                links: {
+                    oauth: `/auth/${user.provider}`
+                }
+            }
+        });
+        return null;
+    }
+
+    // Validate password for email-based accounts
+    if (!(await user.matchPasswd(password))) {
+        sendErrorResponse(reply, 401, "Invalid credentials", {
+            metadata: {
+                hint: "Please check your email and password",
+                links: {
+                    forgotPassword: "/forgot-password",
+                    signup: "/signup"
+                }
+            }
+        });
+        return null;
+    }
+
+    // Check if account is deactivated
+    if (user.isDeactivated) {
+        sendErrorResponse(reply, 403, "Account is deactivated", {
+            metadata: {
+                hint: "Please contact support to reactivate your account"
+            }
+        });
+        return null;
+    }
+
+    // Check if email is confirmed for email-based accounts
+    if (user.provider === "email" && !user.isEmailConfirmed) {
+        sendErrorResponse(reply, 403, "Email not verified", {
+            metadata: {
+                hint: "Please verify your email before signing in",
+                links: {
+                    resendVerification: "/resend-verification"
+                }
+            }
+        });
+        return null;
+    }
+
+    return user;
+};
+
 const signin = async (request, reply) => {
-	request.log.info("handlers/signin");
-	const { password } = request.body;
-	const user = request.userModel;
+    request.log.info("handlers/signin");
+    const user = await handleSignIn(request, reply);
+    
+    if (!user) return; // Error response already sent by handleSignIn
 
-	if (await user.matchPasswd(password)) {
-		const refreshToken = await getRefreshToken(user, request.ipAddress);
+    const refreshToken = await getRefreshToken(user, request.ipAddress);
+    const emailStatus = await sendNewLoginEmail(user, request);
+    const verifyToken = await reply.generateCsrf();
 
-		const emailStatus = await sendNewLoginEmail(user, request);
-		const verifyToken = await reply.generateCsrf();
-		return sendSuccessResponse(
-			reply,
-			{
-				statusCode: 200,
-				message: "Signed in",
-				token: user.getJWT(),
-				emailSuccess: emailStatus.success,
-				emailMessage: emailStatus.message,
-				verifyToken,
-			},
-			{
-				refreshToken,
-			}
-		);
-	} else {
-		return sendErrorResponse(reply, 400, "Password Does not match");
-	}
+    return sendSuccessResponse(
+        reply,
+        {
+            statusCode: 200,
+            message: "Signed in",
+            token: user.getJWT(),
+            emailSuccess: emailStatus.success,
+            emailMessage: emailStatus.message,
+            verifyToken,
+        },
+        {
+            refreshToken,
+        }
+    );
 };
 
 // @route	POST /api/v1/auth/emailLogin

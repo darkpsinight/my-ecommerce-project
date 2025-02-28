@@ -95,6 +95,8 @@ userSchema.methods.getJWT = function () {
 
 // Function to match the password entered by the user and stored password
 userSchema.methods.matchPasswd = async function (enteredPasswd) {
+	console.log(`Entered password: ${enteredPasswd}`);
+	console.log(`Stored password: ${this.password}`);
 	return await bcrypt.compare(enteredPasswd, this.password);
 };
 
@@ -171,7 +173,8 @@ const User = mongoose.model("User", userSchema);
 
 const hashPasswd = async (passwd) => {
 	const salt = await bcrypt.genSalt(10);
-	hashedPasswd = await bcrypt.hash(passwd, salt);
+	const hashedPasswd = await bcrypt.hash(passwd, salt);
+	console.log(`Password hashed: ${hashedPasswd}`);
 	return hashedPasswd;
 };
 

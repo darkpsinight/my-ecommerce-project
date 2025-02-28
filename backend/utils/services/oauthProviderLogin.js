@@ -50,9 +50,6 @@ const getDetailsGoogle = async (code) => {
 
 	let email, verified;
 
-	// Iterator for email
-	let i = 0;
-
 	// Request body for access token request
 	const requestBody = {
 		grant_type: "authorization_code",
@@ -62,43 +59,55 @@ const getDetailsGoogle = async (code) => {
 		redirect_uri: configs.GOOGLE_CONFIGS.REDIRECT_URI,
 	};
 
-	// get Access token from code
-	const accessTokenResponse = await axios.post(
-		configs.GOOGLE_CONFIGS.ACCESS_TOKEN,
-		requestBody
-	);
+	try {
+		// get Access token from code
+		const accessTokenResponse = await axios.post(
+			configs.GOOGLE_CONFIGS.ACCESS_TOKEN,
+			requestBody
+		);
 
-	const accessToken = accessTokenResponse.data.access_token;
+		const accessToken = accessTokenResponse.data.access_token;
 
-	const resourceResponse = await axios.get(
-		"https://people.googleapis.com/v1/people/me\
-		?requestMask.includeField=person.emailAddresses%2Cperson.names",
-		{
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				Accept: "application/json",
-			},
+		const resourceResponse = await axios.get(
+			"https://people.googleapis.com/v1/people/me\
+			?requestMask.includeField=person.emailAddresses%2Cperson.names",
+			{
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					Accept: "application/json",
+				},
+			}
+		);
+
+		let name = resourceResponse.data.names[0]["displayName"];
+		const emailList = resourceResponse.data.emailAddresses;
+
+		let primaryEmail = null;
+
+		// Find primary email from the list of emails
+		for (let i = 0; i < emailList.length; i++) {
+			if (emailList[i]["metadata"]["primary"]) {
+				primaryEmail = emailList[i];
+				break;
+			}
 		}
-	);
 
-	let name = resourceResponse.data.names[0]["displayName"];
-	const emailList = resourceResponse.data.emailAddresses;
-
-	// Find primary email from the list of emails
-	for (i = 0; i < emailList.length; i++) {
-		if (emailList[i]["metadata"]["primary"]) break;
-	}
-
-	// Return information if it finds valid user details
-	if (emailList[i]["metadata"]["primary"] && emailList[i]["value"]) {
-		email = emailList[i]["value"];
-		verified = emailList[i]["metadata"]["verified"];
-		return {
-			name,
-			email,
-			provider,
-			verified,
-		};
+		// Return information if it finds valid user details
+		if (primaryEmail && primaryEmail["value"]) {
+			email = primaryEmail["value"];
+			verified = primaryEmail["metadata"]["verified"];
+			return {
+				name,
+				email,
+				provider,
+				verified,
+			};
+		} else {
+			throw new Error('No primary email found');
+		}
+	} catch (error) {
+		console.error('Error fetching user details from Google:', error.response ? error.response.data : error.message);
+		return { error: 'Failed to fetch user details from Google' };
 	}
 	return 0;
 };

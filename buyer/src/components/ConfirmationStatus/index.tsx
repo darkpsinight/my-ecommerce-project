@@ -152,7 +152,7 @@ const ConfirmationStatus = () => {
 
                 <form
                   onSubmit={handleResendConfirmation}
-                  className="max-w-[400px] mx-auto mb-7.5"
+                  className="max-w-[400px] mx-auto mb-3.5"
                 >
                   <div className="mb-4">
                     <input
@@ -179,12 +179,16 @@ const ConfirmationStatus = () => {
                     {isResending ? "Sending..." : "Resend Confirmation Email"}
                   </button>
                 </form>
+                <span className="relative z-1 block font-medium text-center">
+                  <span className="block absolute -z-1 left-0 top-1/2 h-px w-full bg-gray-3"></span>
+                  <span className="inline-block px-3 bg-white">OR</span>
+                </span>
               </>
             )}
 
             <Link
               href="/signin"
-              className="inline-flex items-center gap-2 font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark"
+              className="inline-flex items-center gap-2 font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark mt-3.5"
             >
               Log In to Your Account
             </Link>

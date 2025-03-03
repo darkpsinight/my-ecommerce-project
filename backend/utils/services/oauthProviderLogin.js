@@ -106,8 +106,15 @@ const getDetailsGoogle = async (code) => {
 			throw new Error('No primary email found');
 		}
 	} catch (error) {
-		console.error('Error fetching user details from Google:', error.response ? error.response.data : error.message);
-		return { error: 'Failed to fetch user details from Google' };
+		// Check if this is an 'invalid_grant' error, which often happens when a code is reused
+		if (error.response && error.response.data && error.response.data.error === 'invalid_grant') {
+			console.log('Auth code already used - this may be a duplicate request');
+			// Return null instead of an error for invalid_grant, as this likely means the code was already used
+			return null;
+		} else {
+			console.error('Error fetching user details from Google:', error.response ? error.response.data : error.message);
+			return { error: 'Failed to fetch user details from Google' };
+		}
 	}
 	return 0;
 };

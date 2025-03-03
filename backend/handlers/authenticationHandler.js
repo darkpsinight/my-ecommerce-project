@@ -21,6 +21,7 @@ const {
 	sendErrorResponse,
 	sendSuccessResponse,
 	redirectWithToken,
+	redirectWithoutToken
 } = require("../utils/responseHelpers");
 const { validatePassword, getPasswordRequirements } = require("../utils/passwordValidation");
 const { BlacklistedToken } = require("../models/blacklistedToken");
@@ -62,7 +63,7 @@ const registerUser = async (request, reply) => {
 				hint: "If you already have an account, try signing in or resetting your password",
 				links: {
 					login: "/signin",
-					passwordReset: "/reset-password"
+					passwordReset: "/forgot-password"
 				}
 			}
 		});
@@ -298,7 +299,7 @@ const loginWithEmail = async (request, reply) => {
 	user.isEmailConfirmed = true;
 	user.save({ validateBeforeSave: false });
 	reply.setCookie("refreshToken", newRefreshToken, getRefreshTokenOptns());
-	return redirectWithToken(reply, verifyToken, {
+	return redirectWithoutToken(reply, verifyToken, {
 		redirectURL: configs.APP_LOGIN_WTH_EMAIL_REDIRECT,
 	});
 };
@@ -314,7 +315,7 @@ const confirmEmail = async (request, reply) => {
 	user.isEmailConfirmed = true;
 	await user.save({ validateBeforeSave: false });
 
-	return redirectWithToken(reply, request.query.token, {
+	return redirectWithoutToken(reply, request.query.token, {
 		redirectURL: configs.APP_CONFIRM_EMAIL_REDIRECT,
 	});
 };
@@ -366,41 +367,38 @@ const requestResetPasswordToken = async (request, reply) => {
 
 	const user = request.userModel;
 
-	if (!user.isPwResetTokenExpired()) {
-		return sendErrorResponse(
-			reply,
-			400,
-			`A password reset email was recently sent. Please wait ${configs.PASSWORD_RESET_TOKEN_EXPIRATION / (60 * 1000)} minutes before requesting another one.`,
-			{
-				metadata: {
-					hint: "Check your spam/promotions folder if you haven't received the email",
-					links: {
-						login: "/api/v1/auth/signin",
-						support: "/api/v1/support"
-					}
-				}
+	// Standard success response for both existing and non-existing emails
+	const standardResponse = {
+		statusCode: 200,
+		message: "Email Sent",
+		success: true,
+		metadata: {
+			hint: "If this email is registered, you'll receive instructions to reset your password shortly. Check Spam/Promotions folder.",
+			links: {
+				forgotPassword: "/forgot-password",
+				signin: "/signin"
 			}
-		);
+		}
+	};
+
+	// If user doesn't exist, wait 2000ms before responding to prevent timing attacks
+	if (!user) {
+		await new Promise(resolve => setTimeout(resolve, 3000));
+		return sendSuccessResponse(reply, standardResponse);
 	}
+
+	// Generate new reset token and send email regardless of existing token
 	const pwResetToken = user.getPwResetToken();
 	await user.save({ validateBeforeSave: false });
 
-	const emailStatus = await passwordResetEmailHelper(
-		user,
-		request,
-		pwResetToken
-	);
-
-	if (!emailStatus.success) {
-		return sendErrorResponse(reply, 500, emailStatus.message);
+	const emailResult = await passwordResetEmailHelper(user, request, pwResetToken);
+	
+	if (!emailResult.success) {
+		request.log.error(`Failed to send password reset email: ${emailResult.message}`);
+		return sendErrorResponse(reply, 500, "Failed to send password reset email");
 	}
 
-	return sendSuccessResponse(reply, {
-		statusCode: 200,
-		message: emailStatus.message,
-		emailSuccess: emailStatus.success,
-		emailMessage: emailStatus.message,
-	});
+	return sendSuccessResponse(reply, standardResponse);
 };
 
 // @route 	GET /api/v1/auth/reset-password
@@ -461,6 +459,12 @@ const resetPasswordFromToken = async (request, reply) => {
 		message: "Password Updated",
 		emailSuccess: emailStatus.success,
 		emailMessage: emailStatus.message,
+		metadata: {
+		  hint: "Your password has been successfully updated. You can now sign in with your new password.",
+		  links: {
+			login: "/signin"
+		  }
+		}
 	});
 };
 
@@ -865,7 +869,12 @@ const logout = async (request, reply) => {
 			if (!decoded.email && decoded.id) {
 				const userFromDb = await User.findById(decoded.id);
 				if (!userFromDb) {
-					return sendErrorResponse(reply, 404, 'User not found');
+					return sendErrorResponse(reply, 404, 'User not found',{
+						metadata: {
+							errors: passwordValidation.errors,
+							requirements: getPasswordRequirements()
+						}
+					});
 				}
 				userEmail = userFromDb.email;
 			} else {

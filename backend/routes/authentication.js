@@ -26,6 +26,7 @@ const {
 	checkPasswordLength,
 	checkMailingDisabled,
 	recaptchaVerification,
+	attachUserForPasswordReset,
 } = require("../plugins/authHelperPlugins");
 const { tokenCheck } = require("../plugins/tokenCheck");
 const { authenticationSchema } = require("./schemas/authSchema");
@@ -110,7 +111,7 @@ const authenticationRoutes = async (fastify, opts) => {
 				rateLimiter(rateLimits.passwordReset),  // Use the new password reset specific rate limit
 				recaptchaVerification,
 				checkMailingDisabled,
-				attachUser(true),
+				attachUserForPasswordReset(true),
 				checkDeactivated,
 			],
 			handler: requestResetPasswordToken,

@@ -10,6 +10,9 @@ const { User } = require("../models/user");
 const checkDeactivated = async (request, reply) => {
 	request.log.info("Checking if the user account is deactivated");
 	const user = request.user || request.userModel;
+	if (!user) {
+		return; // Skip deactivation check for non-existent users
+	}
 	if (user.isDeactivated) {
 		return sendErrorResponse(reply, 400, "User account is deactivated, please reactivate your account by clicking on the link sent to your email address");
 	}
@@ -53,13 +56,12 @@ const attachUser = (byEmail) => {
 			});
 		}
 		if (!user) {
-			return sendErrorResponse(reply, 400, "User not found", {
+			return sendErrorResponse(reply, 401, "Email Not Recognized", {
 				metadata: {
-					hint: "Please check your credentials or consider creating an account",
+					hint: "Please check your email",
 					links: {
-						signup: "/signup",
-						oauth: "/auth/google",
-						forgotPassword: "/forgot-password"
+						forgotPassword: "/forgot-password",
+						signup: "/signup"
 					}
 				}
 			});
@@ -262,14 +264,41 @@ const handleSignIn = async (request, reply) => {
     return user;
 };
 
+/**
+ * Attaches user to request object (request.userModel) for password reset
+ * This function always returns a consistent response regardless of whether
+ * the email exists to prevent email enumeration
+ * @param {Boolean} byEmail true if email is being sent in request body
+ * @returns
+ */
+const attachUserForPasswordReset = (byEmail) => {
+    return async (request, reply) => {
+        request.log.info(
+            `Attaching user for password reset by ${byEmail ? "email" : "user id in the token"}`
+        );
+        let user;
+        if (!byEmail) {
+            user = await User.findOne({
+                uid: request.user.uid,
+            });
+        } else {
+            user = await User.findOne({
+                email: request.body.email,
+            });
+        }
+        request.userModel = user;
+    };
+};
+
 module.exports = {
-	checkDeactivated,
-	checkEmailConfirmed,
-	attachUser,
-	attachUserWithPassword,
-	checkPasswordLength,
-	checkMailingDisabled,
-	recaptchaVerification,
-	//checkEmailLoginDisabled,
-	handleSignIn,
+    checkDeactivated,
+    checkEmailConfirmed,
+    attachUser,
+    attachUserWithPassword,
+    checkPasswordLength,
+    checkMailingDisabled,
+    recaptchaVerification,
+    handleSignIn,
+    attachUserForPasswordReset,
+	//checkEmailLoginDisabled
 };

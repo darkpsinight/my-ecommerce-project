@@ -78,14 +78,22 @@ const sendSuccessResponse = (reply, response, options = {}) => {
   }
 };
 
-const redirectWithToken = (reply, token, options) => {
+const redirectWithoutToken = (reply, token, options) => {
   reply
     .code(302)
     .redirect(`${options.redirectURL}/confirmation?success=true`);
+};
+
+const redirectWithToken = (reply, token, options) => {
+  reply
+    .code(302)
+    .redirect(`${options.redirectURL}/change-password?token=${token}&success=true`);
 };
 
 module.exports = {
   sendErrorResponse,
   sendSuccessResponse,
   redirectWithToken,
+  redirectWithoutToken
 };
+  

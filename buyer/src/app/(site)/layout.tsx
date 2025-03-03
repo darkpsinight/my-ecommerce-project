@@ -29,7 +29,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   // Check if current route is an auth route
-  const isAuthRoute = ["/signin", "/signup", "/confirmation"].includes(pathname);
+  const isAuthRoute = ["/signin", "/signup", "/confirmation", "/forgot-password", "/change-password"].includes(pathname);
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 1000);

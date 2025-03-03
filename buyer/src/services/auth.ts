@@ -1,14 +1,15 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
 // Create an axios instance with default config
 const axiosInstance = axios.create({
   baseURL: API_URL,
   withCredentials: true, // Important: This enables sending cookies in cross-origin requests
   headers: {
-    'Content-Type': 'application/json'
-  }
+    "Content-Type": "application/json",
+  },
 });
 
 export interface SignupData {
@@ -58,31 +59,58 @@ interface ErrorResponse {
     links?: {
       login?: string;
       passwordReset?: string;
-    }
-  }
+    };
+  };
 }
 
-const isErrorResponse = (error: any): error is { response: { data: ErrorResponse } } => {
-  return error?.response?.data?.statusCode !== undefined &&
-         error?.response?.data?.error !== undefined &&
-         error?.response?.data?.success === false;
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
+interface UserData {
+  name: string;
+  email: string;
+  token: string;
+}
+
+const isErrorResponse = (
+  error: unknown
+): error is { response: { data: ErrorResponse } } => {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'response' in error &&
+    error.response !== null &&
+    typeof error.response === 'object' &&
+    'data' in error.response &&
+    error.response.data !== null &&
+    typeof error.response.data === 'object' &&
+    'statusCode' in error.response.data &&
+    'error' in error.response.data &&
+    'success' in error.response.data &&
+    error.response.data.success === false
+  );
 };
 
 export const authApi = {
   signup: async (data: SignupData): Promise<SignupResponse> => {
     try {
-      const response = await axiosInstance.post('/auth/signup', data);
-      
-      const rawData = response.data as any;
-      
+      const response = await axiosInstance.post<ApiResponse<UserData>>('/auth/signup', data);
       const responseData: SignupResponse = {
-        success: rawData.success ?? true,
-        message: rawData.message ?? 'Registration successful',
-        data: rawData.data
+        success: response.data.success?? true,
+        message: response.data.message ?? "Registration successful",
+        data: response.data.data ? {
+          user: {
+            name: response.data.data.name,
+            email: response.data.data.email
+          },
+          token: response.data.data.token
+        } : undefined
       };
-      
       return responseData;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (isErrorResponse(error)) {
         throw error;
       }
@@ -98,21 +126,47 @@ export const authApi = {
       };
     }
   },
-  
+
   signin: async (data: SigninData): Promise<SigninResponse> => {
     try {
-      const response = await axiosInstance.post('/auth/signin', data);
-      
-      const rawData = response.data as any;
-
+      const response = await axiosInstance.post<ApiResponse<UserData>>('/auth/signin', data);
       const responseData: SigninResponse = {
-        success: rawData.success ?? true,
-        message: rawData.message ?? 'Login successful',
-        data: rawData.data
+        success: response.data.success ?? true,
+        message: response.data.message ?? "Login successful",
+        data: response.data.data ? {
+          user: {
+            name: response.data.data.name,
+            email: response.data.data.email
+          },
+          token: response.data.data.token
+        } : undefined
       };
-      
       return responseData;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (isErrorResponse(error)) {
+        throw error;
+      }
+      throw {
+        response: {
+          data: {
+            statusCode: 500,
+            error: 'Internal Server Error',
+            message: 'An unexpected error occurred',
+            success: false
+          } as ErrorResponse
+        }
+      };
+    }
+  },
+
+  forgotPassword: async (email: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await axiosInstance.post<ApiResponse<never>>('/auth/reset-password', { email });
+      return {
+        success: response.data.success ?? true,
+        message: response.data.message ?? "Password reset email sent successfully"
+      };
+    } catch (error: unknown) {
       if (isErrorResponse(error)) {
         throw error;
       }

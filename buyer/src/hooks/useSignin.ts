@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { authApi, SigninData } from '@/services/auth';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { setTokens } from '@/redux/features/auth-slice';
 
 interface UseSigninReturn {
   formData: SigninData;
@@ -23,6 +25,7 @@ interface UseSigninReturn {
 
 export const useSignin = (): UseSigninReturn => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState<SigninData>({
     email: '',
     password: '',
@@ -77,9 +80,12 @@ export const useSignin = (): UseSigninReturn => {
         throw new Error(response.message);
       }
 
-      // Store the token
-      if (response.data?.token) {
-        localStorage.setItem('token', response.data.token);
+      // Store the token in Redux store
+      if (response.data?.token && response.data?.verifyToken) {
+        dispatch(setTokens({
+          token: response.data.token,
+          verifyToken: response.data.verifyToken
+        }));
       }
 
       // Redirect to dashboard or home page after successful login

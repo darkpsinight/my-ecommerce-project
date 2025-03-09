@@ -13,7 +13,7 @@ export const AUTH_API = {
     REQUEST_EMAIL_LOGIN: `${API_URL}/emailLogin`,
     ACCOUNT: `${API_URL}/account`,
     REACTIVATE: `${API_URL}/reactivate`,
-    REFRESH_TOKEN: `${API_URL}/refresh`,
+    REFRESH_TOKEN: `${API_URL}/auth/refresh`,
 };
 
 export const ADMIN_API = {

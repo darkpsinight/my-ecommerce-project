@@ -6,6 +6,7 @@ import SuccessAlert from "@/components/Common/SuccessAlert";
 import { useChangePassword } from "@/hooks/useChangePassword";
 import Link from "next/link";
 import React from "react";
+import PasswordInput from "../PasswordInput";
 
 interface ChangePasswordProps {
   appName: string;
@@ -45,55 +46,28 @@ const ChangePassword = ({ appName }: ChangePasswordProps) => {
 
           <div>
             <form onSubmit={handleSubmit} noValidate>
-              <div className="mb-5">
-                <label htmlFor="password" className="block mb-2.5">
-                  New Password
-                </label>
+              <PasswordInput
+                id="password"
+                name="password"
+                label="New Password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your new password"
+                isRequired={true}
+                error={passwordError}
+              />
 
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter your new password"
-                  autoComplete="new-password"
-                  required
-                  className={`rounded-lg border ${
-                    passwordError ? "border-red" : "border-gray-3"
-                  } bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20`}
-                />
-                {passwordError && (
-                  <div className="text-[#e53e3e] text-sm mt-1">
-                    {passwordError}
-                  </div>
-                )}
-              </div>
-
-              <div className="mb-5">
-                <label htmlFor="confirmPassword" className="block mb-2.5">
-                  Confirm New Password
-                </label>
-
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  id="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm your new password"
-                  autoComplete="new-password"
-                  required
-                  className={`rounded-lg border ${
-                    confirmPasswordError ? "border-red" : "border-gray-3"
-                  } bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20`}
-                />
-                {confirmPasswordError && (
-                  <div className="text-[#e53e3e] text-sm mt-1">
-                    {confirmPasswordError}
-                  </div>
-                )}
-              </div>
+              <PasswordInput
+                id="confirmPassword"
+                name="confirmPassword"
+                label="Confirm New Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm your new password"
+                isRequired={true}
+                error={confirmPasswordError}
+                showStrengthIndicator={false}
+              />
 
               {apiError && (
                 <ErrorAlert

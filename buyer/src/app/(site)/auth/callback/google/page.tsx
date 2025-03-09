@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { setTokens } from '@/redux/features/auth-slice';
 
 export default function GoogleOAuthCallback() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState('Processing authentication...');
   const [error, setError] = useState('');
@@ -40,6 +43,17 @@ export default function GoogleOAuthCallback() {
         if (isLikelyAuthenticated) {
           setIsAuthenticated(true);
           setStatus('Authentication successful! Redirecting...');
+          
+          const data = await response.json();
+          
+          // Update Redux store with tokens
+          if (data.token && data.verifyToken) {
+            dispatch(setTokens({
+              token: data.token,
+              verifyToken: data.verifyToken
+            }));
+          }
+          
           setTimeout(() => {
             router.push('/');
           }, 1500);
@@ -50,6 +64,14 @@ export default function GoogleOAuthCallback() {
 
         if (!response.ok) {
           throw new Error(data.message || 'Authentication failed');
+        }
+
+        // Update Redux store with tokens
+        if (data.token && data.verifyToken) {
+          dispatch(setTokens({
+            token: data.token,
+            verifyToken: data.verifyToken
+          }));
         }
 
         // Store tokens or user data in localStorage or state management
@@ -79,6 +101,15 @@ export default function GoogleOAuthCallback() {
           // We likely have a successful authentication despite the error
           setIsAuthenticated(true);
           setStatus('Authentication successful! Redirecting...');
+          
+          // Try to get tokens from the error response if available
+          if (err.response?.data?.token && err.response?.data?.verifyToken) {
+            dispatch(setTokens({
+              token: err.response.data.token,
+              verifyToken: err.response.data.verifyToken
+            }));
+          }
+          
           setTimeout(() => {
             router.push('/');
           }, 1500);
@@ -89,7 +120,7 @@ export default function GoogleOAuthCallback() {
     };
 
     handleCallback();
-  }, [router, searchParams]);
+  }, [router, searchParams, dispatch]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -124,4 +155,4 @@ export default function GoogleOAuthCallback() {
       </div>
     </div>
   );
-}
+} 

@@ -95,11 +95,11 @@ const attachUserWithPassword = (byEmail) => {
 		}
 		request.log.info(`User retrieved: ${JSON.stringify(user)}`);
 		if (!user) {
-			return sendErrorResponse(reply, 401, "User not found", {
+			return sendErrorResponse(reply, 401, "Invalid email or password", {
 				metadata: {
 					hint: `Please check your email address and password or consider creating an account.`,
 					links: {
-						oauth: `/auth`
+						signin: `/signin`
 					}
 				}
 			});

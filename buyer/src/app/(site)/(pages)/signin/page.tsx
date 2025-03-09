@@ -8,10 +8,10 @@ export async function generateMetadata(): Promise<Metadata> {
   
   return {
     title: `Sign In | ${configs.APP_NAME}`,
-    description: `Sign in to your ${configs.APP_NAME} account`,
+    description: `Sign in to your ${configs.APP_NAME} account to start trading digital codes`,
     openGraph: {
       title: `Sign In | ${configs.APP_NAME}`,
-      description: `Sign in to your ${configs.APP_NAME} account`,
+      description: `Sign in to your ${configs.APP_NAME} account to start trading digital codes`,
       type: "website",
       url: "/signin",
     },

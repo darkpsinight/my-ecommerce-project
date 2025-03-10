@@ -11,7 +11,8 @@ import {
   useTheme,
   Button,
   lighten,
-  darken
+  darken,
+  Tooltip
 } from '@mui/material';
 
 import SidebarMenu from './SidebarMenu';
@@ -84,7 +85,7 @@ function Sidebar() {
             target="_blank"
             rel="noopener noreferrer"
             variant="contained"
-            color="success"
+            color="warning"
             size="small"
             fullWidth
           >

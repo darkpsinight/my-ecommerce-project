@@ -27,7 +27,7 @@ import SearchTwoToneIcon from '@mui/icons-material/SearchTwoTone';
 import Label from 'src/components/Label';
 import CheckTwoToneIcon from '@mui/icons-material/CheckTwoTone';
 import AlarmTwoToneIcon from '@mui/icons-material/AlarmTwoTone';
-import Link from 'src/components/Link';
+import { Link as RouterLink } from 'react-router-dom';
 
 const AvatarSuccess = styled(Avatar)(
   ({ theme }) => `
@@ -429,8 +429,8 @@ function SidebarContent() {
                   width: 28,
                   height: 28
                 }}
-                component={Link}
-                href="#"
+                component={RouterLink}
+                to="#"
                 alt="Remy Sharp"
                 src="/static/images/avatars/1.jpg"
               />
@@ -441,8 +441,8 @@ function SidebarContent() {
                   width: 28,
                   height: 28
                 }}
-                component={Link}
-                href="#"
+                component={RouterLink}
+                to="#"
                 alt="Travis Howard"
                 src="/static/images/avatars/2.jpg"
               />
@@ -453,8 +453,8 @@ function SidebarContent() {
                   width: 28,
                   height: 28
                 }}
-                component={Link}
-                href="#"
+                component={RouterLink}
+                to="#"
                 alt="Craig Vaccaro"
                 src="/static/images/avatars/3.jpg"
               />
@@ -497,8 +497,8 @@ function SidebarContent() {
                   width: 28,
                   height: 28
                 }}
-                component={Link}
-                href="#"
+                component={RouterLink}
+                to="#"
                 alt="Travis Howard"
                 src="/static/images/avatars/4.jpg"
               />
@@ -509,8 +509,8 @@ function SidebarContent() {
                   width: 28,
                   height: 28
                 }}
-                component={Link}
-                href="#"
+                component={RouterLink}
+                to="#"
                 alt="Craig Vaccaro"
                 src="/static/images/avatars/5.jpg"
               />

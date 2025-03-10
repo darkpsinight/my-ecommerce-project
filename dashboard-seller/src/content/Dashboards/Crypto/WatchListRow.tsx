@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import Text from 'src/components/Text';
 import Label from 'src/components/Label';
-import { Chart } from 'src/components/Chart';
+import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import TrendingDownTwoToneIcon from '@mui/icons-material/TrendingDownTwoTone';
 import TrendingUpTwoToneIcon from '@mui/icons-material/TrendingUpTwoTone';

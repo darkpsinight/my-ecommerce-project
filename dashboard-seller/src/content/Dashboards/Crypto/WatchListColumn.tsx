@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import Label from 'src/components/Label';
 import Text from 'src/components/Text';
-import { Chart } from 'src/components/Chart';
+import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 
 const AvatarWrapper = styled(Avatar)(

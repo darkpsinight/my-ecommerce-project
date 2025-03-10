@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-import NextLink from 'next/link';
+import { NavLink } from 'react-router-dom';
 
 import {
   Avatar,
@@ -116,24 +116,22 @@ function HeaderUserbox() {
         </MenuUserBox>
         <Divider sx={{ mb: 0 }} />
         <List sx={{ p: 1 }} component="nav">
-          <NextLink href="/management/profile" passHref>
-            <ListItem button>
-              <AccountBoxTwoToneIcon fontSize="small" />
-              <ListItemText primary="My Profile" />
-            </ListItem>
-          </NextLink>
-          <NextLink href="/applications/messenger" passHref>
-            <ListItem button>
-              <InboxTwoToneIcon fontSize="small" />
-              <ListItemText primary="Messenger" />
-            </ListItem>
-          </NextLink>
-          <NextLink href="/management/profile/settings" passHref>
-            <ListItem button>
-              <AccountTreeTwoToneIcon fontSize="small" />
-              <ListItemText primary="Account Settings" />
-            </ListItem>
-          </NextLink>
+          <ListItem button to="/management/profile/details" component={NavLink}>
+            <AccountBoxTwoToneIcon fontSize="small" />
+            <ListItemText primary="My Profile" />
+          </ListItem>
+          <ListItem button to="/dashboards/messenger" component={NavLink}>
+            <InboxTwoToneIcon fontSize="small" />
+            <ListItemText primary="Messenger" />
+          </ListItem>
+          <ListItem
+            button
+            to="/management/profile/settings"
+            component={NavLink}
+          >
+            <AccountTreeTwoToneIcon fontSize="small" />
+            <ListItemText primary="Account Settings" />
+          </ListItem>
         </List>
         <Divider />
         <Box sx={{ m: 1 }}>

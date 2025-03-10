@@ -1,8 +1,6 @@
 import { alpha, createTheme, lighten, darken } from '@mui/material';
 import '@mui/lab/themeAugmentation';
 
-// import i18n from 'src/i18n/i18n';
-
 const themeColors = {
   primary: '#5569ff',
   secondary: '#6E759F',
@@ -361,8 +359,9 @@ export const PureLightTheme = createTheme({
           width: '100%',
           flex: 1
         },
-        '#__next': {
+        '#root': {
           width: '100%',
+          height: '100%',
           display: 'flex',
           flex: 1,
           flexDirection: 'column'
@@ -403,26 +402,6 @@ export const PureLightTheme = createTheme({
           color: colors.info.dark,
           borderRadius: 4,
           padding: 4
-        },
-        '@keyframes pulse': {
-          '0%': {
-            transform: 'scale(.75)'
-          },
-          '20%': {
-            transform: 'scale(1.1)'
-          },
-          '40%': {
-            transform: 'scale(.75)'
-          },
-          '60%': {
-            transform: 'scale(1.05)'
-          },
-          '80%': {
-            transform: 'scale(.75)'
-          },
-          '100%': {
-            transform: 'scale(.75)'
-          }
         },
         '@keyframes ripple': {
           '0%': {

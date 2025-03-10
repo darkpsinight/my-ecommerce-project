@@ -15,7 +15,6 @@ const Scrollbar: FC<ScrollbarProps> = ({ className, children, ...rest }) => {
   return (
     <Scrollbars
       autoHide
-      universal
       renderThumbVertical={() => {
         return (
           <Box

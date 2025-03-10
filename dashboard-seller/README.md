@@ -1,41 +1,41 @@
 <p align="center">
     <a href="https://bloomui.com" title="BloomUI.com">
-        <img src="https://bloomui.s3.us-east-2.amazonaws.com/tokyo-logo.png" alt="Tokyo Free White Typescript Next.js Admin Dashboard">
+        <img src="https://bloomui.s3.us-east-2.amazonaws.com/tokyo-logo.png" alt="Tokyo Free White Typescript React Admin Dashboard">
     </a>
 </p>
 <h1 align="center">
-    <b>Tokyo Free White Typescript Next.js Admin Dashboard</b>
+    <b>Tokyo Free White Typescript React Admin Dashboard</b>
     <br>
-    <a href="https://twitter.com/intent/tweet?url=https://bloomui.com&text=I like this Next.js admin dashboard">
+    <a href="https://twitter.com/intent/tweet?url=https://bloomui.com&text=I like this React admin dashboard">
         <img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social" />
     </a>
 </h1>
 <div align="center">
 
-![version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 
-<a href="https://bloomui.com/product/tokyo-free-white-nextjs-typescript-material-ui-admin-dashboard/"><img src="https://bloomui.s3.us-east-2.amazonaws.com/tokyo-free-white-nextjs-typescript-material-ui-admin-dashboard.jpg" /></a>
+<a href="https://bloomui.com/product/tokyo-free-white-react-typescript-material-ui-admin-dashboard/"><img src="https://bloomui.s3.us-east-2.amazonaws.com/tokyo-free-white-react-typescript-material-ui-admin-dashboard.jpg" /></a>
 </div>
 
-<a href="https://bloomui.com/product/tokyo-free-white-nextjs-typescript-material-ui-admin-dashboard/"><h3>Free Material-UI Next.js Typescript Dashboard Template with Dark Color Scheme</h3></a>
+<a href="https://bloomui.com/product/tokyo-free-white-react-typescript-material-ui-admin-dashboard/"><h3>Free React Typescript Admin Dashboard Template built with Material-UI</h3></a>
 <p>
-    Tokyo Free White Next.js Typescript Dashboard is built using the latest industry standards and features a clean and premium design style, making use of colors and accents to improve the user experience for all included flows and pages.
+    This free and open source admin dashboard template is built for React and it’s bootstrapped from Facebook’s create-react-app. All NPM dependencies are up to date and it contains multiple fully customized components based on the popular frontend components framework, Material-UI.
 </p>
 <p>
-It is powered by Next.js, Typescript and React and contains multiple components customized on top of Material-UI – which is one of the best UI components frameworks available.</p>
-<p>
-We keep all dependencies updated to their latest stable versions. Each time we release an updated version you will be notified via the email you used to initially download the template.
+Tokyo Free White Typescript Dashboard features a nice classic light & clean design and color scheme.
 </p>
 <p>
-To discover all the features that this free React admin template has to offer, we suggest visiting the live preview we’ve set up.
+You can customize the color scheme and style by editing a single variables files. This Typescript admin dashboard doesn’t use SCSS stylesheets but the more modern approach with styled-components.
 </p>
-<p>There is also a free Javascript version available, if that is what you prefer working with.</p>
+<p>
+We’ve included a few page examples for most used user flows that will give you a solid base for getting started with your new project’s development. With very light modifications you can even integrate Tokyo Free White Typescript Dashboard into existing projects giving them a much deserved makeover.
+</p>
 
 ---
 <h3>Updrade to PRO</h3>
 
-<p>The premium version of this template comes with a lot more components, features and options making it a very powerful friend in your development endeavors. You can download a copy of it from <a href="https://bloomui.com">bloomui.com</a></p>
+<p>If you're looking for more features like translations, complex user flows, redux examples and more,  we recommend taking a look at the premium version (Tokyo White Typescript Dashboard) on <a href="https://bloomui.com">bloomui.com</a></p>
 
 ---
 
@@ -44,9 +44,9 @@ To discover all the features that this free React admin template has to offer, w
 </h2>
 <ol>
     <li>Make sure you have the latest stable versions for Node.js and NPM installed</li>
-    <li>Clone repository: <code>git clone https://github.com/bloomui/tokyo-free-white-nextjs-admin-dashboard.git</code></li>
+    <li>Clone repository: <code>git clone https://github.com/bloomui/tokyo-free-white-react-admin-dashboard.git</code></li>
     <li>Install dependencies: Run <code>npm install</code> inside the project folder</li>
-    <li>Start dev server: After the install finishes, run <code>yarn dev</code>. A browser window will open on http://localhost:3000 where you''ll see the live preview</li>
+    <li>Start dev server: After the install finishes, run <code>npm run start</code>. A browser window will open on http://localhost:3000 where you''ll see the live preview</li>
 </ol>
 
 ---

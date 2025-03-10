@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import TrendingUp from '@mui/icons-material/TrendingUp';
 import Text from 'src/components/Text';
-import { Chart } from 'src/components/Chart';
+import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 
 const AvatarSuccess = styled(Avatar)(

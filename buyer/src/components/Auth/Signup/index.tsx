@@ -30,21 +30,23 @@ const Signup = ({ appName }: SignupProps) => {
 
   const handleGoogleLogin = () => {
     // Redirect to Google OAuth URL
-    const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    const googleAuthUrl = new URL(
+      "https://accounts.google.com/o/oauth2/v2/auth"
+    );
     const params = {
       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       redirect_uri: process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI,
-      response_type: 'code',
-      scope: 'email profile',
+      response_type: "code",
+      scope: "email profile",
     };
-    
-    Object.entries(params).forEach(([key, value]) => 
+
+    Object.entries(params).forEach(([key, value]) =>
       googleAuthUrl.searchParams.append(key, value as string)
     );
 
     // Log the constructed Google OAuth URL
-    console.log('Google OAuth URL:', googleAuthUrl.toString());
-    
+    console.log("Google OAuth URL:", googleAuthUrl.toString());
+
     window.location.href = googleAuthUrl.toString();
   };
 
@@ -54,7 +56,7 @@ const Signup = ({ appName }: SignupProps) => {
       const token = await recaptchaRef.current?.executeAsync();
       await originalHandleSubmit(e, token || undefined);
     } catch (error) {
-      console.error('reCAPTCHA error:', error);
+      console.error("reCAPTCHA error:", error);
       // Still try to submit without recaptcha if there's an error
       await originalHandleSubmit(e);
     }
@@ -85,7 +87,9 @@ const Signup = ({ appName }: SignupProps) => {
               className="flex justify-start items-center gap-3.5 rounded-lg border border-gray-3 bg-gray-1 p-3 ease-out duration-200 hover:bg-gray-2 relative"
             >
               <FacebookIcon />
-              <span className="flex-grow text-center">Sign Up with Facebook</span>
+              <span className="flex-grow text-center">
+                Sign Up with Facebook
+              </span>
             </button>
 
             <button
@@ -212,7 +216,14 @@ const Signup = ({ appName }: SignupProps) => {
                 className="flex items-center justify-center w-full py-3 px-7 rounded-lg bg-blue text-white text-base font-medium hover:bg-blue-dark duration-300 disabled:bg-blue/50"
                 disabled={loading}
               >
-                {loading ? <Spinner size="sm" /> : "Create Account"}
+                {loading ? (
+                  <>
+                    <Spinner className="w-5 h-5 mr-2" />
+                    Creating Account...
+                  </>
+                ) : (
+                  "Create Account"
+                )}
               </button>
 
               <p className="text-center mt-6">

@@ -7,14 +7,12 @@ import PasswordInput from "../PasswordInput";
 import { useSignup } from "@/hooks/useSignup";
 import { Spinner } from "@/components/Common/Spinner/index";
 import ErrorAlert from "@/components/Common/ErrorAlert";
-import { useRouter } from "next/navigation";
 
 interface SignupProps {
   appName: string;
 }
 
 const Signup = ({ appName }: SignupProps) => {
-  const router = useRouter();
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const {
     formData,

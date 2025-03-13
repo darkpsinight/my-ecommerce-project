@@ -6,6 +6,7 @@ import LatestPosts from "../Blog/LatestPosts";
 import LatestProducts from "../Blog/LatestProducts";
 import Categories from "../Blog/Categories";
 import shopData from "../Shop/shopData"; 
+import PageContainer from "../Common/PageContainer";
  
 const BlogGridWithSidebar = () => {
   const categories = [
@@ -37,6 +38,7 @@ const BlogGridWithSidebar = () => {
 
   return (
     <>
+    <PageContainer>
       <section className="overflow-hidden pt-[95px] py-20 bg-gray-2">
         <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
           <div className="flex flex-col lg:flex-row gap-7.5">
@@ -251,6 +253,7 @@ const BlogGridWithSidebar = () => {
           </div>
         </div>
       </section>
+      </PageContainer>
     </>
   );
 };

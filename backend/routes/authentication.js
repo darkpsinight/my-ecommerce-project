@@ -16,6 +16,7 @@ const {
 	loginWithEmail,
 	reactivateAccount,
 	logout,
+	updateUserRole,
 } = require("../handlers/authenticationHandler");
 const { verifyAuth } = require("../plugins/authVerify");
 const {
@@ -301,6 +302,20 @@ const authenticationRoutes = async (fastify, opts) => {
 			attachUser(false),
 		],
 		handler: revokeAllRefreshTokens,
+	});
+
+	// Route to update user role (admin/support only)
+	fastify.route({
+		method: "PUT",
+		url: "/role/:uid",
+		schema: authenticationSchema.updateUserRole,
+		preHandler: [
+			rateLimiter(rateLimits.sensitive),
+			verifyAuth(["admin", "support"]),
+			checkDeactivated,
+			checkEmailConfirmed
+		],
+		handler: updateUserRole,
 	});
 };
 

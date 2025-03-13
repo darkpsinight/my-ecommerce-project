@@ -1,32 +1,35 @@
-{
-  "env": {
-    "browser": true,
-    "es2021": true
+const path = require('path');
+
+module.exports = {
+  env: {
+    browser: true,
+    es2021: true
   },
-  "extends": [
+  extends: [
     "plugin:react/recommended",
     "airbnb-typescript",
     "plugin:react/jsx-runtime",
     "plugin:prettier/recommended"
   ],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaFeatures": {
-      "jsx": true
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true
     },
-    "ecmaVersion": 11,
-    "project": "./tsconfig.json",
-    "sourceType": "module"
+    ecmaVersion: 11,
+    sourceType: "module",
+    tsconfigRootDir: __dirname,
+    project: path.resolve(__dirname, "./tsconfig.json")
   },
-  "plugins": ["react", "@typescript-eslint"],
-  "settings": {
-    "react": {
-      "pragma": "React",
-      "fragment": "Fragment",
-      "version": "detect"
+  plugins: ["react", "@typescript-eslint"],
+  settings: {
+    react: {
+      pragma: "React",
+      fragment: "Fragment",
+      version: "detect"
     }
   },
-  "rules": {
+  rules: {
     "prettier/prettier": "off",
     "react/jsx-filename-extension": "off",
     "import/no-unresolved": "off",
@@ -52,11 +55,11 @@
     "react/jsx-max-props-per-line": [
       1,
       {
-        "maximum": 2,
-        "when": "multiline"
+        maximum: 2,
+        when: "multiline"
       }
     ],
-    "indent": "off",
+    indent: "off",
     "@typescript-eslint/indent": [0],
     "no-use-before-define": "off",
     "@typescript-eslint/no-use-before-define": ["off"],
@@ -66,4 +69,4 @@
     "react/prop-types": ["off"],
     "@typescript-eslint/naming-convention": ["off"]
   }
-}
+}; 

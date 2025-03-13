@@ -109,7 +109,7 @@ const postOauthProviderLogin = async (request, reply) => {
  * email : User's email
  * provider : Oauth2 Provider (example : "github" , "google")
  * verified : If the email of the user is verified
- * role : User's role (example : "user" , "admin")
+ * role : User's role (example : "buyer" , "admin", "seller", "support")
  */
 const oauthLoginHelper = async (request, reply, userInfo) => {
 	const { name, email, provider, verified, role } = userInfo;

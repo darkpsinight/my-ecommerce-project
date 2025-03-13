@@ -1,7 +1,8 @@
 "use client";
 import { FacebookIcon, GoogleIcon, XIcon } from "@/components/Common/Icons";
 import Link from "next/link";
-import React from "react";
+import React, { useRef } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import PasswordInput from "../PasswordInput";
 import { useSignup } from "@/hooks/useSignup";
 import { Spinner } from "@/components/Common/Spinner/index";
@@ -14,6 +15,7 @@ interface SignupProps {
 
 const Signup = ({ appName }: SignupProps) => {
   const router = useRouter();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const {
     formData,
     loading,
@@ -23,7 +25,7 @@ const Signup = ({ appName }: SignupProps) => {
     confirmPasswordError,
     apiError,
     handleChange,
-    handleSubmit,
+    handleSubmit: originalHandleSubmit,
   } = useSignup();
 
   const handleGoogleLogin = () => {
@@ -44,6 +46,18 @@ const Signup = ({ appName }: SignupProps) => {
     console.log('Google OAuth URL:', googleAuthUrl.toString());
     
     window.location.href = googleAuthUrl.toString();
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const token = await recaptchaRef.current?.executeAsync();
+      await originalHandleSubmit(e, token || undefined);
+    } catch (error) {
+      console.error('reCAPTCHA error:', error);
+      // Still try to submit without recaptcha if there's an error
+      await originalHandleSubmit(e);
+    }
   };
 
   return (
@@ -186,19 +200,19 @@ const Signup = ({ appName }: SignupProps) => {
                 />
               )}
 
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                size="invisible"
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
+                className="mb-4"
+              />
+
               <button
                 type="submit"
+                className="flex items-center justify-center w-full py-3 px-7 rounded-lg bg-blue text-white text-base font-medium hover:bg-blue-dark duration-300 disabled:bg-blue/50"
                 disabled={loading}
-                className="w-full flex justify-center items-center font-medium text-white bg-dark py-3 px-6 rounded-lg ease-out duration-200 hover:bg-blue mt-7.5 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {loading ? (
-                  <>
-                    <Spinner className="w-5 h-5 mr-2" />
-                    Creating Account...
-                  </>
-                ) : (
-                  "Create Account"
-                )}
+                {loading ? <Spinner size="sm" /> : "Create Account"}
               </button>
 
               <p className="text-center mt-6">

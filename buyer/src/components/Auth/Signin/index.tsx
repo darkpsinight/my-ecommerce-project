@@ -1,14 +1,14 @@
 "use client";
 import { FacebookIcon, GoogleIcon, XIcon } from "@/components/Common/Icons";
 import Link from "next/link";
-import React from "react";
+import React, { useRef } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import PasswordInput from "../PasswordInput";
 import SuccessAlert from "@/components/Common/SuccessAlert";
 import { useSearchParams } from "next/navigation";
 import { useSignin } from "@/hooks/useSignin";
 import { Spinner } from "@/components/Common/Spinner/index";
 import ErrorAlert from "@/components/Common/ErrorAlert";
-import { useRouter } from "next/navigation";
 
 interface SigninProps {
   appName: string;
@@ -16,6 +16,7 @@ interface SigninProps {
 
 const Signin = ({ appName }: SigninProps) => {
   const searchParams = useSearchParams();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const {
     formData,
     loading,
@@ -23,10 +24,21 @@ const Signin = ({ appName }: SigninProps) => {
     passwordError,
     apiError,
     handleChange,
-    handleSubmit,
+    handleSubmit: originalHandleSubmit,
   } = useSignin();
   const showSuccessAlert = searchParams.get("registered") === "true";
-  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const token = await recaptchaRef.current?.executeAsync();
+      await originalHandleSubmit(e, token || undefined);
+    } catch (error) {
+      console.error('reCAPTCHA error:', error);
+      // Still try to submit without recaptcha if there's an error
+      await originalHandleSubmit(e);
+    }
+  };
 
   const handleGoogleLogin = () => {
     const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
@@ -125,6 +137,13 @@ const Signin = ({ appName }: SigninProps) => {
                 </Link>
                 .
               </p>
+
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                size="invisible"
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
+                className="mb-4"
+              />
 
               <button
                 type="submit"

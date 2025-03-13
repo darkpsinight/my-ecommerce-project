@@ -35,8 +35,8 @@ const userSchema = new mongoose.Schema({
 	},
 	role: {
 		type: String,
-		enum: ["user", "admin"],
-		default: "user",
+		enum: ["buyer", "admin", "support", "seller"],
+		default: "buyer",
 	},
 	isEmailConfirmed: {
 		type: Boolean,
@@ -78,13 +78,13 @@ const userSchema = new mongoose.Schema({
 userSchema.methods.getJWT = function () {
 	return jwt.sign(
 		{
-			id: this._id,
-			role: this.role,
-			name: this.name,
+			// id: this._id,
 			uid: this.uid,
+			name: this.name,
 			email: this.email,
+			role: this.role,
 			isEmailConfirmed: this.isEmailConfirmed,
-			isDeactivated: this.isDeactivated,
+			// isDeactivated: this.isDeactivated,
 		},
 		configs.JWT_KEY,
 		{

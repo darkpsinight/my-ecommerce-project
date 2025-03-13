@@ -1,12 +1,19 @@
-import { Box, Button, Container, Grid, Typography } from '@mui/material';
-
+import { Box, Button, Container, Grid, Typography, Stack } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-
 import { styled } from '@mui/material/styles';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import SecurityIcon from '@mui/icons-material/Security';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import { useEffect, useState } from 'react';
+import { getPublicConfigs } from 'src/services/config';
 
 const TypographyH1 = styled(Typography)(
   ({ theme }) => `
     font-size: ${theme.typography.pxToRem(50)};
+    background: linear-gradient(45deg, ${theme.colors.primary.dark} 0%, ${theme.colors.primary.main} 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 `
 );
 
@@ -16,61 +23,47 @@ const TypographyH2 = styled(Typography)(
 `
 );
 
-const LabelWrapper = styled(Box)(
-  ({ theme }) => `
-    background-color: ${theme.colors.success.main};
-    color: ${theme.palette.success.contrastText};
-    font-weight: bold;
-    border-radius: 30px;
-    text-transform: uppercase;
-    display: inline-block;
-    font-size: ${theme.typography.pxToRem(11)};
-    padding: ${theme.spacing(0.5)} ${theme.spacing(1.5)};
-    margin-bottom: ${theme.spacing(2)};
-`
-);
-
-const MuiAvatar = styled(Box)(
+const FeatureIcon = styled(Box)(
   ({ theme }) => `
     width: ${theme.spacing(8)};
     height: ${theme.spacing(8)};
     border-radius: ${theme.general.borderRadius};
-    background-color: #e5f7ff;
-    flex-shrink: 0;
+    background: ${theme.colors.primary.lighter};
+    color: ${theme.colors.primary.main};
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto ${theme.spacing(2)};
+    transition: all .2s;
 
-    img {
-      width: 60%;
-      height: 60%;
-      display: block;
+    .MuiSvgIcon-root {
+      font-size: ${theme.typography.pxToRem(32)};
     }
-`
-);
 
-const TsAvatar = styled(Box)(
-  ({ theme }) => `
-    width: ${theme.spacing(8)};
-    height: ${theme.spacing(8)};
-    border-radius: ${theme.general.borderRadius};
-    background-color: #dfebf6;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto ${theme.spacing(2)};
-
-    img {
-      width: 60%;
-      height: 60%;
-      display: block;
+    &:hover {
+      background: ${theme.colors.primary.main};
+      color: ${theme.colors.alpha.white[100]};
+      transform: translateY(-5px);
     }
 `
 );
 
 function Hero() {
+  const [appName, setAppName] = useState('');
+
+  useEffect(() => {
+    const fetchConfigs = async () => {
+      try {
+        const configs = await getPublicConfigs();
+        setAppName(configs.APP_NAME);
+      } catch (error) {
+        console.error('Error fetching app name:', error);
+      }
+    };
+
+    fetchConfigs();
+  }, []);
+
   return (
     <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
       <Grid
@@ -80,9 +73,8 @@ function Hero() {
         container
       >
         <Grid item md={10} lg={8} mx="auto">
-          <LabelWrapper color="success">Version 2.0.0</LabelWrapper>
           <TypographyH1 sx={{ mb: 2 }} variant="h1">
-            Tokyo Free White React Typescript Admin Dashboard
+            Welcome to {appName}
           </TypographyH1>
           <TypographyH2
             sx={{ lineHeight: 1.5, pb: 4 }}
@@ -90,62 +82,93 @@ function Hero() {
             color="text.secondary"
             fontWeight="normal"
           >
-            High performance React template built with lots of powerful
-            Material-UI components across multiple product niches for fast &
-            perfect apps development processes
+            Your trusted platform for selling digital codes, game keys, and software licenses.
+            Start managing your digital inventory today!
           </TypographyH2>
-          <Button
-            component={RouterLink}
-            to="/dashboards/crypto"
-            size="large"
-            variant="contained"
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            justifyContent="center"
+            sx={{ mb: 8 }}
           >
-            Browse Live Preview
-          </Button>
-          <Button
-            sx={{ ml: 2 }}
-            component="a"
-            target="_blank"
-            rel="noopener"
-            href="https://bloomui.com/product/tokyo-free-white-react-typescript-material-ui-admin-dashboard"
-            size="large"
-            variant="text"
-          >
-            Key Features
-          </Button>
-          <Grid container spacing={3} mt={5}>
-            <Grid item md={6}>
-              <MuiAvatar>
-                <img
-                  src="/static/images/logo/material-ui.svg"
-                  alt="Material-UI"
-                />
-              </MuiAvatar>
-              <Typography variant="h4">
-                <Box sx={{ pb: 2 }}>
-                  <b>Powered by MUI (Material-UI)</b>
-                </Box>
-                <Typography component="span" variant="subtitle2">
-                  A simple and customizable component library to build faster,
-                  beautiful, and accessible React apps.
-                </Typography>
+            <Button
+              component={RouterLink}
+              to="/login"
+              size="large"
+              variant="contained"
+              sx={{
+                py: 2,
+                px: 4,
+                borderRadius: 2,
+                fontSize: '1.1rem',
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1976D2 30%, #2196F3 90%)',
+                }
+              }}
+            >
+              Sign In to Dashboard
+            </Button>
+            <Button
+              component={RouterLink}
+              to="/register"
+              size="large"
+              variant="outlined"
+              sx={{
+                py: 2,
+                px: 4,
+                borderRadius: 2,
+                fontSize: '1.1rem'
+              }}
+            >
+              Create Seller Account
+            </Button>
+          </Stack>
+
+          <Grid container spacing={4} mt={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <FeatureIcon>
+                <StorefrontIcon />
+              </FeatureIcon>
+              <Typography variant="h4" sx={{ pb: 2 }}>
+                Digital Marketplace
+              </Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                List and manage your digital products with ease. Support for game keys, software licenses, and more.
               </Typography>
             </Grid>
-            <Grid item md={6}>
-              <TsAvatar>
-                <img
-                  src="/static/images/logo/typescript.svg"
-                  alt="Typescript"
-                />
-              </TsAvatar>
-              <Typography variant="h4">
-                <Box sx={{ pb: 2 }}>
-                  <b>Built with Typescript</b>
-                </Box>
-                <Typography component="span" variant="subtitle2">
-                  Tokyo Free White features a modern technology stack and is
-                  built with React + Typescript.
-                </Typography>
+            <Grid item xs={12} sm={6} md={3}>
+              <FeatureIcon>
+                <SecurityIcon />
+              </FeatureIcon>
+              <Typography variant="h4" sx={{ pb: 2 }}>
+                Secure Platform
+              </Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                Advanced security measures to protect your inventory and transactions.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <FeatureIcon>
+                <AnalyticsIcon />
+              </FeatureIcon>
+              <Typography variant="h4" sx={{ pb: 2 }}>
+                Sales Analytics
+              </Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                Track your performance with detailed analytics and sales reports.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <FeatureIcon>
+                <SupportAgentIcon />
+              </FeatureIcon>
+              <Typography variant="h4" sx={{ pb: 2 }}>
+                24/7 Support
+              </Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                Our dedicated support team is always here to help you succeed.
               </Typography>
             </Grid>
           </Grid>

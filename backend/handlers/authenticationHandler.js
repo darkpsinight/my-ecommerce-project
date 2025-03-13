@@ -38,7 +38,7 @@ const registerUser = async (request, reply) => {
   request.log.info("handlers/registerUser");
 
   let { name, email, password } = request.body;
-  let role = "user";
+  let role = "buyer";
   let provider = "email";
 
   // Validate password strength
@@ -234,7 +234,7 @@ const requestLoginWithEmail = async (request, reply) => {
   request.log.info("handlers/requestLoginWithEmail");
 
   const { name, email } = request.body;
-  let role = "user";
+  let role = "buyer";
   let provider = "email-passwordless";
 
   let user = await User.findOne({
@@ -1032,6 +1032,48 @@ const logout = async (request, reply) => {
   }
 };
 
+// @route   PUT /api/v1/auth/role/:uid
+// @desc    Update user role (admin/support only)
+// @access  Private (requires JWT token with admin/support role)
+const updateUserRole = async (request, reply) => {
+  request.log.info("handlers/updateUserRole");
+
+  const { role } = request.body;
+  const { uid } = request.params;
+
+  // Validate role
+  const validRoles = ["buyer", "admin", "support", "seller"];
+  if (!validRoles.includes(role)) {
+    return sendErrorResponse(reply, 400, "Invalid role specified");
+  }
+
+  // Find user by uid
+  const targetUser = await User.findOne({ uid });
+  if (!targetUser) {
+    return sendErrorResponse(reply, 404, "User not found");
+  }
+
+  // Don't allow changing own role (to prevent accidental removal of admin access)
+  if (targetUser.uid === request.user.uid) {
+    return sendErrorResponse(reply, 403, "Cannot modify your own role");
+  }
+
+  // Update role
+  targetUser.role = role;
+  await targetUser.save();
+
+  return sendSuccessResponse(reply, {
+    statusCode: 200,
+    message: "User role updated successfully",
+    updatedRole: role,
+    user: {
+      uid: targetUser.uid,
+      email: targetUser.email,
+      name: targetUser.name
+    }
+  });
+};
+
 module.exports = {
   registerUser,
   confirmEmail,
@@ -1050,4 +1092,5 @@ module.exports = {
   loginWithEmail,
   reactivateAccount,
   logout,
+  updateUserRole,
 };

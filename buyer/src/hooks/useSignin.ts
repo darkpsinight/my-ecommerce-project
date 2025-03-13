@@ -20,7 +20,7 @@ interface UseSigninReturn {
     };
   } | null;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>, recaptchaToken?: string) => Promise<void>;
 }
 
 export const useSignin = (): UseSigninReturn => {
@@ -65,7 +65,7 @@ export const useSignin = (): UseSigninReturn => {
     return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, recaptchaToken?: string) => {
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -74,7 +74,10 @@ export const useSignin = (): UseSigninReturn => {
     setApiError(null); // Reset API error on new submission
     
     try {
-      const response = await authApi.signin(formData);
+      const response = await authApi.signin({
+        ...formData,
+        recaptchaToken
+      });
 
       if (!response.success) {
         throw new Error(response.message);

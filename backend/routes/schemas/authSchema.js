@@ -421,6 +421,46 @@ const authenticationSchema = {
 			429: errors[429],
 		},
 	},
+	updateUserRole: {
+		description: "Update a user's role (admin/support only)",
+		tags: ["User Management"],
+		params: {
+			type: "object",
+			properties: {
+				uid: { type: "string" }
+			},
+			required: ["uid"]
+		},
+		body: {
+			type: "object",
+			properties: {
+				role: { 
+					type: "string",
+					enum: ["buyer", "admin", "support", "seller"]
+				}
+			},
+			required: ["role"]
+		},
+		security: jwtSecurity,
+		response: {
+			200: getSuccessObject(200, true, "User role updated successfully", {
+				updatedRole: { type: "string" },
+				user: {
+					type: "object",
+					properties: {
+						uid: { type: "string" },
+						email: { type: "string", format: "email" },
+						name: { type: "string" }
+					}
+				}
+			}),
+			400: errors[400],
+			403: errors[403],
+			404: errors[404],
+			429: errors[429],
+			500: errors[500]
+		}
+	},
 };
 
 module.exports = {

@@ -23,7 +23,7 @@ interface UseSignupReturn {
     };
   } | null;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>, recaptchaToken?: string) => Promise<void>;
 }
 
 export const useSignup = (): UseSignupReturn => {
@@ -133,7 +133,7 @@ export const useSignup = (): UseSignupReturn => {
     return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, recaptchaToken?: string) => {
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -143,7 +143,10 @@ export const useSignup = (): UseSignupReturn => {
     
     try {
       const { confirmPassword, ...signupData } = formData;
-      const response = await authApi.signup(signupData);
+      const response = await authApi.signup({
+        ...signupData,
+        recaptchaToken
+      });
 
       if (!response.success) {
         throw new Error(response.message);

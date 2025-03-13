@@ -16,6 +16,7 @@ export interface SignupData {
   name: string;
   email: string;
   password: string;
+  recaptchaToken?: string;
 }
 
 export interface SignupResponse {
@@ -44,6 +45,7 @@ interface SigninApiResponse {
 export interface SigninData {
   email: string;
   password: string;
+  recaptchaToken?: string;
 }
 
 export interface SigninResponse {

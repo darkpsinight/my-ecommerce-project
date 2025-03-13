@@ -44,7 +44,7 @@ const HeroSection = ({ appName }: HeroSectionProps) => {
               {/* Image */}
               <div className="relative h-full w-full rounded-xl overflow-hidden shadow-2xl transform rotate-3 transition-transform group-hover:scale-[1.02] duration-300">
                 <Image
-                  src="/images/giftcards/giftcards-sell2.png"
+                  src="/images/giftcards/giftcards-sell.png"
                   alt="Digital Code Marketplace"
                   fill
                   style={{ objectFit: "contain" }}

@@ -13,14 +13,14 @@ const CTASection = ({ appName }: CTASectionProps) => {
           Join thousands of successful sellers on {appName}
         </p>
         <Link
-          href="http://localhost:3002/dashboards/sell-digital-codes"
+          href="http://localhost:3001/sell-digital-codes/KYC"
           className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium bg-white text-blue rounded-md hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
         >
-          Create Seller Account
+          Start Selling Now
         </Link>
       </div>
     </div>
   );
 };
 
-export default CTASection; 
+export default CTASection;

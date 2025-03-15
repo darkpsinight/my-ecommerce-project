@@ -1,4 +1,3 @@
-import Link from "next/link";
 import PageContainer from "../Common/PageContainer";
 import HeroSection from "./sections/HeroSection";
 import StatsSection from "./sections/StatsSection";

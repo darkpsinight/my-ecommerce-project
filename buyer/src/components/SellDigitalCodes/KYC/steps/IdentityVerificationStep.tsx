@@ -15,14 +15,14 @@ const IdentityVerificationStep = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900">
+      <h2 className="text-xl font-semibold text-dark">
         Identity Verification
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label
             htmlFor="idType"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-dark"
           >
             ID Type
           </label>
@@ -43,7 +43,7 @@ const IdentityVerificationStep = ({
         <div>
           <label
             htmlFor="idNumber"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-dark"
           >
             ID Number
           </label>
@@ -61,7 +61,7 @@ const IdentityVerificationStep = ({
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-dark">
             ID Front Side
           </label>
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
@@ -103,7 +103,7 @@ const IdentityVerificationStep = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-dark">
             ID Back Side
           </label>
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">

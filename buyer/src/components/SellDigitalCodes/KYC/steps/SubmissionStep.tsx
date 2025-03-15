@@ -3,7 +3,9 @@ import { StepProps } from "../types";
 const SubmissionStep = ({ formData }: StepProps) => {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900">Submission & Status</h2>
+      <h2 className="text-xl font-semibold text-dark">
+        Submission & Status
+      </h2>
       <div className="bg-white shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <div className="text-center">
@@ -22,7 +24,9 @@ const SubmissionStep = ({ formData }: StepProps) => {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Ready to Submit</h3>
+            <h3 className="mt-2 text-sm font-medium text-dark">
+              Ready to Submit
+            </h3>
             <p className="mt-1 text-sm text-gray-500">
               Your KYC verification form is complete and ready to be submitted.
             </p>
@@ -47,8 +51,9 @@ const SubmissionStep = ({ formData }: StepProps) => {
                   </svg>
                 </div>
                 <div className="ml-3 flex-1 md:flex md:justify-between">
-                  <p className="text-sm text-blue-700">
-                    After submission, our team will review your application within 1-2 business days.
+                  <p className="text-sm text-dark">
+                    After submission, our team will review your application
+                    within 1-2 business days.
                   </p>
                 </div>
               </div>
@@ -73,7 +78,7 @@ const SubmissionStep = ({ formData }: StepProps) => {
                     />
                   </svg>
                 </div>
-                <p className="ml-2 text-sm text-gray-500">
+                <p className="ml-2 text-sm text-dark">
                   You will receive an email confirmation of your submission
                 </p>
               </li>
@@ -92,7 +97,7 @@ const SubmissionStep = ({ formData }: StepProps) => {
                     />
                   </svg>
                 </div>
-                <p className="ml-2 text-sm text-gray-500">
+                <p className="ml-2 text-sm text-dark">
                   Our team will verify your documents and information
                 </p>
               </li>
@@ -111,7 +116,7 @@ const SubmissionStep = ({ formData }: StepProps) => {
                     />
                   </svg>
                 </div>
-                <p className="ml-2 text-sm text-gray-500">
+                <p className="ml-2 text-sm text-dark">
                   You will be notified of the verification result via email
                 </p>
               </li>
@@ -123,4 +128,4 @@ const SubmissionStep = ({ formData }: StepProps) => {
   );
 };
 
-export default SubmissionStep; 
+export default SubmissionStep;

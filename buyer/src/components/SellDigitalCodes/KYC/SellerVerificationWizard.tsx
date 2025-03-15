@@ -31,8 +31,9 @@ const SellerVerificationWizard = () => {
     idBack: null,
     selfie: null,
     livenessVideo: null,
-    termsAccepted: false,
-    dataProcessingAccepted: false,
+    termsConsent: false,
+    dataConsent: false,
+    accuracyConsent: false
   });
 
   const handleInputChange = (
@@ -138,8 +139,9 @@ const SellerVerificationWizard = () => {
             type="submit"
             disabled={
               isSubmitting ||
-              !formData.termsAccepted ||
-              !formData.dataProcessingAccepted
+              !formData.termsConsent ||
+              !formData.dataConsent ||
+              !formData.accuracyConsent
             }
             className="px-6 py-3 border border-transparent rounded-md text-base font-medium text-white bg-blue hover:bg-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue disabled:opacity-50 disabled:cursor-not-allowed"
           >

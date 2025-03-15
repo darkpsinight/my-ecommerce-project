@@ -11,7 +11,7 @@ const LivenessCheckStep = ({ formData, handleFileUpload }: StepProps) => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900">Liveness Check</h2>
+      <h2 className="text-xl font-semibold text-dark">Liveness Check</h2>
       <p className="text-sm text-gray-600">
         Please provide a clear selfie photo and a short video of yourself to verify your identity.
         The video should show you holding your ID and saying "I am [your full name] and I am applying
@@ -20,7 +20,7 @@ const LivenessCheckStep = ({ formData, handleFileUpload }: StepProps) => {
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Selfie Photo</label>
+          <label className="block text-sm font-medium text-dark">Selfie Photo</label>
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
             <div className="space-y-1 text-center">
               <svg
@@ -60,7 +60,7 @@ const LivenessCheckStep = ({ formData, handleFileUpload }: StepProps) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Verification Video</label>
+          <label className="block text-sm font-medium text-dark">Verification Video</label>
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
             <div className="space-y-1 text-center">
               <svg

@@ -22,8 +22,9 @@ export interface FormData {
   livenessVideo: File | null;
 
   // Review & Consent
-  termsAccepted: boolean;
-  dataProcessingAccepted: boolean;
+  termsConsent: boolean;
+  dataConsent: boolean;
+  accuracyConsent: boolean;
 }
 
 export interface StepProps {

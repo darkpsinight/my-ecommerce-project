@@ -4,7 +4,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
   return (
     <div className="space-y-8">
       <header className="space-y-2">
-        <h2 className="text-2xl font-semibold text-gray-900">Personal Information</h2>
+        <h2 className="text-2xl font-semibold text-dark">Personal Information</h2>
         <p className="text-sm text-gray-500">Please provide your personal details for verification</p>
       </header>
 
@@ -12,7 +12,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
         {/* Name Group */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+            <label htmlFor="firstName" className="text-sm font-medium text-dark">
               First Name
             </label>
             <input
@@ -27,7 +27,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+            <label htmlFor="lastName" className="text-sm font-medium text-dark">
               Last Name
             </label>
             <input
@@ -46,7 +46,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
         {/* Contact Group */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="text-sm font-medium text-dark">
               Email Address
             </label>
             <input
@@ -61,7 +61,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
+            <label htmlFor="phoneNumber" className="text-sm font-medium text-dark">
               Phone Number
             </label>
             <input
@@ -80,7 +80,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
         {/* Address Group */}
         <div className="space-y-4">
           <div className="space-y-1">
-            <label htmlFor="address" className="text-sm font-medium text-gray-700">
+            <label htmlFor="address" className="text-sm font-medium text-dark">
               Street Address
             </label>
             <input
@@ -97,7 +97,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <label htmlFor="city" className="text-sm font-medium text-gray-700">
+              <label htmlFor="city" className="text-sm font-medium text-dark">
                 City
               </label>
               <input
@@ -112,7 +112,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="country" className="text-sm font-medium text-gray-700">
+              <label htmlFor="country" className="text-sm font-medium text-dark">
                 Country
               </label>
               <input
@@ -127,7 +127,7 @@ const PersonalInfoStep = ({ formData, handleInputChange }: StepProps) => {
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="postalCode" className="text-sm font-medium text-gray-700">
+              <label htmlFor="postalCode" className="text-sm font-medium text-dark">
                 Postal Code
               </label>
               <input

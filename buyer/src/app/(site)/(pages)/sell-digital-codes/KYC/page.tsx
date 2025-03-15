@@ -25,10 +25,10 @@ export default function KYCPage() {
         <div className="bg-white rounded-xl shadow-1 px-4 py-10 sm:py-15 lg:py-20">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              <h1 className="text-3xl font-bold text-dark mb-4">
                 Seller Verification
               </h1>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-dark">
                 Complete your verification to start selling digital codes on our
                 marketplace. This helps us maintain a safe and trusted
                 environment for all users.

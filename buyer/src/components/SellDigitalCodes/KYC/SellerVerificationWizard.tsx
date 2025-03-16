@@ -52,8 +52,11 @@ const SellerVerificationWizard = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
-    if (files && files[0]) {
-      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+    if (files) {
+      const fileArray = Array.from(files);
+      setFormData((prev) => ({ ...prev, [name]: fileArray }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: null }));
     }
   };
 

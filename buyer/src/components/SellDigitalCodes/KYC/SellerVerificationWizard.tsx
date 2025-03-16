@@ -25,6 +25,9 @@ const SellerVerificationWizard = () => {
     city: "",
     country: "",
     postalCode: "",
+    proofOfAddress: null,
+    isBusinessSeller: false,
+    businessTaxId: "",
     idType: "",
     idNumber: "",
     idFront: null,
@@ -52,6 +55,13 @@ const SellerVerificationWizard = () => {
     if (files && files[0]) {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
     }
+  };
+
+  const handleDateChange = (date: Date | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      dateOfBirth: date ? date.toISOString() : "",
+    }));
   };
 
   const handleNext = () => {
@@ -93,6 +103,7 @@ const SellerVerificationWizard = () => {
       formData,
       handleInputChange,
       handleFileChange,
+      handleDateChange,
     };
 
     switch (currentStep) {

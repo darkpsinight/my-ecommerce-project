@@ -5,11 +5,14 @@ export interface FormData {
   dateOfBirth: string;
   nationality: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber: string | undefined;
   address: string;
   city: string;
   country: string;
   postalCode: string;
+  proofOfAddress: File | null;
+  isBusinessSeller: boolean;
+  businessTaxId: string;
 
   // Identity Verification
   idType: string;
@@ -31,6 +34,7 @@ export interface StepProps {
   formData: FormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleDateChange?: (date: Date | null) => void;
 }
 
 export const steps = [

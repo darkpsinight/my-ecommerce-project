@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import "../css/euclid-circular-a-font.css";
 import "../css/style.css";
 import "../nprogress.css";
+import "@/app/css/phone-input.css";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import AuthHeader from "@/components/Auth/AuthHeader";

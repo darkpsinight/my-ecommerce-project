@@ -1,0 +1,119 @@
+/* React Select Custom Styles */
+.select {
+  width: 100%;
+}
+
+.select :global(.react-select__control) {
+  min-height: 46px;
+  height: 46px;
+  border-radius: 0.5rem;
+  border-color: #606882;
+  box-shadow: none;
+  background-color: white;
+  padding: 0 0.5rem;
+}
+
+.select :global(.react-select__control:hover) {
+  border-color: #9CA3AF;
+}
+
+.select :global(.react-select__control--is-focused) {
+  border-color: #3c50e0;
+  box-shadow: 0 0 0 2px #EFF6FF;
+  outline: none;
+}
+
+.select :global(.react-select__value-container) {
+  padding: 0 0.5rem;
+  height: 42px;
+}
+
+.select :global(.react-select__indicators) {
+  height: 42px;
+}
+
+.select :global(.react-select__menu) {
+  margin-top: 4px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  z-index: 50;
+  border: 1px solid #D1D5DB;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.select :global(.react-select__option) {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+}
+
+.select :global(.react-select__option--is-focused) {
+  background-color: #EFF6FF;
+}
+
+.select :global(.react-select__option--is-selected) {
+  background-color: #3B82F6;
+  color: white;
+}
+
+.select :global(.react-select__placeholder) {
+  color: #9CA3AF;
+  margin: 0;
+}
+
+.select :global(.react-select__input-container) {
+  color: #371f25;
+  margin: 0;
+  padding: 0;
+}
+
+.select :global(.react-select__single-value) {
+  color: #1F2937;
+  margin: 0;
+}
+
+.select :global(.react-select__indicator-separator) {
+  display: none;
+}
+
+.select :global(.react-select__dropdown-indicator) {
+  color: #3c50e0;
+  padding: 0 8px;
+}
+
+.select :global(.react-select__dropdown-indicator:hover) {
+  color: #4B5563;
+}
+
+/* Date Picker Custom Styles */
+.datePickerWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.datePickerWrapper input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.datePickerWrapper :global(.react-datepicker__input-container) {
+  width: 100%;
+}
+
+.datePickerWrapper :global(.react-datepicker-wrapper) {
+  width: 100%;
+  display: block;
+}
+
+@media (max-width: 767px) and (min-width: 443px) {
+  .datePickerWrapper {
+    width: 100%;
+  }
+  
+  .datePickerWrapper input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+} 

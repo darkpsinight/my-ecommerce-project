@@ -135,7 +135,7 @@ const LivenessCheckStep = ({ formData, handleInputChange, handleFileChange }: St
             <h3 className="text-xl font-semibold mb-4">KYC Photo Guide</h3>
             <div className="relative aspect-video w-full">
               <Image
-                src="/images/kycGuide/KYC.webp"
+                src="/images/kycGuide/KYC-Guide-Webcam.webp"
                 alt="KYC Guide"
                 fill
                 className="object-contain rounded-lg"

@@ -208,7 +208,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="text-sm font-medium text-dark">{label}</label>
+      <label htmlFor={id} className="text-sm font-medium text-dark">
+        {label}{required && <span className="text-red"> *</span>}
+      </label>
       <div
         className="flex items-center justify-center w-full"
         onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}

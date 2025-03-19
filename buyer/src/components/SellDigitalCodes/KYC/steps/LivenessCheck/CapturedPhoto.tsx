@@ -17,7 +17,7 @@ export const CapturedPhoto = ({
   const [isZoomed, setIsZoomed] = useState(false);
 
   return (
-    <div>
+    <div className="w-full max-w-lg mx-auto">
       {/* Photo preview section */}
       <div
         className="relative cursor-pointer group"
@@ -28,7 +28,7 @@ export const CapturedPhoto = ({
             isZoomed ? "scale-100" : "scale-95 hover:scale-100"
           }`}
         >
-          <div className="relative aspect-[4/3] max-w-lg mx-auto">
+          <div className="relative aspect-[4/3] w-full">
             <Image
               src={imageSrc}
               alt="Captured selfie"
@@ -42,48 +42,50 @@ export const CapturedPhoto = ({
       </div>
 
       {/* Status and action section */}
-      <div className="p-6">
-        {/* Success message */}
-        <div className="flex items-center mb-6 border border-green p-4 rounded-lg">
-          <div className="rounded-full p-1 mr-4">
-            <svg
-              className="h-10 w-10 text-green"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-          <div>
-            <h3 className="font-medium text-green">
-              Photo captured successfully!
-            </h3>
-            <p className="text-sm mt-1">
-              Please verify that your face and ID are clearly visible
-            </p>
+      <div className="p-4 md:p-6">
+                {/* Success message - redesigned to match the image */}
+                <div className="mb-6 border border-green rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 mr-3">
+              <svg
+                className="h-6 w-6 text-green"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-medium text-green">
+                Photo captured successfully!
+              </h3>
+              <p className="text-sm mt-1 text-gray-600">
+                Please verify that <b> your face and ID front side</b> are clearly visible
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Question */}
-        <h4 className="text-gray-700 text-center mb-5">
+        <h4 className="text-gray-700 text-center text-sm sm:text-base mb-4 sm:mb-5">
           If everything looks good, click <b>Next</b>. Otherwise, choose an action
           below:
         </h4>
 
         {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
-          <div className="flex flex-1 gap-3">
+        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:gap-3">
+          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:flex-1 sm:gap-3">
             <button
               type="button"
               onClick={onRemove}
-              className="flex-1 px-4 py-2.5 border rounded-lg bg-white hover:bg-gray transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red flex items-center justify-center"
+              className="w-full sm:flex-1 px-3 py-2 sm:px-4 sm:py-2.5 border rounded-lg bg-white hover:bg-gray transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red flex items-center justify-center"
             >
               <svg
-                className="w-5 h-5 mr-1.5 text-red"
+                className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-1.5 text-red"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -100,10 +102,10 @@ export const CapturedPhoto = ({
             <button
               type="button"
               onClick={onRetake}
-              className="flex-1 px-4 py-2.5 border rounded-lg bg-white hover:bg-gray transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue flex items-center justify-center"
+              className="w-full sm:flex-1 px-3 py-2 sm:px-4 sm:py-2.5 border rounded-lg bg-white hover:bg-gray transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue flex items-center justify-center"
             >
               <svg
-                className="w-5 h-5 mr-1.5 text-blue"
+                className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-1.5 text-blue"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -123,10 +125,10 @@ export const CapturedPhoto = ({
             <button
               type="button"
               onClick={onApprove}
-              className="flex-1 px-4 py-2.5 rounded-lg text-white bg-blue shadow-sm shadow-blue/20 hover:bg-blue-dark transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue flex items-center justify-center"
+              className="w-full sm:flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-white bg-blue shadow-sm shadow-blue/20 hover:bg-blue-dark transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue flex items-center justify-center"
             >
               <svg
-                className="w-5 h-5 mr-1.5"
+                className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-1.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

@@ -14,6 +14,8 @@ export const IDDocumentUploads: React.FC<IDDocumentUploadsProps> = ({
   onRemove,
   analyzingField
 }) => {
+  const showBackSide = formData.idType !== 'passport';
+
   return (
     <div className="space-y-4">
       <FileUpload
@@ -30,19 +32,21 @@ export const IDDocumentUploads: React.FC<IDDocumentUploadsProps> = ({
         isAnalyzing={analyzingField === 'idFront'}
       />
 
-      <FileUpload
-        id="idBack"
-        name="idBack"
-        label="ID Back Side"
-        accept=".jpg,.jpeg,.png"
-        onChange={onFileChange}
-        files={formData.idBack}
-        required
-        maxSize="5MB"
-        maxFiles={1}
-        onRemove={() => onRemove('idBack')}
-        isAnalyzing={analyzingField === 'idBack'}
-      />
+      {showBackSide && (
+        <FileUpload
+          id="idBack"
+          name="idBack"
+          label="ID Back Side"
+          accept=".jpg,.jpeg,.png"
+          onChange={onFileChange}
+          files={formData.idBack}
+          required
+          maxSize="5MB"
+          maxFiles={1}
+          onRemove={() => onRemove('idBack')}
+          isAnalyzing={analyzingField === 'idBack'}
+        />
+      )}
     </div>
   );
 }; 

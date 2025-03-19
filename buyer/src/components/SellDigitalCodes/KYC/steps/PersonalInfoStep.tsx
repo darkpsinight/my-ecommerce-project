@@ -75,7 +75,6 @@ const PersonalInfoStep = ({ formData, handleInputChange, handleFileChange, handl
             name="firstName"
             value={formData.firstName}
             onChange={handleNameInput}
-            placeholder="John"
             required
           />
           <FormField
@@ -84,7 +83,6 @@ const PersonalInfoStep = ({ formData, handleInputChange, handleFileChange, handl
             name="lastName"
             value={formData.lastName}
             onChange={handleNameInput}
-            placeholder="Doe"
             required
           />
         </div>
@@ -93,7 +91,7 @@ const PersonalInfoStep = ({ formData, handleInputChange, handleFileChange, handl
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <label htmlFor="dateOfBirth" className="text-sm font-medium text-dark">
-              Date of Birth
+              Date of Birth <span className="text-red">*</span>
             </label>
             <div className={`relative ${styles.datePickerWrapper}`}>
               <DatePicker
@@ -113,7 +111,7 @@ const PersonalInfoStep = ({ formData, handleInputChange, handleFileChange, handl
           </div>
           <div className="space-y-1">
             <label htmlFor="nationality" className="text-sm font-medium text-dark">
-              Nationality
+              Nationality <span className="text-red">*</span>
             </label>
             <Select
               id="nationality"
@@ -138,7 +136,6 @@ const PersonalInfoStep = ({ formData, handleInputChange, handleFileChange, handl
           value={formData.email}
           onChange={handleInputChange}
           pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-          placeholder="john.doe@example.com"
           required
         />
 

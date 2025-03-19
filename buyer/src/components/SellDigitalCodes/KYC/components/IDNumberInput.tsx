@@ -16,7 +16,7 @@ export const IDNumberInput: React.FC<IDNumberInputProps> = ({
   return (
     <div className="space-y-1">
       <label htmlFor="idNumber" className="text-sm font-medium text-dark">
-        ID Number
+        ID Number <span className="text-red">*</span>
       </label>
       <input
         id="idNumber"

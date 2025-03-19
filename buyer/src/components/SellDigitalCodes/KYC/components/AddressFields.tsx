@@ -30,14 +30,13 @@ export const AddressFields: React.FC<AddressFieldsProps> = ({
         name="address"
         value={formData.address}
         onChange={handleAddressInput}
-        placeholder="123 Main Street"
         required
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-1">
           <label htmlFor="country" className="text-sm font-medium text-dark">
-            Country
+            Country <span className="text-red">*</span>
           </label>
           <Select
             id="country"
@@ -57,13 +56,12 @@ export const AddressFields: React.FC<AddressFieldsProps> = ({
           name="city"
           value={formData.city}
           onChange={handleAddressInput}
-          placeholder="Enter city"
           required
           error={cityError}
         />
         <div className="space-y-1">
           <label htmlFor="postalCode" className="text-sm font-medium text-dark">
-            Postal Code
+            Postal Code <span className="text-red">*</span>
           </label>
           <input
             type="text"
@@ -73,7 +71,6 @@ export const AddressFields: React.FC<AddressFieldsProps> = ({
             value={formData.postalCode}
             onChange={handleAddressInput}
             className={`w-full px-4 py-2.5 rounded-lg border ${postalCodeError ? 'border-red' : 'border-gray-300'} outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 transition-all placeholder:text-gray-400`}
-            placeholder="Enter postal code"
           />
           {postalCodeError && (
             <p className="text-sm text-red mt-1">{postalCodeError}</p>

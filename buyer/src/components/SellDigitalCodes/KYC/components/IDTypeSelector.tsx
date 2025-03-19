@@ -9,7 +9,7 @@ export const IDTypeSelector: React.FC<IDTypeSelectorProps> = ({ value, onChange 
   return (
     <div className="space-y-1">
       <label htmlFor="idType" className="text-sm font-medium text-dark">
-        ID Type
+        ID Type <span className="text-red">*</span>
       </label>
       <select
         id="idType"

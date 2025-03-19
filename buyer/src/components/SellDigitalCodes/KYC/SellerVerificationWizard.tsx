@@ -17,7 +17,7 @@ const SellerVerificationWizard = () => {
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
-    dateOfBirth: "",
+    dateOfBirth: null,
     nationality: "",
     email: "",
     phoneNumber: "",
@@ -63,7 +63,7 @@ const SellerVerificationWizard = () => {
   const handleDateChange = (date: Date | null) => {
     setFormData((prev) => ({
       ...prev,
-      dateOfBirth: date ? date.toISOString() : "",
+      dateOfBirth: date,
     }));
   };
 

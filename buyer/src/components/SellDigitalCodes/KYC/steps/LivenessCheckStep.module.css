@@ -1,0 +1,64 @@
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.flashOverlay {
+  animation: flash 0.15s ease-out;
+  background-color: white;
+  position: absolute;
+  inset: 0;
+  border-radius: 0.5rem;
+  pointer-events: none;
+}
+
+.cameraFrame {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #3c50e0;
+  border-radius: 0.5rem;
+  pointer-events: none;
+}
+
+.cameraCorner {
+  position: absolute;
+  width: 2rem;
+  height: 2rem;
+  border-color: #3c50e0;
+  border-style: solid;
+}
+
+.topLeft {
+  top: 0;
+  left: 0;
+  border-width: 4px 0 0 4px;
+  border-top-left-radius: 0.5rem;
+}
+
+.topRight {
+  top: 0;
+  right: 0;
+  border-width: 4px 4px 0 0;
+  border-top-right-radius: 0.5rem;
+}
+
+.bottomLeft {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 4px 4px;
+  border-bottom-left-radius: 0.5rem;
+}
+
+.bottomRight {
+  bottom: 0;
+  right: 0;
+  border-width: 0 4px 4px 0;
+  border-bottom-right-radius: 0.5rem;
+} 

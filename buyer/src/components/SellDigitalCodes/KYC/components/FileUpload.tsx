@@ -137,6 +137,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         if (file.preview) URL.revokeObjectURL(file.preview);
       });
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propFiles, accept]);
 
   const createSyntheticEvent = (selectedFiles: File[] | null) => ({
@@ -186,6 +187,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     e.preventDefault();
     setIsDragging(false);
     handleFiles(Array.from(e.dataTransfer.files));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

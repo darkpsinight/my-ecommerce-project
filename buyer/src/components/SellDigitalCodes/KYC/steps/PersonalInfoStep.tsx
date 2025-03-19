@@ -62,6 +62,7 @@ const PersonalInfoStep = ({ formData, handleInputChange, handleFileChange, handl
     <div className="space-y-8">
       <header className="space-y-2">
         <h2 className="text-2xl font-semibold text-dark">Personal Information</h2>
+        <div className="h-1 w-24 bg-blue mb-4 rounded-full"></div>
         <p className="text-sm text-gray-500">Please provide your personal details for verification</p>
       </header>
 

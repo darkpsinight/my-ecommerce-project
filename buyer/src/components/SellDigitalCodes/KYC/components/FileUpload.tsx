@@ -12,6 +12,7 @@ interface FileUploadProps {
   maxSize?: string;
   maxFiles?: number;
   onRemove?: (fileName: string) => void;
+  isAnalyzing?: boolean;
 }
 
 interface FileWithPreview extends File {
@@ -92,6 +93,13 @@ const FilePreview: React.FC<{
   </div>
 );
 
+const LoadingSpinner = () => (
+  <div className="flex flex-col items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    <p className="mt-2 text-sm text-gray-500">Analyzing...</p>
+  </div>
+);
+
 export const FileUpload: React.FC<FileUploadProps> = ({
   id,
   name,
@@ -102,7 +110,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   files: propFiles,
   maxSize = "5MB",
   maxFiles = 3,
-  onRemove
+  onRemove,
+  isAnalyzing = false
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -213,8 +222,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-200`}
         >
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <UploadIcon />
-            <UploadText isMobile={isMobile} accept={accept} maxSize={maxSize} maxFiles={maxFiles} />
+            {isAnalyzing ? (
+              <LoadingSpinner />
+            ) : (
+              <>
+                <UploadIcon />
+                <UploadText isMobile={isMobile} accept={accept} maxSize={maxSize} maxFiles={maxFiles} />
+              </>
+            )}
           </div>
           <input
             id={id}
@@ -225,6 +240,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             onChange={handleFileChange}
             required={required}
             multiple={maxFiles > 1}
+            disabled={isAnalyzing}
           />
         </label>
       </div>

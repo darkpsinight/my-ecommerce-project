@@ -92,8 +92,8 @@ const SellerVerificationWizard = () => {
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      // router.push("/sell-digital-codes/pending-verification");
 
-      router.push("/sell-digital-codes/pending-verification");
     } catch (error) {
       console.error("Error submitting KYC:", error);
     } finally {
@@ -126,7 +126,17 @@ const SellerVerificationWizard = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form 
+      onSubmit={handleSubmit} 
+      className="space-y-8" 
+      autoComplete="off"
+      onKeyDown={(e) => {
+        // Prevent form submission when pressing Enter key
+        if (e.key === 'Enter') {
+          e.preventDefault();
+        }
+      }}
+    >
       <StepperUI currentStep={currentStep} steps={steps} />
 
       <div className="mt-8">{renderStepContent()}</div>

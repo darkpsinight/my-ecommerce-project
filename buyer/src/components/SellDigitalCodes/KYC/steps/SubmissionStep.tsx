@@ -2,10 +2,11 @@ import { StepProps } from "../types";
 
 const SubmissionStep = ({ formData }: StepProps) => {
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-dark">
+    <div>
+      <h2 className="text-xl font-semibold text-dark mb-2">
         Submission & Status
       </h2>
+      <div className="h-1 w-24 bg-blue mb-4 rounded-full"></div>
       <div className="bg-white shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <div className="text-center">

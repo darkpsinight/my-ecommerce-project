@@ -57,7 +57,7 @@ const LivenessCheckStep = ({ formData, handleInputChange, handleFileChange }: St
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div>
       <div className="border border-gray-100 rounded-xl p-6">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-2xl font-semibold text-dark">Liveness Check</h2>

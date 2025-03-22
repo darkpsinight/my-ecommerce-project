@@ -47,7 +47,10 @@ if (configs.COOKIE_SECRET) {
     secret: configs.COOKIE_SECRET, // For signing cookies
   });
   fastify.register(fastifyCsrf, {
-    cookieOpts: getRefreshTokenOptns(),
+    cookieOpts: {
+      ...getRefreshTokenOptns(),
+      httpOnly: false, // Allow JavaScript access to CSRF token
+    },
   });
 }
 

@@ -154,6 +154,7 @@ export const IDDocumentUploads: React.FC<IDDocumentUploadsProps> = ({
             <div className="relative aspect-video w-full">
               <Image
                 src="/images/kycGuide/KYC-Guide-Passport.webp"
+                sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                 alt="Passport Guide"
                 fill
                 className="object-contain rounded-lg"
@@ -191,6 +192,7 @@ export const IDDocumentUploads: React.FC<IDDocumentUploadsProps> = ({
             <div className="relative aspect-video w-full">
               <Image
                 src="/images/kycGuide/KYC-Guide-ID-Front.webp"
+                sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                 alt="ID Front Guide"
                 fill
                 className="object-contain rounded-lg"
@@ -228,6 +230,7 @@ export const IDDocumentUploads: React.FC<IDDocumentUploadsProps> = ({
             <div className="relative aspect-video w-full">
               <Image
                 src="/images/kycGuide/KYC-Guide-ID-Back.webp"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 alt="ID Back Guide"
                 fill
                 className="object-contain rounded-lg"

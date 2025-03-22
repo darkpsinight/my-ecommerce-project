@@ -1,24 +1,99 @@
-import { Metadata } from "next";
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { useAuthRefresh } from '@/hooks/useAuthRefresh';
 import SellerVerificationWizard from "@/components/SellDigitalCodes/KYC/SellerVerificationWizard";
 import PageContainer from "@/components/Common/PageContainer";
-import { getPublicConfigs } from "@/services/config";
-
-export async function generateMetadata(): Promise<Metadata> {
-  const { configs } = await getPublicConfigs();
-
-  return {
-    title: `Seller Verification - KYC | ${configs.APP_NAME}`,
-    description: `Complete your KYC verification to start selling digital codes on our marketplace.`,
-    openGraph: {
-      title: `Seller Verification - KYC | ${configs.APP_NAME}`,
-      description: `Complete your KYC verification to start selling digital codes on our marketplace.`,
-      type: "website",
-      url: "/sell-digital-codes/KYC",
-    },
-  };
-}
 
 export default function KYCPage() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const authState = useSelector((state: any) => state.authReducer);
+  const { token, verifyToken } = authState;
+  const [isChecking, setIsChecking] = useState(true);
+  const [hasRedirected, setHasRedirected] = useState(false);
+  
+  // Use the auth refresh hook to keep tokens fresh
+  const { refreshToken, isRefreshing } = useAuthRefresh();
+
+  // Define a callback function to check auth state
+  const checkTokens = useCallback(() => {
+    const currentToken = authState.token;
+    const currentVerifyToken = authState.verifyToken;
+    
+    return !!(currentToken && currentVerifyToken);
+  }, [authState]);
+
+  useEffect(() => {
+    // First, check if we already have tokens in Redux store
+    if (checkTokens()) {
+      console.log("Already authenticated with token");
+      setIsChecking(false);
+      return;
+    }
+
+    // To prevent redirect loops
+    if (hasRedirected) {
+      return;
+    }
+
+    // Next, try to refresh tokens
+    const checkAuth = async () => {
+      console.log("Checking auth state...");
+      try {
+        // Try refreshing token to get the latest auth state
+        await refreshToken();
+        
+        // Check immediately after refresh 
+        if (checkTokens()) {
+          console.log("Authenticated after immediate check");
+          setIsChecking(false);
+          return;
+        }
+        
+        // If still not authenticated, wait a bit and check again
+        setTimeout(() => {
+          if (checkTokens()) {
+            console.log("Authenticated after delayed check");
+            setIsChecking(false);
+          } else {
+            console.log("Failed to authenticate, redirecting to login");
+            setHasRedirected(true);
+            router.push('/signin?redirect=/sell-digital-codes/KYC');
+          }
+        }, 800);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setHasRedirected(true);
+        router.push('/signin?redirect=/sell-digital-codes/KYC');
+      }
+    };
+
+    // Use a longer timeout for the initial check
+    const timer = setTimeout(() => {
+      if (!isRefreshing) {
+        checkAuth();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [token, verifyToken, router, refreshToken, isRefreshing, hasRedirected, checkTokens]);
+
+  // Show loading state
+  if (isChecking) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col justify-center items-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+          <p className="text-gray-600">Verifying your authentication...</p>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  // Only render content when authenticated
   return (
     <PageContainer>
       <section className="overflow-hidden py-20 bg-gray-2">

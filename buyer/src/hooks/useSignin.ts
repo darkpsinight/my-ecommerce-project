@@ -91,8 +91,12 @@ export const useSignin = (): UseSigninReturn => {
         }));
       }
 
-      // Redirect to dashboard or home page after successful login
-      router.push('/');
+      // Get the redirect URL from search params or default to home
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectUrl = searchParams.get('redirect') || '/';
+      
+      // Redirect to the appropriate page
+      router.push(redirectUrl);
     } catch (err: any) {
       const errorResponse = err.response?.data;
       

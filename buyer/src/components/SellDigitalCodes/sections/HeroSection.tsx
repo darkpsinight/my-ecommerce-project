@@ -26,7 +26,7 @@ const HeroSection = ({ appName }: HeroSectionProps) => {
               <BenefitItem text="24/7 Support available" />
             </div>
             <Link
-              href="http://localhost:3001/sell-digital-codes/KYC"
+              href="/sell-digital-codes/KYC"
               className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-blue rounded-md hover:bg-blue-dark transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Start Selling Now

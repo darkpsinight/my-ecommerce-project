@@ -13,6 +13,7 @@ import { NProgressBar } from "@/components/Common/NProgressBar";
 import { ModalProvider } from "../context/QuickViewModalContext";
 import { CartModalProvider } from "../context/CartSidebarModalContext";
 import { ReduxProvider } from "@/redux/provider";
+import AuthProvider from "@/providers/AuthProvider";
 import QuickViewModal from "@/components/Common/QuickViewModal";
 import CartSidebarModal from "@/components/Common/CartSidebarModal";
 import { PreviewSliderProvider } from "../context/PreviewSliderContext";
@@ -45,18 +46,20 @@ export default function RootLayout({
         ) : (
           <>
             <ReduxProvider>
-              <CartModalProvider>
-                <ModalProvider>
-                  <PreviewSliderProvider>
-                    {isAuthRoute ? <AuthHeader /> : <Header />}
-                    {children}
+              <AuthProvider>
+                <CartModalProvider>
+                  <ModalProvider>
+                    <PreviewSliderProvider>
+                      {isAuthRoute ? <AuthHeader /> : <Header />}
+                      {children}
 
-                    <QuickViewModal />
-                    <CartSidebarModal />
-                    <PreviewSliderModal />
-                  </PreviewSliderProvider>
-                </ModalProvider>
-              </CartModalProvider>
+                      <QuickViewModal />
+                      <CartSidebarModal />
+                      <PreviewSliderModal />
+                    </PreviewSliderProvider>
+                  </ModalProvider>
+                </CartModalProvider>
+              </AuthProvider>
             </ReduxProvider>
             <ScrollToTop />
             <Footer />

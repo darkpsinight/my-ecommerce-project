@@ -46,11 +46,18 @@ if (configs.COOKIE_SECRET) {
   fastify.register(fastifyCookie, {
     secret: configs.COOKIE_SECRET, // For signing cookies
   });
+  
+  // Create CSRF cookie options without expiration (session cookie)
+  const csrfCookieOpts = {
+    httpOnly: true,
+    path: "/",
+    signed: true,
+    sameSite: configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV ? "strict" : "lax",
+    secure: configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV
+  };
+  
   fastify.register(fastifyCsrf, {
-    cookieOpts: {
-      ...getRefreshTokenOptns(),
-      httpOnly: false, // Allow JavaScript access to CSRF token
-    },
+    cookieOpts: csrfCookieOpts,
   });
 }
 

@@ -10,7 +10,7 @@ const verifyRefresh = async (request, reply) => {
 	request.log.info(`Verifying If the refresh Token is valid`);
 	request.JWT_TYPE = "refresh";
 
-	let token;
+	// First ve	let token;
 	// If refresh token is sent in request body attach it to request object
 	// (request.refreshToken) else check cookie and validate the token in the cookie
 	// then attach it to request body (request.refreshToken) if the cookie is
@@ -20,7 +20,7 @@ const verifyRefresh = async (request, reply) => {
 		request.log.info("Refresh Token is in cookie");
 		const refreshTokenCookie = request.cookies.refreshToken;
 		if (!refreshTokenCookie) {
-			return sendErrorResponse(reply, 400, "Missing refresh token in cookie");
+			return sendErrorResponse(reply, 401, "Unauthorized: Token required error");
 		}
 		// Fastify-cookie has a function which can be used to sign & unsign tokens
 		// unsignCookie returns valid, renew & false
@@ -30,7 +30,7 @@ const verifyRefresh = async (request, reply) => {
 		let refreshToken = request.unsignCookie(refreshTokenCookie);
 
 		if (!refreshToken.valid) {
-			return sendErrorResponse(reply, 400, "Invalid Refresh Token", {
+			return sendErrorResponse(reply, 401, "Unauthorized: Token invalid error", {
 				clearCookie: true,
 			});
 		} else {

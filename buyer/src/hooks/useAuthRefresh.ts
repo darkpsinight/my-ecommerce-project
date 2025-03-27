@@ -3,10 +3,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setTokens } from '@/redux/features/auth-slice';
 import { AUTH_API } from '@/config/api';
 
+// Create a debounce mechanism to prevent multiple refreshes
+let globalRefreshInProgress = false;
+let lastRefreshTimestamp = 0;
+const MIN_REFRESH_INTERVAL = 5000; // 5 seconds minimum between refreshes
+
 export const useAuthRefresh = () => {
   const dispatch = useDispatch();
-  const { token, verifyToken } = useSelector((state: any) => state.authReducer);
+  const { token } = useSelector((state: any) => state.authReducer);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const getVerifyToken = (): string | null => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('verifyToken');
+    }
+    return null;
+  };
 
   const getCookie = (name: string): string | null => {
     if (typeof document === 'undefined') return null;
@@ -21,31 +33,58 @@ export const useAuthRefresh = () => {
     return null;
   };
 
+  const isRefreshAllowed = (): boolean => {
+    // Check if global refresh is in progress
+    if (globalRefreshInProgress) {
+      console.log('Skipping refresh - another refresh is already in progress');
+      return false;
+    }
+    
+    // Check if we've refreshed too recently
+    const now = Date.now();
+    if (now - lastRefreshTimestamp < MIN_REFRESH_INTERVAL) {
+      console.log('Skipping refresh - too soon since last refresh');
+      return false;
+    }
+    
+    return true;
+  };
+
   const refreshToken = async () => {
-    // Don't refresh if already refreshing
-    if (isRefreshing) return;
+    // Don't refresh if already refreshing locally
+    if (isRefreshing) {
+      console.log('Skipping refresh - local refresh already in progress');
+      return false;
+    }
+    
+    // Check global refresh state
+    if (!isRefreshAllowed()) {
+      return false;
+    }
     
     try {
       setIsRefreshing(true);
+      globalRefreshInProgress = true;
+      lastRefreshTimestamp = Date.now();
       
-      // Get CSRF token from cookies or use verifyToken from Redux
-      const csrfToken = getCookie('_csrf') || verifyToken || '';
-      const refreshTokenValue = getCookie('refresh_token');
+      // Get verifyToken from sessionStorage
+      const verifyToken = getVerifyToken();
       
-      // Don't attempt to refresh if we don't have tokens
-      if (!csrfToken || !refreshTokenValue) {
-        console.log('Skipping token refresh - no tokens available');
+      // Don't attempt to refresh if we don't have verifyToken
+      if (!verifyToken) {
+        console.log('Skipping token refresh - no verifyToken available');
         setIsRefreshing(false);
-        return;
+        globalRefreshInProgress = false;
+        return false;
       }
       
-      console.log('Refreshing token with CSRF:', csrfToken.substring(0, 5) + '...');
+      console.log('Refreshing token with verifyToken:', verifyToken.substring(0, 5) + '...');
       
       const response = await fetch(AUTH_API.REFRESH_TOKEN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
+          'X-CSRF-Token': verifyToken,
         },
         body: JSON.stringify({}),
         credentials: 'include',
@@ -71,31 +110,39 @@ export const useAuthRefresh = () => {
       return false;
     } finally {
       setIsRefreshing(false);
+      globalRefreshInProgress = false;
     }
   };
 
+  // Check if token exists, if not try to refresh
   useEffect(() => {
-    // Only attempt to refresh if we have cookies but no tokens
-    const csrfCookie = getCookie('_csrf');
-    const refreshCookie = getCookie('refresh_token');
-    
-    if ((csrfCookie || refreshCookie) && (!token || !verifyToken)) {
-      // Small delay to ensure cookies are loaded
-      const timer = setTimeout(() => {
-        refreshToken();
-      }, 300);
-      
-      return () => clearTimeout(timer);
+    if (!token) {
+      const verifyToken = getVerifyToken();
+      if (verifyToken && isRefreshAllowed()) {
+        const timer = setTimeout(() => {
+          refreshToken();
+        }, 300);
+        
+        return () => clearTimeout(timer);
+      }
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   // Set up interval to refresh token every 14 minutes (assuming 15-minute token expiry)
   useEffect(() => {
+    const verifyToken = getVerifyToken();
     if (token && verifyToken) {
-      const interval = setInterval(refreshToken, 14 * 60 * 1000);
+      const interval = setInterval(() => {
+        if (isRefreshAllowed()) {
+          refreshToken();
+        }
+      }, 14 * 60 * 1000);
+      
       return () => clearInterval(interval);
     }
-  }, [token, verifyToken]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   return { refreshToken, isRefreshing };
 }; 

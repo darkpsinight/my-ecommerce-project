@@ -11,17 +11,26 @@ export default function KYCPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const authState = useSelector((state: any) => state.authReducer);
-  const { token, verifyToken } = authState;
+  const { token } = authState;
   const [isChecking, setIsChecking] = useState(true);
   const [hasRedirected, setHasRedirected] = useState(false);
+  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
   
   // Use the auth refresh hook to keep tokens fresh
   const { refreshToken, isRefreshing } = useAuthRefresh();
 
+  // Get verifyToken from sessionStorage
+  const getVerifyToken = (): string | null => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('verifyToken');
+    }
+    return null;
+  };
+
   // Define a callback function to check auth state
   const checkTokens = useCallback(() => {
     const currentToken = authState.token;
-    const currentVerifyToken = authState.verifyToken;
+    const currentVerifyToken = getVerifyToken();
     
     return !!(currentToken && currentVerifyToken);
   }, [authState]);
@@ -39,10 +48,17 @@ export default function KYCPage() {
       return;
     }
 
-    // Next, try to refresh tokens
+    // Skip if we already attempted a refresh
+    if (hasAttemptedRefresh) {
+      return;
+    }
+
+    // Next, try to refresh tokens once
     const checkAuth = async () => {
       console.log("Checking auth state...");
       try {
+        setHasAttemptedRefresh(true);
+        
         // Try refreshing token to get the latest auth state
         await refreshToken();
         
@@ -54,6 +70,8 @@ export default function KYCPage() {
         }
         
         // If still not authenticated, wait a bit and check again
+        // This time we don't call refreshToken again, just check if any other
+        // component's refresh succeeded
         setTimeout(() => {
           if (checkTokens()) {
             console.log("Authenticated after delayed check");
@@ -71,15 +89,18 @@ export default function KYCPage() {
       }
     };
 
-    // Use a longer timeout for the initial check
+    // Use a longer timeout for the initial check to let AuthProvider potentially handle it
     const timer = setTimeout(() => {
-      if (!isRefreshing) {
+      if (!isRefreshing && !checkTokens()) {
         checkAuth();
+      } else if (checkTokens()) {
+        // If tokens are already available, no need to refresh
+        setIsChecking(false);
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [token, verifyToken, router, refreshToken, isRefreshing, hasRedirected, checkTokens]);
+  }, [token, router, refreshToken, isRefreshing, hasRedirected, hasAttemptedRefresh, checkTokens]);
 
   // Show loading state
   if (isChecking) {

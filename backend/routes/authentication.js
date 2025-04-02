@@ -17,6 +17,7 @@ const {
 	reactivateAccount,
 	logout,
 	updateUserRole,
+	sellerSignin,
 } = require("../handlers/authenticationHandler");
 const { verifyAuth } = require("../plugins/authVerify");
 const {
@@ -89,6 +90,21 @@ const authenticationRoutes = async (fastify, opts) => {
 			],
 			schema: authenticationSchema.signin,
 			handler: signin,
+		});
+
+		// Seller/Admin login route
+		fastify.route({
+			method: "POST",
+			url: "/seller-signin",
+			preHandler: [
+				rateLimiter(rateLimits.auth),
+				recaptchaVerification,
+				attachUserWithPassword(true),
+				checkDeactivated,
+				checkEmailConfirmed,
+			],
+			schema: authenticationSchema.signin, // Reuse the signin schema
+			handler: sellerSignin,
 		});
 
 		// Route to check reset password token and redirect to frontend
@@ -316,6 +332,57 @@ const authenticationRoutes = async (fastify, opts) => {
 			checkEmailConfirmed
 		],
 		handler: updateUserRole,
+	});
+
+	// Route to get user public information
+	fastify.route({
+		method: "GET",
+		url: "/user-info",
+		schema: {
+			description: "Get user public information",
+			tags: ["authentication"],
+			response: {
+				200: {
+					type: "object",
+					properties: {
+						success: { type: "boolean" },
+						data: {
+							type: "object",
+							properties: {
+								email: { type: "string" },
+								name: { type: "string" },
+								role: { type: "string" }
+							}
+						}
+					}
+				}
+			},
+			security: [{ JWTToken: [] }]
+		},
+		preHandler: [
+			rateLimiter(rateLimits.standardRead),
+			verifyAuth(["admin", "user", "seller"])
+		],
+		handler: async (request, reply) => {
+			try {
+				const { email, name, role } = request.user;
+				return reply.code(200).send({
+					success: true,
+					data: {
+						email,
+						name,
+						role
+					}
+				});
+			} catch (error) {
+				request.log.error(`Error getting user info: ${error.message}`);
+				return sendErrorResponse(
+					reply,
+					500,
+					"Internal Server Error: Failed to get user information"
+				);
+			}
+		}
 	});
 };
 

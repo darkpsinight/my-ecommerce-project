@@ -27,7 +27,7 @@ function Overview() {
         </Box>
         <Card 
           sx={{ 
-            p: { xs: 3, sm: 6, md: 10 }, 
+            p: { xs: 2, sm: 4, md: 6 }, 
             mb: 10, 
             borderRadius: 2,
             background: 'rgba(255, 255, 255, 0.95)',

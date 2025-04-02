@@ -163,9 +163,9 @@ const handleSignIn = async (request, reply) => {
 
   // Validate password for email-based accounts
   if (!(await user.matchPasswd(password))) {
-    sendErrorResponse(reply, 401, "Invalid credentials", {
+    sendErrorResponse(reply, 401, "Invalid email or password", {
       metadata: {
-        hint: "Please check your email and password",
+        hint: "Please check your email address and password or consider creating an account.",
         links: {
           forgotPassword: "/forgot-password",
           signup: "/signup",
@@ -216,6 +216,49 @@ const signin = async (request, reply) => {
     {
       statusCode: 200,
       message: "Signed in",
+      token: user.getJWT(),
+      emailSuccess: emailStatus.success,
+      emailMessage: emailStatus.message,
+      verifyToken,
+    },
+    {
+      refreshToken,
+    }
+  );
+};
+
+// @route   POST /api/v1/auth/seller-signin
+// @desc    Login handler for sellers and admins only
+// @access  Public
+const sellerSignin = async (request, reply) => {
+  request.log.info("handlers/sellerSignin");
+  const user = await handleSignIn(request, reply);
+
+  if (!user) return; // Error response already sent by handleSignIn
+
+  // Check if user has seller or admin role
+  if (user.role !== "seller" && user.role !== "admin") {
+    return sendErrorResponse(
+      reply,
+      403,
+      "Access denied",
+      {
+        metadata: {
+          hint: "Only sellers can access this login",
+        },
+      }
+    );
+  }
+
+  const refreshToken = await getRefreshToken(user, request.ipAddress);
+  const emailStatus = await sendNewLoginEmail(user, request);
+  const verifyToken = await reply.generateCsrf();
+
+  return sendSuccessResponse(
+    reply,
+    {
+      statusCode: 200,
+      message: "Seller signed in successfully",
       token: user.getJWT(),
       emailSuccess: emailStatus.success,
       emailMessage: emailStatus.message,
@@ -1093,4 +1136,5 @@ module.exports = {
   reactivateAccount,
   logout,
   updateUserRole,
+  sellerSignin,
 };

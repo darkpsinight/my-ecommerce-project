@@ -1,8 +1,11 @@
-import { Box, Button, Container, TextField, Typography, Link, Card, CircularProgress, Divider } from '@mui/material';
+import { Box, Button, Container, TextField, Typography, Link, Card, CircularProgress, Divider, Alert, InputAdornment, IconButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import GoogleIcon from '@mui/icons-material/Google';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 const MainContent = styled(Box)(({ theme }) => `
     min-height: 100vh;
@@ -45,12 +48,44 @@ const LogoBox = styled(Box)(({ theme }) => `
     }
 `);
 
+const GoogleButton = styled(Button)(({ theme }) => `
+    background-color: #fff;
+    color: rgba(0, 0, 0, 0.87);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    text-transform: none;
+    font-weight: 500;
+    padding: ${theme.spacing(1.5)};
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+        background-color: #f5f5f5;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .MuiSvgIcon-root {
+        margin-right: ${theme.spacing(1)};
+        color: #4285F4;
+    }
+`);
+
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');  
+  const [loginErrorHint, setLoginErrorHint] = useState('');  
+  const [loginErrorLink, setLoginErrorLink] = useState('');  
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const validateForm = () => {
     let isValid = true;
@@ -68,9 +103,6 @@ function Login() {
     if (!password) {
       setPasswordError('Password is required');
       isValid = false;
-    } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      isValid = false;
     } else {
       setPasswordError('');
     }
@@ -82,16 +114,53 @@ function Login() {
     e.preventDefault();
     if (validateForm()) {
       setIsLoading(true);
+      setLoginError('');
+      setLoginErrorHint('');
+      setLoginErrorLink('');
       try {
-        // TODO: Implement login logic here
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
-        console.log('Login attempt with:', { email, password });
+        const response = await fetch('http://localhost:3000/api/v1/auth/seller-signin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Extract detailed error information
+          const errorMessage = data.message || 'Login failed';
+          const errorHint = data.metadata?.hint || '';
+          const errorLink = data.metadata?.links?.signin || '';
+          
+          setLoginError(errorMessage);
+          setLoginErrorHint(errorHint);
+          setLoginErrorLink(errorLink);
+          throw new Error(errorMessage);
+        }
+
+        // Store authentication token in localStorage
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+        }
+        if (data.refreshToken) {
+          localStorage.setItem('refresh_token', data.refreshToken);
+        }
+
+        // Redirect to dashboard
+        navigate('/overview');
       } catch (error) {
         console.error('Login failed:', error);
+        setLoginError(error.message || 'Authentication failed. Please check your credentials.');
       } finally {
         setIsLoading(false);
       }
     }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoginError('Google login is not implemented yet.');
   };
 
   return (
@@ -144,6 +213,23 @@ function Login() {
             Access your digital code store, manage inventory, and track sales all in one place
           </Typography>
 
+          {loginError && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                width: '100%', 
+                mb: 3,
+                borderRadius: '8px'
+              }}
+            >
+              <Typography variant="h4" fontWeight="Bold">{loginError}</Typography>
+              {loginErrorHint && (
+                <Typography variant="subtitle1" sx={{ mt: 1 }}>{loginErrorHint}</Typography>
+              )}
+              
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} style={{ width: '100%' }}>
             <TextField
               fullWidth
@@ -174,8 +260,21 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               error={!!passwordError}
               helperText={passwordError}
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               disabled={isLoading}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={togglePasswordVisibility}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
               sx={{ 
                 mb: 3,
                 '& .MuiOutlinedInput-root': {
@@ -213,7 +312,21 @@ function Login() {
             </Button>
           </form>
 
-          <Divider sx={{ width: '100%', my: 3 }} />
+          <Divider sx={{ width: '100%', my: 3 }}>
+            <Typography variant="body2" color="textSecondary" sx={{ px: 2 }}>
+              OR
+            </Typography>
+          </Divider>
+
+          <GoogleButton
+            fullWidth
+            size="large"
+            onClick={handleGoogleLogin}
+            sx={{ mb: 3 }}
+          >
+            <GoogleIcon />
+            Sign in with Google
+          </GoogleButton>
 
           <Box 
             sx={{ 

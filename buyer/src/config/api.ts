@@ -3,7 +3,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1
 export const AUTH_API = {
     SIGNUP: `${API_URL}/signup`,
     SIGNIN: `${API_URL}/signin`,
-    LOGOUT: `${API_URL}/logout`,
+    LOGOUT: `${API_URL}/auth/logout`,
     CONFIRM_EMAIL: `${API_URL}/confirmEmail`,
     REQUEST_CONFIRM_EMAIL: `${API_URL}/confirmEmail`,
     RESET_PASSWORD: `${API_URL}/reset-password`,
@@ -14,6 +14,10 @@ export const AUTH_API = {
     ACCOUNT: `${API_URL}/account`,
     REACTIVATE: `${API_URL}/reactivate`,
     REFRESH_TOKEN: `${API_URL}/auth/refresh`,
+};
+
+export const USER_API = {
+    INFO: `${API_URL}/user/info`,
 };
 
 export const ADMIN_API = {
@@ -37,6 +41,7 @@ const api = {
     AUTH_API,
     ADMIN_API,
     OAUTH_API,
+    USER_API,
 };
 
 export default api;

@@ -35,7 +35,6 @@ const fastifyCsrf = require("fastify-csrf");
 const fastifyCookie = require("fastify-cookie");
 const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
 const { configCache } = require("./services/configCache");
-const { userRoutes } = require("./routes/user");
 
 // fastify-helmet adds various HTTP headers for security
 if (configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV) {
@@ -110,9 +109,6 @@ fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
 
 // Register public routes
 fastify.register(publicRoutes, { prefix: "/api/v1/public" });
-
-// Register user routes
-fastify.register(userRoutes, { prefix: "/api/v1/user" });
 
 // Auth Service health check
 fastify.get("/", async (request, reply) => {

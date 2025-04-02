@@ -11,13 +11,9 @@ export const AUTH_API = {
     UPDATE_PASSWORD: `${API_URL}/updatePassword`,
     EMAIL_LOGIN: `${API_URL}/emailLogin`,
     REQUEST_EMAIL_LOGIN: `${API_URL}/emailLogin`,
-    ACCOUNT: `${API_URL}/account`,
+    ACCOUNT: `${API_URL}/auth/account`,
     REACTIVATE: `${API_URL}/reactivate`,
     REFRESH_TOKEN: `${API_URL}/auth/refresh`,
-};
-
-export const USER_API = {
-    INFO: `${API_URL}/user/info`,
 };
 
 export const ADMIN_API = {
@@ -41,7 +37,6 @@ const api = {
     AUTH_API,
     ADMIN_API,
     OAUTH_API,
-    USER_API,
 };
 
 export default api;

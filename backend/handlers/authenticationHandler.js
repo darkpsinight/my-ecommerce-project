@@ -237,7 +237,7 @@ const sellerSignin = async (request, reply) => {
   if (!user) return; // Error response already sent by handleSignIn
 
   // Check if user has seller or admin role
-  if (user.role !== "seller" && user.role !== "admin") {
+  if (user.role !== "seller") {
     return sendErrorResponse(
       reply,
       403,

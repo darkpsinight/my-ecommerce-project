@@ -153,7 +153,7 @@ const authenticationRoutes = async (fastify, opts) => {
 			url: "/updatePassword",
 			preHandler: [
 				rateLimiter(rateLimits.sensitive),
-				verifyAuth(["admin", "user"]),
+				verifyAuth(["admin", "seller", "buyer", "support"]),
 				checkDeactivated,
 				checkEmailConfirmed,
 				attachUserWithPassword(false),
@@ -220,7 +220,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		url: "/account",
 		preHandler: [
 			rateLimiter(rateLimits.standardRead),
-			verifyAuth(["admin", "user"]),
+			verifyAuth(["admin", "seller", "buyer", "support"]),
 			attachUser(false),
 			checkEmailConfirmed,
 			checkDeactivated,
@@ -235,7 +235,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		url: "/account",
 		preHandler: [
 			rateLimiter(rateLimits.sensitive),
-			verifyAuth(["admin", "user"]),
+			verifyAuth(["admin", "seller", "buyer", "support"]),
 			checkDeactivated,
 			checkEmailConfirmed,
 			attachUserWithPassword(false),
@@ -286,7 +286,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		},
 		preHandler: [
 			rateLimiter(rateLimits.auth),
-			verifyAuth(["admin", "user"]),
+			verifyAuth(["admin", "seller", "buyer", "support"]),
 			attachUser(false)
 		],
 		handler: logout,
@@ -299,7 +299,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		preValidation: fastify.csrfProtection,
 		preHandler: [
 			rateLimiter(rateLimits.sensitive),
-			verifyAuth(["admin", "user"]),
+			verifyAuth(["admin", "seller", "buyer", "support"]),
 			checkDeactivated,
 			verifyRefresh,
 		],
@@ -313,7 +313,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		schema: authenticationSchema.revokeAll,
 		preHandler: [
 			rateLimiter(rateLimits.sensitive),
-			verifyAuth(["admin", "user"]),
+			verifyAuth(["admin", "seller", "buyer", "support"]),
 			checkDeactivated,
 			attachUser(false),
 		],
@@ -361,7 +361,7 @@ const authenticationRoutes = async (fastify, opts) => {
 		},
 		preHandler: [
 			rateLimiter(rateLimits.standardRead),
-			verifyAuth(["admin", "user", "seller"])
+			verifyAuth(["admin", "seller", "buyer", "support"])
 		],
 		handler: async (request, reply) => {
 			try {

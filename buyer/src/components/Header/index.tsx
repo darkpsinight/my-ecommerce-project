@@ -95,7 +95,7 @@ const Header = () => {
             ? (userInfo.name.length > 8
                 ? `${userInfo.name.slice(0, 8)}...`
                 : userInfo.name)
-            : "User")
+            : "")
         : "Sign In",
     path: isAuthenticated ? "#" : "/signin",
     showLabel: true,
@@ -123,6 +123,13 @@ const Header = () => {
     ),
     submenu: isAuthenticated 
       ? [
+          // Show Dashboard only for sellers
+          ...(userInfo?.role === 'seller' ? [
+            { 
+              title: "Dashboard", 
+              path: `${process.env.NEXT_PUBLIC_SELLER_DASHBOARD_URL}` 
+            }
+          ] : []),
           { title: "Profile", path: "/account" },
           { title: "Logout", path: "#", onClick: handleLogout },
         ]

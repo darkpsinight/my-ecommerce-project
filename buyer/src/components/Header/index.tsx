@@ -90,7 +90,13 @@ const Header = () => {
 
   // Create account menu item with submenu for the Dropdown component
   const accountMenuItem = {
-    title: isAuthenticated ? (userInfo?.name || "User") : "Sign In",
+    title: isAuthenticated
+        ? (userInfo?.name
+            ? (userInfo.name.length > 8
+                ? `${userInfo.name.slice(0, 8)}...`
+                : userInfo.name)
+            : "User")
+        : "Sign In",
     path: isAuthenticated ? "#" : "/signin",
     showLabel: true,
     icon: (

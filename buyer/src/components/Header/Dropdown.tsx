@@ -52,7 +52,7 @@ const Dropdown = ({ menuItem, stickyMenu }) => {
 
       {/* <!-- Dropdown Start --> */}
       <ul
-        className={`absolute top-full left-0 z-50 dropdown ${dropdownToggler && "flex"} ${
+        className={`absolute top-full left-0 z-50 bg-gray-2 dropdown ${dropdownToggler && "flex"} ${
           stickyMenu
             ? "xl:group-hover:translate-y-0"
             : "xl:group-hover:translate-y-0"

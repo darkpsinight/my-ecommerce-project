@@ -4,6 +4,7 @@ interface UserInfo {
   email: string;
   name: string;
   role: string;
+  isEmailConfirmed: boolean;
 }
 
 interface UserInfoState {

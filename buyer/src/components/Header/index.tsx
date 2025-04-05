@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import { clearTokens } from "@/redux/features/auth-slice";
 import { AUTH_API } from "@/config/api";
 import { useUserInfo } from "@/hooks/useUserInfo";
+import { decodeToken } from "@/utils/jwt";
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +30,15 @@ const Header = () => {
   const { token } = useAppSelector((state) => state.authReducer);
   const { userInfo } = useUserInfo();
   const isAuthenticated = !!token;
+  const decodedToken = token ? decodeToken(token) : null;
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Set loading to false once we have either the userInfo or decodedToken
+    if (userInfo || decodedToken) {
+      setIsLoading(false);
+    }
+  }, [userInfo, decodedToken]);
 
   const handleOpenCartModal = () => {
     openCartModal();
@@ -91,15 +101,17 @@ const Header = () => {
   // Create account menu item with submenu for the Dropdown component
   const accountMenuItem = {
     title: isAuthenticated
-        ? (userInfo?.name
-            ? (userInfo.name.length > 8
-                ? `${userInfo.name.slice(0, 8)}...`
-                : userInfo.name)
-            : "")
+        ? isLoading 
+          ? "Loading..."
+          : (userInfo?.name || decodedToken?.name || "").length > 8
+            ? `${(userInfo?.name || decodedToken?.name || "").slice(0, 8)}...`
+            : userInfo?.name || decodedToken?.name || ""
         : "Sign In",
     path: isAuthenticated ? "#" : "/signin",
     showLabel: true,
-    icon: (
+    icon: isLoading ? (
+      <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue border-t-transparent"/>
+    ) : (
       <svg
         width="24"
         height="24"
@@ -123,11 +135,11 @@ const Header = () => {
     ),
     submenu: isAuthenticated 
       ? [
-          // Show Dashboard only for sellers
-          ...(userInfo?.role === 'seller' ? [
+          // Show Dashboard only for sellers - using decoded token role
+          ...(decodedToken?.role === 'seller' ? [
             { 
               title: "Dashboard", 
-              path: `${process.env.NEXT_PUBLIC_SELLER_DASHBOARD_URL}` 
+              path: `${process.env.NEXT_PUBLIC_SELLER_DASHBOARD_URL}`
             }
           ] : []),
           { title: "Profile", path: "/account" },
@@ -216,7 +228,7 @@ const Header = () => {
           </div>
 
           {/* <!-- header top right --> */}
-          <div className="flex w-full lg:w-auto items-center gap-7.5">
+          <div className="flex w-full lg:w-auto items-center gap-5.5">
             <div className="hidden xl:flex items-center gap-3.5">
               <svg
                 width="24"

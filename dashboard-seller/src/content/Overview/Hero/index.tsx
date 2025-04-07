@@ -6,8 +6,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { useEffect, useState } from 'react';
-import { getPublicConfigs } from 'src/services/config';
+import { useAppSelector } from 'src/redux/hooks';
 
 const TypographyH1 = styled(Typography)(
   ({ theme }) => `
@@ -171,20 +170,7 @@ const BackgroundDecorationLeft = styled(Box)(
 );
 
 function Hero() {
-  const [appName, setAppName] = useState('');
-
-  useEffect(() => {
-    const fetchConfigs = async () => {
-      try {
-        const configs = await getPublicConfigs();
-        setAppName(configs.APP_NAME);
-      } catch (error) {
-        console.error('Error fetching app name:', error);
-      }
-    };
-
-    fetchConfigs();
-  }, []);
+  const { data: configs } = useAppSelector((state) => state.config);
 
   return (
     <Box sx={{ position: 'relative', overflow: 'hidden' }}>
@@ -200,7 +186,7 @@ function Hero() {
       >
         <Grid item xs={12} md={10} lg={8} mx="auto" sx={{ position: 'relative' }}>
           <TypographyH1 sx={{ mb: 1, fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' } }} variant="h1">
-            Welcome to <span style={{ color: '#2196F3' }}>{appName}</span>
+            Welcome to <span style={{ color: '#2196F3' }}>{configs.APP_NAME}</span>
           </TypographyH1>
           <TypographyH2
             sx={{ 
@@ -216,7 +202,7 @@ function Hero() {
             Your trusted platform for selling digital codes, game keys, and software licenses.
             Start managing your digital inventory today!
           </TypographyH2>
-          <Divider sx={{ width: '120px', mx: 'auto', mb: 4, borderColor: 'primary.light', opacity: 0.6 }} />
+          <Divider sx={{ width: '600px', mx: 'auto', mb: 4, borderColor: 'primary.light', opacity: 0.6 }} />
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
             spacing={{ xs: 2, sm: 3 }}

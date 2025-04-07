@@ -6,9 +6,13 @@ import LocalizationProvider from '@mui/lab/LocalizationProvider';
 
 import { CssBaseline } from '@mui/material';
 import ThemeProvider from './theme/ThemeProvider';
+import { Provider } from 'react-redux';
+import { store } from './redux/store';
+import { useConfigFetcher } from 'src/hooks/useConfigFetcher';
 
-function App() {
+function AppContent() {
   const content = useRoutes(router);
+  useConfigFetcher();
 
   return (
     <ThemeProvider>
@@ -19,4 +23,13 @@ function App() {
     </ThemeProvider>
   );
 }
+
+function App() {
+  return (
+    <Provider store={store}>
+      <AppContent />
+    </Provider>
+  );
+}
+
 export default App;

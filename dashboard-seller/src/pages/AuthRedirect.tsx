@@ -30,7 +30,7 @@ const AuthRedirect = () => {
 
       try {
         const response = await axios.post<ValidationResponse>(
-          'http://localhost:3000/api/v1/auth/validate-seller-token',
+          AUTH_API.VALIDATE_SELLER_TOKEN,
           { token }
         );
 
@@ -38,7 +38,11 @@ const AuthRedirect = () => {
         dispatch(setAuthToken(response.data.token));
 
         // Clear URL params and redirect to dashboard
-        window.history.replaceState({}, document.title, window.location.pathname);
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
         navigate('/');
       } catch (error) {
         console.error('Token validation error:', error);
@@ -68,4 +72,4 @@ const AuthRedirect = () => {
   return null;
 };
 
-export default AuthRedirect; 
+export default AuthRedirect;

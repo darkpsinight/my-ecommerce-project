@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { styled } from '@mui/material/styles';
 import Logo from 'src/components/LogoSign';
 import Hero from './Hero';
+import { useAppSelector } from 'src/redux/hooks';
 
 const OverviewWrapper = styled(Box)(
   ({ theme }) => `
@@ -16,10 +17,12 @@ const OverviewWrapper = styled(Box)(
 );
 
 function Overview() {
+  const { APP_NAME } = useAppSelector((state) => state.config.data);
+  
   return (
     <OverviewWrapper>
       <Helmet>
-        <title>DigitalMarket - Seller Dashboard</title>
+        <title>{APP_NAME} - Seller Dashboard</title>
       </Helmet>
       <Container maxWidth="lg">
         <Box display="flex" justifyContent="center" py={5} alignItems="center">

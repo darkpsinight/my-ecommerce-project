@@ -12,14 +12,17 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import GoogleIcon from '@mui/icons-material/Google';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useLogin } from './useLogin';
 import { MainContent, LoginCard, LogoBox, GoogleButton } from './styles';
 
 function Login() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -57,6 +60,28 @@ function Login() {
 
   return (
     <MainContent>
+      <IconButton
+        onClick={() => navigate('/')}
+        sx={{
+          position: 'fixed',
+          top: { xs: 12, sm: 24, md: 32 },
+          left: { xs: 12, sm: 24, md: 32 },
+          color: '#fff',
+          backgroundColor: 'primary.main',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+          width: { xs: 36, sm: 42 },
+          height: { xs: 36, sm: 42 },
+          '&:hover': {
+            backgroundColor: 'primary.dark',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+          },
+          transition: 'all 0.2s ease-in-out',
+          zIndex: 1100
+        }}
+        size="large"
+      >
+        <ArrowBackIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
+      </IconButton>
       <LoginCard>
         <Box
           display="flex"

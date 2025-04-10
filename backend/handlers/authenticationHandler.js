@@ -238,16 +238,11 @@ const sellerSignin = async (request, reply) => {
 
   // Check if user has seller or admin role
   if (user.role !== "seller") {
-    return sendErrorResponse(
-      reply,
-      403,
-      "Access denied",
-      {
-        metadata: {
-          hint: "Only sellers can access this login",
-        },
-      }
-    );
+    return sendErrorResponse(reply, 403, "Access denied", {
+      metadata: {
+        hint: "Only sellers can access this login",
+      },
+    });
   }
 
   const refreshToken = await getRefreshToken(user, request.ipAddress);
@@ -1112,9 +1107,116 @@ const updateUserRole = async (request, reply) => {
     user: {
       uid: targetUser.uid,
       email: targetUser.email,
-      name: targetUser.name
-    }
+      name: targetUser.name,
+    },
   });
+};
+
+// @route 	POST /api/v1/generate-seller-token
+// @desc	Generates a short-lived token for seller authentication handoff
+// @access	Private (requires valid JWT with seller role)
+const generateSellerToken = async (request, reply) => {
+  request.log.info("handlers/generateSellerToken");
+
+  try {
+    const user = request.user;
+
+    // Get seller domain from configs
+    const sellerDomain = configs.APP_DOMAIN_SELLER;
+    if (!sellerDomain) {
+      return sendErrorResponse(reply, 500, "Seller domain not configured");
+    }
+
+    // Generate short-lived token (1 minute)
+    const token = jwt.sign(
+      {
+        userId: user.uid,
+        redirectTo: sellerDomain,
+        purpose: "seller_auth_handoff",
+      },
+      configs.JWT_KEY,
+      {
+        expiresIn: "1m",
+      }
+    );
+
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "Seller token generated successfully",
+      token,
+    });
+  } catch (error) {
+    request.log.error(`Error generating seller token: ${error.message}`);
+    return sendErrorResponse(reply, 500, "Failed to generate seller token");
+  }
+};
+
+// @route   POST /api/v1/auth/validate-seller-token
+// @desc    Validates seller token and returns a new access token
+// @access  Public
+const validateSellerToken = async (request, reply) => {
+  request.log.info("handlers/validateSellerToken");
+
+  try {
+    const { token } = request.body;
+
+    // Get seller domain from configs
+    const sellerDomain = configs.APP_DOMAIN_SELLER;
+    if (!sellerDomain) {
+      return sendErrorResponse(reply, 500, "Seller domain not configured");
+    }
+
+    if (!token) {
+      return sendErrorResponse(reply, 400, "Token is required");
+    }
+
+    // Verify the handoff token
+    const decoded = jwt.verify(token, configs.JWT_KEY);
+
+    // Validate token claims
+    if (
+      decoded.redirectTo !== sellerDomain ||
+      decoded.purpose !== "seller_auth_handoff"
+    ) {
+      return sendErrorResponse(reply, 401, "Invalid token claims");
+    }
+
+    // Find the user to include in the new token
+    const user = await User.findOne({ uid: decoded.userId });
+    if (!user) {
+      return sendErrorResponse(reply, 404, "User not found");
+    }
+
+    // Generate new access token
+    const accessToken = jwt.sign(
+      {
+        uid: user.uid,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      configs.JWT_KEY,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    // Add the handoff token to blacklist
+    await BlacklistedToken.create({
+      token,
+      userEmail: user.email,
+      expiresAt: new Date(decoded.exp * 1000),
+    });
+
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "Seller token validated successfully",
+      token: accessToken,
+    });
+  } catch (error) {
+    request.log.error(`Error validating seller token: ${error.message}`);
+    return sendErrorResponse(reply, 401, "Invalid token");
+  }
 };
 
 module.exports = {
@@ -1137,4 +1239,6 @@ module.exports = {
   logout,
   updateUserRole,
   sellerSignin,
+  generateSellerToken,
+  validateSellerToken,
 };

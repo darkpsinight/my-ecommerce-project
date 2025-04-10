@@ -63,6 +63,7 @@ const Dropdown = ({ menuItem, stickyMenu }) => {
             {item.onClick ? (
               <button
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation(); // Prevent parent click handler from firing
                   item.onClick();
                 }}

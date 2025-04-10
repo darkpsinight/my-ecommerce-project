@@ -9,6 +9,7 @@ import ThemeProvider from './theme/ThemeProvider';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 import { useConfigFetcher } from 'src/hooks/useConfigFetcher';
+import { Toaster } from 'react-hot-toast';
 
 function AppContent() {
   const content = useRoutes(router);
@@ -18,6 +19,7 @@ function AppContent() {
     <ThemeProvider>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <CssBaseline />
+        <Toaster position="top-right" />
         {content}
       </LocalizationProvider>
     </ThemeProvider>

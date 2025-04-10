@@ -6,6 +6,7 @@ import SidebarLayout from 'src/layouts/SidebarLayout';
 import BaseLayout from 'src/layouts/BaseLayout';
 
 import SuspenseLoader from 'src/components/SuspenseLoader';
+import AuthRedirect from './pages/AuthRedirect';
 
 const Loader = (Component) => (props) =>
   (
@@ -85,6 +86,10 @@ const routes: RouteObject[] = [
       {
         path: '/login',
         element: <Login />
+      },
+      {
+        path: '/auth-redirect',
+        element: <AuthRedirect />
       },
       {
         path: '/',

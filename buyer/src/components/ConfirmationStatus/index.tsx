@@ -59,7 +59,7 @@ const ConfirmationStatus = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/v1/auth/confirmEmail",
+        `${AUTH_API.CONFIRM_EMAIL}`,
         {
           method: "POST",
           headers: {

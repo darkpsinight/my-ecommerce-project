@@ -15,6 +15,14 @@ import { clearTokens } from "@/redux/features/auth-slice";
 import { AUTH_API } from "@/config/api";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { decodeToken } from "@/utils/jwt";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+interface SellerTokenResponse {
+  statusCode: number;
+  message: string;
+  token: string;
+}
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,6 +75,35 @@ const Header = () => {
       }
     } catch (error) {
       console.error("Error during logout:", error);
+    }
+  };
+
+  const handleDashboardClick = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    try {
+      const response = await axios.post<SellerTokenResponse>(
+        AUTH_API.GENERATE_SELLER_TOKEN,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.token) {
+        const sellerDashboardUrl = `${process.env.NEXT_PUBLIC_SELLER_DASHBOARD_URL}/auth-redirect?token=${response.data.token}`;
+        window.location.href = sellerDashboardUrl;
+        // Clear URL token after redirect
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        toast.error("Failed to generate seller token");
+      }
+    } catch (error) {
+      console.error("Error generating seller token:", error);
+      toast.error("Failed to access seller dashboard");
     }
   };
 
@@ -139,7 +176,8 @@ const Header = () => {
           ...(decodedToken?.role === 'seller' ? [
             { 
               title: "Dashboard", 
-              path: `${process.env.NEXT_PUBLIC_SELLER_DASHBOARD_URL}`
+              path: "#",
+              onClick: handleDashboardClick
             }
           ] : []),
           { title: "Profile", path: "/account" },

@@ -1,24 +1,24 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 export const AUTH_API = {
-    SIGNUP: `${API_URL}/signup`,
-    SIGNIN: `${API_URL}/signin`,
+    SIGNUP: `${API_URL}/auth/signup`,
+    SIGNIN: `${API_URL}/auth/signin`,
     LOGOUT: `${API_URL}/auth/logout`,
-    CONFIRM_EMAIL: `${API_URL}/confirmEmail`,
-    REQUEST_CONFIRM_EMAIL: `${API_URL}/confirmEmail`,
-    RESET_PASSWORD: `${API_URL}/reset-password`,
-    REQUEST_RESET_PASSWORD: `${API_URL}/reset-password`,
-    UPDATE_PASSWORD: `${API_URL}/updatePassword`,
-    EMAIL_LOGIN: `${API_URL}/emailLogin`,
-    REQUEST_EMAIL_LOGIN: `${API_URL}/emailLogin`,
+    CONFIRM_EMAIL: `${API_URL}/auth/confirmEmail`,
+    RESET_PASSWORD: `${API_URL}/auth/reset-password`,
+    REQUEST_RESET_PASSWORD: `${API_URL}/auth/reset-password`,
+    UPDATE_PASSWORD: `${API_URL}/auth/updatePassword`,
+    EMAIL_LOGIN: `${API_URL}/auth/emailLogin`,
+    REQUEST_EMAIL_LOGIN: `${API_URL}/auth/emailLogin`,
     ACCOUNT: `${API_URL}/auth/account`,
-    REACTIVATE: `${API_URL}/reactivate`,
+    REACTIVATE: `${API_URL}/auth/reactivate`,
     REFRESH_TOKEN: `${API_URL}/auth/refresh`,
+    GENERATE_SELLER_TOKEN: `${API_URL}/auth/generate-seller-token`,
 };
 
 export const ADMIN_API = {
-    CONFIGS: `${API_URL}/configs`,
-    DELETE_CONFIG: (key: string) => `${API_URL}/configs/${key}`,
+    CONFIGS: `${API_URL}/public/configs`,
+    DELETE_CONFIG: (key: string) => `${API_URL}/public/configs/${key}`,
 };
 
 export const OAUTH_API = {

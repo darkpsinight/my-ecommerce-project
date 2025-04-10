@@ -18,6 +18,8 @@ const {
   logout,
   updateUserRole,
   sellerSignin,
+  generateSellerToken,
+  validateSellerToken,
 } = require("../handlers/authenticationHandler");
 const { verifyAuth } = require("../plugins/authVerify");
 const {
@@ -31,7 +33,7 @@ const {
   attachUserForPasswordReset,
 } = require("../plugins/authHelperPlugins");
 const { tokenCheck } = require("../plugins/tokenCheck");
-const { authenticationSchema } = require("./schemas/authSchema");
+const { authenticationSchema, responseErrors } = require("./schemas/authSchema");
 const { configs } = require("../configs");
 const { verifyRefresh } = require("../plugins/refreshVerify");
 const { rateLimiter } = require("../plugins/rateLimiter");
@@ -323,6 +325,115 @@ const authenticationRoutes = async (fastify, opts) => {
       checkEmailConfirmed,
     ],
     handler: updateUserRole,
+  });
+
+  // Seller token generation route
+  fastify.route({
+    method: "POST",
+    url: "/generate-seller-token",
+    schema: {
+      description: "Generate a short-lived token for seller authentication handoff",
+      tags: ["Authentication"],
+      security: [{ JWTToken: [] }],
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            statusCode: { type: "number" },
+            message: { type: "string" },
+            token: { type: "string" }
+          }
+        },
+        401: {
+          description: "Unauthorized",
+          type: "object",
+          properties: {
+            statusCode: { type: "integer", example: 401 },
+            message: { type: "string" },
+            success: { type: "boolean", example: false },
+            error: { type: "string" }
+          }
+        },
+        403: {
+          description: "Forbidden",
+          type: "object",
+          properties: {
+            statusCode: { type: "integer", example: 403 },
+            message: { type: "string" },
+            success: { type: "boolean", example: false },
+            error: { type: "string" }
+          }
+        },
+        500: {
+          description: "Internal Server Error",
+          type: "object",
+          properties: {
+            statusCode: { type: "integer", example: 500 },
+            message: { type: "string" },
+            success: { type: "boolean", example: false },
+            error: { type: "string" }
+          }
+        }
+      }
+    },
+    preHandler: [
+      verifyAuth(["seller"]),
+      checkDeactivated,
+      checkEmailConfirmed
+    ],
+    handler: generateSellerToken
+  });
+
+  // Validate seller token route
+  fastify.route({
+    method: "POST",
+    url: "/validate-seller-token",
+    schema: {
+      description: "Validate seller token and return a new access token",
+      tags: ["Authentication"],
+      body: {
+        type: "object",
+        required: ["token"],
+        properties: {
+          token: { type: "string" }
+        }
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            statusCode: { type: "number" },
+            message: { type: "string" },
+            token: { type: "string" }
+          }
+        },
+        400: {
+          type: "object",
+          properties: {
+            statusCode: { type: "number" },
+            message: { type: "string" },
+            error: { type: "string" }
+          }
+        },
+        401: {
+          type: "object",
+          properties: {
+            statusCode: { type: "number" },
+            message: { type: "string" },
+            error: { type: "string" }
+          }
+        },
+        404: {
+          type: "object",
+          properties: {
+            statusCode: { type: "number" },
+            message: { type: "string" },
+            error: { type: "string" }
+          }
+        }
+      }
+    },
+    handler: validateSellerToken
   });
 };
 

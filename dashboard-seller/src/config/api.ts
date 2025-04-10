@@ -5,7 +5,6 @@ export const AUTH_API = {
     SIGNIN: `${API_URL}/seller/signin`,
     LOGOUT: `${API_URL}/seller/logout`,
     CONFIRM_EMAIL: `${API_URL}/seller/confirmEmail`,
-    REQUEST_CONFIRM_EMAIL: `${API_URL}/seller/confirmEmail`,
     RESET_PASSWORD: `${API_URL}/seller/reset-password`,
     REQUEST_RESET_PASSWORD: `${API_URL}/seller/reset-password`,
     UPDATE_PASSWORD: `${API_URL}/seller/updatePassword`,
@@ -14,6 +13,7 @@ export const AUTH_API = {
     ACCOUNT: `${API_URL}/seller/account`,
     REACTIVATE: `${API_URL}/seller/reactivate`,
     REFRESH_TOKEN: `${API_URL}/seller/auth/refresh`,
+    VALIDATE_SELLER_TOKEN: `${API_URL}/auth/validate-seller-token`,
 };
 
 export const SELLER_API = {

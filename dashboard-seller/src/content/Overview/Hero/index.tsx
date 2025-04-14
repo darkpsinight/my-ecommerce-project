@@ -36,7 +36,7 @@ function Hero() {
         sx={{
           position: 'relative',
           zIndex: 2,
-          pt: { xs: 6, sm: 8, md: 10 },
+          pt: { xs: 3, sm: 4, md: 2 },
           pb: 2
         }}
       >

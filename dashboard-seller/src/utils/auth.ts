@@ -1,5 +1,6 @@
 import { store } from 'src/redux/store';
 import { setAuthToken, clearAuth } from 'src/redux/slices/authSlice';
+import { encrypt } from 'src/utils/crypto';
 
 interface LoginResponse {
   statusCode: number;
@@ -19,9 +20,14 @@ export const handleLoginResponse = (response: LoginResponse) => {
       store.dispatch(setAuthToken(response.token));
       console.log('Token dispatched to Redux'); // Debug log
       
-      // Store verifyToken in sessionStorage
+      // Encrypt and store in sessionStorage for browser navigation persistence
+      const encryptedToken = encrypt(response.token);
+      sessionStorage.setItem('auth_temp_token', encryptedToken);
+      
+      // Store verifyToken in sessionStorage (also encrypt)
       if (response.verifyToken) {
-        sessionStorage.setItem('verifyToken', response.verifyToken);
+        const encryptedVerifyToken = encrypt(response.verifyToken);
+        sessionStorage.setItem('verifyToken', encryptedVerifyToken);
         console.log('Verify token stored in sessionStorage'); // Debug log
       }
     } catch (error) {
@@ -37,6 +43,7 @@ export const clearAuthData = () => {
     
     // Clear sessionStorage
     sessionStorage.removeItem('verifyToken');
+    sessionStorage.removeItem('auth_temp_token');
   } catch (error) {
     console.error('Error clearing auth data:', error);
   }

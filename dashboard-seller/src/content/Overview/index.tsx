@@ -24,7 +24,7 @@ function Overview() {
       <Helmet>
         <title>{APP_NAME} - Seller Dashboard</title>
       </Helmet>
-      <Container maxWidth="lg">
+      <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3, md: 4, lg: 5 } }}>
         <Box display="flex" justifyContent="center" py={5} alignItems="center">
           <Logo />
         </Box>

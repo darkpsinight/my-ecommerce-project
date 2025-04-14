@@ -94,8 +94,13 @@ const Header = () => {
       );
 
       if (response.data.token) {
-        const sellerDashboardUrl = `${process.env.NEXT_PUBLIC_SELLER_DASHBOARD_URL}/auth-redirect?token=${response.data.token}`;
+        // Get verifyToken from sessionStorage
+        const verifyToken = sessionStorage.getItem('verifyToken');
+        
+        // Include both tokens in the redirect URL
+        const sellerDashboardUrl = `${process.env.NEXT_PUBLIC_SELLER_DASHBOARD_URL}/auth-redirect?token=${response.data.token}${verifyToken ? `&verifyToken=${encodeURIComponent(verifyToken)}` : ''}`;
         window.location.href = sellerDashboardUrl;
+        
         // Clear URL token after redirect
         window.history.replaceState({}, document.title, window.location.pathname);
       } else {

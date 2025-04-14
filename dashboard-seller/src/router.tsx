@@ -6,6 +6,7 @@ import SidebarLayout from 'src/layouts/SidebarLayout';
 import BaseLayout from 'src/layouts/BaseLayout';
 
 import SuspenseLoader from 'src/components/SuspenseLoader';
+import ProtectedRoute from 'src/components/ProtectedRoute';
 import AuthRedirect from './pages/AuthRedirect';
 
 const Loader = (Component) => (props) =>
@@ -93,7 +94,7 @@ const routes: RouteObject[] = [
       },
       {
         path: '/',
-        element: <Overview />
+        element: <ProtectedRoute><Overview /></ProtectedRoute>
       },
       {
         path: 'overview',
@@ -132,7 +133,7 @@ const routes: RouteObject[] = [
   },
   {
     path: 'dashboards',
-    element: <SidebarLayout />,
+    element: <ProtectedRoute><SidebarLayout /></ProtectedRoute>,
     children: [
       {
         path: '',
@@ -150,7 +151,7 @@ const routes: RouteObject[] = [
   },
   {
     path: 'management',
-    element: <SidebarLayout />,
+    element: <ProtectedRoute><SidebarLayout /></ProtectedRoute>,
     children: [
       {
         path: '',
@@ -181,7 +182,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/components',
-    element: <SidebarLayout />,
+    element: <ProtectedRoute><SidebarLayout /></ProtectedRoute>,
     children: [
       {
         path: '',

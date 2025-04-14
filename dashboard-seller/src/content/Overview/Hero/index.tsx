@@ -20,7 +20,7 @@ import FinalCTA from './components/FinalCTA';
 import CTAButton from './components/CTAButton';
 
 function Hero() {
-  const { data: configs } = useAppSelector((state) => state.config);
+  const configs = useAppSelector((state) => state.config.data);
   const buyerBaseUrl = process.env.REACT_APP_BUYER_BASE_URL;
   const { token } = useAppSelector((state) => state.auth);
   const isAuthenticated = !!token;
@@ -108,7 +108,7 @@ function Hero() {
             </Grid>
           </Grid>
 
-          <StatsBar stats={stats} />
+          <StatsBar />
 
           <FeaturesGrid features={features} />
           <TestimonialSection testimonials={testimonials} />

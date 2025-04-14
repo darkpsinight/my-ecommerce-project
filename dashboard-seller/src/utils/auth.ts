@@ -24,10 +24,9 @@ export const handleLoginResponse = (response: LoginResponse) => {
       const encryptedToken = encrypt(response.token);
       sessionStorage.setItem('auth_temp_token', encryptedToken);
       
-      // Store verifyToken in sessionStorage (also encrypt)
+      // Store verifyToken in sessionStorage (without encryption)
       if (response.verifyToken) {
-        const encryptedVerifyToken = encrypt(response.verifyToken);
-        sessionStorage.setItem('verifyToken', encryptedVerifyToken);
+        sessionStorage.setItem('verifyToken', response.verifyToken);
         console.log('Verify token stored in sessionStorage'); // Debug log
       }
     } catch (error) {

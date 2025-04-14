@@ -1,8 +1,6 @@
 import React from 'react';
-import { Box, Container, Grid, Typography, Stack } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Box, Container, Grid, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useAppSelector } from 'src/redux/hooks';
 
 import {
@@ -11,14 +9,15 @@ import {
   TypographyH2,
   BackgroundDecoration,
   BackgroundDecorationLeft,
-  BackgroundGrid,
-  PrimaryButton,
+  BackgroundGrid
 } from './HeroStyles';
 import { containerVariants, itemVariants } from './animations';
 import { testimonials, stats, features } from './data';
 import { TestimonialSection } from './components/TestimonialSection';
 import { FeaturesGrid } from './components/FeaturesGrid';
 import { StatsBar } from './components/StatsBar';
+import FinalCTA from './components/FinalCTA';
+import CTAButton from './components/CTAButton';
 
 function Hero() {
   const { data: configs } = useAppSelector((state) => state.config);
@@ -85,11 +84,13 @@ function Hero() {
                     fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' }
                   }}
                 >
-                  Welcome to{' '}
-                  <span style={{ color: '#2196F3' }}>{configs.APP_NAME}</span>
+                  Welcome to {configs.APP_NAME}
                 </TypographyH1>
               </motion.div>
-
+              
+              {/* CTA Button */}
+              <CTAButton isAuthenticated={isAuthenticated} />
+              
               <motion.div variants={itemVariants}>
                 <TypographyH2
                   variant="h4"
@@ -109,110 +110,11 @@ function Hero() {
 
           <StatsBar stats={stats} />
 
-          {/* CTA Buttons */}
-          <motion.div variants={itemVariants}>
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={{ xs: 2, sm: 3 }}
-              justifyContent="center"
-              sx={{ mb: { xs: 6, sm: 8 }, width: '100%' }}
-            >
-              {isAuthenticated ? (
-                <PrimaryButton
-                  component={RouterLink}
-                  to="/dashboards/crypto"
-                  size="large"
-                  variant="contained"
-                  endIcon={<ArrowForwardIcon />}
-                >
-                  Explore Features
-                </PrimaryButton>
-              ) : (
-                <PrimaryButton
-                  component={RouterLink}
-                  to="/login"
-                  size="large"
-                  variant="contained"
-                  endIcon={<ArrowForwardIcon />}
-                >
-                  Sign In to Dashboard
-                </PrimaryButton>
-              )}
-            </Stack>
-          </motion.div>
-
           <FeaturesGrid features={features} />
           <TestimonialSection testimonials={testimonials} />
 
-          {/* Final CTA */}
-          <motion.div variants={itemVariants}>
-            <Box
-              sx={{
-                mt: 8,
-                pt: 6,
-                pb: 6,
-                textAlign: 'center',
-                borderRadius: 4,
-                background: (theme) =>
-                  `linear-gradient(135deg, ${theme.colors.primary.lighter} 0%, ${theme.colors.primary.light} 100%)`,
-                boxShadow: '0 8px 32px rgba(33, 150, 243, 0.15)',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              <Box sx={{ position: 'relative', zIndex: 2 }}>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    mb: 2,
-                    fontWeight: 700,
-                    color: 'primary.dark'
-                  }}
-                >
-                  Ready to get started?
-                </Typography>
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    mb: 4,
-                    maxWidth: 600,
-                    mx: 'auto',
-                    color: 'text.primary',
-                    padding: 2
-                  }}
-                >
-                  Join thousands of digital sellers who are growing their
-                  business with our platform
-                </Typography>
-                <PrimaryButton
-                  component="a"
-                  href={`${buyerBaseUrl}/sell-digital-codes`}
-                  size="large"
-                  variant="contained"
-                  endIcon={<ArrowForwardIcon />}
-                  sx={{ mt: 4 }}
-                >
-                  Become a Seller
-                </PrimaryButton>
-              </Box>
-
-              {/* Background patterns */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  backgroundImage:
-                    'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
-                  backgroundSize: '20px 20px',
-                  opacity: 0.5,
-                  zIndex: 1
-                }}
-              />
-            </Box>
-          </motion.div>
+          {/* Final CTA Section */}
+          <FinalCTA buyerBaseUrl={buyerBaseUrl} isAuthenticated={isAuthenticated} />
         </MotionContainer>
       </Container>
     </Box>

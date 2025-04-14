@@ -69,9 +69,7 @@ export const useLogin = () => {
       // Handle the response with our Redux auth handler
       handleLoginResponse(response);
       
-      // Store token in localStorage if needed
       if (response.success) {
-        authService.setAuthTokens(response.token);
         navigate('/overview');
       }
     } catch (error) {
@@ -94,9 +92,7 @@ export const useLogin = () => {
       // Handle the response with our Redux auth handler
       handleLoginResponse(response);
       
-      // Store token in localStorage if needed
       if (response.success) {
-        authService.setAuthTokens(response.token);
         navigate('/overview');
       }
     } catch (error) {

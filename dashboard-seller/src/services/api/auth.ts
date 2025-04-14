@@ -43,7 +43,9 @@ class AuthService {
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/seller-signin`, credentials);
+      const response = await axios.post(`${API_BASE_URL}/auth/seller-signin`, credentials, {
+        withCredentials: true // Enable sending/receiving cookies
+      });
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -60,16 +62,11 @@ class AuthService {
     throw new Error('Google login is not implemented yet');
   }
 
-  setAuthTokens(token: string): void {
-    localStorage.setItem('auth_token', token);
-  }
-
-  getAuthToken(): string | null {
-    return localStorage.getItem('auth_token');
-  }
-
-  logout(): void {
-    localStorage.removeItem('auth_token');
+  async logout(): Promise<void> {
+    // Send request to backend to clear the HTTP-only cookie
+    await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
+      withCredentials: true
+    });
   }
 }
 

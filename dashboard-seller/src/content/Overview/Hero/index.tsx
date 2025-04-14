@@ -80,7 +80,7 @@ function Hero() {
                 <TypographyH1
                   variant="h1"
                   sx={{
-                    mb: 3,
+                    mb: 5,
                     fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' }
                   }}
                 >

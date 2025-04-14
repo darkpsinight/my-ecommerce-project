@@ -18,7 +18,7 @@ export const testimonials: Testimonial[] = [
 ];
 
 export const stats: Stat[] = [
-  { value: "99.9%", label: "Uptime" },
+  { value: "0%", label: "Commission" },
   { value: "1,240+", label: "Products" },
   { value: "24/7", label: "Support" },
   { value: "128+", label: "Countries" }
@@ -33,9 +33,9 @@ export const features: Omit<Feature, 'icon'>[] = [
   },
   {
     iconKey: 'security',
-    title: "Enterprise Security",
-    metric: "99.9% Uptime",
-    description: "Advanced security measures to protect your inventory and transactions with full encryption."
+    title: "0% Commission",
+    metric: "Always Free",
+    description: "Sell your digital products without any commission fees. Keep 100% of your earnings with our platform."
   },
   {
     iconKey: 'analytics',

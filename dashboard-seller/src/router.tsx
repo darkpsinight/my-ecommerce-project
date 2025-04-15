@@ -7,7 +7,9 @@ import BaseLayout from 'src/layouts/BaseLayout';
 
 import SuspenseLoader from 'src/components/SuspenseLoader';
 import ProtectedRoute from 'src/components/ProtectedRoute';
+import AuthenticatedRedirect from 'src/components/AuthenticatedRedirect';
 import AuthRedirect from './pages/AuthRedirect';
+import OAuthCallback from './pages/OAuthCallback';
 
 const Loader = (Component) => (props) =>
   (
@@ -86,15 +88,19 @@ const routes: RouteObject[] = [
     children: [
       {
         path: '/login',
-        element: <Login />
+        element: <AuthenticatedRedirect><Login /></AuthenticatedRedirect>
       },
       {
         path: '/auth-redirect',
         element: <AuthRedirect />
       },
       {
+        path: '/oauth/callback',
+        element: <OAuthCallback />
+      },
+      {
         path: '/',
-        element: <ProtectedRoute><Overview /></ProtectedRoute>
+        element: <Overview />
       },
       {
         path: 'overview',

@@ -58,8 +58,28 @@ class AuthService {
   }
 
   async googleLogin(): Promise<LoginResponse> {
-    // Implement Google login when ready
-    throw new Error('Google login is not implemented yet');
+    try {
+      // Step 1: Get the Google OAuth URL from the backend
+      const response = await axios.get(`${API_BASE_URL}/auth/oauth/google`, {
+        withCredentials: true
+      });
+      
+      // Step 2: Redirect to Google OAuth login page
+      window.location.href = response.data.loginUrl;
+      
+      // Since we're redirecting, we'll never reach this point
+      // But we need to return a Promise to satisfy TypeScript
+      return {} as LoginResponse;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Check if there's a specific error message about seller role
+        const message = error.response?.data?.message || 'Google login failed';
+        const loginError = new Error(message) as Error & LoginError;
+        loginError.metadata = error.response?.data?.metadata;
+        throw loginError;
+      }
+      throw new Error('Google login failed');
+    }
   }
 
   async logout(): Promise<void> {

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
+import { useAppSelector } from 'src/redux/hooks';
 import { setAuthToken } from 'src/redux/slices/authSlice';
 import { AUTH_API } from 'src/config/api';
 import { encrypt } from 'src/utils/crypto';
@@ -20,6 +21,7 @@ const AuthRedirect = () => {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
   const isMounted = useRef(true);
+  const { APP_NAME } = useAppSelector((state) => state.config.data);
 
   useEffect(() => {
     // Setup cleanup to prevent memory leaks
@@ -50,7 +52,20 @@ const AuthRedirect = () => {
 
       if (!token) {
         if (isMounted.current) {
-          toast.error('No authentication token found');
+          toast((t) => (
+            <span>
+              Want to go to {APP_NAME}?
+              <button 
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  window.location.href = `${process.env.REACT_APP_BUYER_BASE_URL || 'http://localhost:3001'}`;
+                }}
+                style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#4f46e5', color: 'white', border: 'none', cursor: 'pointer' }}
+              >
+                Yes
+              </button>
+            </span>
+          ));
           navigate('/login');
         }
         return;

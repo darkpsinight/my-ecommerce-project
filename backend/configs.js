@@ -1,5 +1,4 @@
 require("dotenv").config();
-const { Config } = require("./models/config");
 const { configCache } = require("./services/configCache");
 
 const keywords = {
@@ -38,6 +37,7 @@ const configs = {
 	ACCOUNT_DELETION_DELAY_DAYS: Number(process.env.ACCOUNT_DELETION_DELAY_DAYS) || 10,
 	ACCOUNT_DELETION_DELAY_ONE_MINUTE: Number(process.env.ACCOUNT_DELETION_DELAY_ONE_MINUTE) || 0,
 	ACCOUNT_DELETION_CRON: process.env.ACCOUNT_DELETION_CRON || "0 0 * * *",
+	CODE_ENCRYPTION_KEY: process.env.CODE_ENCRYPTION_KEY || "AdV7ya6ehyDaO48VYCyndi2LWkFiupZf",
 
 	get ACCOUNT_DELETION_DELAY() {
 		// If minutes are specified, use that for testing

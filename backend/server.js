@@ -29,6 +29,8 @@ const { getSwaggerOptions } = require("./utils/utils");
 const helmet = require("fastify-helmet");
 const { adminRoutes } = require("./routes/admin");
 const publicRoutes = require("./routes/public");
+const { sellerRoutes } = require("./routes/seller");
+const { listingsRoutes } = require("./routes/listings");
 const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
 const fastifyCsrf = require("fastify-csrf");
@@ -109,6 +111,12 @@ fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
 
 // Register public routes
 fastify.register(publicRoutes, { prefix: "/api/v1/public" });
+
+// Register seller routes
+fastify.register(sellerRoutes, { prefix: "/api/v1/seller" });
+
+// Register listings routes
+fastify.register(listingsRoutes, { prefix: "/api/v1/listings" });
 
 // Auth Service health check
 fastify.get("/", async (request, reply) => {

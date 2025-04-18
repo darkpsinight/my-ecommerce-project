@@ -1,70 +1,233 @@
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAppSelector } from "@/redux/store";
 import { decodeToken } from "@/utils/jwt";
+import Popover from "@mui/material/Popover";
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
 
-interface SellerDashboardButtonProps {
-  handleDashboardClick: (e?: React.MouseEvent) => Promise<void>;
-}
+// Import styles
+import "./SellerDashboardButton/animations.css";
 
-const SellerDashboardButton: React.FC<SellerDashboardButtonProps> = ({ 
-  handleDashboardClick 
+// Import from modular components
+import DashboardIcon from "./SellerDashboardButton/DashboardIcon";
+import CloseButton from "./SellerDashboardButton/CloseButton";
+import PopoverHeader from "./SellerDashboardButton/PopoverHeader";
+import PopoverContent from "./SellerDashboardButton/PopoverContent";
+import { getStoredSettings, updateStoredSettings } from "./SellerDashboardButton/utils";
+import { SellerDashboardButtonProps } from "./SellerDashboardButton/types";
+
+// Main component
+const SellerDashboardButton: React.FC<SellerDashboardButtonProps> = ({
+  handleDashboardClick,
 }) => {
   const { token } = useAppSelector((state) => state.authReducer);
   const decodedToken = token ? decodeToken(token) : null;
   const isAuthenticated = !!token;
-  const isSeller = decodedToken?.role === 'seller';
+  const isSeller = decodedToken?.role === "seller";
+  const [isFlashing, setIsFlashing] = useState(false);
+  const [isFading, setIsFading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [showPopover, setShowPopover] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // For debugging - force show popover
+  useEffect(() => {
+    console.log("Popover state:", showPopover);
+  }, [showPopover]);
+
+  useEffect(() => {
+    if (isSeller) {
+      const settings = getStoredSettings();
+      // Changed from 7 days to 1 day
+      const oneDayInMs = 24 * 60 * 60 * 1000;
+      const shouldShowPopover =
+        !settings.popoverDismissed ||
+        Date.now() - settings.dismissedAt > oneDayInMs;
+
+      setShowPopover(shouldShowPopover);
+    }
+  }, [isSeller]);
+
+  useEffect(() => {
+    if (isSeller && !isHovered) {
+      const flashInterval = setInterval(() => {
+        setIsFlashing(true);
+        setIsFading(false);
+
+        setTimeout(() => {
+          setIsFlashing(false);
+          setIsFading(true);
+
+          setTimeout(() => {
+            setIsFading(false);
+          }, 1000);
+        }, 1500);
+      }, 7000);
+
+      return () => {
+        clearInterval(flashInterval);
+      };
+    }
+  }, [isSeller, isHovered]);
+
+  // Event handlers
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowPopover(true);
+  };
+
+  const handleDashboardNavigation = async (e?: React.MouseEvent) => {
+    setShowPopover(false);
+    updateStoredSettings({
+      popoverDismissed: true,
+      dismissedAt: Date.now(),
+      lastInteraction: Date.now(),
+    });
+    await handleDashboardClick(e);
+  };
+
+  const handlePopoverDismiss = () => {
+    setShowPopover(false);
+    updateStoredSettings({
+      popoverDismissed: true,
+      dismissedAt: Date.now(),
+    });
+  };
+
+  // Empty function to prevent closing when clicking outside
+  const handlePopoverClose = () => {
+    // Do nothing - this prevents the popover from closing when clicking outside
+  };
 
   if (!isAuthenticated || !isSeller) {
     return null;
   }
 
   return (
-    <button 
-      onClick={handleDashboardClick}
-      className="flex items-center gap-1.5 mr-1.5"
-    >
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="min-w-5"
+    <div className="relative">
+      {/* Dashboard Button */}
+      <button
+        ref={buttonRef}
+        onClick={handleButtonClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`flex items-center gap-1.5 mr-1.5 relative rounded-md p-1 
+          border border-solid transition-colors duration-300
+          ${
+            isHovered
+              ? "hover-animation border-blue-600"
+              : isFlashing
+              ? "flash-animation border-blue-600"
+              : isFading
+              ? "fade-out-animation border-transparent"
+              : "border-transparent"
+          }`}
       >
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M3 6C3 4.34315 4.34315 3 6 3H8C9.65685 3 11 4.34315 11 6V8C11 9.65685 9.65685 11 8 11H6C4.34315 11 3 9.65685 3 8V6Z"
-          fill="#3C50E0"
-        />
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M13 6C13 4.34315 14.3431 3 16 3H18C19.6569 3 21 4.34315 21 6V8C21 9.65685 19.6569 11 18 11H16C14.3431 11 13 9.65685 13 8V6Z"
-          fill="#3C50E0"
-        />
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M3 16C3 14.3431 4.34315 13 6 13H8C9.65685 13 11 14.3431 11 16V18C11 19.6569 9.65685 21 8 21H6C4.34315 21 3 19.6569 3 18V16Z"
-          fill="#3C50E0"
-        />
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M13 16C13 14.3431 14.3431 13 16 13H18C19.6569 13 21 14.3431 21 16V18C21 19.6569 19.6569 21 18 21H16C14.3431 21 13 19.6569 13 18V16Z"
-          fill="#3C50E0"
-        />
-      </svg>
-      <div className="hidden xsm:block">
-        <span className="block text-2xs text-dark-4 uppercase">
-          SELLER
-        </span>
-        <p className="font-medium text-xs text-dark">
-          Dashboard
-        </p>
-      </div>
-    </button>
+        <DashboardIcon />
+        <div className="hidden xsm:block">
+          <span
+            className={`block text-2xs uppercase transition-colors duration-300
+            ${
+              isHovered || isFlashing
+                ? "text-blue-600 font-bold"
+                : "text-dark-4"
+            }`}
+          >
+            SELLER
+          </span>
+          <p
+            className={`font-medium text-xs transition-colors duration-300
+            ${isHovered || isFlashing ? "text-blue-600" : "text-dark"}`}
+          >
+            Dashboard
+          </p>
+        </div>
+      </button>
+
+      {/* Popover */}
+      <Popover
+        open={showPopover}
+        anchorEl={buttonRef.current}
+        onClose={handlePopoverClose}
+        disableRestoreFocus
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "center",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "center",
+        }}
+        sx={{ 
+          mt: 2,
+          zIndex: 9999
+        }}
+        slotProps={{
+          paper: {
+            sx: {
+              zIndex: 9999,
+              overflow: 'visible',
+              mt: 1.5,
+              borderRadius: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08)'
+            }
+          }
+        }}
+      >
+        <Box sx={{ position: 'relative' }} ref={popoverRef}>
+          {/* Arrow */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -10,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '10px solid transparent',
+              borderRight: '10px solid transparent',
+              borderBottom: '10px solid #3C50E0',
+              zIndex: 1,
+              filter: 'drop-shadow(0px -2px 2px rgba(0,0,0,0.05))',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 1,
+                left: -10,
+                width: 0,
+                height: 0,
+                borderLeft: '10px solid transparent',
+                borderRight: '10px solid transparent',
+                borderBottom: '10px solid #4C6FFF',
+                zIndex: 0,
+                opacity: 0.8
+              }
+            }}
+          />
+          
+          {/* Popover Content */}
+          <Paper
+            sx={{
+              p: 0,
+              borderRadius: "16px",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              position: "relative",
+              width: 320,
+              overflow: 'hidden',
+            }}
+          >
+            <PopoverHeader />
+            <CloseButton onClick={handlePopoverDismiss} />
+            <PopoverContent 
+              onDismiss={handlePopoverDismiss} 
+              onNavigate={handleDashboardNavigation} 
+            />
+          </Paper>
+        </Box>
+      </Popover>
+
+    </div>
   );
 };
 

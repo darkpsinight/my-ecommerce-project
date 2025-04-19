@@ -1,10 +1,63 @@
 const { verifyAuth } = require("../plugins/authVerify");
 const { Listing } = require("../models/listing");
+const { Category } = require("../models/category");
 const { listingSchema } = require("./schemas/listingSchema");
+const { validateCodeAgainstPatterns, getPatternsForPlatform } = require("../utils/patternValidator");
 
 const listingsRoutes = async (fastify, opts) => {
+  // Configure rate limits for different operations
+  const createRateLimit = {
+    max: 20,
+    timeWindow: '1 minute',
+    errorResponseBuilder: function (req, context) {
+      return {
+        success: false,
+        error: 'Too many listing creation requests',
+        message: `Rate limit exceeded, retry in ${context.after}`
+      };
+    }
+  };
+  
+  const updateRateLimit = {
+    max: 30,
+    timeWindow: '1 minute',
+    errorResponseBuilder: function (req, context) {
+      return {
+        success: false,
+        error: 'Too many listing update requests',
+        message: `Rate limit exceeded, retry in ${context.after}`
+      };
+    }
+  };
+  
+  const readRateLimit = {
+    max: 60,
+    timeWindow: '1 minute',
+    errorResponseBuilder: function (req, context) {
+      return {
+        success: false,
+        error: 'Too many listing read requests',
+        message: `Rate limit exceeded, retry in ${context.after}`
+      };
+    }
+  };
+  
+  const deleteRateLimit = {
+    max: 10,
+    timeWindow: '1 minute',
+    errorResponseBuilder: function (req, context) {
+      return {
+        success: false,
+        error: 'Too many listing deletion requests',
+        message: `Rate limit exceeded, retry in ${context.after}`
+      };
+    }
+  };
   // Create a new listing
   fastify.route({
+    config: {
+      rateLimit: createRateLimit
+    },
     method: "POST",
     url: "/",
     preHandler: verifyAuth(["seller"]),
@@ -15,6 +68,56 @@ const listingsRoutes = async (fastify, opts) => {
         
         // Add seller ID from authenticated user
         listingData.sellerId = request.user.uid;
+        
+        // Validate code against patterns if categoryId is provided
+        if (listingData.code && listingData.categoryId && listingData.platform) {
+          // Get patterns for this category and platform
+          const patternResult = await getPatternsForPlatform(
+            listingData.categoryId, 
+            listingData.platform, 
+            Category
+          );
+          
+          // Check if we found patterns
+          if (patternResult.error) {
+            request.log.warn(`Pattern validation warning: ${patternResult.error}`);
+            // We'll continue without validation if patterns aren't found
+          } else if (patternResult.patterns && patternResult.patterns.length > 0) {
+            // Validate the code against the patterns
+            const validationResult = validateCodeAgainstPatterns(listingData.code, patternResult.patterns);
+            
+            // If code doesn't match any pattern, reject it
+            if (!validationResult.isValid) {
+              return reply.code(400).send({
+                success: false,
+                message: "The provided code doesn't match any valid pattern for this platform",
+                details: {
+                  invalidPatterns: validationResult.invalidPatterns,
+                  platform: patternResult.platform,
+                  category: patternResult.category
+                }
+              });
+            }
+            
+            // Log which patterns matched
+            request.log.info(`Code validated successfully against ${validationResult.matchedPatterns.length} patterns`);
+          }
+        }
+        
+        // Get category information before creating the listing
+        let categoryName = null;
+        let categoryInfo = null;
+        
+        if (listingData.categoryId) {
+          try {
+            categoryInfo = await Category.findById(listingData.categoryId);
+            if (categoryInfo) {
+              categoryName = categoryInfo.name;
+            }
+          } catch (err) {
+            request.log.warn(`Could not fetch category name: ${err.message}`);
+          }
+        }
         
         // Create a new listing instance
         const listing = new Listing(listingData);
@@ -35,7 +138,8 @@ const listingsRoutes = async (fastify, opts) => {
             id: listing._id,
             title: listing.title,
             price: listing.price,
-            category: listing.category,
+            category: categoryName || listing.category, // Use fetched name or fallback to legacy field
+            platform: listing.platform,
             status: listing.status
           }
         });
@@ -52,6 +156,9 @@ const listingsRoutes = async (fastify, opts) => {
 
   // Update a listing
   fastify.route({
+    config: {
+      rateLimit: updateRateLimit
+    },
     method: "PUT",
     url: "/:id",
     preHandler: verifyAuth(["seller"]),
@@ -138,6 +245,9 @@ const listingsRoutes = async (fastify, opts) => {
 
   // Delete a listing
   fastify.route({
+    config: {
+      rateLimit: deleteRateLimit
+    },
     method: "DELETE",
     url: "/:id",
     preHandler: verifyAuth(["seller", "admin"]),
@@ -180,6 +290,9 @@ const listingsRoutes = async (fastify, opts) => {
 
   // Get all listings with filters
   fastify.route({
+    config: {
+      rateLimit: readRateLimit
+    },
     method: "GET",
     url: "/",
     schema: listingSchema.getListings,
@@ -248,6 +361,9 @@ const listingsRoutes = async (fastify, opts) => {
 
   // Get a single listing by ID
   fastify.route({
+    config: {
+      rateLimit: readRateLimit
+    },
     method: "GET",
     url: "/:id",
     schema: listingSchema.getListing,
@@ -294,6 +410,9 @@ const listingsRoutes = async (fastify, opts) => {
 
   // Get seller's own listings
   fastify.route({
+    config: {
+      rateLimit: readRateLimit
+    },
     method: "GET",
     url: "/my-listings",
     preHandler: verifyAuth(["seller"]),
@@ -353,6 +472,9 @@ const listingsRoutes = async (fastify, opts) => {
 
   // Bulk upload listings (for multiple codes)
   fastify.route({
+    config: {
+      rateLimit: createRateLimit
+    },
     method: "POST",
     url: "/bulk",
     preHandler: verifyAuth(["seller"]),

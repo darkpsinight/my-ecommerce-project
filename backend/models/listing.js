@@ -24,15 +24,20 @@ const listingSchema = new mongoose.Schema({
     type: Number,
     min: [0, "Original price cannot be negative"]
   },
+  // Legacy fields - to be deprecated
   category: {
     type: String,
-    required: [true, "Please provide a category for the listing"],
     enum: ["Gift Card", "Game Key", "Software License", "Subscription", "In-Game Currency", "Other"]
+  },
+  // Reference to the actual category document
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: [true, "Please provide a category for the listing"]
   },
   platform: {
     type: String,
-    required: [true, "Please provide a platform/store for the listing"],
-    enum: ["Steam", "Xbox", "PlayStation", "Nintendo", "Epic Games", "Origin", "Uplay", "GOG", "Battle.net", "iTunes", "Google Play", "Amazon", "Other"]
+    required: [true, "Please provide a platform/store for the listing"]
   },
   region: {
     type: String,

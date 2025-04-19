@@ -3,7 +3,7 @@ const listingSchema = {
   createListing: {
     body: {
       type: "object",
-      required: ["title", "description", "price", "category", "platform", "region", "code"],
+      required: ["title", "description", "price", "categoryId", "platform", "region", "code"],
       properties: {
         title: { 
           type: "string", 
@@ -24,14 +24,20 @@ const listingSchema = {
           minimum: 0,
           description: "Original price to show discount"
         },
+        // Legacy field - will be deprecated
         category: { 
           type: "string", 
           enum: ["Gift Card", "Game Key", "Software License", "Subscription", "In-Game Currency", "Other"],
-          description: "Type of code"
+          description: "Type of code (legacy field)"
+        },
+        // New field referencing category document
+        categoryId: {
+          type: "string", 
+          pattern: "^[0-9a-fA-F]{24}$",
+          description: "MongoDB ID of the category"
         },
         platform: { 
-          type: "string", 
-          enum: ["Steam", "Xbox", "PlayStation", "Nintendo", "Epic Games", "Origin", "Uplay", "GOG", "Battle.net", "iTunes", "Google Play", "Other"],
+          type: "string",
           description: "Platform/Store where the code is redeemed"
         },
         region: { 
@@ -107,145 +113,40 @@ const listingSchema = {
     body: {
       type: "object",
       properties: {
-        title: { 
-          type: "string", 
-          maxLength: 100,
-          description: "Short, descriptive name of the listing"
-        },
-        description: { 
-          type: "string",
-          description: "Details about the code, including what it unlocks, terms, and any restrictions"
-        },
-        price: { 
-          type: "number", 
-          minimum: 0,
-          description: "Listing price"
-        },
-        originalPrice: { 
-          type: "number", 
-          minimum: 0,
-          description: "Original price to show discount"
-        },
+        title: { type: "string", maxLength: 100 },
+        description: { type: "string" },
+        price: { type: "number", minimum: 0 },
+        originalPrice: { type: "number", minimum: 0 },
+        // Legacy field - to be deprecated
         category: { 
           type: "string", 
-          enum: ["Gift Card", "Game Key", "Software License", "Subscription", "In-Game Currency", "Other"],
-          description: "Type of code"
+          enum: ["Gift Card", "Game Key", "Software License", "Subscription", "In-Game Currency", "Other"]
+        },
+        // New field referencing category document
+        categoryId: {
+          type: "string", 
+          pattern: "^[0-9a-fA-F]{24}$",
+          description: "MongoDB ID of the category"
         },
         platform: { 
-          type: "string", 
-          enum: ["Steam", "Xbox", "PlayStation", "Nintendo", "Epic Games", "Origin", "Uplay", "GOG", "Battle.net", "iTunes", "Google Play", "Amazon", "Other"],
-          description: "Platform/Store where the code is redeemed"
+          type: "string"
         },
         region: { 
           type: "string", 
-          enum: ["Global", "North America", "Europe", "Asia", "Oceania", "South America", "Africa", "Other"],
-          description: "Region for the code"
+          enum: ["Global", "North America", "Europe", "Asia", "Oceania", "South America", "Africa", "Other"]
         },
-        isRegionLocked: { 
-          type: "boolean",
-          description: "Specify if the code is region-locked"
-        },
-        code: { 
-          type: "string",
-          description: "The actual code (will be encrypted)"
-        },
-        expirationDate: { 
-          type: "string", 
-          format: "date-time",
-          description: "If the code has a validity period"
-        },
-        quantity: { 
-          type: "integer", 
-          minimum: 0,
-          description: "Stock count"
-        },
-        supportedLanguages: { 
-          type: "array", 
-          items: { type: "string" },
-          description: "If the code is language-specific"
-        },
-        thumbnailUrl: { 
-          type: "string",
-          description: "Optional image URL"
-        },
-        autoDelivery: { 
-          type: "boolean",
-          description: "Toggle for instant delivery"
-        },
-        tags: { 
-          type: "array", 
-          items: { type: "string" },
-          description: "Keywords for searchability"
-        },
-        sellerNotes: { 
-          type: "string",
-          description: "Private notes for internal use"
-        },
+        isRegionLocked: { type: "boolean" },
+        code: { type: "string" },
+        expirationDate: { type: "string", format: "date-time" },
+        quantity: { type: "integer", minimum: 1 },
+        supportedLanguages: { type: "array", items: { type: "string" } },
+        thumbnailUrl: { type: "string" },
+        autoDelivery: { type: "boolean" },
+        tags: { type: "array", items: { type: "string" } },
+        sellerNotes: { type: "string" },
         status: { 
           type: "string", 
-          enum: ["active", "sold", "expired", "suspended", "draft"],
-          description: "Current status of the listing"
-        }
-      }
-    }
-  },
-
-  // Schema for deleting a listing
-  deleteListing: {
-    params: {
-      type: "object",
-      required: ["id"],
-      properties: {
-        id: { 
-          type: "string",
-          description: "Listing ID"
-        }
-      }
-    }
-  },
-
-  // Schema for getting all listings with filters
-  getListings: {
-    querystring: {
-      type: "object",
-      properties: {
-        category: { 
-          type: "string",
-          description: "Filter by category"
-        },
-        platform: { 
-          type: "string",
-          description: "Filter by platform"
-        },
-        region: { 
-          type: "string",
-          description: "Filter by region"
-        },
-        minPrice: { 
-          type: "number",
-          description: "Minimum price"
-        },
-        maxPrice: { 
-          type: "number",
-          description: "Maximum price"
-        },
-        sellerId: { 
-          type: "string",
-          description: "Filter by seller ID"
-        },
-        status: { 
-          type: "string",
-          description: "Filter by status"
-        },
-        page: { 
-          type: "integer", 
-          default: 1,
-          description: "Page number for pagination"
-        },
-        limit: { 
-          type: "integer", 
-          default: 10,
-          description: "Number of items per page"
+          enum: ["active", "sold", "expired", "suspended", "draft"]
         }
       }
     }
@@ -257,15 +158,41 @@ const listingSchema = {
       type: "object",
       required: ["id"],
       properties: {
-        id: { 
-          type: "string",
-          description: "Listing ID"
-        }
+        id: { type: "string" }
       }
     }
   },
-
-  // Schema for bulk upload of listings
+  
+  // Schema for getting multiple listings
+  getListings: {
+    querystring: {
+      type: "object",
+      properties: {
+        page: { type: "number", default: 1 },
+        limit: { type: "number", default: 10 },
+        status: { 
+          type: "string", 
+          enum: ["active", "sold", "expired", "suspended", "draft"]
+        },
+        sellerId: { type: "string" },
+        categoryId: { type: "string", pattern: "^[0-9a-fA-F]{24}$" },
+        platform: { type: "string" }
+      }
+    }
+  },
+  
+  // Schema for deleting a listing
+  deleteListing: {
+    params: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: { type: "string" }
+      }
+    }
+  },
+  
+  // Schema for bulk creating listings from a template
   bulkCreateListings: {
     body: {
       type: "object",
@@ -273,7 +200,7 @@ const listingSchema = {
       properties: {
         listingTemplate: {
           type: "object",
-          required: ["title", "description", "price", "category", "platform", "region"],
+          required: ["title", "description", "price", "categoryId", "platform", "region"],
           properties: {
             title: { 
               type: "string", 
@@ -294,14 +221,20 @@ const listingSchema = {
               minimum: 0,
               description: "Original price to show discount"
             },
+            // Legacy field - to be deprecated
             category: { 
               type: "string", 
               enum: ["Gift Card", "Game Key", "Software License", "Subscription", "In-Game Currency", "Other"],
-              description: "Type of code"
+              description: "Type of code (legacy field)"
+            },
+            // New field referencing category document
+            categoryId: {
+              type: "string", 
+              pattern: "^[0-9a-fA-F]{24}$",
+              description: "MongoDB ID of the category"
             },
             platform: { 
-              type: "string", 
-              enum: ["Steam", "Xbox", "PlayStation", "Nintendo", "Epic Games", "Origin", "Uplay", "GOG", "Battle.net", "iTunes", "Google Play", "Amazon", "Other"],
+              type: "string",
               description: "Platform/Store where the code is redeemed"
             },
             region: { 

@@ -4,6 +4,87 @@ const { Category } = require("../models/category");
 const { listingSchema } = require("./schemas/listingSchema");
 const { validateCodeAgainstPatterns, getPatternsForPlatform } = require("../utils/patternValidator");
 
+/**
+ * Generates a user-friendly description of the required format
+ * based on the pattern and platform without exposing regex
+ * @param {Object} pattern - Pattern object with regex and example
+ * @param {string} platformName - Name of the platform
+ * @returns {string} - User-friendly format description
+ */
+const getFormatDescription = (pattern, platformName) => {
+  if (!pattern || !pattern.regex) {
+    return `${platformName} code format not available. Please contact support.`;
+  }
+  
+  try {
+    const regex = pattern.regex;
+    let description = '';
+    
+    // Determine character types allowed
+    const allowsUppercase = regex.includes('A-Z');
+    const allowsLowercase = regex.includes('a-z');
+    const allowsNumbers = regex.includes('0-9');
+    
+    // Determine format structure
+    const hasSeparators = regex.includes('-');
+    let charClasses = [];
+    if (allowsUppercase) charClasses.push('uppercase letters');
+    if (allowsLowercase) charClasses.push('lowercase letters');
+    if (allowsNumbers) charClasses.push('numbers');
+    
+    // Try to determine length from regex (common pattern: {n} for exact length)
+    let totalLength = null;
+    let groupStructure = null;
+    
+    // Check for fixed-length pattern with groups (like XXXXX-XXXXX-XXXXX)
+    const groupMatch = regex.match(/\[([A-Za-z0-9]+-)+[A-Za-z0-9]+\]\{([0-9]+)\}/);
+    const exactLengthMatch = regex.match(/\{([0-9]+)\}$/);
+    
+    // Count hyphens in example to determine group structure
+    const exampleHyphens = (pattern.example?.match(/-/g) || []).length;
+    
+    if (exactLengthMatch) {
+      totalLength = parseInt(exactLengthMatch[1], 10);
+    } else if (pattern.example) {
+      // Determine length from example if regex analysis fails
+      totalLength = pattern.example.replace(/-/g, '').length;
+    }
+    
+    if (hasSeparators && exampleHyphens > 0) {
+      // Calculate group size if there are separators
+      const parts = pattern.example.split('-');
+      if (parts.length > 1 && parts.every(p => p.length === parts[0].length)) {
+        // All groups have same length
+        const groupSize = parts[0].length;
+        groupStructure = `${parts.length} groups of ${groupSize} characters separated by hyphens`;
+      } else {
+        groupStructure = `${exampleHyphens + 1} groups separated by ${exampleHyphens} hyphens`;
+      }
+    }
+    
+    // Build the description
+    if (totalLength) {
+      description += `${platformName} keys must be ${totalLength} characters`;
+      if (charClasses.length > 0) {
+        description += ` (${charClasses.join(' and ')})`;
+      }
+      if (groupStructure) {
+        description += ` in ${groupStructure}`;
+      }
+    } else if (pattern.description) {
+      // Fall back to the stored description if our analysis fails
+      description = pattern.description;
+    } else {
+      description = `${platformName} keys must match a specific format. See example.`;
+    }
+    
+    return description;
+  } catch (error) {
+    console.error('Error creating format description:', error);
+    return pattern.description || `${platformName} code format - see example`;
+  }
+};
+
 const listingsRoutes = async (fastify, opts) => {
   // Configure rate limits for different operations
   const createRateLimit = {
@@ -486,6 +567,71 @@ const listingsRoutes = async (fastify, opts) => {
         
         // Add seller ID to template
         listingTemplate.sellerId = sellerId;
+        
+        // Validate codes against patterns if categoryId is provided
+        if (listingTemplate.categoryId && listingTemplate.platform) {
+          // Get patterns for this category and platform
+          const patternResult = await getPatternsForPlatform(
+            listingTemplate.categoryId, 
+            listingTemplate.platform, 
+            Category
+          );
+          
+          // Check if we found patterns
+          if (patternResult.error) {
+            request.log.warn(`Pattern validation warning: ${patternResult.error}`);
+            // Continue without validation if patterns aren't found
+          } else if (patternResult.patterns && patternResult.patterns.length > 0) {
+            // Validate all codes against the patterns before proceeding
+            const invalidCodes = [];
+            
+            for (let i = 0; i < codes.length; i++) {
+              const code = codes[i];
+              const validationResult = validateCodeAgainstPatterns(code, patternResult.patterns);
+              
+              // If code doesn't match any pattern, add to invalid list with detailed errors
+              if (!validationResult.isValid) {
+                invalidCodes.push({
+                  code,
+                  index: i,
+                  errors: validationResult.validationErrors || []
+                });
+              }
+            }
+            
+            // If any codes are invalid, return user-friendly error with details
+            if (invalidCodes.length > 0) {
+              // Get the first active pattern for formatting guidance
+              const activePattern = patternResult.patterns.find(p => p.isActive) || {};
+              
+              // Extract key format characteristics for user guidance
+              // This builds a user-friendly description without exposing regex
+              const formatDescription = getFormatDescription(activePattern, patternResult.platform);
+              
+              // Prepare the error response with user-friendly formatting
+              const errorResponse = {
+                success: false,
+                message: `Validation failed: ${invalidCodes.length} code(s) do not match ${patternResult.platform} requirements.`,
+                error: {
+                  platform: patternResult.platform,
+                  category: patternResult.category,
+                  invalidCodes,
+                  validFormat: {
+                    description: formatDescription,
+                    example: activePattern.example || ""
+                  }
+                }
+              };
+
+              // Log validation failure for debugging
+              request.log.info(`Bulk listing validation failed for ${invalidCodes.length} codes`);              
+              return reply.code(400).send(errorResponse);
+            }
+            
+            // Log successful validation
+            request.log.info(`All ${codes.length} codes validated successfully against platform patterns`);
+          }
+        }
         
         // Array to store created listings
         const createdListings = [];

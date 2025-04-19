@@ -3,21 +3,118 @@
  */
 
 /**
+ * Analyzes why a code doesn't match a pattern and provides detailed error reasons
+ * @param {string} code - The code to validate
+ * @param {Object} pattern - Pattern object with regex field
+ * @returns {Array} - Array of specific error reasons
+ */
+const getDetailedValidationErrors = (code, pattern) => {
+  const errors = [];
+  
+  // Skip processing if no code or pattern
+  if (!code || !pattern || !pattern.regex) {
+    return [{ reason: "Missing code or pattern" }];
+  }
+
+  try {
+    // Extract length constraints from regex if it has a specific length requirement
+    let lengthRequirement = null;
+    const lengthMatch = pattern.regex.match(/\{(\d+)\}$/); // Matches {n} at the end
+    if (lengthMatch) {
+      lengthRequirement = parseInt(lengthMatch[1]);
+    }
+
+    // Check length
+    if (lengthRequirement && code.length !== lengthRequirement) {
+      errors.push({
+        reason: "Invalid length",
+        expected: `${lengthRequirement} characters`,
+        actual: `${code.length} characters`
+      });
+    }
+
+    // Check for character case issues
+    if (pattern.regex.includes('A-Z') && !/[A-Z]/.test(code) && /[a-z]/.test(code)) {
+      errors.push({
+        reason: "Invalid character case",
+        expected: "Uppercase letters (A-Z)",
+        actual: "Contains lowercase letters"
+      });
+    }
+
+    // Check for numeric characters if required
+    if (pattern.regex.includes('0-9') && !/[0-9]/.test(code)) {
+      errors.push({
+        reason: "Missing required characters",
+        expected: "Numbers (0-9)",
+        actual: "No numeric characters found"
+      });
+    }
+
+    // Check for required separators (like hyphens in XX-XX-XX patterns)
+    if (pattern.regex.includes('\\-') || pattern.regex.includes('-')) {
+      const hasDashes = code.includes('-');
+      const expectedDashCount = (pattern.example?.match(/-/g) || []).length;
+      const actualDashCount = (code.match(/-/g) || []).length;
+
+      if (expectedDashCount > 0 && !hasDashes) {
+        errors.push({
+          reason: "Missing separators",
+          expected: `Format with ${expectedDashCount} hyphens (e.g., ${pattern.example})`,
+          actual: "No hyphens found"
+        });
+      } else if (expectedDashCount > 0 && actualDashCount !== expectedDashCount) {
+        errors.push({
+          reason: "Incorrect separator count",
+          expected: `${expectedDashCount} hyphens`,
+          actual: `${actualDashCount} hyphens`
+        });
+      }
+    }
+
+    // If no specific errors identified but still invalid, provide a fallback error
+    if (errors.length === 0) {
+      const readableFormat = pattern.description || 
+                          (pattern.example ? `Example: ${pattern.example}` : pattern.regex);
+      errors.push({
+        reason: "Invalid format",
+        expected: readableFormat,
+        actual: "Doesn't match required pattern"
+      });
+    }
+
+  } catch (error) {
+    console.error("Error analyzing validation failures:", error);
+    errors.push({
+      reason: "Validation error",
+      message: "An error occurred during detailed validation"
+    });
+  }
+
+  return errors;
+};
+
+/**
  * Validates a code against a set of patterns
  * @param {string} code - The code to validate
  * @param {Array} patterns - Array of pattern objects with regex field
- * @returns {Object} - Result object with isValid and invalidPatterns fields
+ * @returns {Object} - Result object with isValid and detailed validation errors
  */
 const validateCodeAgainstPatterns = (code, patterns) => {
   if (!code || !patterns || !Array.isArray(patterns) || patterns.length === 0) {
     return { 
       isValid: false, 
-      error: "No patterns available for validation" 
+      error: "No patterns available for validation",
+      validationErrors: [{
+        reason: "No validation patterns",
+        message: "No patterns are available to validate this code"
+      }]
     };
   }
 
   // Keep track of which patterns were tested
   const invalidPatterns = [];
+  const validationErrors = [];
   
   // Special case: If there are patterns but they're all empty or inactive,
   // we'll consider any code valid (no validation required)
@@ -46,10 +143,17 @@ const validateCodeAgainstPatterns = (code, patterns) => {
       const isMatch = regexPattern.test(code);
       
       if (!isMatch) {
+        // Store basic pattern info
         invalidPatterns.push({
           regex: pattern.regex,
           description: pattern.description || 'No description provided'
         });
+        
+        // Get detailed validation errors for this pattern
+        const errors = getDetailedValidationErrors(code, pattern);
+        if (errors.length > 0) {
+          validationErrors.push(...errors);
+        }
       }
       
       return isMatch;
@@ -63,7 +167,8 @@ const validateCodeAgainstPatterns = (code, patterns) => {
   return {
     isValid: matches.length > 0,
     invalidPatterns: invalidPatterns,
-    matchedPatterns: matches
+    matchedPatterns: matches,
+    validationErrors: validationErrors
   };
 };
 

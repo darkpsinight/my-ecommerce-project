@@ -189,14 +189,25 @@ const listingsRoutes = async (fastify, opts) => {
         let categoryName = null;
         let categoryInfo = null;
         
+        // Validate that categoryId exists in the database
         if (listingData.categoryId) {
           try {
             categoryInfo = await Category.findById(listingData.categoryId);
-            if (categoryInfo) {
-              categoryName = categoryInfo.name;
+            if (!categoryInfo) {
+              return reply.code(400).send({
+                success: false,
+                error: "Invalid category",
+                message: "The specified categoryId does not exist"
+              });
             }
+            categoryName = categoryInfo.name;
           } catch (err) {
-            request.log.warn(`Could not fetch category name: ${err.message}`);
+            request.log.error(`Error validating category: ${err.message}`);
+            return reply.code(400).send({
+              success: false,
+              error: "Invalid category",
+              message: "The specified categoryId is invalid"
+            });
           }
         }
         
@@ -219,7 +230,7 @@ const listingsRoutes = async (fastify, opts) => {
             id: listing._id,
             title: listing.title,
             price: listing.price,
-            category: categoryName || listing.category, // Use fetched name or fallback to legacy field
+            category: categoryName, // Category name from the referenced categoryId
             platform: listing.platform,
             status: listing.status
           }

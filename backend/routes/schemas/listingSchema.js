@@ -24,13 +24,6 @@ const listingSchema = {
           minimum: 0,
           description: "Original price to show discount"
         },
-        // Legacy field - will be deprecated
-        category: { 
-          type: "string", 
-          enum: ["Gift Card", "Game Key", "Software License", "Subscription", "In-Game Currency", "Other"],
-          description: "Type of code (legacy field)"
-        },
-        // New field referencing category document
         categoryId: {
           type: "string", 
           pattern: "^[0-9a-fA-F]{24}$",

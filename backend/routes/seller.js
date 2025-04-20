@@ -202,6 +202,81 @@ const sellerRoutes = async (fastify, opts) => {
       }
     }
   });
+  
+  // Get active categories (for sellers to use in listings)
+  fastify.route({
+    method: "GET",
+    url: "/categories",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      querystring: {
+        type: "object",
+        properties: {
+          isActive: { type: "boolean", default: true },
+          search: { type: "string" }
+        }
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  _id: { type: "string" },
+                  name: { type: "string" },
+                  description: { type: "string" },
+                  platforms: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" },
+                        description: { type: "string" },
+                        isActive: { type: "boolean" }
+                      }
+                    }
+                  },
+                  isActive: { type: "boolean" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    handler: async (request, reply) => {
+      try {
+        const { isActive = true, search } = request.query;
+        
+        // Build the query
+        const query = { isActive };
+        
+        // Add search functionality if provided
+        if (search) {
+          query.name = { $regex: search, $options: 'i' };
+        }
+        
+        // Find categories matching the query and include platforms information
+        const categories = await Category.find(query).select('name description platforms isActive');
+        
+        return reply.code(200).send({
+          success: true,
+          data: categories
+        });
+      } catch (error) {
+        request.log.error(`Error fetching categories: ${error.message}`);
+        return reply.code(500).send({
+          success: false,
+          error: "Failed to fetch categories",
+          message: error.message
+        });
+      }
+    }
+  });
 };
 
 module.exports = {

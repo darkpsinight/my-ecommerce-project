@@ -26,6 +26,7 @@ const Login = Loader(lazy(() => import('src/content/pages/Auth/Login')));
 // Dashboards
 
 const Crypto = Loader(lazy(() => import('src/content/dashboards/Crypto')));
+const Listings = Loader(lazy(() => import('src/content/dashboards/Listings')));
 
 // Applications
 
@@ -143,7 +144,11 @@ const routes: RouteObject[] = [
     children: [
       {
         path: '',
-        element: <Navigate to="crypto" replace />
+        element: <Navigate to="listings" replace />
+      },
+      {
+        path: 'listings',
+        element: <Listings />
       },
       {
         path: 'crypto',

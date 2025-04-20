@@ -1,5 +1,7 @@
 const { verifyAuth } = require("../plugins/authVerify");
 const { User } = require("../models/user");
+const { Category } = require("../models/category");
+const { getPatternsForPlatform } = require("../utils/patternValidator");
 
 const sellerRoutes = async (fastify, opts) => {
   // Get seller profile
@@ -126,6 +128,79 @@ const sellerRoutes = async (fastify, opts) => {
         });
       }
     },
+  });
+
+  // Get validation patterns for a specific category and platform
+  fastify.route({
+    method: "GET",
+    url: "/validation-patterns/:categoryId/:platformName",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      params: {
+        type: "object",
+        required: ["categoryId", "platformName"],
+        properties: {
+          categoryId: { type: "string" },
+          platformName: { type: "string" }
+        }
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                patterns: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      regex: { type: "string" },
+                      description: { type: "string" },
+                      example: { type: "string" },
+                      isActive: { type: "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    handler: async (request, reply) => {
+      try {
+        const { categoryId, platformName } = request.params;
+        
+        // Get patterns using the existing utility function
+        const result = await getPatternsForPlatform(categoryId, platformName, Category);
+        
+        if (result.error) {
+          return reply.code(404).send({
+            success: false,
+            error: result.error
+          });
+        }
+        
+        // Return only the patterns, not the full platform information
+        return reply.code(200).send({
+          success: true,
+          data: {
+            patterns: result.patterns || [],
+            categoryId,
+            platformName
+          }
+        });
+      } catch (error) {
+        request.log.error(`Error fetching validation patterns: ${error.message}`);
+        return reply.code(500).send({
+          success: false,
+          error: "Internal server error"
+        });
+      }
+    }
   });
 };
 

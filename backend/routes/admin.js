@@ -1,9 +1,11 @@
 const { getConfigs, updateConfig, deleteConfig } = require("../handlers/configHandler");
 const { createCategory, getCategories, getCategoryById, updateCategory, deleteCategory } = require("../handlers/categoryHandler");
+const { addPlatform, getPlatforms, getPlatformByName, updatePlatform, deletePlatform } = require("../handlers/platformHandler");
 const { verifyAuth } = require("../plugins/authVerify");
 const { adminSchema } = require("./schemas/adminSchema");
 const { configSchema } = require("./schemas/configSchema");
 const { categorySchema } = require("./schemas/categorySchema");
+const { platformSchema } = require("./schemas/platformSchema");
 
 const adminRoutes = async (fastify, opts) => {
 	// Config Routes
@@ -113,6 +115,87 @@ const adminRoutes = async (fastify, opts) => {
 			fastify.rateLimit(categoryRateLimit.delete),
 		],
 		handler: deleteCategory,
+	});
+
+	// Platform Management Routes
+	// Register rate limiting specific to platform endpoints
+	const platformRateLimit = {
+		create: {
+			max: 20,
+			timeWindow: "1 minute",
+		},
+		read: {
+			max: 60,
+			timeWindow: "1 minute",
+		},
+		update: {
+			max: 30,
+			timeWindow: "1 minute",
+		},
+		delete: {
+			max: 10,
+			timeWindow: "1 minute",
+		},
+	};
+
+	// Add a new platform to a category
+	fastify.route({
+		method: "POST",
+		url: "/categories/:categoryId/platforms",
+		schema: platformSchema.platformAdd,
+		preHandler: [
+			verifyAuth(["admin"], true),
+			fastify.rateLimit(platformRateLimit.create),
+		],
+		handler: addPlatform,
+	});
+
+	// Get all platforms for a category
+	fastify.route({
+		method: "GET",
+		url: "/categories/:categoryId/platforms",
+		schema: platformSchema.platformsGet,
+		preHandler: [
+			verifyAuth(["admin"], true),
+			fastify.rateLimit(platformRateLimit.read),
+		],
+		handler: getPlatforms,
+	});
+
+	// Get platform by name
+	fastify.route({
+		method: "GET",
+		url: "/categories/:categoryId/platforms/:platformName",
+		schema: platformSchema.platformGet,
+		preHandler: [
+			verifyAuth(["admin"], true),
+			fastify.rateLimit(platformRateLimit.read),
+		],
+		handler: getPlatformByName,
+	});
+
+	// Update platform
+	fastify.route({
+		method: "PUT",
+		url: "/categories/:categoryId/platforms/:platformName",
+		schema: platformSchema.platformUpdate,
+		preHandler: [
+			verifyAuth(["admin"], true),
+			fastify.rateLimit(platformRateLimit.update),
+		],
+		handler: updatePlatform,
+	});
+
+	// Delete platform
+	fastify.route({
+		method: "DELETE",
+		url: "/categories/:categoryId/platforms/:platformName",
+		schema: platformSchema.platformDelete,
+		preHandler: [
+			verifyAuth(["admin"], true),
+			fastify.rateLimit(platformRateLimit.delete),
+		],
+		handler: deletePlatform,
 	});
 };
 

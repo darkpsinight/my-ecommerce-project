@@ -19,7 +19,8 @@ import {
   Alert
 } from '@mui/material';
 
-import { getListings } from 'src/services/api/listings';
+import { getSellerListings } from 'src/services/api/listings';
+import { CodeViewer } from './components/CodeViewer';
 
 import EditTwoToneIcon from '@mui/icons-material/EditTwoTone';
 import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone';
@@ -29,15 +30,20 @@ interface Listing {
   _id: string;
   title: string;
   platform: string;
-  code: string;
+  codes?: Array<{
+    code: string;
+    soldStatus: string;
+    soldAt?: string | Date;
+  }>;
   price: number;
   status: string;
   createdAt: Date | string | null;
   description?: string;
   categoryId?: string;
-  category?: string;
+  categoryName?: string;
   region?: string;
   quantity?: number;
+  expirationDate?: string | Date | null;
 }
 
 const applyPagination = (
@@ -62,10 +68,10 @@ const ListingsTable: FC = () => {
       setLoading(true);
       setError(null);
       
-      const response = await getListings({
+      const response = await getSellerListings({
         page,
-        limit,
-        status: 'active' // Can be expanded to filter by other statuses
+        limit
+        // Removed status filter to show all listings
       });
       
       if (response && response.success && response.data) {
@@ -101,7 +107,7 @@ const ListingsTable: FC = () => {
     <Card>
       <CardHeader
         title="Your Listings"
-        subheader="Manage your active product listings"
+        subheader="Manage all your product listings"
       />
       <Divider />
       <TableContainer>
@@ -110,8 +116,12 @@ const ListingsTable: FC = () => {
             <TableRow>
               <TableCell>Title</TableCell>
               <TableCell>Platform</TableCell>
-              <TableCell>Code</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell>Region</TableCell>
+              <TableCell>Codes</TableCell>
+              <TableCell align="center">Quantity</TableCell>
               <TableCell>Price</TableCell>
+              <TableCell>Expiration</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Created</TableCell>
               <TableCell align="right">Actions</TableCell>
@@ -120,7 +130,7 @@ const ListingsTable: FC = () => {
           <TableBody>
             {error ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 3 }}>
                   <Alert severity="error" sx={{ justifyContent: 'center' }}>
                     {error}
                   </Alert>
@@ -128,7 +138,7 @@ const ListingsTable: FC = () => {
               </TableRow>
             ) : loading ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 3 }}>
                   <CircularProgress size={30} />
                   <Typography
                     variant="body1"
@@ -155,12 +165,53 @@ const ListingsTable: FC = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body1" noWrap>
-                        {listing.code}
+                        {listing.categoryName || 'Unknown'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body1" noWrap>
+                        {listing.region || 'Global'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {listing.codes && listing.codes.length > 0 ? (
+                        <CodeViewer codes={listing.codes} />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No codes available
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography 
+                        variant="body1" 
+                        fontWeight="bold"
+                        color={listing.quantity > 0 ? 'success.main' : 'error.main'}
+                      >
+                        {listing.quantity || 0}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body1" noWrap>
                         ${listing.price.toFixed(2)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body1" noWrap>
+                        {listing.expirationDate ? (
+                          (() => {
+                            try {
+                              const dateObj = typeof listing.expirationDate === 'string' 
+                                ? new Date(listing.expirationDate) 
+                                : listing.expirationDate;
+                              return format(dateObj, 'MM/dd/yyyy');
+                            } catch (error) {
+                              return 'Invalid date';
+                            }
+                          })()
+                        ) : (
+                          'No expiration'
+                        )}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -170,6 +221,12 @@ const ListingsTable: FC = () => {
                         color={
                           listing.status === 'active'
                             ? 'success.main'
+                            : listing.status === 'sold'
+                            ? 'info.main'
+                            : listing.status === 'draft'
+                            ? 'warning.main'
+                            : listing.status === 'expired'
+                            ? 'text.secondary'
                             : 'error.main'
                         }
                         noWrap
@@ -232,7 +289,7 @@ const ListingsTable: FC = () => {
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 3 }}>
                   <Typography variant="h6" color="text.secondary">
                     No listings found
                   </Typography>

@@ -126,6 +126,39 @@ export const getListings = async (params?: {
   }
 };
 
+// Get seller listings with masked codes
+export const getSellerListings = async (params?: { 
+  page?: number; 
+  limit?: number;
+  status?: string;
+  platform?: string;
+}) => {
+  try {
+    const api = getAuthAxios();
+    // Convert page parameter to the backend's expected format (1-based instead of 0-based)
+    const apiParams = {
+      ...params,
+      page: params?.page !== undefined ? params.page + 1 : 1
+    };
+    const response = await api.get('/listings/seller', { params: apiParams });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching seller listings:', error);
+    if (error.response) {
+      return {
+        success: false,
+        error: error.response.data.error || 'Failed to fetch listings',
+        message: error.response.data.message || 'Error occurred while fetching listings'
+      };
+    }
+    return {
+      success: false,
+      error: 'Failed to fetch listings',
+      message: error.message
+    };
+  }
+};
+
 // Get a single listing by ID
 export const getListingById = async (id: string) => {
   try {
@@ -174,6 +207,29 @@ export const getCategories = async () => {
       success: false,
       message: error.response ? error.response.data.message || 'Failed to fetch categories' : error.message,
       error: error.response ? error.response.data.error || 'API Error' : 'Network Error'
+    };
+  }
+};
+
+// Get listings summary statistics
+export const getListingsSummary = async () => {
+  try {
+    const api = getAuthAxios();
+    const response = await api.get('/listings/summary');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching listings summary:', error);
+    if (error.response) {
+      return {
+        success: false,
+        error: error.response.data.error || 'Failed to fetch listings summary',
+        message: error.response.data.message || 'Error occurred while fetching listings summary'
+      };
+    }
+    return {
+      success: false,
+      error: 'Failed to fetch listings summary',
+      message: error.message
     };
   }
 };

@@ -85,6 +85,23 @@ const getFormatDescription = (pattern, platformName) => {
   }
 };
 
+/**
+ * Masks a code to show only first 3 and last 2 characters
+ * @param {string} code - The code to mask
+ * @returns {string} - Masked code
+ */
+const maskCode = (code) => {
+  if (!code || code.length <= 5) {
+    return code; // Return as is if too short to mask
+  }
+  
+  const firstThree = code.substring(0, 3);
+  const lastTwo = code.substring(code.length - 2);
+  const maskedMiddle = '*'.repeat(10); // Fixed 10 asterisks for all codes
+  
+  return `${firstThree}${maskedMiddle}${lastTwo}`;
+};
+
 const listingsRoutes = async (fastify, opts) => {
   // Configure rate limits for different operations
   const createRateLimit = {
@@ -214,9 +231,9 @@ const listingsRoutes = async (fastify, opts) => {
         // Create a new listing instance
         const listing = new Listing(listingData);
         
-        // Encrypt the code before saving
+        // Add the code to the listing's codes array if provided
         if (listingData.code) {
-          listing.encryptCode(listingData.code);
+          listing.addCodes([listingData.code]);
         }
         
         // Save the listing
@@ -562,6 +579,269 @@ const listingsRoutes = async (fastify, opts) => {
     }
   });
 
+  // Get seller listings with masked codes
+  fastify.route({
+    config: {
+      rateLimit: readRateLimit
+    },
+    method: "GET",
+    url: "/seller",
+    preHandler: verifyAuth(["seller"]),
+    schema: listingSchema.getListings,
+    handler: async (request, reply) => {
+      try {
+        const { 
+          category, platform, region, minPrice, maxPrice, 
+          status, page = 1, limit = 5 
+        } = request.query;
+        
+        // Get the seller ID from the authenticated user
+        const sellerId = request.user.uid;
+        
+        // Build filter object - always filter by the authenticated seller's ID
+        const filter = { sellerId };
+        
+        if (category) filter.category = category;
+        if (platform) filter.platform = platform;
+        if (region) filter.region = region;
+        if (status) filter.status = status;
+        
+        // Price range filter
+        if (minPrice !== undefined || maxPrice !== undefined) {
+          filter.price = {};
+          if (minPrice !== undefined) filter.price.$gte = minPrice;
+          if (maxPrice !== undefined) filter.price.$lte = maxPrice;
+        }
+        
+        // Calculate pagination
+        const skip = (page - 1) * limit;
+        
+        // Find listings with filters and pagination
+        // We need to explicitly select the codes field which is normally excluded
+        const listings = await Listing.find(filter)
+          .select('+codes.code +codes.iv')
+          .populate('categoryId', 'name') // Populate category information
+          .skip(skip)
+          .limit(limit)
+          .sort({ createdAt: -1 });
+        
+        // Check for expired listings and update them if needed
+        const currentDate = new Date();
+        const listingsToUpdate = new Map(); // Use a Map to ensure one save per listing
+        
+        for (const listing of listings) {
+          let needsUpdate = false;
+          
+          // Check if the listing is expired but not marked as expired
+          if (listing.expirationDate && 
+              new Date(listing.expirationDate) < currentDate && 
+              listing.status !== "expired") {
+            listing.status = "expired";
+            needsUpdate = true;
+          }
+          
+          // Check if quantity doesn't match active codes count
+          const activeCodes = listing.codes ? listing.codes.filter(code => code.soldStatus === "active").length : 0;
+          if (listing.quantity !== activeCodes) {
+            listing.quantity = activeCodes;
+            
+            // Update status if needed (and not draft or already expired)
+            if (listing.status !== "draft" && listing.status !== "expired") {
+              if (activeCodes > 0) {
+                listing.status = "active";
+              } else {
+                const hasSoldCodes = listing.codes && listing.codes.some(code => code.soldStatus === "sold");
+                listing.status = hasSoldCodes ? "sold" : "suspended";
+              }
+            }
+            
+            needsUpdate = true;
+          }
+          
+          // Only queue this listing for update if needed
+          if (needsUpdate) {
+            listingsToUpdate.set(listing._id.toString(), listing);
+          }
+        }
+        
+        // Wait for all updates to complete if any
+        if (listingsToUpdate.size > 0) {
+          // Convert Map values to array and save each listing
+          const savePromises = Array.from(listingsToUpdate.values()).map(listing => listing.save());
+          await Promise.all(savePromises);
+          
+          // Re-fetch listings if any were updated to get the latest data
+          const updatedListings = await Listing.find(filter)
+            .select('+codes.code +codes.iv')
+            .populate('categoryId', 'name')
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+            
+          listings.length = 0; // Clear the array
+          listings.push(...updatedListings); // Add the updated listings
+        }
+        
+        // Count total listings matching the filter
+        const total = await Listing.countDocuments(filter);
+        
+        // Process listings to include masked codes
+        const processedListings = listings.map(listing => {
+          const listingObj = listing.toObject();
+          
+          // Add category name from the populated field
+          if (listingObj.categoryId && listingObj.categoryId.name) {
+            listingObj.categoryName = listingObj.categoryId.name;
+          }
+          
+          // Process codes array to decrypt and mask each code
+          if (listingObj.codes && listingObj.codes.length > 0) {
+            listingObj.codes = listingObj.codes.map(codeObj => {
+              // Process all codes regardless of status
+              try {
+                // Decrypt the code if it exists
+                if (codeObj.code && codeObj.iv) {
+                  const decryptedCode = listing.decryptCode(codeObj.code, codeObj.iv);
+                  
+                  // Return object with masked code and status information
+                  return {
+                    ...codeObj,
+                    code: maskCode(decryptedCode),
+                    iv: undefined // Remove IV for security
+                  };
+                } else {
+                  // If code doesn't exist or can't be decrypted
+                  return {
+                    ...codeObj,
+                    code: codeObj.soldStatus === 'active' ? 'Code unavailable' : `${codeObj.soldStatus} code`,
+                    iv: undefined
+                  };
+                }
+              } catch (error) {
+                request.log.error(`Error processing code: ${error.message}`);
+                return {
+                  ...codeObj,
+                  code: 'Error processing code',
+                  iv: undefined
+                };
+              }
+            });
+          }
+          
+          return listingObj;
+        });
+        
+        return reply.code(200).send({
+          success: true,
+          data: {
+            listings: processedListings,
+            pagination: {
+              total,
+              page,
+              limit,
+              pages: Math.ceil(total / limit)
+            }
+          }
+        });
+      } catch (error) {
+        request.log.error(`Error fetching seller listings: ${error.message}`);
+        return reply.code(500).send({
+          success: false,
+          error: "Failed to fetch seller listings",
+          message: error.message
+        });
+      }
+    }
+  });
+
+  // Get seller listings summary statistics
+  fastify.route({
+    config: {
+      rateLimit: readRateLimit
+    },
+    method: "GET",
+    url: "/summary",
+    preHandler: verifyAuth(["seller"]),
+    handler: async (request, reply) => {
+      try {
+        // Get the seller ID from the authenticated user
+        const sellerId = request.user.uid;
+        
+        // Get count of active listings
+        const activeListingsCount = await Listing.countDocuments({ 
+          sellerId, 
+          status: "active" 
+        });
+        
+        // Get count of delivered/sold codes
+        const soldCodesCount = await Listing.aggregate([
+          { $match: { sellerId } },
+          { $unwind: "$codes" },
+          { $match: { "codes.soldStatus": "sold" } },
+          { $count: "total" }
+        ]);
+        
+        const totalSoldCodes = soldCodesCount.length > 0 ? soldCodesCount[0].total : 0;
+        
+        // Calculate total revenue (assuming each sold code generates revenue equal to the listing price)
+        const revenueData = await Listing.aggregate([
+          { $match: { sellerId } },
+          { $unwind: "$codes" },
+          { $match: { "codes.soldStatus": "sold" } },
+          { $group: {
+              _id: null,
+              totalRevenue: { $sum: "$price" }
+            }
+          }
+        ]);
+        
+        const totalRevenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
+        
+        return reply.code(200).send({
+          success: true,
+          data: {
+            activeListings: activeListingsCount,
+            soldCodes: totalSoldCodes,
+            totalRevenue: totalRevenue
+          }
+        });
+      } catch (error) {
+        request.log.error(`Error fetching listings summary: ${error.message}`);
+        return reply.code(500).send({
+          success: false,
+          error: "Failed to fetch listings summary",
+          message: error.message
+        });
+      }
+    }
+  });
+
+  // Admin endpoint to audit and fix inconsistent listings
+  fastify.route({
+    method: "POST",
+    url: "/audit-fix",
+    preHandler: verifyAuth(["admin"]),
+    handler: async (request, reply) => {
+      try {
+        // Run the audit and fix function
+        const result = await Listing.auditAndFixListings();
+        
+        return reply.code(200).send({
+          success: true,
+          message: `Audited ${result.total} listings and fixed ${result.fixed} inconsistencies`,
+          data: result
+        });
+      } catch (error) {
+        request.log.error(`Error auditing listings: ${error.message}`);
+        return reply.code(500).send({
+          success: false,
+          error: "Failed to audit listings",
+          message: error.message
+        });
+      }
+    }
+  });
+
   // Bulk upload listings (for multiple codes)
   fastify.route({
     config: {
@@ -647,30 +927,35 @@ const listingsRoutes = async (fastify, opts) => {
         // Array to store created listings
         const createdListings = [];
         
-        // Create a listing for each code
-        for (const code of codes) {
-          // Create a new listing instance with the template
-          const listing = new Listing({
-            ...listingTemplate,
-            quantity: 1 // Each code gets its own listing with quantity 1
-          });
-          
-          // Encrypt the code
-          listing.encryptCode(code);
-          
-          // Save the listing
-          await listing.save();
-          
-          // Add to created listings
-          createdListings.push({
-            id: listing._id,
-            title: listing.title
-          });
+        // Create a single listing with all codes instead of separate listings
+        const listing = new Listing({
+          ...listingTemplate
+        });
+        
+        // Add all codes to the listing
+        // Check for duplicates before adding
+        const uniqueCodes = [...new Set(codes)]; // Remove duplicates
+        
+        if (uniqueCodes.length !== codes.length) {
+          request.log.info(`Removed ${codes.length - uniqueCodes.length} duplicate codes`);
         }
+        
+        // Add the unique codes to the listing
+        listing.addCodes(uniqueCodes);
+        
+        // Save the listing
+        await listing.save();
+        
+        // Add to created listings
+        createdListings.push({
+          id: listing._id,
+          title: listing.title,
+          codesCount: uniqueCodes.length
+        });
         
         return reply.code(201).send({
           success: true,
-          message: `Successfully created ${createdListings.length} listings`,
+          message: `Successfully created listing with ${uniqueCodes.length} codes`,
           data: {
             count: createdListings.length,
             listings: createdListings

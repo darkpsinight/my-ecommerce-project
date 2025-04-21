@@ -28,11 +28,11 @@ function DashboardListings() {
           <Grid item xs={12}>
             <ListingsActions />
           </Grid>
-          <Grid item lg={8} xs={12}>
-            <ListingsTable />
-          </Grid>
-          <Grid item lg={4} xs={12}>
+          <Grid item xs={12}>
             <ListingsSummary />
+          </Grid>
+          <Grid item xs={12}>
+            <ListingsTable />
           </Grid>
         </Grid>
       </Container>

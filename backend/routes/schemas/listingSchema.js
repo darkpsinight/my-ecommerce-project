@@ -3,7 +3,7 @@ const listingSchema = {
   createListing: {
     body: {
       type: "object",
-      required: ["title", "description", "price", "categoryId", "platform", "region", "code"],
+      required: ["title", "description", "price", "categoryId", "platform", "region"],
       properties: {
         title: { 
           type: "string", 
@@ -280,7 +280,8 @@ const listingSchema = {
           type: "array", 
           items: { type: "string" },
           minItems: 1,
-          description: "Array of codes to create listings for"
+          uniqueItems: true,
+          description: "Array of unique codes to add to the listing"
         }
       }
     }

@@ -27,7 +27,7 @@ export const CTAButton: React.FC<CTAButtonProps> = ({ isAuthenticated }) => {
         {isAuthenticated ? (
           <PrimaryButton
             component={RouterLink}
-            to="/dashboards/crypto"
+            to="/dashboards/listings"
             size="small"
             variant="contained"
             endIcon={<ArrowForwardIcon fontSize={isMobile ? "small" : "medium"} />}

@@ -1,30 +1,29 @@
-import { FC, useState, useEffect, useRef } from 'react';
+import { FC, useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  TextField,
   Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
   IconButton,
   Typography,
-  FormHelperText,
-  Box,
   Divider,
-  InputAdornment,
-  Tooltip,
   Alert,
   CircularProgress
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { getCategories, createListing, ListingData } from 'src/services/api/listings';
 import { getValidationPatterns, Pattern } from 'src/services/api/validation';
+import { 
+  BasicInformation, 
+  ProductDetails, 
+  Pricing, 
+  ProductCode,
+  validateListingForm,
+  ListingFormData,
+  ListingFormErrors 
+} from './components';
 
 interface Category {
   _id: string;
@@ -67,7 +66,7 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<ListingData>({
+  const [formData, setFormData] = useState<ListingFormData>({
     title: '',
     description: '',
     price: '',
@@ -86,7 +85,7 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
     sellerNotes: '',
     status: 'active'
   });
-  const [formErrors, setFormErrors] = useState({
+  const [formErrors, setFormErrors] = useState<ListingFormErrors>({
     title: '',
     description: '',
     price: '',
@@ -184,69 +183,25 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
     // Clear validation error when code is edited
     if (name === 'code') {
       setValidationError(null);
+      
+      // Validate code against regex pattern in real-time
+      if (selectedPattern && value) {
+        try {
+          const regex = new RegExp(selectedPattern.regex);
+          const isValid = regex.test(value);
+          
+          if (!isValid) {
+            setValidationError(`Code doesn't match the required format: ${selectedPattern.description || selectedPattern.regex}`);
+          }
+        } catch (error) {
+          console.error('Invalid regex pattern:', error);
+        }
+      }
     }
   };
 
   const validateForm = () => {
-    const errors = {
-      title: '',
-      description: '',
-      price: '',
-      categoryId: '',
-      platform: '',
-      region: '',
-      code: ''
-    };
-    let isValid = true;
-
-    // Title validation
-    if (!formData.title.trim()) {
-      errors.title = 'Title is required';
-      isValid = false;
-    } else if (formData.title.length > 100) {
-      errors.title = 'Title must be less than 100 characters';
-      isValid = false;
-    }
-
-    // Description validation
-    if (!formData.description.trim()) {
-      errors.description = 'Description is required';
-      isValid = false;
-    }
-
-    // Price validation
-    if (!formData.price) {
-      errors.price = 'Price is required';
-      isValid = false;
-    } else if (isNaN(Number(formData.price)) || Number(formData.price) < 0) {
-      errors.price = 'Price must be a positive number';
-      isValid = false;
-    }
-
-    // Category validation
-    if (!formData.categoryId) {
-      errors.categoryId = 'Category is required';
-      isValid = false;
-    }
-
-    // Platform validation
-    if (!formData.platform) {
-      errors.platform = 'Platform is required';
-      isValid = false;
-    }
-
-    // Region validation
-    if (!formData.region) {
-      errors.region = 'Region is required';
-      isValid = false;
-    }
-
-    // Code validation
-    if (!formData.code.trim()) {
-      errors.code = 'Product code is required';
-      isValid = false;
-    }
-
+    const { errors, isValid } = validateListingForm(formData);
     setFormErrors(errors);
     return isValid;
   };
@@ -353,229 +308,64 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
         )}
         <Grid container spacing={3}>
           {/* Basic Information */}
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom>
-              Basic Information
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="e.g. Steam Game Key for Cyberpunk 2077"
-              error={!!formErrors.title}
-              helperText={formErrors.title}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Thumbnail URL"
-              name="thumbnailUrl"
-              value={formData.thumbnailUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              multiline
-              rows={4}
-              placeholder="Detailed description of what this code unlocks, any restrictions, etc."
-              error={!!formErrors.description}
-              helperText={formErrors.description}
-              required
-            />
-          </Grid>
+          <BasicInformation 
+            formData={{
+              title: formData.title,
+              thumbnailUrl: formData.thumbnailUrl,
+              description: formData.description
+            }}
+            formErrors={{
+              title: formErrors.title,
+              description: formErrors.description
+            }}
+            handleChange={handleChange}
+          />
 
           {/* Product Details */}
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-              Product Details
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth error={!!formErrors.categoryId} required>
-              <InputLabel>Category</InputLabel>
-              <Select
-                name="categoryId"
-                value={formData.categoryId}
-                onChange={handleChange}
-                label="Category"
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category._id} value={category._id}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {formErrors.categoryId && (
-                <FormHelperText>{formErrors.categoryId}</FormHelperText>
-              )}
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth error={!!formErrors.platform} required>
-              <InputLabel>Platform</InputLabel>
-              <Select
-                name="platform"
-                value={formData.platform}
-                onChange={handleChange}
-                label="Platform"
-              >
-                {availablePlatforms.length > 0 ? (
-                  availablePlatforms.map((platform) => (
-                    <MenuItem key={platform} value={platform}>
-                      {platform}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>
-                    <em>Select a category first</em>
-                  </MenuItem>
-                )}
-              </Select>
-              {formErrors.platform && (
-                <FormHelperText>{formErrors.platform}</FormHelperText>
-              )}
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth error={!!formErrors.region} required>
-              <InputLabel>Region</InputLabel>
-              <Select
-                name="region"
-                value={formData.region}
-                onChange={handleChange}
-                label="Region"
-              >
-                {regions.map((region) => (
-                  <MenuItem key={region} value={region}>
-                    {region}
-                  </MenuItem>
-                ))}
-              </Select>
-              {formErrors.region && (
-                <FormHelperText>{formErrors.region}</FormHelperText>
-              )}
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Quantity"
-              name="quantity"
-              type="number"
-              value={formData.quantity}
-              onChange={handleChange}
-              InputProps={{ inputProps: { min: 1 } }}
-            />
-          </Grid>
+          <ProductDetails
+            formData={{
+              categoryId: formData.categoryId,
+              platform: formData.platform,
+              region: formData.region,
+              quantity: formData.quantity
+            }}
+            formErrors={{
+              categoryId: formErrors.categoryId,
+              platform: formErrors.platform,
+              region: formErrors.region
+            }}
+            handleChange={handleChange}
+            categories={categories}
+            availablePlatforms={availablePlatforms}
+            regions={regions}
+          />
 
           {/* Pricing */}
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-              Pricing
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Price"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleChange}
-              InputProps={{ 
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                inputProps: { min: 0, step: "0.01" }
-              }}
-              error={!!formErrors.price}
-              helperText={formErrors.price}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Original Price (Optional for Discounts)"
-              name="originalPrice"
-              type="number"
-              value={formData.originalPrice}
-              onChange={handleChange}
-              InputProps={{ 
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                inputProps: { min: 0, step: "0.01" }
-              }}
-            />
-          </Grid>
+          <Pricing
+            formData={{
+              price: formData.price,
+              originalPrice: formData.originalPrice
+            }}
+            formErrors={{
+              price: formErrors.price
+            }}
+            handleChange={handleChange}
+          />
 
           {/* Product Code */}
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-              Product Code
-              <Tooltip title="This code will be encrypted and securely stored. It will only be revealed to buyers after purchase." arrow>
-                <IconButton size="small">
-                  <InfoOutlinedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Product Code"
-              name="code"
-              value={formData.code}
-              onChange={handleChange}
-              placeholder={selectedPattern?.example || "Enter the exact code that buyers will receive"}
-              error={!!formErrors.code || !!validationError}
-              helperText={
-                formErrors.code || validationError || 
-                (selectedPattern ? `Format: ${selectedPattern.description || selectedPattern.regex}` : undefined)
-              }
-              required
-            />
-            {selectedPattern && (
-              <FormHelperText sx={{ mt: 0.5 }}>
-                <Typography variant="caption" color="primary">
-                  Example: {selectedPattern.example}
-                </Typography>
-              </FormHelperText>
-            )}
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Expiration Date (Optional)"
-              name="expirationDate"
-              type="date"
-              value={formData.expirationDate}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Seller Notes (Private)"
-              name="sellerNotes"
-              value={formData.sellerNotes}
-              onChange={handleChange}
-              multiline
-              rows={2}
-              placeholder="Private notes (not visible to buyers)"
-            />
-          </Grid>
+          <ProductCode
+            formData={{
+              code: formData.code,
+              expirationDate: formData.expirationDate,
+              sellerNotes: formData.sellerNotes
+            }}
+            formErrors={{
+              code: formErrors.code
+            }}
+            handleChange={handleChange}
+            selectedPattern={selectedPattern}
+            validationError={validationError}
+          />
         </Grid>
       </DialogContent>
       <Divider />

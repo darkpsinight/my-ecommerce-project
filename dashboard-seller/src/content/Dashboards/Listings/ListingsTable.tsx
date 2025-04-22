@@ -237,6 +237,26 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
                 onClick={handleBulkMenuOpen}
               >
                 Bulk Actions
+                {selected.length > 0 && (
+                  <Box
+                    component="span"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      ml: 1,
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      backgroundColor: theme => theme.palette.primary.main,
+                      color: theme => theme.palette.primary.contrastText,
+                      fontWeight: 'bold',
+                      fontSize: 14
+                    }}
+                  >
+                    {selected.length}
+                  </Box>
+                )}
               </Button>
               <Menu
                 anchorEl={bulkAnchorEl}

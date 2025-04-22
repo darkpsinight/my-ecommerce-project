@@ -1,0 +1,201 @@
+import { FC } from 'react';
+import {
+  TableRow,
+  TableCell,
+  Checkbox,
+  Typography,
+  Tooltip,
+  IconButton,
+  Menu,
+  MenuItem,
+  alpha,
+  useTheme
+} from '@mui/material';
+import { format } from 'date-fns';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import VisibilityTwoToneIcon from '@mui/icons-material/VisibilityTwoTone';
+import EditTwoToneIcon from '@mui/icons-material/EditTwoTone';
+import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone';
+
+import { Listing } from '../types';
+import { CodeViewer } from './CodeViewer';
+import ListingStatusBadge from './ListingStatusBadge';
+import ExpirationDateCell from './ExpirationDateCell';
+
+interface ListingRowProps {
+  listing: Listing;
+  isSelected: boolean;
+  onSelectClick: (event: React.MouseEvent<unknown>, id: string) => void;
+  onViewClick: (id: string) => void;
+  onEditClick: (id: string) => void;
+  onDeleteClick: (id: string) => void;
+  anchorEl: HTMLElement | null;
+  activeListingId: string | null;
+  onMenuOpen: (event: React.MouseEvent<HTMLElement>, id: string) => void;
+  onMenuClose: () => void;
+}
+
+const ListingRow: FC<ListingRowProps> = ({
+  listing,
+  isSelected,
+  onSelectClick,
+  onViewClick,
+  onEditClick,
+  onDeleteClick,
+  anchorEl,
+  activeListingId,
+  onMenuOpen,
+  onMenuClose
+}) => {
+  const theme = useTheme();
+  const isInactive = listing.status === 'sold' || listing.quantity === 0;
+
+  const formatDate = (dateValue: Date | string | null): string => {
+    if (!dateValue) return 'N/A';
+    
+    try {
+      // Handle both string dates and Date objects
+      const dateObj = typeof dateValue === 'string'
+        ? new Date(dateValue)
+        : dateValue;
+      return format(dateObj, 'MM/dd/yyyy');
+    } catch (error) {
+      console.error('Invalid date format:', dateValue);
+      return 'Invalid date';
+    }
+  };
+
+  return (
+    <TableRow
+      hover
+      key={listing._id}
+      selected={isSelected}
+      aria-checked={isSelected}
+      tabIndex={-1}
+      sx={
+        isInactive
+          ? {
+              backgroundColor: (theme) => theme.palette.action.disabledBackground,
+              color: (theme) => theme.palette.text.disabled,
+              opacity: 0.7
+            }
+          : {}
+      }
+    >
+      <TableCell padding="checkbox">
+        <Checkbox
+          color="primary"
+          checked={isSelected}
+          onClick={(event) => onSelectClick(event, listing._id)}
+          inputProps={{
+            'aria-labelledby': `enhanced-table-checkbox-${listing._id}`
+          }}
+        />
+      </TableCell>
+      <TableCell>
+        <Typography variant="body1" fontWeight="bold" noWrap>
+          {listing.title}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        <Typography variant="body1" noWrap>
+          {listing.platform}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        {listing.codes && listing.codes.length > 0 ? (
+          <CodeViewer codes={listing.codes} />
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            No codes available
+          </Typography>
+        )}
+      </TableCell>
+      <TableCell align="center">
+        <Typography
+          variant="body1"
+          fontWeight="bold"
+          color={listing.quantity > 0 ? 'success.main' : 'error.main'}
+        >
+          {listing.quantity || 0}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        <Typography variant="body1" noWrap>
+          ${listing.price.toFixed(2)}
+        </Typography>
+      </TableCell>
+      <TableCell align="center">
+        <ExpirationDateCell expirationDate={listing.expirationDate} />
+      </TableCell>
+      <TableCell>
+        <ListingStatusBadge status={listing.status} />
+      </TableCell>
+      <TableCell>
+        <Typography variant="body1" noWrap>
+          {formatDate(listing.createdAt)}
+        </Typography>
+      </TableCell>
+      <TableCell align="right">
+        <Tooltip title="Actions" arrow>
+          <IconButton
+            onClick={(e) => onMenuOpen(e, listing._id)}
+            size="small"
+            sx={{
+              color: theme.palette.primary.main,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.1)
+              }
+            }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl) && activeListingId === listing._id}
+          onClose={onMenuClose}
+          keepMounted
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right'
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right'
+          }}
+        >
+          <MenuItem onClick={() => onViewClick(listing._id)}>
+            <VisibilityTwoToneIcon
+              fontSize="small"
+              sx={{ mr: 1, color: theme.palette.primary.main }}
+            />
+            View Details
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => onEditClick(listing._id)}
+            disabled={listing.status === 'sold' || listing.status === 'expired'}
+          >
+            <EditTwoToneIcon
+              fontSize="small"
+              sx={{ mr: 1, color: theme.palette.success.main }}
+            />
+            Edit Listing
+          </MenuItem>
+
+          <MenuItem onClick={() => onDeleteClick(listing._id)}>
+            <DeleteTwoToneIcon
+              fontSize="small"
+              sx={{ mr: 1, color: theme.palette.error.main }}
+            />
+            Delete Listing
+          </MenuItem>
+        </Menu>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+export default ListingRow;

@@ -109,7 +109,8 @@ export const CodeViewer: FC<CodeViewerProps> = ({ codes }) => {
             px: 1,
             borderRadius: 1,
             cursor: 'pointer',
-            width: '100px' // Fixed width to prevent layout shifts
+            width: '100px', // Fixed width to prevent layout shifts
+            boxShadow: '0px 9px 16px rgba(159, 162, 191, .18), 0px 2px 2px rgba(159, 162, 191, 0.32)'
           }}
           onClick={handleOpenModal}
         >

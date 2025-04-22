@@ -8,7 +8,10 @@ import ListingsTable from './ListingsTable';
 import ListingsSummary from './ListingsSummary';
 import ListingsActions from './ListingsActions';
 
+import { useState } from 'react';
+
 function DashboardListings() {
+  const [selected, setSelected] = useState<string[]>([]);
   return (
     <>
       <Helmet>
@@ -29,10 +32,10 @@ function DashboardListings() {
             <ListingsSummary />
           </Grid>
           <Grid item xs={12}>
-            <ListingsActions />
+            <ListingsActions selected={selected} setSelected={setSelected} />
           </Grid>
           <Grid item xs={12}>
-            <ListingsTable />
+            <ListingsTable selected={selected} setSelected={setSelected} />
           </Grid>
         </Grid>
       </Container>

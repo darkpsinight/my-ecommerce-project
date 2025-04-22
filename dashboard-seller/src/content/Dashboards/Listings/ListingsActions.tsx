@@ -24,25 +24,15 @@ import FilterListTwoToneIcon from '@mui/icons-material/FilterListTwoTone';
 
 import CreateListingModal from './CreateListingModal';
 
-const ButtonSearch = styled(Button)(
-  ({ theme }) => `
-    margin-right: ${theme.spacing(1)};
-`
-);
+interface ListingsActionsProps {
+  selected: string[];
+  setSelected: React.Dispatch<React.SetStateAction<string[]>>;
+}
 
-const ButtonAdd = styled(Button)(
-  ({ theme }) => `
-    margin-right: ${theme.spacing(1)};
-    background-color: ${theme.colors.primary.main};
-    color: ${theme.colors.alpha.white[100]};
-    
-    &:hover {
-      background-color: ${theme.colors.primary.dark};
-    }
-`
-);
-
-const ListingsActions: FC = () => {
+const ListingsActions: FC<ListingsActionsProps> = ({
+  selected,
+  setSelected
+}) => {
   const theme = useTheme();
   const [platform, setPlatform] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -84,7 +74,8 @@ const ListingsActions: FC = () => {
       } else {
         setAlert({
           open: true,
-          message: response.message || 'Failed to create listing. Please try again.',
+          message:
+            response.message || 'Failed to create listing. Please try again.',
           severity: 'error'
         });
       }
@@ -105,23 +96,39 @@ const ListingsActions: FC = () => {
     });
   };
 
+  const ButtonSearch = styled(Button)(
+    ({ theme }) => `
+      margin-right: ${theme.spacing(1)};
+    `
+  );
+
+  const ButtonAdd = styled(Button)(
+    ({ theme }) => `
+      margin-right: ${theme.spacing(1)};
+      background-color: ${theme.colors.primary.main};
+      color: ${theme.colors.alpha.white[100]};
+      
+      &:hover {
+        background-color: ${theme.colors.primary.dark};
+      }
+    `
+  );
+
   return (
     <Card>
       <Box p={3}>
         <Grid container justifyContent="space-between" alignItems="center">
           <Grid item>
-            <Box>
-              <Typography variant="h4" gutterBottom>
-                Product Listings
-              </Typography>
-              <Typography variant="subtitle2">
-                Manage all your product listings and codes
-              </Typography>
-            </Box>
+            <Typography variant="h4" gutterBottom>
+              Product Listings
+            </Typography>
+            <Typography variant="subtitle2" color="text.secondary">
+              Overview of your listing activity
+            </Typography>
           </Grid>
           <Grid item>
-            <ButtonAdd 
-              variant="contained" 
+            <ButtonAdd
+              variant="contained"
               startIcon={<AddTwoToneIcon />}
               onClick={handleOpenModal}
             >
@@ -174,24 +181,24 @@ const ListingsActions: FC = () => {
           </Grid>
         </Grid>
       </Box>
-      
+
       {/* Create Listing Modal */}
-      <CreateListingModal 
+      <CreateListingModal
         open={openModal}
         onClose={handleCloseModal}
         onSubmit={handleCreateListing}
       />
-      
+
       {/* Feedback Alert */}
-      <Snackbar 
-        open={alert.open} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={6000}
         onClose={handleCloseAlert}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={handleCloseAlert} 
-          severity={alert.severity === 'success' ? 'success' : 'error'} 
+        <Alert
+          onClose={handleCloseAlert}
+          severity={alert.severity === 'success' ? 'success' : 'error'}
           sx={{ width: '100%' }}
         >
           {alert.message}

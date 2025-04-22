@@ -105,7 +105,7 @@ const ListingsSummary: FC = () => {
   ];
 
   return (
-    <Card sx={{ mb: 4 }}>
+    <Card>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4">Listings Summary</Typography>
         <Typography variant="subtitle2" color="text.secondary">

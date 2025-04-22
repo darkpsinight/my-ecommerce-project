@@ -16,7 +16,10 @@ import {
   IconButton,
   useTheme,
   CircularProgress,
-  Alert
+  Alert,
+  Menu,
+  MenuItem,
+  alpha
 } from '@mui/material';
 
 import { getSellerListings } from 'src/services/api/listings';
@@ -24,6 +27,8 @@ import { CodeViewer } from './components/CodeViewer';
 
 import EditTwoToneIcon from '@mui/icons-material/EditTwoTone';
 import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import VisibilityTwoToneIcon from '@mui/icons-material/VisibilityTwoTone';
 import { format } from 'date-fns';
 
 interface Listing {
@@ -63,17 +68,20 @@ const ListingsTable: FC = () => {
 
   const [error, setError] = useState<string | null>(null);
 
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [activeListingId, setActiveListingId] = useState<string | null>(null);
+
   const fetchListings = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await getSellerListings({
         page,
         limit
         // Removed status filter to show all listings
       });
-      
+
       if (response && response.success && response.data) {
         setListings(response.data.listings || []);
       } else {
@@ -101,6 +109,35 @@ const ListingsTable: FC = () => {
     setLimit(parseInt(event.target.value));
   };
 
+  const handleViewListing = (id: string) => {
+    console.log('View listing:', id);
+    // Navigate to listing details page or open a modal
+    handleCloseMenu();
+  };
+
+  const handleEditListing = (id: string) => {
+    console.log('Edit listing:', id);
+    // Navigate to edit form or open edit modal
+    handleCloseMenu();
+  };
+
+  const handleDeleteConfirmation = (id: string) => {
+    console.log('Delete listing:', id);
+    // Show confirmation dialog before deleting
+    // You could implement this with a Dialog component
+    handleCloseMenu();
+  };
+
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>, id: string) => {
+    setAnchorEl(event.currentTarget);
+    setActiveListingId(id);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setActiveListingId(null);
+  };
+
   const paginatedListings = applyPagination(listings, page, limit);
 
   return (
@@ -116,8 +153,6 @@ const ListingsTable: FC = () => {
             <TableRow>
               <TableCell>Title</TableCell>
               <TableCell>Platform</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Region</TableCell>
               <TableCell>Codes</TableCell>
               <TableCell align="center">Quantity</TableCell>
               <TableCell>Price</TableCell>
@@ -163,16 +198,7 @@ const ListingsTable: FC = () => {
                         {listing.platform}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body1" noWrap>
-                        {listing.categoryName || 'Unknown'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body1" noWrap>
-                        {listing.region || 'Global'}
-                      </Typography>
-                    </TableCell>
+
                     <TableCell>
                       {listing.codes && listing.codes.length > 0 ? (
                         <CodeViewer codes={listing.codes} />
@@ -183,10 +209,12 @@ const ListingsTable: FC = () => {
                       )}
                     </TableCell>
                     <TableCell align="center">
-                      <Typography 
-                        variant="body1" 
+                      <Typography
+                        variant="body1"
                         fontWeight="bold"
-                        color={listing.quantity > 0 ? 'success.main' : 'error.main'}
+                        color={
+                          listing.quantity > 0 ? 'success.main' : 'error.main'
+                        }
                       >
                         {listing.quantity || 0}
                       </Typography>
@@ -198,20 +226,19 @@ const ListingsTable: FC = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body1" noWrap>
-                        {listing.expirationDate ? (
-                          (() => {
-                            try {
-                              const dateObj = typeof listing.expirationDate === 'string' 
-                                ? new Date(listing.expirationDate) 
-                                : listing.expirationDate;
-                              return format(dateObj, 'MM/dd/yyyy');
-                            } catch (error) {
-                              return 'Invalid date';
-                            }
-                          })()
-                        ) : (
-                          'No expiration'
-                        )}
+                        {listing.expirationDate
+                          ? (() => {
+                              try {
+                                const dateObj =
+                                  typeof listing.expirationDate === 'string'
+                                    ? new Date(listing.expirationDate)
+                                    : listing.expirationDate;
+                                return format(dateObj, 'MM/dd/yyyy');
+                              } catch (error) {
+                                return 'Invalid date';
+                              }
+                            })()
+                          : 'No expiration'}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -236,53 +263,95 @@ const ListingsTable: FC = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body1" noWrap>
-                        {listing.createdAt ? (
-                          (() => {
-                            try {
-                              // Handle both string dates and Date objects
-                              const dateObj = typeof listing.createdAt === 'string' 
-                                ? new Date(listing.createdAt) 
-                                : listing.createdAt;
-                              return format(dateObj, 'MM/dd/yyyy');
-                            } catch (error) {
-                              console.error('Invalid date format:', listing.createdAt);
-                              return 'Invalid date';
-                            }
-                          })()
-                        ) : (
-                          'N/A'
-                        )}
+                        {listing.createdAt
+                          ? (() => {
+                              try {
+                                // Handle both string dates and Date objects
+                                const dateObj =
+                                  typeof listing.createdAt === 'string'
+                                    ? new Date(listing.createdAt)
+                                    : listing.createdAt;
+                                return format(dateObj, 'MM/dd/yyyy');
+                              } catch (error) {
+                                console.error(
+                                  'Invalid date format:',
+                                  listing.createdAt
+                                );
+                                return 'Invalid date';
+                              }
+                            })()
+                          : 'N/A'}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Tooltip title="Edit" arrow>
+                      <Tooltip title="Actions" arrow>
                         <IconButton
-                          sx={{
-                            '&:hover': {
-                              background: theme.colors.primary.lighter
-                            },
-                            color: theme.palette.primary.main
-                          }}
-                          color="inherit"
+                          onClick={(e) => handleOpenMenu(e, listing._id)}
                           size="small"
+                          sx={{
+                            color: theme.palette.primary.main,
+                            '&:hover': {
+                              backgroundColor: alpha(
+                                theme.palette.primary.main,
+                                0.1
+                              )
+                            }
+                          }}
                         >
-                          <EditTwoToneIcon fontSize="small" />
+                          <MoreVertIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete" arrow>
-                        <IconButton
-                          sx={{
-                            '&:hover': {
-                              background: theme.colors.error.lighter
-                            },
-                            color: theme.palette.error.main
-                          }}
-                          color="inherit"
-                          size="small"
+
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={
+                          Boolean(anchorEl) && activeListingId === listing._id
+                        }
+                        onClose={handleCloseMenu}
+                        keepMounted
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'right'
+                        }}
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'right'
+                        }}
+                      >
+                        <MenuItem
+                          onClick={() => handleViewListing(listing._id)}
                         >
-                          <DeleteTwoToneIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                          <VisibilityTwoToneIcon
+                            fontSize="small"
+                            sx={{ mr: 1, color: theme.palette.primary.main }}
+                          />
+                          View Details
+                        </MenuItem>
+
+                        <MenuItem
+                          onClick={() => handleEditListing(listing._id)}
+                          disabled={
+                            listing.status === 'sold' ||
+                            listing.status === 'expired'
+                          }
+                        >
+                          <EditTwoToneIcon
+                            fontSize="small"
+                            sx={{ mr: 1, color: theme.palette.success.main }}
+                          />
+                          Edit Listing
+                        </MenuItem>
+
+                        <MenuItem
+                          onClick={() => handleDeleteConfirmation(listing._id)}
+                        >
+                          <DeleteTwoToneIcon
+                            fontSize="small"
+                            sx={{ mr: 1, color: theme.palette.error.main }}
+                          />
+                          Delete Listing
+                        </MenuItem>
+                      </Menu>
                     </TableCell>
                   </TableRow>
                 );

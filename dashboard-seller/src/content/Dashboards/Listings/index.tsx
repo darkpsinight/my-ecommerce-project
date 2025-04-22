@@ -26,10 +26,10 @@ function DashboardListings() {
           spacing={4}
         >
           <Grid item xs={12}>
-            <ListingsActions />
+            <ListingsSummary />
           </Grid>
           <Grid item xs={12}>
-            <ListingsSummary />
+            <ListingsActions />
           </Grid>
           <Grid item xs={12}>
             <ListingsTable />

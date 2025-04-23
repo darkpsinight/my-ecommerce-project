@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useState, useContext } from 'react';
 import {
   Button,
   Card,
@@ -23,6 +23,7 @@ import SearchTwoToneIcon from '@mui/icons-material/SearchTwoTone';
 import FilterListTwoToneIcon from '@mui/icons-material/FilterListTwoTone';
 
 import CreateListingModal from './CreateListingModal';
+import { ListingsContext } from './context/ListingsContext';
 
 interface ListingsActionsProps {
   selected: string[];
@@ -34,6 +35,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   setSelected
 }) => {
   const theme = useTheme();
+  const { refreshListings, addNewListing } = useContext(ListingsContext);
   const [platform, setPlatform] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [openModal, setOpenModal] = useState<boolean>(false);
@@ -69,8 +71,13 @@ const ListingsActions: FC<ListingsActionsProps> = ({
           severity: 'success'
         });
 
-        // Refresh the listings table (will be implemented in step 4)
-        // refreshListings();
+        // Add the new listing to the table and refresh
+        if (response.data && response.data.listing) {
+          addNewListing(response.data.listing);
+        } else {
+          // If we don't have the listing data, just refresh the table
+          refreshListings();
+        }
       } else {
         setAlert({
           open: true,

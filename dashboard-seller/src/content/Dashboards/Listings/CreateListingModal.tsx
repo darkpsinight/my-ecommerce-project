@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,16 +13,20 @@ import {
   CircularProgress
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { getCategories, createListing, ListingData } from 'src/services/api/listings';
+import {
+  getCategories,
+  createListing,
+  ListingData
+} from 'src/services/api/listings';
 import { getValidationPatterns, Pattern } from 'src/services/api/validation';
-import { 
-  BasicInformation, 
-  ProductDetails, 
-  Pricing, 
+import {
+  BasicInformation,
+  ProductDetails,
+  Pricing,
   ProductCode,
   validateListingForm,
   ListingFormData,
-  ListingFormErrors 
+  ListingFormErrors
 } from './components';
 
 interface Category {
@@ -55,13 +59,22 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [availablePlatforms, setAvailablePlatforms] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<Pattern | null>(null);
   const [patternLoading, setPatternLoading] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [regions, setRegions] = useState<string[]>([
-    'Global', 'North America', 'Europe', 'Asia', 'Oceania', 'South America', 'Africa', 'Other'
+    'Global',
+    'North America',
+    'Europe',
+    'Asia',
+    'Oceania',
+    'South America',
+    'Africa',
+    'Other'
   ]);
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -95,6 +108,17 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
     code: ''
   });
 
+  const bottomErrorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (error && bottomErrorRef.current) {
+      bottomErrorRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end'
+      });
+    }
+  }, [error]);
+
   // Fetch categories when component mounts
   useEffect(() => {
     const fetchCategoriesData = async () => {
@@ -104,7 +128,10 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
         if (response && response.success && response.data) {
           setCategories(response.data);
         } else {
-          setError('Failed to load categories: ' + (response.message || 'Unknown error'));
+          setError(
+            'Failed to load categories: ' +
+              (response.message || 'Unknown error')
+          );
         }
       } catch (err) {
         console.error('Error fetching categories:', err);
@@ -121,22 +148,25 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // If changing category, update available platforms
     if (name === 'categoryId') {
-      const category = categories.find(cat => cat._id === value);
+      const category = categories.find((cat) => cat._id === value);
       setSelectedCategory(category || null);
-      
+
       if (category && category.platforms && category.platforms.length > 0) {
         // Extract platform names and filter active ones
         const platforms = category.platforms
-          .filter(platform => platform.isActive !== false)
-          .map(platform => platform.name);
-        
+          .filter((platform) => platform.isActive !== false)
+          .map((platform) => platform.name);
+
         setAvailablePlatforms(platforms);
-        
+
         // Reset platform selection if current selection isn't in the new list
-        if (formData.platform && !platforms.includes(formData.platform as string)) {
+        if (
+          formData.platform &&
+          !platforms.includes(formData.platform as string)
+        ) {
           setFormData({
             ...formData,
             platform: '',
@@ -161,7 +191,7 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
         return;
       }
     }
-    
+
     setFormData({
       ...formData,
       [name]: value
@@ -174,24 +204,28 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
         [name]: ''
       });
     }
-    
+
     // If platform changes, fetch validation patterns
     if (name === 'platform' && value && formData.categoryId) {
       fetchValidationPatterns(formData.categoryId as string, value as string);
     }
-    
+
     // Clear validation error when code is edited
     if (name === 'code') {
       setValidationError(null);
-      
+
       // Validate code against regex pattern in real-time
       if (selectedPattern && value) {
         try {
           const regex = new RegExp(selectedPattern.regex);
           const isValid = regex.test(value);
-          
+
           if (!isValid) {
-            setValidationError(`Code doesn't match the required format: ${selectedPattern.description || selectedPattern.regex}`);
+            setValidationError(
+              `Code doesn't match the required format: ${
+                selectedPattern.description || selectedPattern.regex
+              }`
+            );
           }
         } catch (error) {
           console.error('Invalid regex pattern:', error);
@@ -207,16 +241,21 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
   };
 
   // Fetch validation patterns for the selected category and platform
-  const fetchValidationPatterns = async (categoryId: string, platformName: string) => {
+  const fetchValidationPatterns = async (
+    categoryId: string,
+    platformName: string
+  ) => {
     try {
       setPatternLoading(true);
-      
+
       const response = await getValidationPatterns(categoryId, platformName);
-      
+
       if (response.success && response.data && response.data.patterns) {
-        const activePatterns = response.data.patterns.filter(p => p.isActive !== false);
+        const activePatterns = response.data.patterns.filter(
+          (p) => p.isActive !== false
+        );
         setPatterns(activePatterns);
-        
+
         // Use the first pattern by default
         if (activePatterns.length > 0) {
           setSelectedPattern(activePatterns[0]);
@@ -227,7 +266,6 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
         setPatterns([]);
         setSelectedPattern(null);
       }
-      
     } catch (error) {
       console.error('Error fetching validation patterns:', error);
       setPatterns([]);
@@ -236,7 +274,7 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
       setPatternLoading(false);
     }
   };
-  
+
   const handleSubmit = async () => {
     if (!validateForm()) {
       return;
@@ -245,34 +283,53 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
     // Prepare data for submission
     const submitData = {
       ...formData,
-      price: typeof formData.price === 'string' ? parseFloat(formData.price) : formData.price,
-      originalPrice: formData.originalPrice ? (typeof formData.originalPrice === 'string' ? parseFloat(formData.originalPrice) : formData.originalPrice) : undefined,
-      quantity: formData.quantity ? (typeof formData.quantity === 'string' ? parseInt(formData.quantity, 10) : formData.quantity) : 1
+      price:
+        typeof formData.price === 'string'
+          ? parseFloat(formData.price)
+          : formData.price,
+      originalPrice: formData.originalPrice
+        ? typeof formData.originalPrice === 'string'
+          ? parseFloat(formData.originalPrice)
+          : formData.originalPrice
+        : undefined,
+      quantity: formData.quantity
+        ? typeof formData.quantity === 'string'
+          ? parseInt(formData.quantity, 10)
+          : formData.quantity
+        : 1,
+      expirationDate:
+        formData.expirationDate && formData.expirationDate.trim() !== ''
+          ? formData.expirationDate
+          : undefined
     };
 
     try {
       setSubmitting(true);
       setError(null);
-      
+
       const response = await createListing(submitData);
-      
+
       if (response.success) {
         onSubmit(response);
       } else {
         // Check for code validation errors
         if (response.details && response.details.invalidPatterns) {
           const invalidPatternsInfo = response.details.invalidPatterns
-            .map(pattern => pattern.description || pattern.regex)
+            .map((pattern) => pattern.description || pattern.regex)
             .join(', ');
-          
-          setValidationError(`Code doesn't match the required format: ${invalidPatternsInfo}`);
-          
+
+          setValidationError(
+            `Code doesn't match the required format: ${invalidPatternsInfo}`
+          );
+
           setFormErrors({
             ...formErrors,
             code: `Invalid format for ${response.details.platform} on ${response.details.category}`
           });
         } else {
-          setError(response.message || 'Failed to create listing. Please try again.');
+          setError(
+            response.message || 'Failed to create listing. Please try again.'
+          );
         }
       }
     } catch (err) {
@@ -284,8 +341,8 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       fullWidth
       maxWidth="md"
@@ -293,7 +350,15 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
         sx: { borderRadius: 2 }
       }}
     >
-      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle
+        sx={{
+          m: 0,
+          p: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
         <Typography variant="h4">Create New Listing</Typography>
         <IconButton onClick={onClose} aria-label="close">
           <CloseIcon />
@@ -301,14 +366,10 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
       </DialogTitle>
       <Divider />
       <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        {error && <div style={{ minHeight: 0 }} />}
         <Grid container spacing={3}>
           {/* Basic Information */}
-          <BasicInformation 
+          <BasicInformation
             formData={{
               title: formData.title,
               thumbnailUrl: formData.thumbnailUrl,
@@ -366,6 +427,15 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
             selectedPattern={selectedPattern}
             validationError={validationError}
           />
+
+          {/* Error Alert moved below seller notes */}
+          {error && (
+            <Grid item xs={12}>
+              <Alert severity="error" sx={{ mt: 2 }} ref={bottomErrorRef}>
+                {error}
+              </Alert>
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
       <Divider />
@@ -373,12 +443,14 @@ const CreateListingModal: FC<CreateListingModalProps> = ({
         <Button onClick={onClose} variant="outlined" disabled={submitting}>
           Cancel
         </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained" 
-          color="primary" 
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
           disabled={submitting || loading}
-          startIcon={submitting && <CircularProgress size={20} color="inherit" />}
+          startIcon={
+            submitting && <CircularProgress size={20} color="inherit" />
+          }
         >
           {submitting ? 'Creating...' : 'Create Listing'}
         </Button>

@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useContext, useEffect, useState } from 'react';
 import {
   TableRow,
   TableCell,
@@ -21,6 +21,20 @@ import { Listing } from '../types';
 import { CodeViewer } from './CodeViewer';
 import ListingStatusBadge from './ListingStatusBadge';
 import ExpirationDateCell from './ExpirationDateCell';
+import { ListingsContext } from '../context/ListingsContext';
+import { keyframes } from '@emotion/react';
+
+const flashAnimation = keyframes`
+  0% {
+    background-color: rgba(76, 175, 80, 0.3);
+  }
+  50% {
+    background-color: rgba(76, 175, 80, 0.1);
+  }
+  100% {
+    background-color: rgba(76, 175, 80, 0);
+  }
+`;
 
 interface ListingRowProps {
   listing: Listing;
@@ -48,7 +62,16 @@ const ListingRow: FC<ListingRowProps> = ({
   onMenuClose
 }) => {
   const theme = useTheme();
+  const { newListingId } = useContext(ListingsContext);
+  const [isFlashing, setIsFlashing] = useState(false);
   const isInactive = listing.status === 'sold' || listing.quantity === 0;
+  const isNewListing = newListingId === listing._id;
+
+  useEffect(() => {
+    if (isNewListing) {
+      setIsFlashing(true);
+    }
+  }, [isNewListing]);
 
   const formatDate = (dateValue: Date | string | null): string => {
     if (!dateValue) return 'N/A';
@@ -78,6 +101,10 @@ const ListingRow: FC<ListingRowProps> = ({
               backgroundColor: (theme) => theme.palette.action.disabledBackground,
               color: (theme) => theme.palette.text.disabled,
               opacity: 0.7
+            }
+          : isFlashing
+          ? {
+              animation: `${flashAnimation} 2s ease-in-out 3`,
             }
           : {}
       }

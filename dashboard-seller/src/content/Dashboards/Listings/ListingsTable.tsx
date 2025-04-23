@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useContext } from 'react';
 import {
   Card,
   CardHeader,
@@ -11,7 +11,8 @@ import {
 } from '@mui/material';
 
 // Import custom hooks
-import { useListings, useListingSelection, useListingMenus } from './hooks';
+import { useListingSelection, useListingMenus } from './hooks';
+import { ListingsContext } from './context/ListingsContext';
 
 // Import components
 import ListingsTableHeader from './components/ListingsTableHeader';
@@ -23,7 +24,7 @@ import { EmptyState, LoadingState, ErrorState } from './components/ListingsTable
 import { ListingsTableProps } from './types';
 
 const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
-  // Use custom hooks for data fetching and state management
+  // Use ListingsContext instead of the hook directly
   const {
     listings,
     loading,
@@ -32,9 +33,8 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
     page,
     limit,
     setPage,
-    setLimit,
-    fetchListings
-  } = useListings();
+    setLimit
+  } = useContext(ListingsContext);
 
   // Use selection hook
   const {

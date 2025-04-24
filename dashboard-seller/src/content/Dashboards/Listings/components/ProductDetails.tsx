@@ -6,7 +6,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormHelperText
+  FormHelperText,
+  FormControlLabel,
+  Checkbox,
+  ListItemText
 } from '@mui/material';
 import { FormSection } from './FormSection';
 
@@ -21,7 +24,8 @@ interface ProductDetailsProps {
     categoryId: string;
     platform: string;
     region: string;
-    quantity: string;
+    isRegionLocked: boolean;
+    supportedLanguages: string[];
   };
   formErrors: {
     categoryId?: string;
@@ -45,6 +49,17 @@ export const ProductDetails: FC<ProductDetailsProps> = ({
   availablePlatforms,
   regions
 }) => {
+  // Function to handle checkbox changes specifically
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const event = {
+      target: {
+        name: e.target.name,
+        value: e.target.checked
+      }
+    };
+    handleChange(event as any);
+  };
+
   return (
     <FormSection title="Product Details" marginTop={2}>
       <Grid item xs={12} md={6}>
@@ -76,17 +91,11 @@ export const ProductDetails: FC<ProductDetailsProps> = ({
             onChange={handleChange as any}
             label="Platform"
           >
-            {availablePlatforms.length > 0 ? (
-              availablePlatforms.map((platform) => (
-                <MenuItem key={platform} value={platform}>
-                  {platform}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>
-                <em>Select a category first</em>
+            {availablePlatforms.map((platform) => (
+              <MenuItem key={platform} value={platform}>
+                {platform}
               </MenuItem>
-            )}
+            ))}
           </Select>
           {formErrors.platform && (
             <FormHelperText>{formErrors.platform}</FormHelperText>
@@ -114,15 +123,37 @@ export const ProductDetails: FC<ProductDetailsProps> = ({
         </FormControl>
       </Grid>
       <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Quantity"
-          name="quantity"
-          type="number"
-          value={formData.quantity}
-          onChange={handleChange}
-          InputProps={{ inputProps: { min: 1 } }}
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="isRegionLocked"
+              checked={Boolean(formData.isRegionLocked)}
+              onChange={handleCheckboxChange}
+              color="primary"
+            />
+          }
+          label="Region Locked?"
         />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth>
+          <InputLabel>Supported Languages</InputLabel>
+          <Select
+            name="supportedLanguages"
+            multiple
+            value={formData.supportedLanguages}
+            onChange={handleChange as any}
+            label="Supported Languages"
+            renderValue={(selected) => (selected as string[]).join(', ')}
+          >
+            {['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Russian', 'Chinese', 'Japanese', 'Korean', 'Other'].map((lang) => (
+              <MenuItem key={lang} value={lang}>
+                <Checkbox checked={formData.supportedLanguages.indexOf(lang) > -1} />
+                <ListItemText primary={lang} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Grid>
     </FormSection>
   );

@@ -5,7 +5,9 @@ import {
   Typography, 
   Tooltip, 
   IconButton, 
-  FormHelperText 
+  FormHelperText,
+  Autocomplete,
+  Chip
 } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { FormSection } from './FormSection';
@@ -22,6 +24,7 @@ interface ProductCodeProps {
     code: string;
     expirationDate: string;
     sellerNotes: string;
+    tags: string[];
   };
   formErrors: {
     code?: string;
@@ -43,23 +46,24 @@ export const ProductCode: FC<ProductCodeProps> = ({
 }) => {
   const [isValid, setIsValid] = useState<boolean>(true);
   const [localValidationError, setLocalValidationError] = useState<string | null>(null);
-  
+  const [tagInput, setTagInput] = useState<string>('');
+
   // Handle code input with auto-formatting based on selected pattern
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     let formattedValue = value.replace(/-/g, ''); // Remove existing dashes
     let finalValue = formattedValue;
-    
+
     // Apply formatting based on the selected pattern
     if (selectedPattern && selectedPattern.example) {
       try {
         const example = selectedPattern.example;
-        
+
         if (example.includes('-')) {
           // Get dash positions from the example
           const dashPositions: number[] = [];
           let exampleWithoutDashes = '';
-          
+
           for (let i = 0; i < example.length; i++) {
             if (example[i] === '-') {
               // Store the position in the string without dashes
@@ -68,18 +72,18 @@ export const ProductCode: FC<ProductCodeProps> = ({
               exampleWithoutDashes += example[i];
             }
           }
-          
+
           // Apply dashes at the correct positions
           finalValue = '';
           let dashesAdded = 0;
-          
+
           for (let i = 0; i < formattedValue.length; i++) {
             // Check if we need to add a dash before this character
             if (dashPositions.includes(i)) {
               finalValue += '-';
               dashesAdded++;
             }
-            
+
             finalValue += formattedValue[i];
           }
         } else {
@@ -92,7 +96,7 @@ export const ProductCode: FC<ProductCodeProps> = ({
         finalValue = formattedValue;
       }
     }
-    
+
     // Create a synthetic event with the formatted value
     const syntheticEvent = {
       ...e,
@@ -102,7 +106,19 @@ export const ProductCode: FC<ProductCodeProps> = ({
         value: finalValue
       }
     };
-    
+
+    handleChange(syntheticEvent as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  // Handle tags change
+  const handleTagsChange = (event, newValue) => {
+    const syntheticEvent = {
+      target: {
+        name: 'tags',
+        value: newValue
+      }
+    };
+
     handleChange(syntheticEvent as React.ChangeEvent<HTMLInputElement>);
   };
 
@@ -113,7 +129,7 @@ export const ProductCode: FC<ProductCodeProps> = ({
         const regex = new RegExp(selectedPattern.regex);
         const valid = regex.test(formData.code);
         setIsValid(valid);
-        
+
         if (!valid) {
           setLocalValidationError(`Code doesn't match the required format: ${selectedPattern.description || selectedPattern.regex}`);
         } else {
@@ -155,7 +171,7 @@ export const ProductCode: FC<ProductCodeProps> = ({
           value={formData.code}
           onChange={handleCodeChange}
           placeholder={selectedPattern?.example || "Enter the exact code that buyers will receive"}
-          error={!!formErrors.code || !!validationError || !!localValidationError || (formData.code && !isValid)}
+          error={Boolean(formErrors.code) || Boolean(validationError) || Boolean(localValidationError) || (formData.code ? !isValid : false)}
           helperText={
             formErrors.code || validationError || localValidationError || 
             (selectedPattern ? `Format: ${selectedPattern.description || selectedPattern.regex}` : undefined)
@@ -179,6 +195,35 @@ export const ProductCode: FC<ProductCodeProps> = ({
           value={formData.expirationDate}
           onChange={handleChange}
           InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <Autocomplete
+          multiple
+          freeSolo
+          options={[]}
+          value={formData.tags}
+          onChange={handleTagsChange}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip 
+                key={`tag-${option}-${index}`}
+                variant="outlined" 
+                label={option} 
+                size="small"
+                {...getTagProps({ index })} 
+              />
+            ))
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              fullWidth
+              label="Tags (Optional)"
+              placeholder="Add tags and press Enter"
+              helperText="Add keywords to help buyers find your listing"
+            />
+          )}
         />
       </Grid>
       <Grid item xs={12}>

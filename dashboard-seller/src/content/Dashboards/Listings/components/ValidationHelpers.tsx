@@ -14,7 +14,6 @@ export interface ListingFormData {
   isRegionLocked: boolean;
   code: string;
   expirationDate: string;
-  quantity: string;
   supportedLanguages: string[];
   thumbnailUrl: string;
   autoDelivery: boolean;
@@ -34,7 +33,22 @@ export interface ListingFormErrors {
   platform: string;
   region: string;
   code: string;
+  thumbnailUrl: string;
 }
+
+/**
+ * Validates if a string is a valid URL
+ * @param url The URL to validate
+ * @returns A boolean indicating if the URL is valid
+ */
+const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 /**
  * Validates the listing form data
@@ -49,7 +63,8 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
     categoryId: '',
     platform: '',
     region: '',
-    code: ''
+    code: '',
+    thumbnailUrl: ''
   };
   let isValid = true;
 
@@ -101,6 +116,12 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
     isValid = false;
   }
 
+  // Thumbnail URL validation
+  if (formData.thumbnailUrl && !isValidUrl(formData.thumbnailUrl)) {
+    errors.thumbnailUrl = 'Please enter a valid URL';
+    isValid = false;
+  }
+
   return { errors, isValid };
 };
 
@@ -110,14 +131,43 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
  * @returns The prepared data ready for submission
  */
 export const prepareFormDataForSubmission = (formData: ListingFormData) => {
-  return {
-    ...formData,
-    price: typeof formData.price === 'string' ? parseFloat(formData.price) : formData.price,
-    originalPrice: formData.originalPrice ? 
-      (typeof formData.originalPrice === 'string' ? parseFloat(formData.originalPrice) : formData.originalPrice) : 
-      undefined,
-    quantity: formData.quantity ? 
-      (typeof formData.quantity === 'string' ? parseInt(formData.quantity, 10) : formData.quantity) : 
-      1
+  // Create a copy of the form data to avoid mutating the original
+  const processedData = { ...formData };
+  
+  console.log('Original form data:', JSON.stringify(formData, null, 2));
+  console.log('Original expirationDate:', formData.expirationDate);
+  console.log('Type of expirationDate:', typeof formData.expirationDate);
+  
+  // Format expirationDate as ISO date-time string if it exists
+  let formattedExpirationDate = undefined;
+  if (formData.expirationDate) {
+    // Convert YYYY-MM-DD to YYYY-MM-DDT23:59:59.999Z (end of the day in UTC)
+    formattedExpirationDate = `${formData.expirationDate}T23:59:59.999Z`;
+    console.log('Formatted expiration date:', formattedExpirationDate);
+  }
+  
+  // Create the final data object with all conversions applied
+  const finalData = {
+    title: formData.title,
+    description: formData.description,
+    price: parseFloat(formData.price),
+    originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+    categoryId: formData.categoryId,
+    platform: formData.platform,
+    region: formData.region,
+    isRegionLocked: Boolean(formData.isRegionLocked),
+    code: formData.code,
+    expirationDate: formattedExpirationDate, // Use the formatted date
+    supportedLanguages: Array.isArray(formData.supportedLanguages) ? formData.supportedLanguages : [],
+    thumbnailUrl: formData.thumbnailUrl,
+    autoDelivery: Boolean(formData.autoDelivery),
+    tags: Array.isArray(formData.tags) ? formData.tags : [],
+    sellerNotes: formData.sellerNotes,
+    status: formData.status
   };
+  
+  console.log('Final prepared data:', JSON.stringify(finalData, null, 2));
+  console.log('Final expirationDate:', finalData.expirationDate);
+  
+  return finalData;
 };

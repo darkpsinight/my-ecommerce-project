@@ -13,9 +13,7 @@ import {
   Select,
   MenuItem,
   TextField,
-  InputAdornment,
-  Snackbar,
-  Alert
+  InputAdornment
 } from '@mui/material';
 
 import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
@@ -24,6 +22,8 @@ import FilterListTwoToneIcon from '@mui/icons-material/FilterListTwoTone';
 
 import CreateListingModal from './CreateListingModal';
 import { ListingsContext } from './context/ListingsContext';
+import toast, { Toaster } from 'react-hot-toast';
+import LargerDismissibleToast from 'src/components/LargerDismissibleToast';
 
 interface ListingsActionsProps {
   selected: string[];
@@ -39,11 +39,6 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   const [platform, setPlatform] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const [alert, setAlert] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
 
   const handlePlatformChange = (event) => {
     setPlatform(event.target.value);
@@ -65,42 +60,26 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     try {
       if (response && response.success) {
         setOpenModal(false);
-        setAlert({
-          open: true,
-          message: response.message || 'Listing created successfully!',
-          severity: 'success'
-        });
-
+        toast.custom((t) => (
+          <LargerDismissibleToast t={t} message={response.message || 'Listing created successfully!'} type="success" />
+        ), { duration: 10000 });
         // Add the new listing to the table and refresh
         if (response.data && response.data.listing) {
           addNewListing(response.data.listing);
         } else {
-          // If we don't have the listing data, just refresh the table
           refreshListings();
         }
       } else {
-        setAlert({
-          open: true,
-          message:
-            response.message || 'Failed to create listing. Please try again.',
-          severity: 'error'
-        });
+        toast.custom((t) => (
+          <LargerDismissibleToast t={t} message={response.message || 'Failed to create listing. Please try again.'} type="error" />
+        ), { duration: 10000 });
       }
     } catch (error) {
       console.error('Error handling create listing response:', error);
-      setAlert({
-        open: true,
-        message: 'An unexpected error occurred. Please try again.',
-        severity: 'error'
-      });
+      toast.custom((t) => (
+        <LargerDismissibleToast t={t} message={'An unexpected error occurred. Please try again.'} type="error" />
+      ), { duration: 10000 });
     }
-  };
-
-  const handleCloseAlert = () => {
-    setAlert({
-      ...alert,
-      open: false
-    });
   };
 
   const ButtonSearch = styled(Button)(
@@ -121,17 +100,74 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     `
   );
 
+  // Header box for improved text layout
+  const ListingsHeaderBox = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing(2),
+    [theme.breakpoints.down('sm')]: {
+      alignItems: 'center',
+      textAlign: 'center',
+      marginBottom: theme.spacing(2.5),
+    },
+  }));
+
+  // Add responsive styles for the actions section
+  const ResponsiveActionsBox = styled(Box)(({ theme }) => ({
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(1),
+      '.MuiGrid-container': {
+        flexDirection: 'column',
+        gap: theme.spacing(2),
+      },
+      '.MuiGrid-item': {
+        maxWidth: '100%',
+        flexBasis: '100%',
+      },
+      '.MuiButton-root': {
+        width: '100%',
+        marginRight: 0,
+        marginBottom: theme.spacing(1.5),
+        marginTop: 0,
+        alignSelf: 'center',
+      },
+      '.MuiFormControl-root, .MuiTextField-root': {
+        width: '100%',
+      },
+    },
+  }));
+
   return (
     <Card>
-      <Box p={3}>
+      <ResponsiveActionsBox p={3}>
         <Grid container justifyContent="space-between" alignItems="center">
-          <Grid item>
-            <Typography variant="h4" gutterBottom>
-              Product Listings
-            </Typography>
-            <Typography variant="subtitle2" color="text.secondary">
-              Overview of your listing activity
-            </Typography>
+          <Grid item xs={12} sm="auto">
+            <ListingsHeaderBox>
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                sx={{
+                  mb: 0.5,
+                  mt: 2,
+                  letterSpacing: '-0.5px'
+                }}
+              >
+                Product Listings
+              </Typography>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                sx={{
+                  fontWeight: 400,
+                  fontSize: { xs: '1rem', sm: '1.1rem' },
+                  color: (theme) => theme.palette.text.secondary,
+                  mb: 0
+                }}
+              >
+                Overview of your listing activity
+              </Typography>
+            </ListingsHeaderBox>
           </Grid>
           <Grid item>
             <ButtonAdd
@@ -187,7 +223,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
             </ButtonSearch>
           </Grid>
         </Grid>
-      </Box>
+      </ResponsiveActionsBox>
 
       {/* Create Listing Modal */}
       <CreateListingModal
@@ -197,7 +233,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
       />
 
       {/* Feedback Alert */}
-      <Snackbar
+      {/* <Snackbar
         open={alert.open}
         autoHideDuration={6000}
         onClose={handleCloseAlert}
@@ -210,7 +246,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
         >
           {alert.message}
         </Alert>
-      </Snackbar>
+      </Snackbar> */}
     </Card>
   );
 };

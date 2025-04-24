@@ -66,11 +66,6 @@ const listingSchema = new mongoose.Schema({
   expirationDate: {
     type: Date
   },
-  quantity: {
-    type: Number,
-    min: [0, "Quantity cannot be negative"],
-    default: 0 // Will be calculated based on active codes
-  },
   supportedLanguages: {
     type: [String],
     default: ["English"]
@@ -118,7 +113,6 @@ listingSchema.pre("save", function(next) {
   if (this.codes && this.codes.length > 0) {
     // Count only active codes
     const activeCodes = this.codes.filter(code => code.soldStatus === "active");
-    this.quantity = activeCodes.length;
     
     // Check if listing is expired
     const isExpired = this.expirationDate && new Date(this.expirationDate) < new Date();
@@ -128,7 +122,7 @@ listingSchema.pre("save", function(next) {
       this.status = "expired";
     } else if (this.status !== "draft") {
       // Only update status if not in draft state
-      if (this.quantity > 0) {
+      if (activeCodes.length > 0) {
         // Has active codes and not expired or draft
         this.status = "active";
       } else {
@@ -139,8 +133,6 @@ listingSchema.pre("save", function(next) {
     }
   } else {
     // No codes at all
-    this.quantity = 0;
-    
     // Only update status if not in draft or expired state
     if (this.status !== "draft" && this.status !== "expired") {
       this.status = "suspended";
@@ -258,11 +250,6 @@ listingSchema.statics.auditAndFixListings = async function() {
       const activeCodes = listing.codes.filter(code => code.soldStatus === "active");
       const correctQuantity = activeCodes.length;
       
-      if (listing.quantity !== correctQuantity) {
-        listing.quantity = correctQuantity;
-        needsUpdate = true;
-      }
-      
       // Check if expired
       const isExpired = listing.expirationDate && new Date(listing.expirationDate) < new Date();
       
@@ -285,11 +272,6 @@ listingSchema.statics.auditAndFixListings = async function() {
       }
     } else {
       // No codes
-      if (listing.quantity !== 0) {
-        listing.quantity = 0;
-        needsUpdate = true;
-      }
-      
       if (listing.status !== "draft" && listing.status !== "expired" && listing.status !== "suspended") {
         listing.status = "suspended";
         needsUpdate = true;

@@ -60,8 +60,20 @@ export interface ListingResponse {
 // Create a new listing
 export const createListing = async (listingData: ListingData): Promise<ListingResponse> => {
   try {
+    // Ensure expirationDate is in ISO 8601 format if it exists
+    if (listingData.expirationDate) {
+      // Check if the date is already in ISO format (contains 'T')
+      if (!listingData.expirationDate.includes('T')) {
+        // Convert YYYY-MM-DD to YYYY-MM-DDT23:59:59.999Z (end of the day in UTC)
+        listingData.expirationDate = `${listingData.expirationDate}T23:59:59.999Z`;
+        console.log('API service fixed date format:', listingData.expirationDate);
+      }
+    }
+    
+    console.log('Creating listing with data:', JSON.stringify(listingData, null, 2));
     const api = getAuthAxios();
     const response = await api.post('/listings', listingData);
+    console.log('Listing creation response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error creating listing:', error);
@@ -70,6 +82,7 @@ export const createListing = async (listingData: ListingData): Promise<ListingRe
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
+      console.log('API error response:', error.response.data);
       return {
         success: false,
         message: error.response.data.message || 'Failed to create listing',

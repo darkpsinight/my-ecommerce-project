@@ -48,7 +48,18 @@ function AppContent() {
     <ThemeProvider>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <CssBaseline />
-        <Toaster position="top-right" />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              fontSize: '1.2rem',
+              minWidth: '400px',
+              padding: '24px 32px',
+              borderRadius: '12px',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.18)'
+            }
+          }}
+        />
         {content}
       </LocalizationProvider>
     </ThemeProvider>

@@ -11,8 +11,10 @@ interface BasicInformationProps {
   formErrors: {
     title?: string;
     description?: string;
+    thumbnailUrl?: string;
   };
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -21,7 +23,8 @@ interface BasicInformationProps {
 export const BasicInformation: FC<BasicInformationProps> = ({
   formData,
   formErrors,
-  handleChange
+  handleChange,
+  handleBlur
 }) => {
   return (
     <FormSection title="Basic Information">
@@ -45,7 +48,10 @@ export const BasicInformation: FC<BasicInformationProps> = ({
           name="thumbnailUrl"
           value={formData.thumbnailUrl}
           onChange={handleChange}
+          onBlur={handleBlur}
           placeholder="https://example.com/image.jpg"
+          error={!!formErrors.thumbnailUrl}
+          helperText={formErrors.thumbnailUrl}
         />
       </Grid>
       <Grid item xs={12}>

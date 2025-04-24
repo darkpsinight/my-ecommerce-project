@@ -64,7 +64,12 @@ const ListingRow: FC<ListingRowProps> = ({
   const theme = useTheme();
   const { newListingId } = useContext(ListingsContext);
   const [isFlashing, setIsFlashing] = useState(false);
-  const isInactive = listing.status === 'sold' || listing.quantity === 0;
+  
+  // Calculate quantity based on active codes
+  const activeCodesCount = listing.codes ? 
+    listing.codes.filter(code => code.soldStatus === 'active').length : 0;
+  
+  const isInactive = listing.status === 'sold' || activeCodesCount === 0;
   const isNewListing = newListingId === listing._id;
 
   useEffect(() => {
@@ -142,9 +147,9 @@ const ListingRow: FC<ListingRowProps> = ({
         <Typography
           variant="body1"
           fontWeight="bold"
-          color={listing.quantity > 0 ? 'success.main' : 'error.main'}
+          color={activeCodesCount > 0 ? 'success.main' : 'error.main'}
         >
-          {listing.quantity || 0}
+          {activeCodesCount}
         </Typography>
       </TableCell>
       <TableCell>

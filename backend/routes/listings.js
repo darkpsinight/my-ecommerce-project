@@ -102,16 +102,91 @@ const maskCode = (code) => {
   return `${firstThree}${maskedMiddle}${lastTwo}`;
 };
 
+/**
+ * Checks if any of the provided codes already exist in the database
+ * @param {Array<string>} codes - Array of plaintext codes to check
+ * @param {string} [excludeListingId] - Optional listing ID to exclude from the check (for updates)
+ * @returns {Promise<Object>} - Object with duplicates array and success status
+ */
+const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
+  try {
+    if (!Array.isArray(codes) || codes.length === 0) {
+      return { success: true, duplicates: [] };
+    }
+
+    // Get all listings that might contain these codes
+    // We need to include the codes field which is normally not selected
+    const allListings = await Listing.find({}).select('+codes.code +codes.iv');
+    
+    // Initialize array to track duplicates
+    const duplicates = [];
+    
+    // For each listing, check if any of the codes match
+    for (const listing of allListings) {
+      // Skip the current listing if we're updating
+      if (excludeListingId && listing._id.toString() === excludeListingId) {
+        continue;
+      }
+      
+      // For each code in the listing
+      for (const codeObj of listing.codes) {
+        // Decrypt the code
+        const decryptedCode = listing.decryptCode(codeObj.code, codeObj.iv);
+        
+        // Check if this code exists in our input codes
+        const duplicateIndex = codes.findIndex(code => code === decryptedCode);
+        
+        if (duplicateIndex !== -1) {
+          // Found a duplicate
+          duplicates.push({
+            code: codes[duplicateIndex],
+            index: duplicateIndex,
+            existingListingId: listing._id.toString(),
+            listingTitle: listing.title,
+            sellerId: listing.sellerId
+          });
+        }
+      }
+    }
+    
+    return {
+      success: duplicates.length === 0,
+      duplicates
+    };
+  } catch (error) {
+    console.error("Error checking for duplicate codes:", error);
+    return {
+      success: false,
+      error: error.message,
+      duplicates: []
+    };
+  }
+};
+
 const listingsRoutes = async (fastify, opts) => {
   // Configure rate limits for different operations
   const createRateLimit = {
-    max: 20,
+    max: 15,
     timeWindow: '1 minute',
     errorResponseBuilder: function (req, context) {
       return {
         success: false,
         error: 'Too many listing creation requests',
-        message: `Rate limit exceeded, retry in ${context.after}`
+        message: `Rate limit exceeded: maximum of 15 listings per minute. Please try again in ${context.after}`,
+        retryAfter: context.after
+      };
+    }
+  };
+  
+  const bulkCreateRateLimit = {
+    max: 5,
+    timeWindow: '1 minute',
+    errorResponseBuilder: function (req, context) {
+      return {
+        success: false,
+        error: 'Too many bulk listing creation requests',
+        message: `Rate limit exceeded: maximum of 5 bulk uploads per minute. Please try again in ${context.after}`,
+        retryAfter: context.after
       };
     }
   };
@@ -166,6 +241,26 @@ const listingsRoutes = async (fastify, opts) => {
         
         // Add seller ID from authenticated user
         listingData.sellerId = request.user.uid;
+        
+        // Check for duplicate code
+        if (listingData.code) {
+          const duplicateCheck = await checkForDuplicateCodes([listingData.code]);
+          
+          if (!duplicateCheck.success) {
+            // Found a duplicate code
+            return reply.code(400).send({
+              success: false,
+              message: "Validation failed: The code already exists in another listing",
+              error: {
+                duplicates: duplicateCheck.duplicates.map(dup => ({
+                  code: maskCode(dup.code),
+                  listingTitle: dup.listingTitle,
+                  sellerId: dup.sellerId
+                }))
+              }
+            });
+          }
+        }
         
         // Validate code against patterns if categoryId is provided
         if (listingData.code && listingData.categoryId && listingData.platform) {
@@ -845,7 +940,7 @@ const listingsRoutes = async (fastify, opts) => {
   // Bulk upload listings (for multiple codes)
   fastify.route({
     config: {
-      rateLimit: createRateLimit
+      rateLimit: bulkCreateRateLimit
     },
     method: "POST",
     url: "/bulk",
@@ -856,19 +951,46 @@ const listingsRoutes = async (fastify, opts) => {
         const { listingTemplate, codes } = request.body;
         const sellerId = request.user.uid;
         
-        // Add seller ID to template
-        listingTemplate.sellerId = sellerId;
+        // Check for duplicate codes
+        const duplicateCheck = await checkForDuplicateCodes(codes);
         
-        // Validate codes against patterns if categoryId is provided
-        if (listingTemplate.categoryId && listingTemplate.platform) {
-          // Get patterns for this category and platform
-          const patternResult = await getPatternsForPlatform(
-            listingTemplate.categoryId, 
-            listingTemplate.platform, 
-            Category
-          );
+        if (!duplicateCheck.success) {
+          // Found duplicate codes
+          return reply.code(400).send({
+            success: false,
+            message: `Validation failed: ${duplicateCheck.duplicates.length} code(s) already exist in other listings`,
+            error: {
+              duplicates: duplicateCheck.duplicates.map(dup => ({
+                code: maskCode(dup.code),
+                index: dup.index,
+                listingTitle: dup.listingTitle,
+                sellerId: dup.sellerId
+              }))
+            }
+          });
+        }
+        
+        // Add seller ID to template
+        const template = {
+          ...listingTemplate,
+          sellerId: sellerId
+        };
+        
+        // Get the category to validate codes against patterns
+        const category = await Category.findById(template.categoryId);
+        
+        if (!category) {
+          return reply.code(400).send({
+            success: false,
+            message: "Invalid category ID"
+          });
+        }
+        
+        // Validate codes against patterns if category has patterns
+        if (category.patterns && category.patterns.length > 0) {
+          // Get patterns for the specified platform
+          const patternResult = getPatternsForPlatform(category, template.platform);
           
-          // Check if we found patterns
           if (patternResult.error) {
             request.log.warn(`Pattern validation warning: ${patternResult.error}`);
             // Continue without validation if patterns aren't found

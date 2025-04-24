@@ -5,7 +5,8 @@ import { ListingFormData, ListingFormErrors } from '../types';
  * Hook to manage form state
  */
 export const useFormState = () => {
-  const [formData, setFormData] = useState<ListingFormData>({
+  // Initial form data state
+  const initialFormData: ListingFormData = {
     title: '',
     description: '',
     price: '',
@@ -22,9 +23,10 @@ export const useFormState = () => {
     tags: [],
     sellerNotes: '',
     status: 'active'
-  });
+  };
 
-  const [formErrors, setFormErrors] = useState<ListingFormErrors>({
+  // Initial form errors state
+  const initialFormErrors: ListingFormErrors = {
     title: '',
     description: '',
     price: '',
@@ -33,12 +35,22 @@ export const useFormState = () => {
     region: '',
     code: '',
     thumbnailUrl: ''
-  });
+  };
+
+  const [formData, setFormData] = useState<ListingFormData>(initialFormData);
+  const [formErrors, setFormErrors] = useState<ListingFormErrors>(initialFormErrors);
+
+  // Function to reset form to initial state
+  const resetForm = () => {
+    setFormData(initialFormData);
+    setFormErrors(initialFormErrors);
+  };
 
   return {
     formData,
     setFormData,
     formErrors,
-    setFormErrors
+    setFormErrors,
+    resetForm
   };
 };

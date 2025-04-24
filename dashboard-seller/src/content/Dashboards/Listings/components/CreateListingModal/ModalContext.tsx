@@ -25,7 +25,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
   // Use custom hooks to manage different aspects of the component
   const { error, setError, bottomErrorRef } = useErrorHandling();
   
-  const { formData, setFormData, formErrors, setFormErrors } = useFormState();
+  const { formData, setFormData, formErrors, setFormErrors, resetForm } = useFormState();
   
   const {
     categories,
@@ -86,7 +86,8 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     formErrors,
     handleChange,
     handleBlur,
-    handleSubmit
+    handleSubmit,
+    resetForm
   };
 
   return (

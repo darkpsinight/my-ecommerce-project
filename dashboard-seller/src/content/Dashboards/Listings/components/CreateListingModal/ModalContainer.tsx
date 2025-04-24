@@ -106,12 +106,18 @@ const ModalContent: FC = () => {
 };
 
 const ModalActions: FC = () => {
-  const { handleSubmit, submitting, loading } = useModalContext();
+  const { handleSubmit, submitting, loading, resetForm } = useModalContext();
   const { onClose } = useModalContainerProps();
+
+  // Handle cancel button click - reset form and close modal
+  const handleCancel = () => {
+    resetForm();
+    onClose();
+  };
 
   return (
     <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
-      <Button onClick={onClose} variant="outlined" disabled={submitting}>
+      <Button onClick={handleCancel} variant="outlined" disabled={submitting}>
         Cancel
       </Button>
       <Button
@@ -141,11 +147,16 @@ const CreateListingModal: FC<CreateListingModalProps> = (props) => {
   modalContainerProps = props;
   const { open, onClose, onSubmit } = props;
 
+  // Create a wrapper for onClose that resets the form
+  const handleClose = () => {
+    onClose();
+  };
+
   return (
     <ModalProvider open={open} onClose={onClose} onSubmit={onSubmit}>
       <Dialog
         open={open}
-        onClose={onClose}
+        onClose={handleClose}
         fullWidth
         maxWidth="md"
         PaperProps={{
@@ -162,7 +173,7 @@ const CreateListingModal: FC<CreateListingModalProps> = (props) => {
           }}
         >
           <Typography variant="h4">Create New Listing</Typography>
-          <IconButton onClick={onClose} aria-label="close">
+          <IconButton onClick={handleClose} aria-label="close">
             <CloseIcon />
           </IconButton>
         </DialogTitle>

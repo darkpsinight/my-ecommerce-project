@@ -91,6 +91,11 @@ export const ProductDetails: FC<ProductDetailsProps> = ({
             onChange={handleChange as any}
             label="Platform"
           >
+            {formData.categoryId === '' && (
+              <MenuItem disabled value="">
+                <em>Please choose a category first</em>
+              </MenuItem>
+            )}
             {availablePlatforms.map((platform) => (
               <MenuItem key={platform} value={platform}>
                 {platform}

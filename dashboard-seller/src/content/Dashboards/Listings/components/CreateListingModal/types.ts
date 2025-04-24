@@ -40,6 +40,7 @@ export interface ModalContextProps {
   handleChange: (e: any) => void;
   handleBlur: (e: any) => void;
   handleSubmit: () => void;
+  resetForm: () => void;
 }
 
 export interface ListingFormData {

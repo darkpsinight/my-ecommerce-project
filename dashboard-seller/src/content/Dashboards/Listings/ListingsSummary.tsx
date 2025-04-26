@@ -57,9 +57,9 @@ const ListingsSummary: FC = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await getListingsSummary();
-        
+
         if (response && response.success && response.data) {
           setSummaryData({
             activeListings: response.data.activeListings || 0,
@@ -107,8 +107,27 @@ const ListingsSummary: FC = () => {
   return (
     <Card>
       <Box sx={{ p: 3 }}>
-        <Typography variant="h4">Listings Summary</Typography>
-        <Typography variant="subtitle2" color="text.secondary">
+        <Typography
+          variant="h4"
+          fontWeight={700}
+          sx={{
+            mb: 0.5,
+            mt: 0,
+            letterSpacing: '-0.5px'
+          }}
+        >
+          Listings Summary
+        </Typography>
+        <Typography
+          variant="subtitle2"
+          color="text.secondary"
+          sx={{
+            fontWeight: 400,
+            fontSize: { xs: '1rem', sm: '1.1rem' },
+            color: (theme) => theme.palette.text.secondary,
+            mb: 0
+          }}
+        >
           Overview of your listing activity
         </Typography>
       </Box>
@@ -119,54 +138,50 @@ const ListingsSummary: FC = () => {
             {error}
           </Alert>
         ) : null}
-        
+
         <Grid container spacing={3}>
-          {loading ? (
-            // Loading skeleton state
-            Array.from(new Array(3)).map((_, index) => (
-              <Grid item xs={12} md={4} key={`skeleton-${index}`}>
-                <SummaryCard elevation={0}>
-                  <Skeleton 
-                    variant="circular" 
-                    width={54} 
-                    height={54} 
-                    sx={{ mr: 2 }} 
-                  />
-                  <Box sx={{ width: '100%' }}>
-                    <Skeleton variant="text" width="60%" height={24} />
-                    <Skeleton variant="text" width="40%" height={32} />
-                  </Box>
-                </SummaryCard>
-              </Grid>
-            ))
-          ) : (
-            // Actual data display
-            items.map((item) => (
-              <Grid item xs={12} md={4} key={item.id}>
-                <SummaryCard elevation={0}>
-                  <Avatar
-                    sx={{
-                      mr: 2,
-                      width: 54,
-                      height: 54,
-                      background: item.color,
-                      color: `${theme.colors.alpha.white[100]}`
-                    }}
-                  >
-                    <item.icon fontSize="medium" />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h5" noWrap>
-                      {item.name}
-                    </Typography>
-                    <Typography variant="h3">
-                      {item.value}
-                    </Typography>
-                  </Box>
-                </SummaryCard>
-              </Grid>
-            ))
-          )}
+          {loading
+            ? // Loading skeleton state
+              Array.from(new Array(3)).map((_, index) => (
+                <Grid item xs={12} md={4} key={`skeleton-${index}`}>
+                  <SummaryCard elevation={0}>
+                    <Skeleton
+                      variant="circular"
+                      width={54}
+                      height={54}
+                      sx={{ mr: 2 }}
+                    />
+                    <Box sx={{ width: '100%' }}>
+                      <Skeleton variant="text" width="60%" height={24} />
+                      <Skeleton variant="text" width="40%" height={32} />
+                    </Box>
+                  </SummaryCard>
+                </Grid>
+              ))
+            : // Actual data display
+              items.map((item) => (
+                <Grid item xs={12} md={4} key={item.id}>
+                  <SummaryCard elevation={0}>
+                    <Avatar
+                      sx={{
+                        mr: 2,
+                        width: 54,
+                        height: 54,
+                        background: item.color,
+                        color: `${theme.colors.alpha.white[100]}`
+                      }}
+                    >
+                      <item.icon fontSize="medium" />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h5" noWrap>
+                        {item.name}
+                      </Typography>
+                      <Typography variant="h3">{item.value}</Typography>
+                    </Box>
+                  </SummaryCard>
+                </Grid>
+              ))}
         </Grid>
       </Box>
     </Card>

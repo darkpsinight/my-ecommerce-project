@@ -60,9 +60,16 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     try {
       if (response && response.success) {
         setOpenModal(false);
-        toast.custom((t) => (
-          <LargerDismissibleToast t={t} message={response.message || 'Listing created successfully!'} type="success" />
-        ), { duration: 10000 });
+        toast.custom(
+          (t) => (
+            <LargerDismissibleToast
+              t={t}
+              message={response.message || 'Listing created successfully!'}
+              type="success"
+            />
+          ),
+          { duration: 10000 }
+        );
         // Add the new listing to the table and refresh
         if (response.data && response.data.listing) {
           addNewListing(response.data.listing);
@@ -70,15 +77,32 @@ const ListingsActions: FC<ListingsActionsProps> = ({
           refreshListings();
         }
       } else {
-        toast.custom((t) => (
-          <LargerDismissibleToast t={t} message={response.message || 'Failed to create listing. Please try again.'} type="error" />
-        ), { duration: 10000 });
+        toast.custom(
+          (t) => (
+            <LargerDismissibleToast
+              t={t}
+              message={
+                response.message ||
+                'Failed to create listing. Please try again.'
+              }
+              type="error"
+            />
+          ),
+          { duration: 10000 }
+        );
       }
     } catch (error) {
       console.error('Error handling create listing response:', error);
-      toast.custom((t) => (
-        <LargerDismissibleToast t={t} message={'An unexpected error occurred. Please try again.'} type="error" />
-      ), { duration: 10000 });
+      toast.custom(
+        (t) => (
+          <LargerDismissibleToast
+            t={t}
+            message={'An unexpected error occurred. Please try again.'}
+            type="error"
+          />
+        ),
+        { duration: 10000 }
+      );
     }
   };
 
@@ -109,8 +133,8 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     [theme.breakpoints.down('sm')]: {
       alignItems: 'center',
       textAlign: 'center',
-      marginBottom: theme.spacing(2.5),
-    },
+      marginBottom: theme.spacing(2.5)
+    }
   }));
 
   // Add responsive styles for the actions section
@@ -119,23 +143,23 @@ const ListingsActions: FC<ListingsActionsProps> = ({
       padding: theme.spacing(1),
       '.MuiGrid-container': {
         flexDirection: 'column',
-        gap: theme.spacing(2),
+        gap: theme.spacing(2)
       },
       '.MuiGrid-item': {
         maxWidth: '100%',
-        flexBasis: '100%',
+        flexBasis: '100%'
       },
       '.MuiButton-root': {
         width: '100%',
         marginRight: 0,
         marginBottom: theme.spacing(1.5),
         marginTop: 0,
-        alignSelf: 'center',
+        alignSelf: 'center'
       },
       '.MuiFormControl-root, .MuiTextField-root': {
-        width: '100%',
-      },
-    },
+        width: '100%'
+      }
+    }
   }));
 
   return (
@@ -149,7 +173,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
                 fontWeight={700}
                 sx={{
                   mb: 0.5,
-                  mt: 2,
+                  mt: 0,
                   letterSpacing: '-0.5px'
                 }}
               >
@@ -165,7 +189,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
                   mb: 0
                 }}
               >
-                Overview of your listing activity
+                Add new listings and apply filters
               </Typography>
             </ListingsHeaderBox>
           </Grid>
@@ -179,7 +203,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
             </ButtonAdd>
           </Grid>
         </Grid>
-        <Divider sx={{ mt: 3, mb: 2 }} />
+        <Divider sx={{ mt: 0, mb: 2 }} />
         <Grid container spacing={3}>
           <Grid item xs={12} md={5}>
             <TextField

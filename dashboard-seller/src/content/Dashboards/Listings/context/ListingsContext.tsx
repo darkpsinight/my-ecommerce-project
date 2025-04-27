@@ -9,9 +9,12 @@ interface ListingsContextProps {
   totalListings: number;
   page: number;
   limit: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
   newListingId: string | null;
   setPage: (page: number) => void;
   setLimit: (limit: number) => void;
+  setSorting: (field: string) => void;
   fetchListings: (pageOverride?: number, limitOverride?: number) => Promise<void>;
   refreshListings: () => Promise<void>;
   addNewListing: (listing: Listing) => void;
@@ -31,9 +34,12 @@ export const ListingsContext = createContext<ListingsContextProps>({
   totalListings: 0,
   page: 0,
   limit: 5,
+  sortBy: 'createdAt',
+  sortOrder: 'desc',
   newListingId: null,
   setPage: () => {},
   setLimit: () => {},
+  setSorting: () => {},
   fetchListings: async () => {},
   refreshListings: async () => {},
   addNewListing: () => {},
@@ -51,7 +57,23 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
   const [totalListings, setTotalListings] = useState<number>(0);
   const [page, setPage] = useState<number>(initialPage);
   const [limit, setLimit] = useState<number>(initialLimit);
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [newListingId, setNewListingId] = useState<string | null>(null);
+
+  // Function to handle sorting changes
+  const setSorting = useCallback((field: string) => {
+    setSortBy(prevSortBy => {
+      // If clicking the same field, toggle sort order
+      if (prevSortBy === field) {
+        setSortOrder(prevOrder => (prevOrder === 'asc' ? 'desc' : 'asc'));
+      } else {
+        // If clicking a new field, set it as the sort field and default to desc order
+        setSortOrder('desc');
+      }
+      return field;
+    });
+  }, []);
 
   const fetchListings = useCallback(
     async (pageOverride?: number, limitOverride?: number) => {
@@ -64,7 +86,9 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
 
         const response: ListingsResponse = await getSellerListings({
           page: currentPage,
-          limit: currentLimit
+          limit: currentLimit,
+          sortBy,
+          sortOrder
         });
 
         if (response && response.success && response.data) {
@@ -91,7 +115,7 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
         setLoading(false);
       }
     },
-    [page, limit]
+    [page, limit, sortBy, sortOrder]
   );
 
   const refreshListings = useCallback(() => fetchListings(), [fetchListings]);
@@ -129,9 +153,12 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
         totalListings,
         page,
         limit,
+        sortBy,
+        sortOrder,
         newListingId,
         setPage,
         setLimit,
+        setSorting,
         fetchListings,
         refreshListings,
         addNewListing,

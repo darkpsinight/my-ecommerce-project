@@ -687,7 +687,7 @@ const listingsRoutes = async (fastify, opts) => {
       try {
         const { 
           category, platform, region, minPrice, maxPrice, 
-          status, page = 1, limit = 5 
+          status, page = 1, limit = 5, sortBy = "createdAt", sortOrder = "desc"
         } = request.query;
         
         // Get the seller ID from the authenticated user
@@ -711,14 +711,18 @@ const listingsRoutes = async (fastify, opts) => {
         // Calculate pagination
         const skip = (page - 1) * limit;
         
-        // Find listings with filters and pagination
+        // Build sort object based on sortBy and sortOrder parameters
+        const sort = {};
+        sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+        
+        // Find listings with filters, pagination, and sorting
         // We need to explicitly select the codes field which is normally excluded
         const listings = await Listing.find(filter)
           .select('+codes.code +codes.iv')
           .populate('categoryId', 'name') // Populate category information
           .skip(skip)
           .limit(limit)
-          .sort({ createdAt: -1 });
+          .sort(sort);
         
         // Check for expired listings and update them if needed
         const currentDate = new Date();
@@ -771,7 +775,7 @@ const listingsRoutes = async (fastify, opts) => {
             .populate('categoryId', 'name')
             .skip(skip)
             .limit(limit)
-            .sort({ createdAt: -1 });
+            .sort(sort);
             
           listings.length = 0; // Clear the array
           listings.push(...updatedListings); // Add the updated listings

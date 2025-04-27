@@ -145,6 +145,8 @@ export const getSellerListings = async (params?: {
   limit?: number;
   status?: string;
   platform?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }) => {
   try {
     const api = getAuthAxios();

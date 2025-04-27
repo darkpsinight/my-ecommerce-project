@@ -169,7 +169,17 @@ const listingSchema = {
         },
         sellerId: { type: "string" },
         categoryId: { type: "string", pattern: "^[0-9a-fA-F]{24}$" },
-        platform: { type: "string" }
+        platform: { type: "string" },
+        sortBy: { 
+          type: "string", 
+          enum: ["title", "platform", "quantity", "price", "expirationDate", "status", "createdAt"],
+          default: "createdAt"
+        },
+        sortOrder: { 
+          type: "string", 
+          enum: ["asc", "desc"],
+          default: "desc"
+        }
       }
     }
   },

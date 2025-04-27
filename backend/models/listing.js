@@ -104,6 +104,9 @@ const listingSchema = new mongoose.Schema({
   }
 });
 
+// Add compound index for status and expirationDate to optimize expiration queries
+listingSchema.index({ status: 1, expirationDate: 1 });
+
 // Middleware to update the updatedAt field and handle code-related logic on save
 listingSchema.pre("save", function(next) {
   // Update the updatedAt timestamp

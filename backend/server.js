@@ -36,6 +36,7 @@ const { getRefreshTokenOptns } = require("./models/refreshToken");
 const fastifyCsrf = require("fastify-csrf");
 const fastifyCookie = require("fastify-cookie");
 const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
+const { setupListingExpirationCron } = require("./jobs/listingExpirationCron");
 const { configCache } = require("./services/configCache");
 
 // fastify-helmet adds various HTTP headers for security
@@ -169,6 +170,7 @@ const start = async () => {
 
       // Setup cron jobs
       setupAccountDeletionCron(fastify);
+      setupListingExpirationCron(fastify);
 
       if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
         fastify.swagger();

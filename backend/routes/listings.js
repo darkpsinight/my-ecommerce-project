@@ -3,6 +3,7 @@ const { Listing } = require("../models/listing");
 const { Category } = require("../models/category");
 const { listingSchema } = require("./schemas/listingSchema");
 const { validateCodeAgainstPatterns, getPatternsForPlatform } = require("../utils/patternValidator");
+const { checkAndUpdateExpiredStatus, processListingsExpiration } = require("../utils/listingHelpers");
 
 /**
  * Generates a user-friendly description of the required format
@@ -537,6 +538,9 @@ const listingsRoutes = async (fastify, opts) => {
           .limit(limit)
           .sort({ createdAt: -1 });
         
+        // Perform real-time expiration check on the results
+        processListingsExpiration(listings, fastify);
+        
         // Count total listings matching the filter
         const total = await Listing.countDocuments(filter);
         
@@ -584,6 +588,9 @@ const listingsRoutes = async (fastify, opts) => {
             error: "Listing not found"
           });
         }
+        
+        // Check if the listing is expired and update its status in the response
+        checkAndUpdateExpiredStatus(listing);
         
         // Check if user is the seller or an admin to show more details
         const isSeller = request.user && request.user.uid === listing.sellerId;
@@ -647,6 +654,9 @@ const listingsRoutes = async (fastify, opts) => {
           .skip(skip)
           .limit(limit)
           .sort({ createdAt: -1 });
+        
+        // Perform real-time expiration check on the results
+        processListingsExpiration(listings, fastify);
         
         // Count total listings matching the filter
         const total = await Listing.countDocuments(filter);
@@ -724,62 +734,8 @@ const listingsRoutes = async (fastify, opts) => {
           .limit(limit)
           .sort(sort);
         
-        // Check for expired listings and update them if needed
-        const currentDate = new Date();
-        const listingsToUpdate = new Map(); // Use a Map to ensure one save per listing
-        
-        for (const listing of listings) {
-          let needsUpdate = false;
-          
-          // Check if the listing is expired but not marked as expired
-          if (listing.expirationDate && 
-              new Date(listing.expirationDate) < currentDate && 
-              listing.status !== "expired") {
-            listing.status = "expired";
-            needsUpdate = true;
-          }
-          
-          // Check if quantity doesn't match active codes count
-          const activeCodes = listing.codes ? listing.codes.filter(code => code.soldStatus === "active").length : 0;
-          if (listing.quantity !== activeCodes) {
-            listing.quantity = activeCodes;
-            
-            // Update status if needed (and not draft or already expired)
-            if (listing.status !== "draft" && listing.status !== "expired") {
-              if (activeCodes > 0) {
-                listing.status = "active";
-              } else {
-                const hasSoldCodes = listing.codes && listing.codes.some(code => code.soldStatus === "sold");
-                listing.status = hasSoldCodes ? "sold" : "suspended";
-              }
-            }
-            
-            needsUpdate = true;
-          }
-          
-          // Only queue this listing for update if needed
-          if (needsUpdate) {
-            listingsToUpdate.set(listing._id.toString(), listing);
-          }
-        }
-        
-        // Wait for all updates to complete if any
-        if (listingsToUpdate.size > 0) {
-          // Convert Map values to array and save each listing
-          const savePromises = Array.from(listingsToUpdate.values()).map(listing => listing.save());
-          await Promise.all(savePromises);
-          
-          // Re-fetch listings if any were updated to get the latest data
-          const updatedListings = await Listing.find(filter)
-            .select('+codes.code +codes.iv')
-            .populate('categoryId', 'name')
-            .skip(skip)
-            .limit(limit)
-            .sort(sort);
-            
-          listings.length = 0; // Clear the array
-          listings.push(...updatedListings); // Add the updated listings
-        }
+        // Perform real-time expiration check on the results
+        processListingsExpiration(listings, fastify);
         
         // Count total listings matching the filter
         const total = await Listing.countDocuments(filter);
@@ -954,7 +910,8 @@ const listingsRoutes = async (fastify, opts) => {
       try {
         const { listingTemplate, codes } = request.body;
         const sellerId = request.user.uid;
-        
+        // REMOVE sellerId from incoming template if present
+        if (listingTemplate.sellerId) delete listingTemplate.sellerId;
         // Check for duplicate codes
         const duplicateCheck = await checkForDuplicateCodes(codes);
         
@@ -974,7 +931,7 @@ const listingsRoutes = async (fastify, opts) => {
           });
         }
         
-        // Add seller ID to template
+        // Add seller ID to template (server-side only)
         const template = {
           ...listingTemplate,
           sellerId: sellerId
@@ -992,14 +949,11 @@ const listingsRoutes = async (fastify, opts) => {
         
         // Validate codes against patterns if category has patterns
         if (category.patterns && category.patterns.length > 0) {
-          // Get patterns for the specified platform
           const patternResult = getPatternsForPlatform(category, template.platform);
           
           if (patternResult.error) {
             request.log.warn(`Pattern validation warning: ${patternResult.error}`);
-            // Continue without validation if patterns aren't found
           } else if (patternResult.patterns && patternResult.patterns.length > 0) {
-            // Validate all codes against the patterns before proceeding
             const invalidCodes = [];
             
             for (let i = 0; i < codes.length; i++) {
@@ -1055,7 +1009,7 @@ const listingsRoutes = async (fastify, opts) => {
         
         // Create a single listing with all codes instead of separate listings
         const listing = new Listing({
-          ...listingTemplate
+          ...template
         });
         
         // Add all codes to the listing

@@ -174,11 +174,12 @@ export const CodeViewer: FC<CodeViewerProps> = ({ codes }) => {
                       <TableCell>
                         <Typography 
                           variant="body2" 
-                          color={codeObj.soldStatus === 'active' ? 'success.main' : 'text.secondary'}
+                          color={codeObj.soldStatus === 'active' ? 'success.main' : 
+                                codeObj.soldStatus === 'expired' ? 'error.main' : 'text.secondary'}
                         >
                           {codeObj.soldStatus === 'active' ? 'Active' : 
                             codeObj.soldStatus === 'sold' ? `Sold${codeObj.soldAt ? ` on ${format(new Date(codeObj.soldAt), 'MM/dd/yyyy')}` : ''}` : 
-                            'Suspended'}
+                            codeObj.soldStatus === 'expired' ? 'Expired' : 'Suspended'}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">

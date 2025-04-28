@@ -16,6 +16,7 @@ import AuthProvider from './providers/AuthProvider';
 import { Toaster } from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { RootState } from './redux/store';
+import GlobalAuthLoader from 'src/components/GlobalAuthLoader';
 
 function AppContent() {
   const content = useRoutes(router);
@@ -60,6 +61,7 @@ function AppContent() {
             }
           }}
         />
+        <GlobalAuthLoader />
         {content}
       </LocalizationProvider>
     </ThemeProvider>

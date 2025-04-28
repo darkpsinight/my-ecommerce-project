@@ -134,7 +134,7 @@ const SellerDashboardButton: React.FC<SellerDashboardButtonProps> = ({
                 : "text-dark-4"
             }`}
           >
-            SELLER
+            Access
           </span>
           <p
             className={`font-medium text-xs transition-colors duration-300

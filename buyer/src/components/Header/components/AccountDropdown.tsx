@@ -70,7 +70,7 @@ const AccountDropdown: React.FC<AccountDropdownProps> = ({
           // Show Dashboard only for sellers - using decoded token role
           ...(decodedToken?.role === 'seller' ? [
             { 
-              title: "Access your Dashboard",
+              title: "Access Your Dashboard",
               path: "#",
               onClick: handleDashboardClick
             }

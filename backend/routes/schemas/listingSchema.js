@@ -168,8 +168,20 @@ const listingSchema = {
           enum: ["active", "sold", "expired", "suspended", "draft"]
         },
         sellerId: { type: "string" },
-        categoryId: { type: "string", pattern: "^[0-9a-fA-F]{24}$" },
-        platform: { type: "string" },
+        categoryId: { 
+          type: "string", 
+          description: "Category ID to filter by or 'all' to show all categories"
+        },
+        platform: { 
+          type: "string",
+          description: "Platform to filter by or 'all' to show all platforms"
+        },
+        region: { type: "string" },
+        minPrice: { type: "number" },
+        maxPrice: { type: "number" },
+        startDate: { type: "string", format: "date-time" },
+        endDate: { type: "string", format: "date-time" },
+        title: { type: "string" },
         sortBy: { 
           type: "string", 
           enum: ["title", "platform", "quantity", "price", "expirationDate", "status", "createdAt"],

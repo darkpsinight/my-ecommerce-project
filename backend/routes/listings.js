@@ -631,7 +631,7 @@ const listingsRoutes = async (fastify, opts) => {
     handler: async (request, reply) => {
       try {
         const { 
-          category, platform, region, minPrice, maxPrice, 
+          categoryId, platform, region, minPrice, maxPrice, 
           status, page = 1, limit = 5, sortBy = "createdAt", sortOrder = "desc",
           startDate, endDate, title
         } = request.query;
@@ -642,8 +642,16 @@ const listingsRoutes = async (fastify, opts) => {
         // Build filter object - always filter by the authenticated seller's ID
         const filter = { sellerId };
         
-        if (category) filter.category = category;
-        if (platform) filter.platform = platform;
+        // Handle category filtering with support for "all" option
+        if (categoryId && categoryId.toLowerCase() !== 'all') {
+          filter.categoryId = categoryId; 
+        }
+        
+        // Handle platform filtering with support for "all" option
+        if (platform && platform.toLowerCase() !== 'all') {
+          filter.platform = platform;
+        }
+        
         if (region) filter.region = region;
         if (status) filter.status = status;
         

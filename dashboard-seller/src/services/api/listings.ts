@@ -145,6 +145,11 @@ export const getSellerListings = async (params?: {
   limit?: number;
   status?: string;
   platform?: string;
+  title?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  startDate?: string;
+  endDate?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }) => {
@@ -155,6 +160,7 @@ export const getSellerListings = async (params?: {
       ...params,
       page: params?.page !== undefined ? params.page + 1 : 1
     };
+    console.log('Fetching seller listings with params:', apiParams);
     const response = await api.get('/listings/seller', { params: apiParams });
     return response.data;
   } catch (error) {

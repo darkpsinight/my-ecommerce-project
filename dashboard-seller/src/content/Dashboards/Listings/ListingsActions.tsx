@@ -1,4 +1,4 @@
-import { FC, useState, useContext } from 'react';
+import { FC, useState, useContext, useEffect } from 'react';
 import {
   Button,
   Card,
@@ -13,39 +13,196 @@ import {
   Select,
   MenuItem,
   TextField,
-  InputAdornment
+  InputAdornment,
+  Collapse,
+  IconButton,
+  Tooltip,
+  Chip
 } from '@mui/material';
+
+// Define interfaces for type safety
+interface FilterValues {
+  category?: string;
+  platform?: string;
+  status?: string;
+  title?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  startDate?: string;
+  endDate?: string;
+  [key: string]: any;
+}
+
+interface ActiveFilterDisplay {
+  category?: string;
+  platform?: string;
+  status?: string;
+  title?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  startDate?: string;
+  endDate?: string;
+  [key: string]: string | undefined;
+}
 
 import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
 import SearchTwoToneIcon from '@mui/icons-material/SearchTwoTone';
 import FilterListTwoToneIcon from '@mui/icons-material/FilterListTwoTone';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import ClearIcon from '@mui/icons-material/Clear';
 
 import CreateListingModal from './CreateListingModal';
 import { ListingsContext } from './context/ListingsContext';
 import toast, { Toaster } from 'react-hot-toast';
 import LargerDismissibleToast from 'src/components/LargerDismissibleToast';
+import { getCategories } from 'src/services/api/listings';
 
 interface ListingsActionsProps {
   selected: string[];
   setSelected: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
+// ---- Styled components ----
+const ButtonSearch = styled(Button)(
+  ({ theme }) => `
+    margin-right: ${theme.spacing(1)};
+  `
+);
+
+const ButtonAdd = styled(Button)(
+  ({ theme }) => `
+    background-color: ${theme.colors.primary.main};
+    color: ${theme.colors.alpha.white[100]};
+    
+    &:hover {
+      background-color: ${theme.colors.primary.dark};
+    }
+  `
+);
+
+const ListingsHeaderBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  marginBottom: theme.spacing(2),
+  [theme.breakpoints.down('sm')]: {
+    alignItems: 'center',
+    textAlign: 'center',
+    marginBottom: theme.spacing(2.5)
+  }
+}));
+
+const ResponsiveActionsBox = styled(Box)(({ theme }) => ({
+  [theme.breakpoints.down('sm')]: {
+    '.MuiButton-root': {
+      width: '100%',
+      marginRight: 0,
+      marginBottom: theme.spacing(1.5)
+    }
+  }
+}));
+
+const ActiveFilterChip = styled(Chip)(({ theme }) => ({
+  margin: theme.spacing(0.5),
+  '& .MuiChip-label': {
+    fontWeight: 500
+  }
+}));
+
+// Create a component for the bold filter label
+const BoldSpan = styled('span')({
+  fontWeight: 700
+});
+
+const FilterToggleButton = styled(Button)(({ theme }) => ({
+  marginBottom: theme.spacing(1),
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  width: 'auto',
+  paddingLeft: theme.spacing(2),
+  paddingRight: theme.spacing(2)
+}));
+
 const ListingsActions: FC<ListingsActionsProps> = ({
   selected,
   setSelected
 }) => {
   const theme = useTheme();
-  const { refreshListings, addNewListing } = useContext(ListingsContext);
+  const { refreshListings, addNewListing, fetchListings, setFilters } = useContext(ListingsContext);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [platforms, setPlatforms] = useState<any[]>([]);
+  const [category, setCategory] = useState<string>('all');
   const [platform, setPlatform] = useState<string>('all');
+  const [status, setStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [openModal, setOpenModal] = useState<boolean>(false);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [activeFilters, setActiveFilters] = useState<ActiveFilterDisplay>({});
+
+  useEffect(() => {
+    // Fetch categories and platforms from API
+    const fetchCategories = async () => {
+      const data = await getCategories();
+      if (data && data.success && Array.isArray(data.data)) {
+        setCategories(data.data);
+        const allPlatforms = data.data.flatMap((cat) => cat.platforms.filter((p) => p.isActive));
+        setPlatforms(allPlatforms);
+      } else {
+        setCategories([]);
+        setPlatforms([]);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Update platforms when category changes
+  useEffect(() => {
+    if (category === 'all') {
+      const allPlatforms = categories.flatMap((cat) => cat.platforms.filter((p) => p.isActive));
+      setPlatforms(allPlatforms);
+    } else {
+      const selectedCat = categories.find((cat) => cat._id === category);
+      setPlatforms(selectedCat ? selectedCat.platforms.filter((p) => p.isActive) : []);
+    }
+    setPlatform('all'); // Reset platform selection when category changes
+  }, [category, categories]);
+
+  const handleCategoryChange = (event) => {
+    setCategory(event.target.value);
+  };
 
   const handlePlatformChange = (event) => {
     setPlatform(event.target.value);
   };
 
+  const handleStatusChange = (event) => {
+    setStatus(event.target.value);
+  };
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
+  };
+
+  const handleMinPriceChange = (event) => {
+    setMinPrice(event.target.value.replace(/[^\d.]/g, ''));
+  };
+
+  const handleMaxPriceChange = (event) => {
+    setMaxPrice(event.target.value.replace(/[^\d.]/g, ''));
+  };
+
+  const handleStartDateChange = (event) => {
+    setStartDate(event.target.value);
+  };
+
+  const handleEndDateChange = (event) => {
+    setEndDate(event.target.value);
   };
 
   const handleOpenModal = () => {
@@ -54,6 +211,132 @@ const ListingsActions: FC<ListingsActionsProps> = ({
 
   const handleCloseModal = () => {
     setOpenModal(false);
+  };
+
+  const handleApplyFilters = () => {
+    // Convert date to ISO string if present
+    let startDateISO = startDate ? `${startDate}T00:00:00.000Z` : undefined;
+    let endDateISO = endDate ? `${endDate}T23:59:59.999Z` : undefined;
+    
+    const filters = {
+      category: category !== 'all' ? category : undefined,
+      platform: platform !== 'all' ? platform : undefined,
+      status: status !== 'all' ? status : undefined,
+      title: searchTerm || undefined,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      startDate: startDateISO,
+      endDate: endDateISO
+    };
+    
+    // Update active filters for UI display
+    const newActiveFilters: ActiveFilterDisplay = {};
+    
+    if (category !== 'all') {
+      const categoryName = categories.find(cat => cat._id === category)?.name || category;
+      newActiveFilters.category = `Category: ${categoryName}`;
+    }
+    
+    if (platform !== 'all') {
+      newActiveFilters.platform = `Platform: ${platform}`;
+    }
+    
+    if (status !== 'all') {
+      newActiveFilters.status = `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+    }
+    
+    if (searchTerm) {
+      newActiveFilters.title = `Title: ${searchTerm}`;
+    }
+    
+    if (minPrice) {
+      newActiveFilters.minPrice = `Min: ${minPrice}`;
+    }
+    
+    if (maxPrice) {
+      newActiveFilters.maxPrice = `Max: ${maxPrice}`;
+    }
+    
+    if (startDate) {
+      newActiveFilters.startDate = `From: ${startDate}`;
+    }
+    
+    if (endDate) {
+      newActiveFilters.endDate = `To: ${endDate}`;
+    }
+    
+    setActiveFilters(newActiveFilters);
+    setFilters(filters);
+    setShowFilters(false);
+  };
+
+  const handleClearFilters = () => {
+    setCategory('all');
+    setPlatform('all');
+    setStatus('all');
+    setSearchTerm('');
+    setMinPrice('');
+    setMaxPrice('');
+    setStartDate('');
+    setEndDate('');
+    setActiveFilters({});
+    setFilters({
+      category: undefined,
+      platform: undefined,
+      status: undefined,
+      title: undefined,
+      minPrice: undefined,
+      maxPrice: undefined,
+      startDate: undefined,
+      endDate: undefined
+    });
+  };
+
+  const handleRemoveFilter = (key) => {
+    const newActiveFilters = { ...activeFilters };
+    delete newActiveFilters[key];
+    setActiveFilters(newActiveFilters);
+    
+    // Update the corresponding state
+    switch(key) {
+      case 'category':
+        setCategory('all');
+        break;
+      case 'platform':
+        setPlatform('all');
+        break;
+      case 'status':
+        setStatus('all');
+        break;
+      case 'title':
+        setSearchTerm('');
+        break;
+      case 'minPrice':
+        setMinPrice('');
+        break;
+      case 'maxPrice':
+        setMaxPrice('');
+        break;
+      case 'startDate':
+        setStartDate('');
+        break;
+      case 'endDate':
+        setEndDate('');
+        break;
+    }
+    
+    // Re-apply remaining filters
+    const updatedFilters: Partial<FilterValues> = {};
+    if (category !== 'all' && key !== 'category') updatedFilters.category = category;
+    if (platform !== 'all' && key !== 'platform') updatedFilters.platform = platform;
+    if (status !== 'all' && key !== 'status') updatedFilters.status = status;
+    if (searchTerm && key !== 'title') updatedFilters.title = searchTerm;
+    if (minPrice && key !== 'minPrice') updatedFilters.minPrice = Number(minPrice) || undefined;
+    if (maxPrice && key !== 'maxPrice') updatedFilters.maxPrice = Number(maxPrice) || undefined;
+    if (startDate && key !== 'startDate') updatedFilters.startDate = `${startDate}T00:00:00.000Z`;
+    if (endDate && key !== 'endDate') updatedFilters.endDate = `${endDate}T23:59:59.999Z`;
+    
+    setFilters(updatedFilters);
   };
 
   const handleCreateListing = async (response) => {
@@ -106,74 +389,17 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     }
   };
 
-  const ButtonSearch = styled(Button)(
-    ({ theme }) => `
-      margin-right: ${theme.spacing(1)};
-    `
-  );
-
-  const ButtonAdd = styled(Button)(
-    ({ theme }) => `
-      margin-right: ${theme.spacing(1)};
-      background-color: ${theme.colors.primary.main};
-      color: ${theme.colors.alpha.white[100]};
-      
-      &:hover {
-        background-color: ${theme.colors.primary.dark};
-      }
-    `
-  );
-
-  // Header box for improved text layout
-  const ListingsHeaderBox = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing(2),
-    [theme.breakpoints.down('sm')]: {
-      alignItems: 'center',
-      textAlign: 'center',
-      marginBottom: theme.spacing(2.5)
-    }
-  }));
-
-  // Add responsive styles for the actions section
-  const ResponsiveActionsBox = styled(Box)(({ theme }) => ({
-    [theme.breakpoints.down('sm')]: {
-      padding: theme.spacing(1),
-      '.MuiGrid-container': {
-        flexDirection: 'column',
-        gap: theme.spacing(2)
-      },
-      '.MuiGrid-item': {
-        maxWidth: '100%',
-        flexBasis: '100%'
-      },
-      '.MuiButton-root': {
-        width: '100%',
-        marginRight: 0,
-        marginBottom: theme.spacing(1.5),
-        marginTop: 0,
-        alignSelf: 'center'
-      },
-      '.MuiFormControl-root, .MuiTextField-root': {
-        width: '100%'
-      }
-    }
-  }));
-
   return (
     <Card>
       <ResponsiveActionsBox p={3}>
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Grid item xs={12} sm="auto">
+        <Grid container justifyContent="space-between" alignItems="center" spacing={2}>
+          <Grid item xs={12} sm={6}>
             <ListingsHeaderBox>
               <Typography
                 variant="h4"
                 fontWeight={700}
                 sx={{
                   mb: 0.5,
-                  mt: 0,
                   letterSpacing: '-0.5px'
                 }}
               >
@@ -184,69 +410,229 @@ const ListingsActions: FC<ListingsActionsProps> = ({
                 color="text.secondary"
                 sx={{
                   fontWeight: 400,
-                  fontSize: { xs: '1rem', sm: '1.1rem' },
-                  color: (theme) => theme.palette.text.secondary,
-                  mb: 0
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
                 }}
               >
-                Add new listings and apply filters
+                {Object.keys(activeFilters).length > 0 
+                  ? `${Object.keys(activeFilters).length} active filters` 
+                  : 'Manage and filter your listings'}
               </Typography>
             </ListingsHeaderBox>
           </Grid>
-          <Grid item>
+        </Grid>
+
+        {/* Filter Toggle + Create Button on same row */}
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mt: 1, mb: 2, alignItems: { sm: 'center' } }}>
+          <Box sx={{ flex: 1 }}>
+            <FilterToggleButton
+              color="secondary"
+              variant="outlined"
+              onClick={() => setShowFilters(!showFilters)}
+              endIcon={showFilters ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+              startIcon={<FilterListTwoToneIcon />}
+              fullWidth
+            >
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </FilterToggleButton>
+          </Box>
+          <Box>
             <ButtonAdd
               variant="contained"
               startIcon={<AddTwoToneIcon />}
               onClick={handleOpenModal}
+              sx={{ minWidth: 180 }}
             >
               Create New Listing
             </ButtonAdd>
-          </Grid>
-        </Grid>
-        <Divider sx={{ mt: 0, mb: 2 }} />
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={5}>
-            <TextField
-              fullWidth
-              value={searchTerm}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchTwoToneIcon />
-                  </InputAdornment>
-                )
-              }}
-              placeholder="Search by title, code, or platform..."
-            />
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel>Platform</InputLabel>
-              <Select
-                value={platform}
-                onChange={handlePlatformChange}
-                label="Platform"
-              >
-                <MenuItem value="all">All Platforms</MenuItem>
-                <MenuItem value="steam">Steam</MenuItem>
-                <MenuItem value="epic">Epic Games</MenuItem>
-                <MenuItem value="playstation">PlayStation</MenuItem>
-                <MenuItem value="xbox">Xbox</MenuItem>
-                <MenuItem value="nintendo">Nintendo</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <ButtonSearch
-              fullWidth
-              startIcon={<FilterListTwoToneIcon />}
-              variant="outlined"
+          </Box>
+        </Box>
+
+        {/* Active Filters Display */}
+        {Object.keys(activeFilters).length > 0 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>
+            {Object.entries(activeFilters).map(([key, value]) => {
+              // For each filter chip, parse the label to make the prefix bold
+              const parts = value.split(':');
+              const label = parts.length > 1 ? (
+                <>
+                  <BoldSpan>{parts[0]}:</BoldSpan>{parts.slice(1).join(':')}
+                </>
+              ) : value;
+              
+              return (
+                <ActiveFilterChip
+                  key={key}
+                  label={label}
+                  onDelete={() => handleRemoveFilter(key)}
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                />
+              );
+            })}
+            <Button
+              size="small"
+              variant="text"
+              color="error"
+              sx={{ ml: 1 }}
+              onClick={handleClearFilters}
             >
-              Filter
-            </ButtonSearch>
+              Clear All
+            </Button>
+          </Box>
+        )}
+
+        {/* Collapsible Filter Panel */}
+        <Collapse in={showFilters}>
+          <Divider sx={{ mt: 1, mb: 3 }} />
+          <Grid container spacing={3}>
+            {/* Search field moved inside the filter panel */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                value={searchTerm}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchTwoToneIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchTerm && (
+                    <InputAdornment position="end">
+                      <IconButton 
+                        size="small" 
+                        onClick={() => setSearchTerm('')}
+                        edge="end"
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+                placeholder="Search by title..."
+                label="Title"
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth variant="outlined" size="small">
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={category}
+                  onChange={handleCategoryChange}
+                  label="Category"
+                >
+                  <MenuItem value="all">All Categories</MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth variant="outlined" disabled={platforms.length === 0} size="small">
+                <InputLabel>Platform</InputLabel>
+                <Select
+                  value={platform}
+                  onChange={handlePlatformChange}
+                  label="Platform"
+                >
+                  <MenuItem value="all">All Platforms</MenuItem>
+                  {platforms.map((plat) => (
+                    <MenuItem key={plat.name} value={plat.name}>
+                      {plat.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth variant="outlined" size="small">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={status}
+                  onChange={handleStatusChange}
+                  label="Status"
+                >
+                  <MenuItem value="all">All Statuses</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="sold">Sold</MenuItem>
+                  <MenuItem value="expired">Expired</MenuItem>
+                  <MenuItem value="suspended">Suspended</MenuItem>
+                  <MenuItem value="draft">Draft</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                value={minPrice}
+                onChange={handleMinPriceChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  )
+                }}
+                placeholder="Min Price"
+                label="Min Price"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                value={maxPrice}
+                onChange={handleMaxPriceChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  )
+                }}
+                placeholder="Max Price"
+                label="Max Price"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                size="small"
+                type="date"
+                value={startDate}
+                onChange={handleStartDateChange}
+                InputLabelProps={{ shrink: true }}
+                label="Start Date"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                size="small"
+                type="date"
+                value={endDate}
+                onChange={handleEndDateChange}
+                InputLabelProps={{ shrink: true }}
+                label="End Date"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <ButtonSearch
+                fullWidth
+                startIcon={<FilterListTwoToneIcon />}
+                variant="contained"
+                onClick={handleApplyFilters}
+              >
+                Apply Filters
+              </ButtonSearch>
+            </Grid>
           </Grid>
-        </Grid>
+          <Divider sx={{ mt: 3, mb: 1 }} />
+        </Collapse>
       </ResponsiveActionsBox>
 
       {/* Create Listing Modal */}
@@ -255,22 +641,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
         onClose={handleCloseModal}
         onSubmit={handleCreateListing}
       />
-
-      {/* Feedback Alert */}
-      {/* <Snackbar
-        open={alert.open}
-        autoHideDuration={6000}
-        onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseAlert}
-          severity={alert.severity === 'success' ? 'success' : 'error'}
-          sx={{ width: '100%' }}
-        >
-          {alert.message}
-        </Alert>
-      </Snackbar> */}
+      <Toaster position="top-right" />
     </Card>
   );
 };

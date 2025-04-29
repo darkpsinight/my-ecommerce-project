@@ -619,71 +619,6 @@ const listingsRoutes = async (fastify, opts) => {
     }
   });
 
-  // Get seller's own listings
-  fastify.route({
-    config: {
-      rateLimit: readRateLimit
-    },
-    method: "GET",
-    url: "/my-listings",
-    preHandler: verifyAuth(["seller"]),
-    schema: {
-      querystring: {
-        type: "object",
-        properties: {
-          status: { type: "string" },
-          page: { type: "integer", default: 1 },
-          limit: { type: "integer", default: 10 }
-        }
-      }
-    },
-    handler: async (request, reply) => {
-      try {
-        const { status, page = 1, limit = 10 } = request.query;
-        const sellerId = request.user.uid;
-        
-        // Build filter object
-        const filter = { sellerId };
-        if (status) filter.status = status;
-        
-        // Calculate pagination
-        const skip = (page - 1) * limit;
-        
-        // Find listings with filters and pagination
-        const listings = await Listing.find(filter)
-          .skip(skip)
-          .limit(limit)
-          .sort({ createdAt: -1 });
-        
-        // Perform real-time expiration check on the results
-        processListingsExpiration(listings, fastify);
-        
-        // Count total listings matching the filter
-        const total = await Listing.countDocuments(filter);
-        
-        return reply.code(200).send({
-          success: true,
-          data: {
-            listings,
-            pagination: {
-              total,
-              page,
-              limit,
-              pages: Math.ceil(total / limit)
-            }
-          }
-        });
-      } catch (error) {
-        request.log.error(`Error fetching seller listings: ${error.message}`);
-        return reply.code(500).send({
-          success: false,
-          error: "Failed to fetch listings",
-          message: error.message
-        });
-      }
-    }
-  });
-
   // Get seller listings with masked codes
   fastify.route({
     config: {
@@ -697,7 +632,8 @@ const listingsRoutes = async (fastify, opts) => {
       try {
         const { 
           category, platform, region, minPrice, maxPrice, 
-          status, page = 1, limit = 5, sortBy = "createdAt", sortOrder = "desc"
+          status, page = 1, limit = 5, sortBy = "createdAt", sortOrder = "desc",
+          startDate, endDate, title
         } = request.query;
         
         // Get the seller ID from the authenticated user
@@ -716,6 +652,19 @@ const listingsRoutes = async (fastify, opts) => {
           filter.price = {};
           if (minPrice !== undefined) filter.price.$gte = minPrice;
           if (maxPrice !== undefined) filter.price.$lte = maxPrice;
+        }
+        
+        // Add date range filter for createdAt
+        let createdAtFilter = {};
+        if (request.query.startDate) createdAtFilter.$gte = new Date(request.query.startDate);
+        if (request.query.endDate) createdAtFilter.$lte = new Date(request.query.endDate);
+        if (Object.keys(createdAtFilter).length > 0) {
+          filter.createdAt = createdAtFilter;
+        }
+        
+        // Title case-insensitive search filter
+        if (request.query.title) {
+          filter.title = { $regex: request.query.title, $options: 'i' };
         }
         
         // Calculate pagination

@@ -157,8 +157,8 @@ const updateListingStatuses = async (fastify) => {
  * @param {Object} fastify - Fastify instance for logging
  */
 const setupListingExpirationCron = (fastify) => {
-  // Run every minute
-  cron.schedule('* * * * *', async () => {
+  // Run every 10 minutes
+  cron.schedule('*/10 * * * *', async () => {
     fastify.log.info('Running scheduled task: updating listing statuses');
     await updateListingStatuses(fastify);
   });

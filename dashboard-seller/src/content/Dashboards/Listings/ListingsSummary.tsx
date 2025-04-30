@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useContext } from 'react';
 import {
   Box,
   Card,
@@ -10,13 +10,17 @@ import {
   useTheme,
   styled,
   Skeleton,
-  Alert
+  Alert,
+  Button
 } from '@mui/material';
 
 import ShoppingCartTwoToneIcon from '@mui/icons-material/ShoppingCartTwoTone';
 import AttachMoneyTwoToneIcon from '@mui/icons-material/AttachMoneyTwoTone';
 import LocalShippingTwoToneIcon from '@mui/icons-material/LocalShippingTwoTone';
+import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
+import CreateListingModal from './CreateListingModal';
 import { getListingsSummary } from 'src/services/api/listings';
+import { ListingsContext } from './context/ListingsContext';
 
 const SummaryCard = styled(Paper)(
   ({ theme }) => `
@@ -36,6 +40,17 @@ const SummaryCard = styled(Paper)(
 `
 );
 
+const ButtonAdd = styled(Button)(
+  ({ theme }) => `
+    background-color: ${theme.colors.primary.main};
+    color: ${theme.colors.alpha.white[100]};
+    
+    &:hover {
+      background-color: ${theme.colors.primary.dark};
+    }
+  `
+);
+
 interface SummaryData {
   activeListings: number;
   soldCodes: number;
@@ -44,6 +59,7 @@ interface SummaryData {
 
 const ListingsSummary: FC = () => {
   const theme = useTheme();
+  const { addNewListing } = useContext(ListingsContext);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [summaryData, setSummaryData] = useState<SummaryData>({
@@ -51,6 +67,7 @@ const ListingsSummary: FC = () => {
     soldCodes: 0,
     totalRevenue: 0
   });
+  const [openModal, setOpenModal] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchSummaryData = async () => {
@@ -107,29 +124,42 @@ const ListingsSummary: FC = () => {
   return (
     <Card>
       <Box sx={{ p: 3 }}>
-        <Typography
-          variant="h4"
-          fontWeight={700}
-          sx={{
-            mb: 0.5,
-            mt: 0,
-            letterSpacing: '-0.5px'
-          }}
-        >
-          Listings Summary
-        </Typography>
-        <Typography
-          variant="subtitle2"
-          color="text.secondary"
-          sx={{
-            fontWeight: 400,
-            fontSize: { xs: '1rem', sm: '1.1rem' },
-            color: (theme) => theme.palette.text.secondary,
-            mb: 0
-          }}
-        >
-          Overview of your listing activity
-        </Typography>
+        <Grid container spacing={3} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} md={8}>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{
+                mb: 0.5,
+                mt: 0,
+                letterSpacing: '-0.5px'
+              }}
+            >
+              Listings Summary
+            </Typography>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{
+                fontWeight: 400,
+                fontSize: { xs: '1rem', sm: '1.1rem' },
+                color: (theme) => theme.palette.text.secondary,
+                mb: 0
+              }}
+            >
+              Overview of your listing activity
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4} container justifyContent="flex-end">
+            <ButtonAdd
+              fullWidth
+              startIcon={<AddTwoToneIcon />}
+              onClick={() => setOpenModal(true)}
+            >
+              Create New Listing
+            </ButtonAdd>
+          </Grid>
+        </Grid>
       </Box>
       <Divider />
       <Box sx={{ p: 3 }}>
@@ -184,6 +214,11 @@ const ListingsSummary: FC = () => {
               ))}
         </Grid>
       </Box>
+      <CreateListingModal 
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        onSubmit={addNewListing}
+      />
     </Card>
   );
 };

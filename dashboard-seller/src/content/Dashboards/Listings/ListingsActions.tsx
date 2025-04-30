@@ -70,17 +70,6 @@ const ButtonSearch = styled(Button)(
   `
 );
 
-const ButtonAdd = styled(Button)(
-  ({ theme }) => `
-    background-color: ${theme.colors.primary.main};
-    color: ${theme.colors.alpha.white[100]};
-    
-    &:hover {
-      background-color: ${theme.colors.primary.dark};
-    }
-  `
-);
-
 const ListingsHeaderBox = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
@@ -392,8 +381,8 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   return (
     <Card>
       <ResponsiveActionsBox p={3}>
-        <Grid container justifyContent="space-between" alignItems="center" spacing={2}>
-          <Grid item xs={12} sm={6}>
+        <Grid container spacing={3} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} md={8}>
             <ListingsHeaderBox>
               <Typography
                 variant="h4"
@@ -419,33 +408,22 @@ const ListingsActions: FC<ListingsActionsProps> = ({
               </Typography>
             </ListingsHeaderBox>
           </Grid>
+          <Grid item xs={12} md={4} container justifyContent="flex-end" sx={{ width: '100%' }}>
+            <Box sx={{ width: '100%', maxWidth: { md: 180 } }}>
+              <FilterToggleButton
+                fullWidth
+                sx={{ minWidth: { md: 180 } }}
+                color="secondary"
+                variant="outlined"
+                onClick={() => setShowFilters(!showFilters)}
+                endIcon={showFilters ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                startIcon={<FilterListTwoToneIcon />}
+              >
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </FilterToggleButton>
+            </Box>
+          </Grid>
         </Grid>
-
-        {/* Filter Toggle + Create Button on same row */}
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mt: 1, mb: 2, alignItems: { sm: 'center' } }}>
-          <Box sx={{ flex: 1 }}>
-            <FilterToggleButton
-              color="secondary"
-              variant="outlined"
-              onClick={() => setShowFilters(!showFilters)}
-              endIcon={showFilters ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-              startIcon={<FilterListTwoToneIcon />}
-              fullWidth
-            >
-              {showFilters ? 'Hide Filters' : 'Show Filters'}
-            </FilterToggleButton>
-          </Box>
-          <Box>
-            <ButtonAdd
-              variant="contained"
-              startIcon={<AddTwoToneIcon />}
-              onClick={handleOpenModal}
-              sx={{ minWidth: 180 }}
-            >
-              Create New Listing
-            </ButtonAdd>
-          </Box>
-        </Box>
 
         {/* Active Filters Display */}
         {Object.keys(activeFilters).length > 0 && (

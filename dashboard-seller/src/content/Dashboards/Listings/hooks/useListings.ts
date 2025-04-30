@@ -75,7 +75,23 @@ export const useListings = ({
   const refreshListings = useCallback(() => fetchListings(), [fetchListings]);
 
   useEffect(() => {
-    fetchListings();
+    const abortController = new AbortController();
+    
+    const fetchData = async () => {
+      try {
+        await fetchListings();
+      } catch (error) {
+        if (!abortController.signal.aborted) {
+          // Handle error
+        }
+      }
+    };
+
+    fetchData();
+    
+    return () => {
+      abortController.abort();
+    };
   }, [fetchListings]);
 
   return {

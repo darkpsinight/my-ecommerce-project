@@ -119,7 +119,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   setSelected
 }) => {
   const theme = useTheme();
-  const { refreshListings, addNewListing, fetchListings, setFilters } = useContext(ListingsContext);
+  const { refreshListings, addNewListing, fetchListings, setFilters, filters, limit } = useContext(ListingsContext);
   const [categories, setCategories] = useState<any[]>([]);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [category, setCategory] = useState<string>('all');
@@ -282,11 +282,12 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   };
 
   const handleRemoveFilter = (key) => {
+    // Update the UI state first
     const newActiveFilters = { ...activeFilters };
     delete newActiveFilters[key];
     setActiveFilters(newActiveFilters);
     
-    // Update the corresponding state
+    // Update the local state based on which filter was removed
     switch(key) {
       case 'category':
         setCategory('all');
@@ -314,17 +315,22 @@ const ListingsActions: FC<ListingsActionsProps> = ({
         break;
     }
     
-    // Re-apply remaining filters
+    // Instead of using fetchListings which would trigger the useEffect,
+    // directly call the API with the updated filters
+    // This avoids the double API call issue
     const updatedFilters: Partial<FilterValues> = {};
+    
+    // Only include filters that are active
     if (category !== 'all' && key !== 'category') updatedFilters.category = category;
     if (platform !== 'all' && key !== 'platform') updatedFilters.platform = platform;
     if (status !== 'all' && key !== 'status') updatedFilters.status = status;
     if (searchTerm && key !== 'title') updatedFilters.title = searchTerm;
-    if (minPrice && key !== 'minPrice') updatedFilters.minPrice = Number(minPrice) || undefined;
-    if (maxPrice && key !== 'maxPrice') updatedFilters.maxPrice = Number(maxPrice) || undefined;
+    if (minPrice && key !== 'minPrice') updatedFilters.minPrice = Number(minPrice);
+    if (maxPrice && key !== 'maxPrice') updatedFilters.maxPrice = Number(maxPrice);
     if (startDate && key !== 'startDate') updatedFilters.startDate = `${startDate}T00:00:00.000Z`;
     if (endDate && key !== 'endDate') updatedFilters.endDate = `${endDate}T23:59:59.999Z`;
     
+    // Update the context filters in a single operation
     setFilters(updatedFilters);
   };
 

@@ -153,8 +153,8 @@ const ListingRow: FC<ListingRowProps> = ({
         </Typography>
       </TableCell>
       <TableCell>
-        <Typography variant="body1" noWrap>
-          ${listing.price.toFixed(2)}
+        <Typography variant="body2">
+          ${(listing.price || 0).toFixed(2)}
         </Typography>
       </TableCell>
       <TableCell align="center">

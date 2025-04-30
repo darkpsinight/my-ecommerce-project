@@ -93,10 +93,17 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
 
   // Function to update filters
   const setFilters = useCallback((newFilters: Partial<FilterParams>) => {
-    setFiltersState(prevFilters => ({
-      ...prevFilters,
-      ...newFilters
-    }));
+    // Create a clean filter object with only defined values
+    const cleanFilters = Object.entries(newFilters).reduce((acc, [key, value]) => {
+      // Only include properties that have defined values
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Partial<FilterParams>);
+    
+    // Completely replace the filters state
+    setFiltersState(cleanFilters);
   }, []);
 
   const fetchListings = useCallback(
@@ -154,21 +161,23 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
 
   const refreshListings = useCallback(() => fetchListings(), [fetchListings]);
 
-  const addNewListing = useCallback((listing: Listing) => {
-    // Add the new listing to the beginning of the array
-    setListings(prevListings => [listing, ...prevListings]);
-    
-    // Set the new listing ID to trigger the highlight effect
-    setNewListingId(listing._id);
-    
-    // Increment total listings count
-    setTotalListings(prev => prev + 1);
-    
-    // Clear the highlight after 5 seconds
-    setTimeout(() => {
-      setNewListingId(null);
-    }, 5000);
-  }, []);
+  const addNewListing = useCallback(async (response: any) => {
+    if (response && response.success && response.data && response.data.id) {
+      // Store the new listing ID to highlight it after refresh
+      const newId = response.data.id;
+      setNewListingId(newId);
+      
+      // Refresh the listings from the API to get the complete data
+      await fetchListings(0, limit); // Reset to first page to show the new listing
+      
+      // Clear the highlight after 5 seconds
+      setTimeout(() => {
+        setNewListingId(null);
+      }, 5000);
+    } else {
+      console.error('Invalid response format from listing creation:', response);
+    }
+  }, [fetchListings, limit]);
 
   const clearNewListingHighlight = useCallback(() => {
     setNewListingId(null);

@@ -149,9 +149,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
             ) : loading ? (
               <LoadingState colSpan={TABLE_COLUMNS_COUNT} />
             ) : listings.length > 0 ? (
-              listings.map((listing) => (
+              listings.map((listing, index) => (
                 <ListingRow
-                  key={listing._id}
+                  key={index}
                   listing={listing}
                   isSelected={isSelected(listing._id)}
                   onSelectClick={handleSelectClick}

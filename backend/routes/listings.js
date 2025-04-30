@@ -645,6 +645,8 @@ const listingsRoutes = async (fastify, opts) => {
         // Handle category filtering with support for "all" option
         if (categoryId && categoryId.toLowerCase() !== 'all') {
           filter.categoryId = categoryId; 
+        } else if (request.query.category && request.query.category.toLowerCase() !== 'all') {
+          filter.categoryId = request.query.category;
         }
         
         // Handle platform filtering with support for "all" option

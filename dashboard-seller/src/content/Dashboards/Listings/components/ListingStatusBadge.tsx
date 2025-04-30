@@ -28,10 +28,10 @@ const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({ status }) => {
     <Typography
       variant="body1"
       fontWeight="bold"
-      color={getStatusColor(status)}
+      color={getStatusColor(status || 'active')}
       noWrap
     >
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Active'}
     </Typography>
   );
 };

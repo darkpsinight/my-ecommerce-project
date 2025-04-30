@@ -3,7 +3,7 @@ const { Listing } = require("../models/listing");
 const { Category } = require("../models/category");
 const { listingSchema } = require("./schemas/listingSchema");
 const { validateCodeAgainstPatterns, getPatternsForPlatform } = require("../utils/patternValidator");
-const { checkAndUpdateExpiredStatus, processListingsExpiration } = require("../utils/listingHelpers");
+const { checkAndUpdateListingStatus, processListingsExpiration } = require("../utils/listingHelpers");
 
 /**
  * Generates a user-friendly description of the required format

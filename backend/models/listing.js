@@ -112,32 +112,75 @@ listingSchema.pre("save", function(next) {
   // Update the updatedAt timestamp
   this.updatedAt = Date.now();
   
-  // Calculate quantity based on active codes
+  // Skip status calculation if explicitly set to not recalculate
+  if (this._skipStatusCalculation) {
+    return next();
+  }
+  
+  // Calculate status based on codes
   if (this.codes && this.codes.length > 0) {
-    // Count only active codes
-    const activeCodes = this.codes.filter(code => code.soldStatus === "active");
+    // Count codes by status
+    const statusCounts = {
+      active: 0,
+      sold: 0,
+      expired: 0,
+      suspended: 0,
+      draft: 0
+    };
     
-    // Check if listing is expired
+    this.codes.forEach(code => {
+      if (statusCounts.hasOwnProperty(code.soldStatus)) {
+        statusCounts[code.soldStatus]++;
+      }
+    });
+    
+    // Check if listing is expired by date
     const isExpired = this.expirationDate && new Date(this.expirationDate) < new Date();
     
     if (isExpired) {
-      // If expired, set status to expired regardless of other conditions
+      // If expired by date, set status to expired regardless of other conditions
       this.status = "expired";
-    } else if (this.status !== "draft") {
-      // Only update status if not in draft state
-      if (activeCodes.length > 0) {
-        // Has active codes and not expired or draft
+      
+      // Also mark all active codes as expired
+      if (statusCounts.active > 0) {
+        this.codes.forEach(code => {
+          if (code.soldStatus === "active") {
+            code.soldStatus = "expired";
+          }
+        });
+      }
+    } else if (this.status === "draft") {
+      // Preserve draft status if explicitly set
+      // Do nothing to change the status
+    } else {
+      // Apply the status rules based on the scenarios
+      if (statusCounts.active > 0) {
+        // Any active code means the listing is active, regardless of other statuses
         this.status = "active";
+      } else if (statusCounts.suspended > 0) {
+        // No active codes, but some suspended codes means the listing is suspended
+        this.status = "suspended";
+      } else if (statusCounts.expired > 0) {
+        // No active or suspended codes, but some expired codes means the listing is expired
+        this.status = "expired";
+      } else if (statusCounts.sold === this.codes.length) {
+        // All codes are sold
+        this.status = "sold";
+      } else if (statusCounts.draft === this.codes.length) {
+        // All codes are draft
+        this.status = "draft";
+      } else if (statusCounts.sold > 0 && statusCounts.draft > 0) {
+        // Mix of sold and draft codes
+        this.status = "expired";
       } else {
-        // No active codes - determine if sold or suspended
-        const hasSoldCodes = this.codes.some(code => code.soldStatus === "sold");
-        this.status = hasSoldCodes ? "sold" : "suspended";
+        // Default fallback (shouldn't reach here with proper data)
+        this.status = "expired";
       }
     }
   } else {
     // No codes at all
-    // Only update status if not in draft or expired state
-    if (this.status !== "draft" && this.status !== "expired") {
+    // Only update status if not in draft state
+    if (this.status !== "draft") {
       this.status = "suspended";
     }
   }
@@ -237,52 +280,105 @@ listingSchema.methods.purchaseCode = function() {
   return decryptedCode;
 };
 
+/**
+ * Determines the correct listing status based on the status of its codes
+ * @param {Array} codes - Array of code objects with soldStatus property
+ * @param {Boolean} isExpired - Whether the listing's expiration date has passed
+ * @param {String} currentStatus - The current status of the listing
+ * @returns {String} - The correct listing status
+ */
+listingSchema.statics.determineListingStatus = function(codes, isExpired, currentStatus) {
+  // If expired by date, always return expired
+  if (isExpired) {
+    return "expired";
+  }
+  
+  // If no codes, return draft if it's already draft, otherwise suspended
+  if (!codes || codes.length === 0) {
+    return currentStatus === "draft" ? "draft" : "suspended";
+  }
+
+  // Count codes by status
+  const statusCounts = {
+    active: 0,
+    sold: 0,
+    expired: 0,
+    suspended: 0,
+    draft: 0
+  };
+
+  codes.forEach(code => {
+    if (statusCounts.hasOwnProperty(code.soldStatus)) {
+      statusCounts[code.soldStatus]++;
+    }
+  });
+
+  // Preserve draft status if explicitly set
+  if (currentStatus === "draft") {
+    return "draft";
+  }
+
+  // Apply the status rules based on the scenarios
+  if (statusCounts.active > 0) {
+    // Any active code means the listing is active, regardless of other statuses
+    return "active";
+  } else if (statusCounts.suspended > 0) {
+    // No active codes, but some suspended codes means the listing is suspended
+    return "suspended";
+  } else if (statusCounts.expired > 0) {
+    // No active or suspended codes, but some expired codes means the listing is expired
+    return "expired";
+  } else if (statusCounts.sold === codes.length) {
+    // All codes are sold
+    return "sold";
+  } else if (statusCounts.draft === codes.length) {
+    // All codes are draft
+    return "draft";
+  } else if (statusCounts.sold > 0 && statusCounts.draft > 0) {
+    // Mix of sold and draft codes
+    return "expired";
+  }
+
+  // Default fallback (shouldn't reach here with proper data)
+  return "expired";
+};
+
 // Add a static method to fix inconsistent listings
 listingSchema.statics.auditAndFixListings = async function() {
   const Listing = this;
   
   // Find all listings
-  const listings = await Listing.find({});
+  const listings = await Listing.find({}).select("+codes");
   let fixedCount = 0;
   
   for (const listing of listings) {
     let needsUpdate = false;
     
-    // Recalculate active codes count
-    if (listing.codes && listing.codes.length > 0) {
-      const activeCodes = listing.codes.filter(code => code.soldStatus === "active");
-      const correctQuantity = activeCodes.length;
-      
-      // Check if expired
-      const isExpired = listing.expirationDate && new Date(listing.expirationDate) < new Date();
-      
-      // Determine correct status
-      let correctStatus;
-      if (isExpired) {
-        correctStatus = "expired";
-      } else if (listing.status === "draft") {
-        correctStatus = "draft"; // Preserve draft status
-      } else if (correctQuantity > 0) {
-        correctStatus = "active";
-      } else {
-        const hasSoldCodes = listing.codes.some(code => code.soldStatus === "sold");
-        correctStatus = hasSoldCodes ? "sold" : "suspended";
+    // Check if expired by date
+    const isExpired = listing.expirationDate && new Date(listing.expirationDate) < new Date();
+    
+    // If expired, mark active codes as expired
+    if (isExpired && listing.codes && listing.codes.length > 0) {
+      for (const code of listing.codes) {
+        if (code.soldStatus === "active") {
+          code.soldStatus = "expired";
+          needsUpdate = true;
+        }
       }
-      
-      if (listing.status !== correctStatus) {
-        listing.status = correctStatus;
-        needsUpdate = true;
-      }
-    } else {
-      // No codes
-      if (listing.status !== "draft" && listing.status !== "expired" && listing.status !== "suspended") {
-        listing.status = "suspended";
-        needsUpdate = true;
-      }
+    }
+    
+    // Determine correct status using the shared logic
+    const correctStatus = Listing.determineListingStatus(listing.codes, isExpired, listing.status);
+    
+    if (listing.status !== correctStatus) {
+      listing.status = correctStatus;
+      needsUpdate = true;
     }
     
     // Save if changes were made
     if (needsUpdate) {
+      // Skip status recalculation in pre-save hook since we just did it
+      listing._skipStatusCalculation = true;
       await listing.save();
       fixedCount++;
     }

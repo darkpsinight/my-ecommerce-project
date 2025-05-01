@@ -148,6 +148,8 @@ export const useFormHandlers = ({
 
       if (response.success) {
         onSubmit(response);
+        // Explicitly close the modal after successful submission
+        onClose();
       } else {
         // Check for code validation errors
         if (response.details && response.details.invalidPatterns) {

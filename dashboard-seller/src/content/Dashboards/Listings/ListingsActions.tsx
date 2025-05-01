@@ -1,125 +1,30 @@
 import { FC, useState, useContext, useEffect } from 'react';
-import {
-  Button,
-  Card,
-  Grid,
-  Box,
-  Typography,
-  useTheme,
-  styled,
-  Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  InputAdornment,
-  Collapse,
-  IconButton,
-  Tooltip,
-  Chip
-} from '@mui/material';
-
-// Define interfaces for type safety
-interface FilterValues {
-  category?: string;
-  platform?: string;
-  status?: string;
-  title?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  startDate?: string;
-  endDate?: string;
-  [key: string]: any;
-}
-
-interface ActiveFilterDisplay {
-  category?: string;
-  platform?: string;
-  status?: string;
-  title?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  startDate?: string;
-  endDate?: string;
-  [key: string]: string | undefined;
-}
-
+import { Card } from '@mui/material';
 import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
-import SearchTwoToneIcon from '@mui/icons-material/SearchTwoTone';
-import FilterListTwoToneIcon from '@mui/icons-material/FilterListTwoTone';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import ClearIcon from '@mui/icons-material/Clear';
 
 import CreateListingModal from './CreateListingModal';
 import { ListingsContext } from './context/ListingsContext';
-import toast, { Toaster } from 'react-hot-toast';
-import LargerDismissibleToast from 'src/components/LargerDismissibleToast';
 import { getCategories } from 'src/services/api/listings';
 
-interface ListingsActionsProps {
-  selected: string[];
-  setSelected: React.Dispatch<React.SetStateAction<string[]>>;
-}
-
-// ---- Styled components ----
-const ButtonSearch = styled(Button)(
-  ({ theme }) => `
-    margin-right: ${theme.spacing(1)};
-  `
-);
-
-const ListingsHeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  marginBottom: theme.spacing(2),
-  [theme.breakpoints.down('sm')]: {
-    alignItems: 'center',
-    textAlign: 'center',
-    marginBottom: theme.spacing(2.5)
-  }
-}));
-
-const ResponsiveActionsBox = styled(Box)(({ theme }) => ({
-  [theme.breakpoints.down('sm')]: {
-    '.MuiButton-root': {
-      width: '100%',
-      marginRight: 0,
-      marginBottom: theme.spacing(1.5)
-    }
-  }
-}));
-
-const ActiveFilterChip = styled(Chip)(({ theme }) => ({
-  margin: theme.spacing(0.5),
-  '& .MuiChip-label': {
-    fontWeight: 500
-  }
-}));
-
-// Create a component for the bold filter label
-const BoldSpan = styled('span')({
-  fontWeight: 700
-});
-
-const FilterToggleButton = styled(Button)(({ theme }) => ({
-  marginBottom: theme.spacing(1),
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: 'auto',
-  paddingLeft: theme.spacing(2),
-  paddingRight: theme.spacing(2)
-}));
+// Import refactored components
+import {
+  ResponsiveActionsBox,
+  FilterPanel,
+  ActiveFilters,
+  ListingsHeader,
+  ToastContainer,
+  showSuccessToast,
+  showErrorToast,
+  FilterValues,
+  ActiveFilterDisplay,
+  ListingsActionsProps
+} from './components/ListingsActions';
 
 const ListingsActions: FC<ListingsActionsProps> = ({
   selected,
   setSelected
 }) => {
-  const theme = useTheme();
-  const { refreshListings, addNewListing, fetchListings, setFilters, filters, limit } = useContext(ListingsContext);
+  const { refreshListings, addNewListing, setFilters } = useContext(ListingsContext);
   const [categories, setCategories] = useState<any[]>([]);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [category, setCategory] = useState<string>('all');
@@ -338,285 +243,60 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     try {
       if (response && response.success) {
         setOpenModal(false);
-        toast.custom(
-          (t) => (
-            <LargerDismissibleToast
-              t={t}
-              message={response.message || 'Listing created successfully!'}
-              type="success"
-            />
-          ),
-          { duration: 10000 }
-        );
-        // Add the new listing to the table and refresh
+        showSuccessToast(response.message || 'Listing created successfully!');
+        
         if (response.data && response.data.listing) {
           addNewListing(response.data.listing);
         } else {
           refreshListings();
         }
       } else {
-        toast.custom(
-          (t) => (
-            <LargerDismissibleToast
-              t={t}
-              message={
-                response.message ||
-                'Failed to create listing. Please try again.'
-              }
-              type="error"
-            />
-          ),
-          { duration: 10000 }
-        );
+        showErrorToast(response.message || 'Failed to create listing. Please try again.');
       }
     } catch (error) {
       console.error('Error handling create listing response:', error);
-      toast.custom(
-        (t) => (
-          <LargerDismissibleToast
-            t={t}
-            message={'An unexpected error occurred. Please try again.'}
-            type="error"
-          />
-        ),
-        { duration: 10000 }
-      );
+      showErrorToast('An unexpected error occurred. Please try again.');
     }
   };
 
   return (
     <Card>
       <ResponsiveActionsBox p={3}>
-        <Grid container spacing={3} alignItems="center" justifyContent="space-between">
-          <Grid item xs={12} md={8}>
-            <ListingsHeaderBox>
-              <Typography
-                variant="h4"
-                fontWeight={700}
-                sx={{
-                  mb: 0.5,
-                  letterSpacing: '-0.5px'
-                }}
-              >
-                Product Listings
-              </Typography>
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                sx={{
-                  fontWeight: 400,
-                  fontSize: { xs: '0.9rem', sm: '1rem' }
-                }}
-              >
-                {Object.keys(activeFilters).length > 0 
-                  ? `${Object.keys(activeFilters).length} active filters` 
-                  : 'Manage and filter your listings'}
-              </Typography>
-            </ListingsHeaderBox>
-          </Grid>
-          <Grid item xs={12} md={4} container justifyContent="flex-end" sx={{ width: '100%' }}>
-            <Box sx={{ width: '100%', maxWidth: { md: 180 } }}>
-              <FilterToggleButton
-                fullWidth
-                sx={{ minWidth: { md: 180 } }}
-                color="secondary"
-                variant="outlined"
-                onClick={() => setShowFilters(!showFilters)}
-                endIcon={showFilters ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                startIcon={<FilterListTwoToneIcon />}
-              >
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </FilterToggleButton>
-            </Box>
-          </Grid>
-        </Grid>
+        <ListingsHeader 
+          activeFiltersCount={Object.keys(activeFilters).length}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+        />
 
-        {/* Active Filters Display */}
-        {Object.keys(activeFilters).length > 0 && (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>
-            {Object.entries(activeFilters).map(([key, value]) => {
-              // For each filter chip, parse the label to make the prefix bold
-              const parts = value.split(':');
-              const label = parts.length > 1 ? (
-                <>
-                  <BoldSpan>{parts[0]}:</BoldSpan>{parts.slice(1).join(':')}
-                </>
-              ) : value;
-              
-              return (
-                <ActiveFilterChip
-                  key={key}
-                  label={label}
-                  onDelete={() => handleRemoveFilter(key)}
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                />
-              );
-            })}
-            <Button
-              size="small"
-              variant="text"
-              color="error"
-              sx={{ ml: 1 }}
-              onClick={handleClearFilters}
-            >
-              Clear All
-            </Button>
-          </Box>
-        )}
+        <ActiveFilters 
+          activeFilters={activeFilters}
+          handleRemoveFilter={handleRemoveFilter}
+          handleClearFilters={handleClearFilters}
+        />
 
-        {/* Collapsible Filter Panel */}
-        <Collapse in={showFilters}>
-          <Divider sx={{ mt: 1, mb: 3 }} />
-          <Grid container spacing={3}>
-            {/* Search field moved inside the filter panel */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                value={searchTerm}
-                onChange={handleSearchChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchTwoToneIcon />
-                    </InputAdornment>
-                  ),
-                  endAdornment: searchTerm && (
-                    <InputAdornment position="end">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => setSearchTerm('')}
-                        edge="end"
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-                placeholder="Search by title..."
-                label="Title"
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth variant="outlined" size="small">
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={category}
-                  onChange={handleCategoryChange}
-                  label="Category"
-                >
-                  <MenuItem value="all">All Categories</MenuItem>
-                  {categories.map((cat) => (
-                    <MenuItem key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth variant="outlined" disabled={platforms.length === 0} size="small">
-                <InputLabel>Platform</InputLabel>
-                <Select
-                  value={platform}
-                  onChange={handlePlatformChange}
-                  label="Platform"
-                >
-                  <MenuItem value="all">All Platforms</MenuItem>
-                  {platforms.map((plat) => (
-                    <MenuItem key={plat.name} value={plat.name}>
-                      {plat.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth variant="outlined" size="small">
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={status}
-                  onChange={handleStatusChange}
-                  label="Status"
-                >
-                  <MenuItem value="all">All Statuses</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="sold">Sold</MenuItem>
-                  <MenuItem value="expired">Expired</MenuItem>
-                  <MenuItem value="suspended">Suspended</MenuItem>
-                  <MenuItem value="draft">Draft</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                value={minPrice}
-                onChange={handleMinPriceChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">$</InputAdornment>
-                  )
-                }}
-                placeholder="Min Price"
-                label="Min Price"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                value={maxPrice}
-                onChange={handleMaxPriceChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">$</InputAdornment>
-                  )
-                }}
-                placeholder="Max Price"
-                label="Max Price"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <TextField
-                fullWidth
-                size="small"
-                type="date"
-                value={startDate}
-                onChange={handleStartDateChange}
-                InputLabelProps={{ shrink: true }}
-                label="Start Date"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <TextField
-                fullWidth
-                size="small"
-                type="date"
-                value={endDate}
-                onChange={handleEndDateChange}
-                InputLabelProps={{ shrink: true }}
-                label="End Date"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <ButtonSearch
-                fullWidth
-                startIcon={<FilterListTwoToneIcon />}
-                variant="contained"
-                onClick={handleApplyFilters}
-              >
-                Apply Filters
-              </ButtonSearch>
-            </Grid>
-          </Grid>
-          <Divider sx={{ mt: 3, mb: 1 }} />
-        </Collapse>
+        <FilterPanel 
+          showFilters={showFilters}
+          searchTerm={searchTerm}
+          category={category}
+          platform={platform}
+          status={status}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          startDate={startDate}
+          endDate={endDate}
+          categories={categories}
+          platforms={platforms}
+          handleSearchChange={handleSearchChange}
+          handleCategoryChange={handleCategoryChange}
+          handlePlatformChange={handlePlatformChange}
+          handleStatusChange={handleStatusChange}
+          handleMinPriceChange={handleMinPriceChange}
+          handleMaxPriceChange={handleMaxPriceChange}
+          handleStartDateChange={handleStartDateChange}
+          handleEndDateChange={handleEndDateChange}
+          handleApplyFilters={handleApplyFilters}
+          setSearchTerm={setSearchTerm}
+        />
       </ResponsiveActionsBox>
 
       {/* Create Listing Modal */}
@@ -625,7 +305,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
         onClose={handleCloseModal}
         onSubmit={handleCreateListing}
       />
-      <Toaster position="top-right" />
+      <ToastContainer />
     </Card>
   );
 };

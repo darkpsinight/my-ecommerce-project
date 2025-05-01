@@ -20,6 +20,7 @@ import ListingRow from './components/ListingRow';
 import BulkActionsMenu from './components/BulkActionsMenu';
 import { EmptyState, LoadingState, ErrorState } from './components/ListingsTableStates';
 import ViewListingDetailsModal from './components/ViewListingDetailsModal';
+import { EditListingModal } from './components/EditListingModal';
 
 // Import types
 import { ListingsTableProps } from './types';
@@ -70,8 +71,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
     setPage(0);
   };
 
-  // State for view details modal
+  // State for modals
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
 
   // Action handlers
@@ -82,8 +84,8 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   };
 
   const handleEditListing = (id: string) => {
-    console.log('Edit listing:', id);
-    // Navigate to edit form or open edit modal
+    setSelectedListingId(id);
+    setEditModalOpen(true);
     handleCloseMenu();
   };
 
@@ -111,6 +113,16 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
       default:
         break;
     }
+  };
+
+  // Handle listing update from the edit modal
+  const handleListingUpdated = (updatedListing: any) => {
+    // In a real application, you would update the listings in the context
+    // or make an API call to refresh the data
+    console.log('Listing updated:', updatedListing);
+    
+    // For now, we'll just close the modal
+    setEditModalOpen(false);
   };
 
   // Constants
@@ -193,6 +205,15 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
         onClose={() => setViewDetailsOpen(false)}
         listingId={selectedListingId}
         listings={listings}
+      />
+
+      {/* Edit Listing Modal */}
+      <EditListingModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        listingId={selectedListingId}
+        listings={listings}
+        onListingUpdated={handleListingUpdated}
       />
     </Card>
   );

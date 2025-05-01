@@ -25,6 +25,7 @@ export interface Listing {
   tags?: string[];
   sellerId?: string;
   updatedAt?: Date | string | null;
+  sellerNotes?: string;
   __v?: number;
 }
 

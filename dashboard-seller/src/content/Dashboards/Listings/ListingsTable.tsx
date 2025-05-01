@@ -1,4 +1,4 @@
-import { FC, useContext } from 'react';
+import { FC, useContext, useState } from 'react';
 import {
   Card,
   CardHeader,
@@ -19,6 +19,7 @@ import ListingsTableHeader from './components/ListingsTableHeader';
 import ListingRow from './components/ListingRow';
 import BulkActionsMenu from './components/BulkActionsMenu';
 import { EmptyState, LoadingState, ErrorState } from './components/ListingsTableStates';
+import ViewListingDetailsModal from './components/ViewListingDetailsModal';
 
 // Import types
 import { ListingsTableProps } from './types';
@@ -69,10 +70,14 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
     setPage(0);
   };
 
+  // State for view details modal
+  const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+
   // Action handlers
   const handleViewListing = (id: string) => {
-    console.log('View listing:', id);
-    // Navigate to listing details page or open a modal
+    setSelectedListingId(id);
+    setViewDetailsOpen(true);
     handleCloseMenu();
   };
 
@@ -181,6 +186,14 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
           rowsPerPageOptions={[5, 10, 25, 30]}
         />
       </Box>
+
+      {/* View Listing Details Modal */}
+      <ViewListingDetailsModal
+        open={viewDetailsOpen}
+        onClose={() => setViewDetailsOpen(false)}
+        listingId={selectedListingId}
+        listings={listings}
+      />
     </Card>
   );
 };

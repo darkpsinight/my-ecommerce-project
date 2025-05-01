@@ -9,13 +9,23 @@ export interface Listing {
   status: ListingStatus;
   createdAt: Date | string | null;
   description?: string;
-  categoryId?: string;
+  categoryId?: { _id: string; name: string } | string;
   categoryName?: string;
   region?: string;
   quantity?: number;
   quantityOfActiveCodes?: number;
   quantityOfAllCodes?: number;
   expirationDate?: string | Date | null;
+  // Additional properties from API response
+  originalPrice?: number;
+  isRegionLocked?: boolean;
+  supportedLanguages?: string[];
+  thumbnailUrl?: string;
+  autoDelivery?: boolean;
+  tags?: string[];
+  sellerId?: string;
+  updatedAt?: Date | string | null;
+  __v?: number;
 }
 
 export interface ListingCode {

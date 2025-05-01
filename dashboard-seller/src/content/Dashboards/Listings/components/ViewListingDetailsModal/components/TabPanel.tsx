@@ -17,11 +17,11 @@ const TabPanel: React.FC<TabPanelProps> = (props) => {
       id={`listing-tabpanel-${index}`}
       aria-labelledby={`listing-tab-${index}`}
       {...other}
-      style={{ padding: '16px 0' }}
+      style={{ padding: '0' }}
     >
       {value === index && (
         <Fade in={value === index} timeout={400}>
-          <Box>{children}</Box>
+          <Box sx={{ pt: { xs: 1.5, sm: 2 }, pb: { xs: 1, sm: 1.5 } }}>{children}</Box>
         </Fade>
       )}
     </div>

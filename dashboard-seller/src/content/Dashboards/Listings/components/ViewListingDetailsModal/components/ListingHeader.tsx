@@ -15,14 +15,14 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
   return (
     <Box
       sx={{
-        px: 3,
-        pt: 2.5,
-        pb: 1,
+        px: { xs: 2, sm: 3 },
+        pt: { xs: 2, sm: 2.5 },
+        pb: { xs: 0.5, sm: 1 },
         display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
         alignItems: { xs: 'flex-start', sm: 'center' },
         justifyContent: 'space-between',
-        gap: 1
+        gap: { xs: 1.5, sm: 1 }
       }}
     >
       <Box>
@@ -31,12 +31,21 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
           sx={{
             fontWeight: 700,
             color: theme.palette.text.primary,
-            mb: 0.5
+            mb: 0.5,
+            fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
+            lineHeight: 1.2,
+            wordBreak: 'break-word'
           }}
         >
           {listing.title}
         </Typography>
-        <Box display="flex" alignItems="center" flexWrap="wrap" gap={1}>
+        <Box 
+          display="flex" 
+          alignItems="center" 
+          flexWrap="wrap" 
+          gap={1}
+          sx={{ mb: { xs: 1, sm: 0 } }}
+        >
           <ListingStatusBadge status={listing.status} />
           <Typography
             variant="body2"
@@ -62,7 +71,10 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
           sx={{
             display: 'flex',
             alignItems: 'flex-end',
-            gap: 1
+            gap: 1,
+            alignSelf: { xs: 'flex-start', sm: 'center' },
+            mt: { xs: 0.5, sm: 0 },
+            mb: { xs: 1, sm: 0 }
           }}
         >
           <Typography
@@ -71,7 +83,8 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
             sx={{
               fontWeight: 700,
               color: theme.palette.primary.main,
-              lineHeight: 1
+              lineHeight: 1,
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' }
             }}
           >
             {formatCurrency(listing.price)}

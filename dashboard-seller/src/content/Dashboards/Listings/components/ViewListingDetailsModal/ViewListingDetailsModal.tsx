@@ -95,10 +95,18 @@ const ViewListingDetailsModal: FC<ViewListingDetailsModalProps> = ({
       TransitionComponent={Zoom}
       transitionDuration={300}
       sx={{
+        margin: { xs: '8px', sm: '24px' },
         '& .MuiDialog-paper': {
-          borderRadius: 2,
+          borderRadius: { xs: 1, sm: 2 },
           boxShadow: theme.shadows[20],
-          overflow: 'hidden'
+          overflow: 'hidden',
+          maxHeight: { xs: 'calc(100% - 16px)', sm: 'calc(100% - 64px)' },
+          maxWidth: { xs: 'calc(100% - 16px)', sm: '600px', md: '900px' },
+          width: '100%'
+        },
+        '& .MuiDialog-container': {
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          paddingTop: { xs: '8px', sm: '0' }
         }
       }}
     >
@@ -122,8 +130,9 @@ const ViewListingDetailsModal: FC<ViewListingDetailsModalProps> = ({
 
           <DialogContent
             sx={{
-              p: { xs: 2, sm: 3 },
-              backgroundColor: alpha(theme.palette.background.default, 0.4)
+              p: { xs: 1.5, sm: 2, md: 3 },
+              backgroundColor: alpha(theme.palette.background.default, 0.4),
+              overflow: 'auto'
             }}
           >
             {/* Overview Tab */}

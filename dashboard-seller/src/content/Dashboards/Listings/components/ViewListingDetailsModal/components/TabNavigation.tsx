@@ -22,22 +22,24 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   const theme = useTheme();
 
   return (
-    <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+    <Box sx={{ borderBottom: 1, borderColor: 'divider', px: { xs: 0.5, sm: 1, md: 2 } }}>
       <Tabs
         value={tabValue}
         onChange={handleTabChange}
         aria-label="listing details tabs"
-        variant="scrollable"
-        scrollButtons="auto"
+        variant="fullWidth"
         sx={{
+          minHeight: { xs: '36px', sm: '42px', md: '48px' },
           '& .MuiTab-root': {
-            minWidth: 'auto',
-            px: 2,
-            py: 1.5,
+            minWidth: { xs: '10px', sm: '70px' },
+            maxWidth: { xs: '80px', sm: 'none' },
+            px: { xs: 0.25, sm: 1, md: 2 },
+            py: { xs: 0.5, sm: 1, md: 1.5 },
             fontWeight: 600,
             textTransform: 'none',
-            fontSize: '0.9rem',
+            fontSize: { xs: '0.65rem', sm: '0.8rem', md: '0.9rem' },
             color: theme.palette.text.primary,
+            minHeight: { xs: '36px', sm: '42px', md: '48px' },
             '&.Mui-selected': {
               color: '#ffffff'
             },
@@ -58,12 +60,16 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
         TabIndicatorProps={{ children: <span /> }}
       >
         <Tab
-          icon={<InfoOutlinedIcon fontSize="small" />}
+          icon={<InfoOutlinedIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
           iconPosition="start"
           label={
             <Typography
               component="span"
-              sx={{ ml: 1, display: 'inline-block', fontWeight: 'bold' }}
+              sx={{ 
+                ml: { xs: 0.25, sm: 0.5, md: 1 }, 
+                display: { xs: 'none', sm: 'inline-block' }, 
+                fontWeight: 'bold' 
+              }}
             >
               Overview
             </Typography>
@@ -72,16 +78,25 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           aria-controls="listing-tabpanel-0"
         />
         <Tab
-          icon={<CodeIcon fontSize="small" />}
+          icon={<CodeIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
           iconPosition="start"
           label={
-            <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
-              <Typography component="span" sx={{ fontWeight: 'bold' }}>Codes</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: { xs: 0, sm: 0.5, md: 1 } }}>
+              <Typography 
+                component="span" 
+                sx={{ 
+                  fontWeight: 'bold', 
+                  fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.8rem' },
+                  display: { xs: 'none', sm: 'inline-block' }
+                }}
+              >
+                Codes
+              </Typography>
               {activeCodes > 0 && (
                 <Badge
                   badgeContent={activeCodes}
                   color="success"
-                  sx={{ ml: 1 }}
+                  sx={{ ml: { xs: 0.25, sm: 0.5, md: 1 } }}
                   max={999}
                 >
                   <Box sx={{ width: 8 }} />
@@ -94,14 +109,18 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           disabled={!listing.codes || listing.codes.length === 0}
         />
         <Tab
-          icon={<LocalOfferIcon fontSize="small" />}
+          icon={<LocalOfferIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
           iconPosition="start"
           label={
             <Typography
               component="span"
-              sx={{ ml: 1, display: 'inline-block', fontWeight: 'bold' }}
+              sx={{ 
+                ml: { xs: 0.25, sm: 0.5, md: 1 }, 
+                display: { xs: 'none', sm: 'inline-block' }, 
+                fontWeight: 'bold' 
+              }}
             >
-              Tags & Languages
+              Tags
             </Typography>
           }
           id="listing-tab-2"
@@ -114,12 +133,16 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
         />
         {listing.thumbnailUrl && (
           <Tab
-            icon={<ImageIcon fontSize="small" />}
+            icon={<ImageIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
             iconPosition="start"
             label={
               <Typography
                 component="span"
-                sx={{ ml: 1, display: 'inline-block', fontWeight: 'bold' }}
+                sx={{ 
+                  ml: { xs: 0.25, sm: 0.5, md: 1 }, 
+                  display: { xs: 'none', sm: 'inline-block' }, 
+                  fontWeight: 'bold' 
+                }}
               >
                 Images
               </Typography>

@@ -13,6 +13,8 @@ export interface Listing {
   categoryName?: string;
   region?: string;
   quantity?: number;
+  quantityOfActiveCodes?: number;
+  quantityOfAllCodes?: number;
   expirationDate?: string | Date | null;
 }
 

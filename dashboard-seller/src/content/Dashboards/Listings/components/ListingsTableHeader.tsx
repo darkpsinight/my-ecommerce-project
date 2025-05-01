@@ -5,7 +5,8 @@ import {
   TableCell,
   Checkbox,
   TableSortLabel,
-  Box
+  Box,
+  Tooltip
 } from '@mui/material';
 import { ListingsContext } from '../context/ListingsContext';
 
@@ -35,21 +36,40 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
   };
 
   const headers = [
-    { id: 'title', label: 'Title', align: 'left', sortable: true },
-    { id: 'platform', label: 'Platform', align: 'left', sortable: true },
-    { id: 'codes', label: 'Codes', align: 'left', sortable: false },
-    { id: 'quantity', label: 'Quantity', align: 'center', sortable: true },
-    { id: 'price', label: 'Price', align: 'left', sortable: true },
-    { id: 'expiration', label: 'Expiration', align: 'left', sortable: true },
-    { id: 'status', label: 'Status', align: 'left', sortable: true },
-    { id: 'created', label: 'Created', align: 'left', sortable: true },
-    { id: 'actions', label: 'Actions', align: 'right', sortable: false }
+    { id: 'title', label: 'TITLE', align: 'left', sortable: true },
+    { id: 'platform', label: 'PLATFORM', align: 'left', sortable: true },
+    { id: 'codes', label: 'CODES', align: 'left', sortable: false },
+    { 
+      id: 'quantity', 
+      label: 'QTY (A/T)', 
+      align: 'center', 
+      sortable: true,
+      tooltip: 'Quantity: Active codes available / Total codes listed',
+      style: { whiteSpace: 'nowrap' } // Ensure label stays on one line
+    },
+    { id: 'price', label: 'PRICE', align: 'left', sortable: true },
+    { id: 'expiration', label: 'EXPIRATION', align: 'left', sortable: true },
+    { id: 'status', label: 'STATUS', align: 'left', sortable: true },
+    { id: 'created', label: 'CREATED', align: 'left', sortable: true },
+    { id: 'actions', label: 'ACTIONS', align: 'right', sortable: false }
   ];
 
   const handleSort = (headerId: string) => {
     if (sortFieldMap[headerId]) {
       setSorting(sortFieldMap[headerId]);
     }
+  };
+
+  // Custom styling for specific columns
+  const getColumnStyle = (headerId: string) => {
+    if (headerId === 'quantity') {
+      return { 
+        width: '100px', 
+        minWidth: '100px',
+        whiteSpace: 'nowrap' // Prevent text wrapping
+      }; 
+    }
+    return {};
   };
 
   return (
@@ -65,22 +85,30 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
           />
         </TableCell>
         {headers.map((header) => (
-          <TableCell key={header.id} align={header.align as any}>
+          <TableCell 
+            key={header.id} 
+            align={header.align as any}
+            style={getColumnStyle(header.id)}
+          >
             {header.sortable ? (
-              <TableSortLabel
-                active={sortBy === sortFieldMap[header.id]}
-                direction={sortBy === sortFieldMap[header.id] ? sortOrder : 'asc'}
-                onClick={() => handleSort(header.id)}
-              >
-                {header.label}
-                {sortBy === sortFieldMap[header.id] ? (
-                  <Box component="span" sx={{ border: 0, clip: 'rect(0 0 0 0)', height: 1, margin: -1, overflow: 'hidden', padding: 0, position: 'absolute', whiteSpace: 'nowrap', width: 1 }}>
-                    {sortOrder === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                  </Box>
-                ) : null}
-              </TableSortLabel>
+              <Tooltip title={header.tooltip || ''} arrow placement="top">
+                <TableSortLabel
+                  active={sortBy === sortFieldMap[header.id]}
+                  direction={sortBy === sortFieldMap[header.id] ? sortOrder : 'asc'}
+                  onClick={() => handleSort(header.id)}
+                >
+                  {header.label}
+                  {sortBy === sortFieldMap[header.id] ? (
+                    <Box component="span" sx={{ border: 0, clip: 'rect(0 0 0 0)', height: 1, margin: -1, overflow: 'hidden', padding: 0, position: 'absolute', whiteSpace: 'nowrap', width: 1 }}>
+                      {sortOrder === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                    </Box>
+                  ) : null}
+                </TableSortLabel>
+              </Tooltip>
             ) : (
-              header.label
+              <Tooltip title={header.tooltip || ''} arrow placement="top">
+                <span style={header.style}>{header.label}</span>
+              </Tooltip>
             )}
           </TableCell>
         ))}

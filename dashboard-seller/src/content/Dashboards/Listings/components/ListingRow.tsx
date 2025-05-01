@@ -65,11 +65,16 @@ const ListingRow: FC<ListingRowProps> = ({
   const { newListingId } = useContext(ListingsContext);
   const [isFlashing, setIsFlashing] = useState(false);
   
-  // Calculate quantity based on active codes
-  const activeCodesCount = listing.codes ? 
-    listing.codes.filter(code => code.soldStatus === 'active').length : 0;
+  // Get quantity values from API or calculate as fallback
+  const activeCodes = listing.quantityOfActiveCodes !== undefined ? 
+    listing.quantityOfActiveCodes : 
+    (listing.codes ? listing.codes.filter(code => code.soldStatus === 'active').length : 0);
   
-  const isInactive = listing.status === 'sold' || activeCodesCount === 0;
+  const totalCodes = listing.quantityOfAllCodes !== undefined ? 
+    listing.quantityOfAllCodes : 
+    (listing.codes ? listing.codes.length : 0);
+  
+  const isInactive = listing.status === 'sold' || activeCodes === 0;
   const isNewListing = newListingId === listing._id;
 
   useEffect(() => {
@@ -144,13 +149,20 @@ const ListingRow: FC<ListingRowProps> = ({
         )}
       </TableCell>
       <TableCell align="center">
-        <Typography
-          variant="body1"
-          fontWeight="bold"
-          color={activeCodesCount > 0 ? 'success.main' : 'error.main'}
+        <Tooltip 
+          title="Format: Active/Total (Active codes available / Total codes listed)" 
+          arrow 
+          placement="top"
         >
-          {activeCodesCount}
-        </Typography>
+          <Typography
+            variant="body1"
+            fontWeight="bold"
+            color={activeCodes > 0 ? 'success.main' : 'error.main'}
+            sx={{ cursor: 'help' }}
+          >
+            {activeCodes}/{totalCodes}
+          </Typography>
+        </Tooltip>
       </TableCell>
       <TableCell>
         <Typography variant="body2">

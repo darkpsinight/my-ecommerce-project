@@ -198,6 +198,10 @@ const getSellerListings = async (request, reply) => {
       
       // Process codes array to decrypt and mask each code
       if (listingObj.codes && listingObj.codes.length > 0) {
+        // Calculate quantity metrics
+        listingObj.quantityOfAllCodes = listingObj.codes.length;
+        listingObj.quantityOfActiveCodes = listingObj.codes.filter(code => code.soldStatus === 'active').length;
+        
         listingObj.codes = listingObj.codes.map(codeObj => {
           // Process all codes regardless of status
           try {
@@ -228,6 +232,10 @@ const getSellerListings = async (request, reply) => {
             };
           }
         });
+      } else {
+        // If no codes, set quantities to 0
+        listingObj.quantityOfAllCodes = 0;
+        listingObj.quantityOfActiveCodes = 0;
       }
       
       return listingObj;

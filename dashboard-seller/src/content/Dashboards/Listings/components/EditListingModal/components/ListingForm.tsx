@@ -21,10 +21,37 @@ import {
   Tooltip,
   IconButton,
   Autocomplete,
-  styled
+  styled,
+  Stack,
+  Alert,
+  Card,
+  CardContent,
+  Badge,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
+  Fade,
+  AlertTitle,
+  useTheme
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import ImageIcon from '@mui/icons-material/Image';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import LanguageIcon from '@mui/icons-material/Language';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import CodeIcon from '@mui/icons-material/Code';
+import SellIcon from '@mui/icons-material/Sell';
+import DescriptionIcon from '@mui/icons-material/Description';
+import NotesIcon from '@mui/icons-material/Notes';
+import SaveIcon from '@mui/icons-material/Save';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -36,31 +63,37 @@ interface ListingFormProps {
   listing: Listing;
   onSubmit: (updatedListing: Partial<Listing>) => void;
   isSubmitting: boolean;
+  section?: 'general' | 'codes' | 'tagsLanguages' | 'images';
+  hideSubmitButton?: boolean;
 }
 
-/**
- * Styled container for the Quill editor to match Material-UI theme
- */
+// Styled container for the Quill editor with improved styling
 const EditorContainer = styled('div')(({ theme }) => ({
   position: 'relative',
   '& .ql-container': {
     border: `1px solid ${theme.palette.divider}`,
-    borderRadius: '0 0 4px 4px',
+    borderRadius: '0 0 8px 8px',
     background: theme.palette.background.paper,
-    minHeight: '150px',
+    minHeight: '200px',
     fontFamily: theme.typography.fontFamily,
+    fontSize: '1rem'
   },
   '& .ql-toolbar': {
-    background: theme.palette.grey[100],
+    background: theme.palette.grey[50],
     borderBottom: `1px solid ${theme.palette.divider}`,
-    borderRadius: `${theme.shape.borderRadius}px ${theme.shape.borderRadius}px 0 0`,
+    borderRadius: `8px 8px 0 0`,
+    padding: '8px'
+  },
+  '& .ql-editor': {
+    minHeight: '200px',
+    padding: '16px'
   },
   // Error state styling
   '&.error .ql-container': {
-    border: `1px solid ${theme.palette.error.main}`,
+    border: `1px solid ${theme.palette.error.main}`
   },
   '&.error .ql-toolbar': {
-    borderColor: theme.palette.error.main,
+    borderColor: theme.palette.error.main
   },
   // Helper text styling
   '& .MuiFormHelperText-root': {
@@ -68,35 +101,91 @@ const EditorContainer = styled('div')(({ theme }) => ({
     marginTop: '4px',
     color: theme.palette.text.secondary,
     '&.Mui-error': {
-      color: theme.palette.error.main,
-    },
+      color: theme.palette.error.main
+    }
   },
   // Placeholder styling
   '& .ql-editor.ql-blank::before': {
     color: theme.palette.text.secondary,
     fontStyle: 'normal',
     opacity: 0.7,
+    padding: '0 16px'
   }
 }));
 
-const CodeItem = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: theme.spacing(1, 2),
-  marginBottom: theme.spacing(1),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.background.paper,
-  border: `1px solid ${theme.palette.divider}`,
-  '&:hover': {
-    backgroundColor: theme.palette.action.hover,
-  },
+// Improved code item styling
+const CodeItem = styled(Card)(({ theme }) => ({
+  marginBottom: theme.spacing(1.5),
+  transition: 'all 0.2s ease',
   '&.sold': {
     opacity: 0.7,
-    backgroundColor: theme.palette.action.disabledBackground,
+    backgroundColor: theme.palette.action.disabledBackground
+  },
+  '& .MuiCardContent-root': {
+    padding: theme.spacing(1.5),
+    '&:last-child': {
+      paddingBottom: theme.spacing(1.5)
+    }
   }
 }));
 
+// Section container with consistent styling
+const SectionContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+  borderRadius: '12px',
+  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '4px',
+    height: '100%',
+    backgroundColor: theme.palette.primary.main,
+    opacity: 0.7
+  }
+}));
+
+// Custom section header with icon
+const SectionHeader = ({ icon, title }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+    <Box
+      sx={{
+        backgroundColor: 'primary.light',
+        borderRadius: '50%',
+        width: 40,
+        height: 40,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mr: 2,
+        color: 'primary.main'
+      }}
+    >
+      {icon}
+    </Box>
+    <Typography variant="h5" fontWeight="medium">
+      {title}
+    </Typography>
+  </Box>
+);
+
+// Custom styled button for adding items
+const AddButton = styled(Button)(({ theme }) => ({
+  borderRadius: '8px',
+  padding: theme.spacing(1, 2),
+  backgroundColor: theme.palette.grey[50],
+  color: theme.palette.primary.main,
+  border: `1px dashed ${theme.palette.primary.main}`,
+  '&:hover': {
+    backgroundColor: theme.palette.grey[100]
+  }
+}));
+
+// Form data interface
 interface FormData {
   title: string;
   description: string;
@@ -111,9 +200,13 @@ interface FormData {
   tags: string[];
   status: string;
   sellerNotes: string;
-  codes: Array<{ code: string; soldStatus: string; soldAt?: string | Date }> | undefined;
+  codes:
+    | Array<{ code: string; soldStatus: string; soldAt?: string | Date }>
+    | undefined;
+  newCode: string;
 }
 
+// Form errors interface
 interface FormErrors {
   title: string;
   description: string;
@@ -122,13 +215,18 @@ interface FormErrors {
   region: string;
   thumbnailUrl: string;
   codes: string;
+  newCode: string;
 }
 
 const ListingForm: FC<ListingFormProps> = ({
   listing,
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  section = 'general',
+  hideSubmitButton = false
 }) => {
+  const theme = useTheme();
+
   // Initialize form data from listing
   const [formData, setFormData] = useState<FormData>({
     title: listing.title || '',
@@ -138,13 +236,16 @@ const ListingForm: FC<ListingFormProps> = ({
     platform: listing.platform || '',
     region: listing.region || '',
     isRegionLocked: listing.isRegionLocked || false,
-    expirationDate: listing.expirationDate ? new Date(listing.expirationDate) : null,
+    expirationDate: listing.expirationDate
+      ? new Date(listing.expirationDate)
+      : null,
     supportedLanguages: listing.supportedLanguages || [],
     thumbnailUrl: listing.thumbnailUrl || '',
     tags: listing.tags || [],
     status: listing.status || 'active',
     sellerNotes: listing.sellerNotes || '',
-    codes: listing.codes || []
+    codes: listing.codes || [],
+    newCode: ''
   });
 
   // Form validation errors
@@ -155,31 +256,109 @@ const ListingForm: FC<ListingFormProps> = ({
     platform: '',
     region: '',
     thumbnailUrl: '',
-    codes: ''
+    codes: '',
+    newCode: ''
   });
 
-  // New tag input
-  const [newTag, setNewTag] = useState('');
-  const [newLanguage, setNewLanguage] = useState('');
-  
-  // Quill editor reference
+  // Available regions
+  const regions = [
+    'Global',
+    'North America',
+    'Europe',
+    'Asia',
+    'Oceania',
+    'South America',
+    'Africa'
+  ];
+
+  // Available platforms
+  const platforms = [
+    'Steam',
+    'Epic Games',
+    'Origin',
+    'Uplay',
+    'GOG',
+    'PlayStation',
+    'Xbox',
+    'Nintendo',
+    'Other'
+  ];
+
+  // Available statuses with color mapping
+  const statuses = [
+    { value: 'active', label: 'Active', color: 'success' },
+    { value: 'draft', label: 'Draft', color: 'warning' },
+    { value: 'paused', label: 'Paused', color: 'error' }
+  ];
+
+  // Popular languages for autocomplete suggestions
+  const commonLanguages = [
+    'English',
+    'Spanish',
+    'French',
+    'German',
+    'Japanese',
+    'Chinese',
+    'Russian',
+    'Portuguese',
+    'Italian',
+    'Korean',
+    'Arabic',
+    'Dutch',
+    'Swedish',
+    'Polish'
+  ];
+
+  // Popular tags for autocomplete suggestions
+  const suggestedTags = [
+    'Action',
+    'Adventure',
+    'RPG',
+    'Strategy',
+    'Simulation',
+    'Sports',
+    'Racing',
+    'Puzzle',
+    'FPS',
+    'MMORPG',
+    'Indie',
+    'Casual',
+    'Multiplayer',
+    'Co-op',
+    'Single-player',
+    'Open World',
+    'VR',
+    'Early Access',
+    'Family Friendly',
+    'Horror'
+  ];
+
+  // UI state
+  const [activeStep, setActiveStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [formTouched, setFormTouched] = useState(false);
   const quillRef = useRef<ReactQuill>(null);
 
-  // Available regions (would typically come from an API)
-  const regions = ['Global', 'North America', 'Europe', 'Asia', 'Oceania', 'South America', 'Africa'];
-  
-  // Available platforms (would typically come from an API)
-  const platforms = ['Steam', 'Epic Games', 'Origin', 'Uplay', 'GOG', 'PlayStation', 'Xbox', 'Nintendo', 'Other'];
-  
-  // Available statuses
-  const statuses = ['active', 'draft', 'paused'];
+  // Form steps definition
+  const steps = [
+    { label: 'Basic Information', icon: <DescriptionIcon /> },
+    { label: 'Product Details', icon: <InfoOutlinedIcon /> },
+    { label: 'Pricing', icon: <AttachMoneyIcon /> },
+    { label: 'Tags & Languages', icon: <LocalOfferIcon /> },
+    { label: 'Product Codes', icon: <CodeIcon /> },
+    { label: 'Seller Notes', icon: <NotesIcon /> }
+  ];
 
   // Handle text field input changes
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
     const target = e.target;
     const name = target.name as string;
     const value = target.value;
-    
+
+    setFormTouched(true);
+
     // Handle checkbox separately
     if ('checked' in target && target.type === 'checkbox') {
       setFormData({
@@ -192,7 +371,7 @@ const ListingForm: FC<ListingFormProps> = ({
         [name]: value
       });
     }
-    
+
     // Clear error when field is edited
     if (name && name in formErrors) {
       setFormErrors({
@@ -206,12 +385,13 @@ const ListingForm: FC<ListingFormProps> = ({
   const handleSelectChange = (e: SelectChangeEvent<string>) => {
     const name = e.target.name as string;
     const value = e.target.value;
-    
+
+    setFormTouched(true);
     setFormData({
       ...formData,
       [name]: value
     });
-    
+
     // Clear error when field is edited
     if (name && name in formErrors) {
       setFormErrors({
@@ -223,73 +403,185 @@ const ListingForm: FC<ListingFormProps> = ({
 
   // Handle date change
   const handleDateChange = (date: Date | null) => {
+    setFormTouched(true);
     setFormData({
       ...formData,
       expirationDate: date
     });
   };
 
-  // Custom handleChange for ReactQuill to mimic TextField's onChange
+  // Custom handleChange for ReactQuill
   const handleDescriptionChange = (value: string) => {
-    const syntheticEvent = {
-      target: {
-        name: 'description',
-        value,
-      },
-    } as React.ChangeEvent<HTMLInputElement>;
-    handleTextChange(syntheticEvent);
+    setFormTouched(true);
+    setFormData({
+      ...formData,
+      description: value
+    });
+
+    // Clear error
+    if (formErrors.description) {
+      setFormErrors({
+        ...formErrors,
+        description: ''
+      });
+    }
+  };
+
+  // Handle code addition
+  const handleAddCode = () => {
+    if (!formData.newCode.trim()) {
+      setFormErrors({
+        ...formErrors,
+        newCode: 'Please enter a code'
+      });
+      return;
+    }
+
+    // Check if code already exists
+    if (formData.codes?.some((c) => c.code === formData.newCode.trim())) {
+      setFormErrors({
+        ...formErrors,
+        newCode: 'This code already exists'
+      });
+      return;
+    }
+
+    setFormTouched(true);
+    const newCodes = [
+      ...(formData.codes || []),
+      {
+        code: formData.newCode.trim(),
+        soldStatus: 'active'
+      }
+    ];
+
+    setFormData({
+      ...formData,
+      codes: newCodes,
+      newCode: ''
+    });
+
+    // Clear error
+    if (formErrors.codes) {
+      setFormErrors({
+        ...formErrors,
+        codes: '',
+        newCode: ''
+      });
+    }
   };
 
   // Handle code deletion
   const handleDeleteCode = (codeToDelete: string) => {
     if (!formData.codes) return;
-    
-    const updatedCodes = formData.codes.filter(code => code.code !== codeToDelete);
+
+    setFormTouched(true);
+    const updatedCodes = formData.codes.filter(
+      (code) => code.code !== codeToDelete
+    );
     setFormData({
       ...formData,
       codes: updatedCodes
     });
   };
 
-  // Add a new tag
-  const handleAddTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData({
-        ...formData,
-        tags: [...formData.tags, newTag.trim()]
-      });
-      setNewTag('');
+  // Keydown handler for code input
+  const handleCodeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddCode();
     }
   };
 
-  // Remove a tag
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData({
-      ...formData,
-      tags: formData.tags.filter(tag => tag !== tagToRemove)
-    });
-  };
+  // Validate current step
+  const validateCurrentStep = (): boolean => {
+    const errors: FormErrors = { ...formErrors };
+    let isValid = true;
 
-  // Add a new language
-  const handleAddLanguage = () => {
-    if (newLanguage.trim() && !formData.supportedLanguages.includes(newLanguage.trim())) {
-      setFormData({
-        ...formData,
-        supportedLanguages: [...formData.supportedLanguages, newLanguage.trim()]
-      });
-      setNewLanguage('');
+    // Validate based on active step
+    switch (activeStep) {
+      case 0: // Basic Information
+        // Title validation
+        if (!formData.title.trim()) {
+          errors.title = 'Title is required';
+          isValid = false;
+        } else if (formData.title.length < 5) {
+          errors.title = 'Title must be at least 5 characters';
+          isValid = false;
+        }
+
+        // Description validation
+        if (!formData.description.trim()) {
+          errors.description = 'Description is required';
+          isValid = false;
+        } else if (formData.description.replace(/<[^>]*>/g, '').length < 20) {
+          errors.description = 'Description must be at least 20 characters';
+          isValid = false;
+        }
+
+        // Thumbnail URL validation
+        if (formData.thumbnailUrl && !isValidUrl(formData.thumbnailUrl)) {
+          errors.thumbnailUrl = 'Please enter a valid URL';
+          isValid = false;
+        }
+        break;
+
+      case 1: // Product Details
+        // Platform validation
+        if (!formData.platform) {
+          errors.platform = 'Platform is required';
+          isValid = false;
+        }
+
+        // Region validation
+        if (formData.isRegionLocked && !formData.region) {
+          errors.region = 'Region is required when region-locked';
+          isValid = false;
+        }
+        break;
+
+      case 2: // Pricing
+        // Price validation
+        if (!formData.price.trim()) {
+          errors.price = 'Price is required';
+          isValid = false;
+        } else {
+          const priceValue = parseFloat(formData.price);
+          if (isNaN(priceValue) || priceValue <= 0) {
+            errors.price = 'Price must be a positive number';
+            isValid = false;
+          }
+        }
+
+        // Original price validation
+        if (formData.originalPrice) {
+          const originalPrice = parseFloat(formData.originalPrice);
+          const currentPrice = parseFloat(formData.price);
+
+          if (isNaN(originalPrice) || originalPrice <= 0) {
+            errors.price = 'Original price must be a positive number';
+            isValid = false;
+          } else if (originalPrice <= currentPrice) {
+            errors.price = 'Original price should be higher than current price';
+            isValid = false;
+          }
+        }
+        break;
+
+      case 4: // Product Codes
+        // Codes validation
+        if (!formData.codes || formData.codes.length === 0) {
+          errors.codes = 'At least one product code is required';
+          isValid = false;
+        }
+        break;
     }
+
+    setFormErrors(errors);
+    return isValid;
   };
 
-  // Remove a language
-  const handleRemoveLanguage = (langToRemove: string) => {
-    setFormData({
-      ...formData,
-      supportedLanguages: formData.supportedLanguages.filter(lang => lang !== langToRemove)
-    });
-  };
-
-  // Validate form
+  // Validate entire form
   const validateForm = (): boolean => {
     const errors: FormErrors = {
       title: '',
@@ -298,11 +590,12 @@ const ListingForm: FC<ListingFormProps> = ({
       platform: '',
       region: '',
       thumbnailUrl: '',
-      codes: ''
+      codes: '',
+      newCode: ''
     };
-    
+
     let isValid = true;
-    
+
     // Title validation
     if (!formData.title.trim()) {
       errors.title = 'Title is required';
@@ -311,16 +604,16 @@ const ListingForm: FC<ListingFormProps> = ({
       errors.title = 'Title must be at least 5 characters';
       isValid = false;
     }
-    
+
     // Description validation
     if (!formData.description.trim()) {
       errors.description = 'Description is required';
       isValid = false;
-    } else if (formData.description.length < 20) {
+    } else if (formData.description.replace(/<[^>]*>/g, '').length < 20) {
       errors.description = 'Description must be at least 20 characters';
       isValid = false;
     }
-    
+
     // Price validation
     if (!formData.price.trim()) {
       errors.price = 'Price is required';
@@ -332,31 +625,31 @@ const ListingForm: FC<ListingFormProps> = ({
         isValid = false;
       }
     }
-    
+
     // Platform validation
     if (!formData.platform) {
       errors.platform = 'Platform is required';
       isValid = false;
     }
-    
+
     // Region validation
     if (formData.isRegionLocked && !formData.region) {
       errors.region = 'Region is required when region-locked';
       isValid = false;
     }
-    
+
     // Thumbnail URL validation
     if (formData.thumbnailUrl && !isValidUrl(formData.thumbnailUrl)) {
       errors.thumbnailUrl = 'Please enter a valid URL';
       isValid = false;
     }
-    
+
     // Codes validation
     if (!formData.codes || formData.codes.length === 0) {
       errors.codes = 'At least one product code is required';
       isValid = false;
     }
-    
+
     setFormErrors(errors);
     return isValid;
   };
@@ -371,16 +664,47 @@ const ListingForm: FC<ListingFormProps> = ({
     }
   };
 
+  // Handle navigation to next step
+  const handleNext = () => {
+    if (validateCurrentStep()) {
+      setCompletedSteps((prev) => [...prev, activeStep]);
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    }
+  };
+
+  // Handle navigation to previous step
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
   // Handle form submission
   const handleSubmit = () => {
-    if (!validateForm()) return;
-    
+    if (!validateForm()) {
+      // Find the first step with errors and navigate to it
+      if (
+        formErrors.title ||
+        formErrors.description ||
+        formErrors.thumbnailUrl
+      ) {
+        setActiveStep(0);
+      } else if (formErrors.platform || formErrors.region) {
+        setActiveStep(1);
+      } else if (formErrors.price) {
+        setActiveStep(2);
+      } else if (formErrors.codes) {
+        setActiveStep(4);
+      }
+      return;
+    }
+
     // Convert form data to listing format
     const updatedListing: Partial<Listing> = {
       title: formData.title,
       description: formData.description,
       price: parseFloat(formData.price),
-      originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+      originalPrice: formData.originalPrice
+        ? parseFloat(formData.originalPrice)
+        : undefined,
       platform: formData.platform,
       region: formData.isRegionLocked ? formData.region : undefined,
       isRegionLocked: formData.isRegionLocked,
@@ -392,20 +716,36 @@ const ListingForm: FC<ListingFormProps> = ({
       sellerNotes: formData.sellerNotes,
       codes: formData.codes
     };
-    
+
     onSubmit(updatedListing);
   };
 
-  return (
-      <Grid container spacing={3}>
-        {/* Basic Information */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h5" gutterBottom>
-              Basic Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
+  // Calculate discount percentage
+  const getDiscountPercentage = (): string => {
+    if (!formData.originalPrice || !formData.price) return '';
+
+    const originalPrice = parseFloat(formData.originalPrice);
+    const currentPrice = parseFloat(formData.price);
+
+    if (
+      isNaN(originalPrice) ||
+      isNaN(currentPrice) ||
+      originalPrice <= currentPrice
+    )
+      return '';
+
+    const discount = Math.round(
+      ((originalPrice - currentPrice) / originalPrice) * 100
+    );
+    return `${discount}% off`;
+  };
+
+  // Render different form sections based on the active tab
+  const renderFormSection = () => {
+    switch (section) {
+      case 'general':
+        return (
+          <Box sx={{ pt: 1 }}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
@@ -417,210 +757,414 @@ const ListingForm: FC<ListingFormProps> = ({
                   error={!!formErrors.title}
                   helperText={formErrors.title}
                   required
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SellIcon fontSize="small" />
+                      </InputAdornment>
+                    )
+                  }}
                 />
               </Grid>
-              
+
               <Grid item xs={12}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Description <span style={{ color: 'red' }}>*</span>
-                </Typography>
-                <EditorContainer className={formErrors.description ? 'error' : ''}>
+                <EditorContainer
+                  className={formErrors.description ? 'error' : ''}
+                >
                   <ReactQuill
-                    ref={quillRef}
                     theme="snow"
                     value={formData.description}
                     onChange={handleDescriptionChange}
-                    modules={{
-                      toolbar: [
-                        [{ header: [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        ['link', 'image'],
-                        ['clean'],
-                      ],
-                    }}
-                    style={{ minHeight: '200px' }}
-                    placeholder="Provide a detailed description of your product. Include important features, usage instructions, and any other information buyers should know. For digital products, specify platform compatibility, activation instructions, and any expiration details."
+                    placeholder="Enter a detailed description of your listing..."
                   />
                   {formErrors.description && (
-                    <div className="MuiFormHelperText-root Mui-error" style={{ fontWeight: 'bold' }}>
+                    <FormHelperText className="Mui-error">
                       {formErrors.description}
-                    </div>
+                    </FormHelperText>
                   )}
                 </EditorContainer>
               </Grid>
-              
-              <Grid item xs={12}>
+
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Thumbnail URL"
-                  name="thumbnailUrl"
-                  value={formData.thumbnailUrl}
+                  label="Price ($)"
+                  name="price"
+                  value={formData.price}
                   onChange={handleTextChange}
-                  error={!!formErrors.thumbnailUrl}
-                  helperText={formErrors.thumbnailUrl || 'Enter a URL for the product image'}
+                  error={!!formErrors.price}
+                  helperText={formErrors.price}
+                  required
+                  variant="outlined"
+                  type="number"
+                  inputProps={{ min: '0', step: '0.01' }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AttachMoneyIcon fontSize="small" />
+                      </InputAdornment>
+                    )
+                  }}
                 />
               </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-        
-        {/* Product Details */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h5" gutterBottom>
-              Product Details
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Original Price ($)"
+                  name="originalPrice"
+                  value={formData.originalPrice}
+                  onChange={handleTextChange}
+                  variant="outlined"
+                  type="number"
+                  inputProps={{ min: '0', step: '0.01' }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AttachMoneyIcon fontSize="small" />
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={!!formErrors.platform} required>
-                  <InputLabel>Platform</InputLabel>
+                  <InputLabel id="platform-label">Platform</InputLabel>
                   <Select
+                    labelId="platform-label"
                     name="platform"
                     value={formData.platform}
                     onChange={handleSelectChange}
                     label="Platform"
                   >
-                    {platforms.map((platform) => (
-                      <MenuItem key={platform} value={platform}>
-                        {platform}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="">Select Platform</MenuItem>
+                    <MenuItem value="steam">Steam</MenuItem>
+                    <MenuItem value="epic">Epic Games</MenuItem>
+                    <MenuItem value="uplay">Ubisoft Connect</MenuItem>
+                    <MenuItem value="origin">EA App / Origin</MenuItem>
+                    <MenuItem value="gog">GOG</MenuItem>
+                    <MenuItem value="battlenet">Battle.net</MenuItem>
+                    <MenuItem value="microsoft">Microsoft Store</MenuItem>
+                    <MenuItem value="playstation">PlayStation</MenuItem>
+                    <MenuItem value="xbox">Xbox</MenuItem>
+                    <MenuItem value="nintendo">Nintendo</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
                   </Select>
-                  {formErrors.platform && <FormHelperText>{formErrors.platform}</FormHelperText>}
+                  {formErrors.platform && (
+                    <FormHelperText>{formErrors.platform}</FormHelperText>
+                  )}
                 </FormControl>
               </Grid>
-              
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth error={!!formErrors.region}>
+                  <InputLabel id="region-label">Region</InputLabel>
+                  <Select
+                    labelId="region-label"
+                    name="region"
+                    value={formData.region}
+                    onChange={handleSelectChange}
+                    label="Region"
+                  >
+                    <MenuItem value="">Select Region</MenuItem>
+                    <MenuItem value="global">Global</MenuItem>
+                    <MenuItem value="europe">Europe</MenuItem>
+                    <MenuItem value="north_america">North America</MenuItem>
+                    <MenuItem value="south_america">South America</MenuItem>
+                    <MenuItem value="asia">Asia</MenuItem>
+                    <MenuItem value="oceania">Oceania</MenuItem>
+                    <MenuItem value="africa">Africa</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
+                  </Select>
+                  {formErrors.region && (
+                    <FormHelperText>{formErrors.region}</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
                 <FormControlLabel
                   control={
                     <Switch
                       checked={formData.isRegionLocked}
-                      onChange={handleTextChange}
-                      name="isRegionLocked"
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          isRegionLocked: e.target.checked
+                        })
+                      }
                       color="primary"
                     />
                   }
-                  label="Region Locked"
+                  label="This product is region-locked"
                 />
               </Grid>
-              
-              {formData.isRegionLocked && (
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth error={!!formErrors.region} required>
-                    <InputLabel>Region</InputLabel>
-                    <Select
-                      name="region"
-                      value={formData.region}
-                      onChange={handleSelectChange}
-                      label="Region"
-                    >
-                      {regions.map((region) => (
-                        <MenuItem key={region} value={region}>
-                          {region}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {formErrors.region && <FormHelperText>{formErrors.region}</FormHelperText>}
-                  </FormControl>
-                </Grid>
-              )}
-              
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
+                  <InputLabel id="status-label">Status</InputLabel>
                   <Select
+                    labelId="status-label"
                     name="status"
                     value={formData.status}
                     onChange={handleSelectChange}
                     label="Status"
                   >
-                    {statuses.map((status) => (
-                      <MenuItem key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="draft">Draft</MenuItem>
+                    <MenuItem value="paused">Paused</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DatePicker
-                    label="Expiration Date"
+                    label="Expiration Date (Optional)"
                     value={formData.expirationDate}
-                    onChange={handleDateChange}
+                    onChange={(newValue) => {
+                      handleDateChange(newValue);
+                    }}
                     renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        helperText="When the product codes expire (optional)"
-                      />
+                      <TextField {...params} fullWidth variant="outlined" />
                     )}
                   />
                 </LocalizationProvider>
               </Grid>
-              
 
-            </Grid>
-          </Paper>
-        </Grid>
-        
-        {/* Pricing */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h5" gutterBottom>
-              Pricing
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Price"
-                  name="price"
-                  value={formData.price}
+                  label="Seller Notes (Optional)"
+                  name="sellerNotes"
+                  value={formData.sellerNotes}
                   onChange={handleTextChange}
+                  multiline
+                  rows={3}
+                  variant="outlined"
+                  placeholder="Add any private notes about this listing (only visible to you)"
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <NotesIcon fontSize="small" />
+                      </InputAdornment>
+                    )
                   }}
-                  error={!!formErrors.price}
-                  helperText={formErrors.price}
-                  required
                 />
               </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Original Price (before discount)"
-                  name="originalPrice"
-                  value={formData.originalPrice}
-                  onChange={handleTextChange}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                  helperText="Leave empty if there's no discount"
-                />
-              </Grid>
+
+              {!hideSubmitButton && (
+                <Grid item xs={12}>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      startIcon={
+                        isSubmitting ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <SaveIcon />
+                        )
+                      }
+                      sx={{ borderRadius: 2 }}
+                    >
+                      {isSubmitting ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </Box>
+                </Grid>
+              )}
             </Grid>
-          </Paper>
-        </Grid>
-        
-        {/* Tags and Languages */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h5" gutterBottom>
-              Tags and Languages
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
+          </Box>
+        );
+
+      case 'codes':
+        return (
+          <Box sx={{ pt: 1 }}>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Autocomplete<string, true, undefined, true>
+              <Grid item xs={12}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <AlertTitle>Manage Product Codes</AlertTitle>
+                  Add, edit, or remove product codes for this listing. Each code
+                  must follow the platform's format requirements.
+                </Alert>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    justifyContent: 'space-between',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    '& > *': { width: { xs: '100%', sm: 'auto' } }
+                  }}
+                >
+                  <TextField
+                    label="Add New Code"
+                    sx={{ width: { xs: '100%', sm: '60%' } }}
+                    name="newCode"
+                    value={formData.newCode}
+                    onChange={handleTextChange}
+                    error={!!formErrors.newCode}
+                    helperText={formErrors.newCode}
+                    variant="outlined"
+                    placeholder="Enter product code to add"
+                    onKeyDown={handleCodeKeyDown}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <CodeIcon fontSize="small" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    sx={{
+                      width: { xs: '100%', sm: '35%' },
+                      borderRadius: 2,
+                      minWidth: '120px'
+                    }}
+                    color="primary"
+                    onClick={handleAddCode}
+                    disabled={!formData.newCode.trim()}
+                    startIcon={<AddIcon />}
+                  >
+                    Add Code
+                  </Button>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  {formData.codes?.length || 0} Codes Added
+                </Typography>
+
+                <Box sx={{ maxHeight: '400px', overflow: 'auto', pr: 1 }}>
+                  {formData.codes && formData.codes.length > 0 ? (
+                    formData.codes.map((codeItem, index) => (
+                      <CodeItem
+                        key={index}
+                        className={codeItem.soldStatus === 'sold' ? 'sold' : ''}
+                      >
+                        <CardContent>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontFamily: 'monospace',
+                                  wordBreak: 'break-all'
+                                }}
+                              >
+                                {codeItem.code}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  mt: 0.5
+                                }}
+                              >
+                                <Chip
+                                  label={
+                                    codeItem.soldStatus === 'active'
+                                      ? 'On Sale'
+                                      : 'Sold'
+                                  }
+                                  size="small"
+                                  color={
+                                    codeItem.soldStatus === 'active'
+                                      ? 'success'
+                                      : 'default'
+                                  }
+                                  sx={{ height: 20, fontSize: '0.7rem' }}
+                                />
+                                {codeItem.soldStatus === 'sold' &&
+                                  codeItem.soldAt && (
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{ ml: 1 }}
+                                    >
+                                      Sold:{' '}
+                                      {new Date(
+                                        codeItem.soldAt
+                                      ).toLocaleDateString()}
+                                    </Typography>
+                                  )}
+                              </Box>
+                            </Box>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteCode(codeItem.code)}
+                              disabled={codeItem.soldStatus === 'sold'}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </CardContent>
+                      </CodeItem>
+                    ))
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ py: 2, textAlign: 'center' }}
+                    >
+                      No codes added yet. Add your first code above.
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+
+              {!hideSubmitButton && (
+                <Grid item xs={12}>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      startIcon={
+                        isSubmitting ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <SaveIcon />
+                        )
+                      }
+                      sx={{ borderRadius: 2 }}
+                    >
+                      {isSubmitting ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+        );
+
+      case 'tagsLanguages':
+        return (
+          <Box sx={{ pt: 1 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Autocomplete
                   multiple
                   freeSolo
                   options={[]}
@@ -633,32 +1177,57 @@ const ListingForm: FC<ListingFormProps> = ({
                   }}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
-                      <Chip 
-                        key={`tag-${option}-${index}`}
-                        variant="outlined" 
-                        label={option} 
-                        size="small"
-                        {...getTagProps({ index })} 
+                      <Chip
+                        label={option}
+                        {...getTagProps({ index })}
+                        key={index}
                       />
                     ))
                   }
                   renderInput={(params) => (
                     <TextField
                       {...params}
+                      label="Tags"
+                      placeholder="Add tags..."
+                      helperText="Press Enter to add a new tag"
                       fullWidth
-                      label="Tags (Optional)"
-                      placeholder="Add tags and press Enter"
-                      helperText="Add keywords to help buyers find your listing"
+                      variant="outlined"
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <LocalOfferIcon fontSize="small" />
+                            </InputAdornment>
+                            {params.InputProps.startAdornment}
+                          </>
+                        )
+                      }}
                     />
                   )}
                 />
               </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Autocomplete<string, true, undefined, true>
+
+              <Grid item xs={12}>
+                <Autocomplete
                   multiple
-                  freeSolo
-                  options={[]}
+                  options={[
+                    'English',
+                    'Spanish',
+                    'French',
+                    'German',
+                    'Italian',
+                    'Portuguese',
+                    'Russian',
+                    'Japanese',
+                    'Chinese',
+                    'Korean',
+                    'Arabic',
+                    'Polish',
+                    'Dutch',
+                    'Swedish',
+                    'Turkish'
+                  ]}
                   value={formData.supportedLanguages}
                   onChange={(event, newValue: string[]) => {
                     setFormData({
@@ -668,137 +1237,191 @@ const ListingForm: FC<ListingFormProps> = ({
                   }}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
-                      <Chip 
-                        key={`lang-${option}-${index}`}
-                        variant="outlined" 
-                        label={option} 
-                        size="small"
+                      <Chip
+                        label={option}
+                        {...getTagProps({ index })}
+                        key={index}
                         color="secondary"
-                        {...getTagProps({ index })} 
                       />
                     ))
                   }
                   renderInput={(params) => (
                     <TextField
                       {...params}
+                      label="Supported Languages"
+                      placeholder="Select languages..."
+                      helperText="Select all languages supported by this product"
                       fullWidth
-                      label="Supported Languages (Optional)"
-                      placeholder="Add languages and press Enter"
-                      helperText="Languages supported by this product"
+                      variant="outlined"
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <LanguageIcon fontSize="small" />
+                            </InputAdornment>
+                            {params.InputProps.startAdornment}
+                          </>
+                        )
+                      }}
                     />
                   )}
                 />
               </Grid>
+
+              {!hideSubmitButton && (
+                <Grid item xs={12}>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      startIcon={
+                        isSubmitting ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <SaveIcon />
+                        )
+                      }
+                      sx={{ borderRadius: 2 }}
+                    >
+                      {isSubmitting ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </Box>
+                </Grid>
+              )}
             </Grid>
-          </Paper>
-        </Grid>
-        
-        {/* Product Codes */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              Product Codes
-              <Tooltip 
-                title="These codes will be delivered to buyers after purchase. You can manage them here." 
-                arrow
-              >
-                <IconButton size="small" sx={{ p: 0 }}>
-                  <InfoOutlinedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
+          </Box>
+        );
+
+      case 'images':
+        return (
+          <Box sx={{ pt: 1 }}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                {formErrors.codes && (
-                  <Typography color="error" variant="body2" sx={{ mb: 2 }}>
-                    {formErrors.codes}
-                  </Typography>
-                )}
-                
-                {formData.codes && formData.codes.length > 0 ? (
-                  <Box sx={{ mb: 2 }}>
-                    {formData.codes.map((code, index) => (
-                      <CodeItem 
-                        key={`code-${index}`}
-                        className={code.soldStatus !== 'active' ? 'sold' : ''}
-                      >
-                        <Box>
-                          <Typography variant="body1" fontWeight="medium">
-                            {code.code}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Status: {code.soldStatus.charAt(0).toUpperCase() + code.soldStatus.slice(1)}
-                            {code.soldAt && ` • Sold: ${new Date(code.soldAt).toLocaleDateString()}`}
-                          </Typography>
-                        </Box>
-                        {code.soldStatus === 'active' && (
-                          <IconButton 
-                            color="error" 
-                            size="small" 
-                            onClick={() => handleDeleteCode(code.code)}
-                            title="Delete code"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </CodeItem>
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography color="text.secondary" sx={{ mb: 2 }}>
-                    No product codes available. Please add at least one code.
-                  </Typography>
-                )}
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <AlertTitle>Manage Listing Images</AlertTitle>
+                  Update the thumbnail image for your listing. A good image
+                  helps your listing stand out.
+                </Alert>
               </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-        
-        {/* Seller Notes */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h5" gutterBottom>
-              Seller Notes (Private)
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
-            <Grid container spacing={2}>
+
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Private Notes"
-                  name="sellerNotes"
-                  value={formData.sellerNotes}
+                  label="Thumbnail URL"
+                  name="thumbnailUrl"
+                  value={formData.thumbnailUrl}
                   onChange={handleTextChange}
-                  multiline
-                  rows={3}
-                  placeholder="Add private notes about this listing (not visible to buyers)"
-                  helperText="These notes are only visible to you and will not be shown to buyers"
+                  error={!!formErrors.thumbnailUrl}
+                  helperText={
+                    formErrors.thumbnailUrl ||
+                    'URL to the main image for this listing'
+                  }
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <ImageIcon fontSize="small" />
+                      </InputAdornment>
+                    )
+                  }}
                 />
               </Grid>
+
+              {formData.thumbnailUrl && (
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 2,
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: 1,
+                      textAlign: 'center'
+                    }}
+                  >
+                    <Typography variant="subtitle2" gutterBottom>
+                      Current Thumbnail Preview
+                    </Typography>
+                    <Box
+                      component="img"
+                      src={formData.thumbnailUrl}
+                      alt="Listing thumbnail"
+                      sx={{
+                        maxWidth: '100%',
+                        maxHeight: '300px',
+                        objectFit: 'contain',
+                        borderRadius: 1,
+                        boxShadow: theme.shadows[1]
+                      }}
+                      onError={(e) => {
+                        const width =
+                          window.innerWidth > theme.breakpoints.values.md
+                            ? 800
+                            : window.innerWidth > theme.breakpoints.values.sm
+                            ? 600
+                            : 400;
+                        if (e.currentTarget.src !== formData.thumbnailUrl) {
+                          e.currentTarget.src = formData.thumbnailUrl;
+                          return;
+                        }
+                        const svg = encodeURIComponent(`
+                          <svg width="${width}" height="${Math.round(
+                          width * 0.66
+                        )}" 
+                               xmlns="http://www.w3.org/2000/svg">
+                            <rect width="100%" height="100%" fill="#e0e0e0"/>
+                            <text x="50%" y="50%" dominant-baseline="middle" 
+                                  text-anchor="middle" font-family="Arial" 
+                                  font-size="20" fill="#666">
+                              Thumbnail Preview
+                            </text>
+                          </svg>
+                        `);
+                        e.currentTarget.src = `data:image/svg+xml,${svg}`;
+                      }}
+                    />
+                  </Box>
+                </Grid>
+              )}
+
+              {!hideSubmitButton && (
+                <Grid item xs={12}>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      startIcon={
+                        isSubmitting ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <SaveIcon />
+                        )
+                      }
+                      sx={{ borderRadius: 2 }}
+                    >
+                      {isSubmitting ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </Box>
+                </Grid>
+              )}
             </Grid>
-          </Paper>
-        </Grid>
-        
-        {/* Submit Button */}
-        <Grid item xs={12}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              startIcon={isSubmitting && <CircularProgress size={20} color="inherit" />}
-              size="large"
-            >
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
-            </Button>
           </Box>
-        </Grid>
-      </Grid>
-  );
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return <Box>{renderFormSection()}</Box>;
 };
 
 export default ListingForm;

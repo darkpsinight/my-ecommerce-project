@@ -1,14 +1,22 @@
 import { FC } from 'react';
-import { DialogActions, Button, Box, Typography } from '@mui/material';
+import { DialogActions, Button, Box, Typography, CircularProgress } from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import { Listing } from '../../../types';
 
 interface ModalFooterProps {
   onClose: () => void;
   lastUpdated?: string | Date | null;
+  showSaveButton?: boolean;
+  onSave?: (updatedData: Partial<Listing>) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const ModalFooter: FC<ModalFooterProps> = ({ 
   onClose,
-  lastUpdated
+  lastUpdated,
+  showSaveButton = false,
+  onSave,
+  isSubmitting = false
 }) => {
   const formatDate = (date: string | Date | null): string => {
     if (!date) return '';
@@ -28,6 +36,12 @@ const ModalFooter: FC<ModalFooterProps> = ({
     }
   };
 
+  const handleSave = () => {
+    if (onSave) {
+      onSave({});
+    }
+  };
+
   return (
     <DialogActions
       sx={{
@@ -44,13 +58,28 @@ const ModalFooter: FC<ModalFooterProps> = ({
           </Typography>
         </Box>
       )}
-      <Button
-        onClick={onClose}
-        color="primary"
-        variant="outlined"
-      >
-        Close
-      </Button>
+      <Box sx={{ display: 'flex', gap: 2, flexGrow: 1 }}>
+        <Button
+          onClick={onClose}
+          color="primary"
+          variant="outlined"
+          sx={{ mr: 'auto' }}
+        >
+          Close
+        </Button>
+        
+        {showSaveButton && onSave && (
+          <Button
+            onClick={handleSave}
+            color="primary"
+            variant="contained"
+            disabled={isSubmitting}
+            startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+          >
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </Button>
+        )}
+      </Box>
     </DialogActions>
   );
 };

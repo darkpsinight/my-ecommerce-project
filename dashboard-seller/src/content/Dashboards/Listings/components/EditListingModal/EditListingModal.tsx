@@ -42,6 +42,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [activeCodes, setActiveCodes] = useState(0);
 
   useEffect(() => {
     if (open) {
@@ -52,12 +53,20 @@ const EditListingModal: FC<EditListingModalProps> = ({
       if (listingId && listings.length > 0) {
         const foundListing = listings.find((item) => item._id === listingId);
         setListing(foundListing || null);
+        
+        // Set initial active codes count
+        if (foundListing) {
+          const initialActiveCodes = getActiveCodes(foundListing);
+          setActiveCodes(initialActiveCodes);
+        }
+        
         // Simulate loading for better UX
         setTimeout(() => {
           setIsLoading(false);
         }, 500);
       } else {
         setListing(null);
+        setActiveCodes(0);
         setIsLoading(false);
       }
     }
@@ -65,6 +74,11 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handleCodesChange = (codesCount: number) => {
+    // For simplicity, we're assuming all new codes are active
+    setActiveCodes(codesCount);
   };
 
   const handleSubmit = async (updatedData: Partial<Listing>) => {
@@ -100,7 +114,6 @@ const EditListingModal: FC<EditListingModalProps> = ({
     return null;
   }
 
-  const activeCodes = listing ? getActiveCodes(listing) : 0;
   const totalCodes = listing ? getTotalCodes(listing) : 0;
   const discountPercentage = listing ? getDiscountPercentage(listing) : null;
 
@@ -164,6 +177,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 isSubmitting={isSubmitting}
                 section="general"
                 hideSubmitButton={true}
+                onCodesChange={handleCodesChange}
               />
             </TabPanel>
 
@@ -175,6 +189,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 isSubmitting={isSubmitting}
                 section="codes"
                 hideSubmitButton={true}
+                onCodesChange={handleCodesChange}
               />
             </TabPanel>
 
@@ -186,6 +201,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 isSubmitting={isSubmitting}
                 section="tagsLanguages"
                 hideSubmitButton={true}
+                onCodesChange={handleCodesChange}
               />
             </TabPanel>
 
@@ -198,6 +214,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                   isSubmitting={isSubmitting}
                   section="images"
                   hideSubmitButton={true}
+                  onCodesChange={handleCodesChange}
                 />
               </TabPanel>
             )}

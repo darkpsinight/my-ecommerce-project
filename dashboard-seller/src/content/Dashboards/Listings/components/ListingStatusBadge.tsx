@@ -17,7 +17,7 @@ const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({ status }) => {
         return 'warning.main';
       case 'expired':
         return 'text.secondary';
-      case 'paused':
+      case 'suspended':
         return 'error.main';
       default:
         return 'text.primary';

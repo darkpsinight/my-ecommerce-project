@@ -8,7 +8,7 @@ import {
   ListItemText
 } from '@mui/material';
 import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone';
-import PauseCircleTwoToneIcon from '@mui/icons-material/PauseCircleTwoTone';
+import BlockTwoToneIcon from '@mui/icons-material/BlockTwoTone';
 import DownloadTwoToneIcon from '@mui/icons-material/DownloadTwoTone';
 import { BulkActionMenuItem } from '../types';
 
@@ -34,9 +34,9 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
       icon: <DeleteTwoToneIcon fontSize="small" />
     },
     {
-      action: 'pause',
-      label: 'Pause Selected',
-      icon: <PauseCircleTwoToneIcon fontSize="small" />
+      action: 'suspend',
+      label: 'Suspend Selected',
+      icon: <BlockTwoToneIcon fontSize="small" />
     },
     {
       action: 'export',

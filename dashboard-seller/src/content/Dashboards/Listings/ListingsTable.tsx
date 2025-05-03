@@ -104,8 +104,8 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
       case 'delete':
         window.alert(`Delete Selected: ${selected.join(', ')}`);
         break;
-      case 'pause':
-        window.alert(`Pause Selected: ${selected.join(', ')}`);
+      case 'suspend':
+        window.alert(`Suspend Selected: ${selected.join(', ')}`);
         break;
       case 'export':
         window.alert(`Export Selected to CSV: ${selected.join(', ')}`);

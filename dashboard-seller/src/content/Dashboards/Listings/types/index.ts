@@ -35,7 +35,7 @@ export interface ListingCode {
   soldAt?: string | Date;
 }
 
-export type ListingStatus = 'active' | 'draft' | 'sold' | 'expired' | 'paused';
+export type ListingStatus = 'active' | 'draft' | 'sold' | 'expired' | 'suspended';
 
 export interface ListingsTableProps {
   selected: string[];

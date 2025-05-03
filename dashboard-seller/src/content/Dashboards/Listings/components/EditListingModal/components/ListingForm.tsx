@@ -65,6 +65,7 @@ interface ListingFormProps {
   isSubmitting: boolean;
   section?: 'general' | 'codes' | 'tagsLanguages' | 'images';
   hideSubmitButton?: boolean;
+  onCodesChange?: (codesCount: number) => void;
 }
 
 // Styled container for the Quill editor with improved styling
@@ -223,7 +224,8 @@ const ListingForm: FC<ListingFormProps> = ({
   onSubmit,
   isSubmitting,
   section = 'general',
-  hideSubmitButton = false
+  hideSubmitButton = false,
+  onCodesChange
 }) => {
   const theme = useTheme();
 
@@ -287,8 +289,7 @@ const ListingForm: FC<ListingFormProps> = ({
   // Available statuses with color mapping
   const statuses = [
     { value: 'active', label: 'Active', color: 'success' },
-    { value: 'draft', label: 'Draft', color: 'warning' },
-    { value: 'paused', label: 'Paused', color: 'error' }
+    { value: 'draft', label: 'Draft', color: 'warning' }
   ];
 
   // Popular languages for autocomplete suggestions
@@ -438,7 +439,7 @@ const ListingForm: FC<ListingFormProps> = ({
     }
 
     // Check if code already exists
-    if (formData.codes?.some((c) => c.code === formData.newCode.trim())) {
+    if (formData.codes && formData.codes.some(c => c.code === formData.newCode.trim())) {
       setFormErrors({
         ...formErrors,
         newCode: 'This code already exists'
@@ -446,7 +447,6 @@ const ListingForm: FC<ListingFormProps> = ({
       return;
     }
 
-    setFormTouched(true);
     const newCodes = [
       ...(formData.codes || []),
       {
@@ -458,31 +458,35 @@ const ListingForm: FC<ListingFormProps> = ({
     setFormData({
       ...formData,
       codes: newCodes,
-      newCode: ''
+      newCode: '' // Clear the input
     });
 
-    // Clear error
-    if (formErrors.codes) {
-      setFormErrors({
-        ...formErrors,
-        codes: '',
-        newCode: ''
-      });
+    // Clear any errors
+    setFormErrors({
+      ...formErrors,
+      newCode: '',
+      codes: ''
+    });
+    
+    // Notify parent component about the code count change
+    if (onCodesChange) {
+      onCodesChange(newCodes.length);
     }
   };
 
   // Handle code deletion
   const handleDeleteCode = (codeToDelete: string) => {
-    if (!formData.codes) return;
-
-    setFormTouched(true);
-    const updatedCodes = formData.codes.filter(
-      (code) => code.code !== codeToDelete
-    );
+    const updatedCodes = formData.codes?.filter(c => c.code !== codeToDelete) || [];
+    
     setFormData({
       ...formData,
       codes: updatedCodes
     });
+    
+    // Notify parent component about the code count change
+    if (onCodesChange) {
+      onCodesChange(updatedCodes.length);
+    }
   };
 
   // Keydown handler for code input
@@ -914,7 +918,6 @@ const ListingForm: FC<ListingFormProps> = ({
                   >
                     <MenuItem value="active">Active</MenuItem>
                     <MenuItem value="draft">Draft</MenuItem>
-                    <MenuItem value="paused">Paused</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>

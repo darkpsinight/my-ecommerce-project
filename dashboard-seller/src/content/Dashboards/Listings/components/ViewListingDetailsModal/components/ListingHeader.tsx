@@ -31,7 +31,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
           sx={{
             fontWeight: 700,
             color: theme.palette.text.primary,
-            mb: 0.5,
+            mb: 2,
             fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
             lineHeight: 1.2,
             wordBreak: 'break-word'

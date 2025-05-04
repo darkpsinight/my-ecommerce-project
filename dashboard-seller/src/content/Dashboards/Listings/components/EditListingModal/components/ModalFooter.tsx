@@ -1,11 +1,10 @@
 import { FC } from 'react';
-import { DialogActions, Button, Box, Typography, CircularProgress } from '@mui/material';
+import { DialogActions, Button, Box, CircularProgress } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { Listing } from '../../../types';
 
 interface ModalFooterProps {
   onClose: () => void;
-  lastUpdated?: string | Date | null;
   showSaveButton?: boolean;
   onSave?: (updatedData: Partial<Listing>) => void;
   isSubmitting?: boolean;
@@ -13,29 +12,10 @@ interface ModalFooterProps {
 
 const ModalFooter: FC<ModalFooterProps> = ({ 
   onClose,
-  lastUpdated,
   showSaveButton = false,
   onSave,
   isSubmitting = false
 }) => {
-  const formatDate = (date: string | Date | null): string => {
-    if (!date) return '';
-    
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(dateObj);
-    } catch (error) {
-      console.error('Invalid date format:', date);
-      return '';
-    }
-  };
-
   const handleSave = () => {
     if (onSave) {
       // The actual form data will be collected in the ListingForm component
@@ -53,13 +33,6 @@ const ModalFooter: FC<ModalFooterProps> = ({
         borderTop: (theme) => `1px solid ${theme.palette.divider}`
       }}
     >
-      {lastUpdated && (
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Last updated: {formatDate(lastUpdated)}
-          </Typography>
-        </Box>
-      )}
       <Box sx={{ display: 'flex', gap: 2, flexGrow: 1 }}>
         <Button
           onClick={onClose}

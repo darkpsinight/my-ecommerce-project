@@ -10,7 +10,7 @@ import { getActiveCodes, getTotalCodes, getDiscountPercentage } from '../ViewLis
 
 // Import components
 import ModalHeader from './components/ModalHeader';
-import ListingHeader from '../ViewListingDetailsModal/components/ListingHeader';
+import ListingHeader from './components/ListingHeader';
 import TabNavigation from '../ViewListingDetailsModal/components/TabNavigation';
 import TabPanel from '../ViewListingDetailsModal/components/TabPanel';
 import ListingForm from './components/ListingForm';
@@ -220,6 +220,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
           <ListingHeader 
             listing={listing} 
             discountPercentage={discountPercentage} 
+            lastUpdated={listing.updatedAt}
           />
 
           <TabNavigation 
@@ -296,7 +297,6 @@ const EditListingModal: FC<EditListingModalProps> = ({
             showSaveButton={true}
             onSave={handleSubmit}
             isSubmitting={isSubmitting}
-            lastUpdated={listing.updatedAt}
           />
           <Toaster position="top-right" />
         </>

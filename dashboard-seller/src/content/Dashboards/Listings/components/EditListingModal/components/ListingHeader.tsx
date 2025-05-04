@@ -4,14 +4,34 @@ import { Listing } from '../../../types';
 import ListingStatusBadge from '../../ListingStatusBadge';
 import { formatCurrency } from '../../ViewListingDetailsModal/utils/formatters';
 import EditIcon from '@mui/icons-material/Edit';
+import UpdateIcon from '@mui/icons-material/Update';
 
 interface ListingHeaderProps {
   listing: Listing;
   discountPercentage: number | null;
+  lastUpdated: string | Date | null;
 }
 
-const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercentage }) => {
+const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercentage, lastUpdated }) => {
   const theme = useTheme();
+
+  const formatDate = (date: string | Date | null): string => {
+    if (!date) return '';
+    
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(dateObj);
+    } catch (error) {
+      console.error('Invalid date format:', date);
+      return '';
+    }
+  };
 
   return (
     <Box
@@ -20,110 +40,142 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
         pt: { xs: 2, sm: 2.5 },
         pb: { xs: 0.5, sm: 1 },
         display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        justifyContent: 'space-between',
-        gap: { xs: 1.5, sm: 1 }
+        flexDirection: 'column',
+        gap: { xs: 1, sm: 1 }
       }}
     >
-      <Box>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 700,
-            color: theme.palette.text.primary,
-            mb: 2,
-            fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
-            lineHeight: 1.2,
-            wordBreak: 'break-word'
-          }}
-        >
-          {listing.title}
-        </Typography>
+      {/* Last updated info */}
+      {lastUpdated && (
         <Box 
-          display="flex" 
-          alignItems="center" 
-          flexWrap="wrap" 
-          gap={1}
-          sx={{ mb: { xs: 1, sm: 0 } }}
-        >
-          <ListingStatusBadge status={listing.status} />
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              fontFamily: 'monospace',
-              fontSize: '0.75rem',
-              bgcolor: alpha(theme.palette.background.default, 0.7),
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              border: `1px solid ${theme.palette.divider}`
-            }}
-          >
-            ID: {listing._id}
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Price display */}
-      {listing.price !== undefined && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 1,
-            alignSelf: { xs: 'flex-start', sm: 'center' },
-            mt: { xs: 0.5, sm: 0 },
-            mb: { xs: 1, sm: 0 }
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            alignSelf: 'flex-end',
+            mb: 1
           }}
         >
-          <Typography
-            variant="h4"
-            component="span"
-            sx={{
-              fontWeight: 700,
-              color: theme.palette.primary.main,
-              lineHeight: 1,
-              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' }
-            }}
-          >
-            {formatCurrency(listing.price)}
+          <UpdateIcon 
+            fontSize="small" 
+            sx={{ 
+              color: theme.palette.text.secondary,
+              mr: 0.5,
+              fontSize: '0.875rem'
+            }} 
+          />
+          <Typography variant="caption" color="text.secondary">
+            Last updated: {formatDate(lastUpdated)}
           </Typography>
-
-          {discountPercentage && (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end'
-              }}
-            >
-              <Typography
-                variant="body2"
-                component="span"
-                sx={{
-                  textDecoration: 'line-through',
-                  color: theme.palette.text.secondary,
-                  mb: -0.5
-                }}
-              >
-                {formatCurrency(listing.originalPrice)}
-              </Typography>
-              <Chip
-                label={`-${discountPercentage}%`}
-                size="small"
-                color="error"
-                sx={{
-                  height: 20,
-                  fontSize: '0.7rem',
-                  fontWeight: 'bold'
-                }}
-              />
-            </Box>
-          )}
         </Box>
       )}
+
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          gap: { xs: 1.5, sm: 1 }
+        }}
+      >
+        <Box>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              color: theme.palette.text.primary,
+              mb: 2,
+              fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
+              lineHeight: 1.2,
+              wordBreak: 'break-word'
+            }}
+          >
+            {listing.title}
+          </Typography>
+          <Box 
+            display="flex" 
+            alignItems="center" 
+            flexWrap="wrap" 
+            gap={1}
+            sx={{ mb: { xs: 1, sm: 0 } }}
+          >
+            <ListingStatusBadge status={listing.status} />
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                fontFamily: 'monospace',
+                fontSize: '0.75rem',
+                bgcolor: alpha(theme.palette.background.default, 0.7),
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                border: `1px solid ${theme.palette.divider}`
+              }}
+            >
+              ID: {listing._id}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Price display */}
+        {listing.price !== undefined && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: 1,
+              alignSelf: { xs: 'flex-start', sm: 'center' },
+              mt: { xs: 0.5, sm: 0 },
+              mb: { xs: 1, sm: 0 }
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="span"
+              sx={{
+                fontWeight: 700,
+                color: theme.palette.primary.main,
+                lineHeight: 1,
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' }
+              }}
+            >
+              {formatCurrency(listing.price)}
+            </Typography>
+
+            {discountPercentage && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end'
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  component="span"
+                  sx={{
+                    textDecoration: 'line-through',
+                    color: theme.palette.text.secondary,
+                    mb: -0.5
+                  }}
+                >
+                  {formatCurrency(listing.originalPrice)}
+                </Typography>
+                <Chip
+                  label={`-${discountPercentage}%`}
+                  size="small"
+                  color="error"
+                  sx={{
+                    height: 20,
+                    fontSize: '0.7rem',
+                    fontWeight: 'bold'
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

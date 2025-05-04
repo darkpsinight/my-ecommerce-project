@@ -175,7 +175,7 @@ const getSellerListings = async (request, reply) => {
     // Find listings with filters, pagination, and sorting
     // We need to explicitly select the codes field which is normally excluded
     const listings = await Listing.find(filter)
-      .select('+codes.code +codes.iv')
+      .select('+codes.code +codes.iv +sellerNotes')
       .populate('categoryId', 'name') // Populate category information
       .skip(skip)
       .limit(limit)

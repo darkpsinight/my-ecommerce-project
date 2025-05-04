@@ -6,6 +6,7 @@ export interface CreateListingModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (response: any) => void;
+  initialCategories?: any[];
 }
 
 /**

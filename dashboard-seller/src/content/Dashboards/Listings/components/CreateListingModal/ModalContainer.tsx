@@ -145,7 +145,7 @@ const useModalContainerProps = () => {
 const CreateListingModal: FC<CreateListingModalProps> = (props) => {
   // Store props in the variable
   modalContainerProps = props;
-  const { open, onClose, onSubmit } = props;
+  const { open, onClose, onSubmit, initialCategories } = props;
 
   // Create a wrapper for onClose that resets the form
   const handleClose = () => {
@@ -153,7 +153,12 @@ const CreateListingModal: FC<CreateListingModalProps> = (props) => {
   };
 
   return (
-    <ModalProvider open={open} onClose={onClose} onSubmit={onSubmit}>
+    <ModalProvider 
+      open={open} 
+      onClose={onClose} 
+      onSubmit={onSubmit}
+      initialCategories={initialCategories}
+    >
       <Dialog
         open={open}
         onClose={handleClose}

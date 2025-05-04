@@ -14,13 +14,16 @@ interface ModalProviderProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (response: any) => void;
+  // Optional categories data that might be passed from parent
+  initialCategories?: any[];
 }
 
 export const ModalProvider: React.FC<ModalProviderProps> = ({ 
   children, 
   open, 
   onClose, 
-  onSubmit 
+  onSubmit,
+  initialCategories = [] 
 }) => {
   // Use custom hooks to manage different aspects of the component
   const { error, setError, bottomErrorRef } = useErrorHandling();
@@ -43,7 +46,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     setValidationError,
     regions,
     loading
-  } = useCategoryData(open, setError);
+  } = useCategoryData(open, setError, initialCategories);
   
   const {
     handleChange,

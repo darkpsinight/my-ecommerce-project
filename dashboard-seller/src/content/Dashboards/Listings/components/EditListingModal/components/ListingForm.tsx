@@ -1,4 +1,4 @@
-import { FC, useState, useEffect, useRef } from 'react';
+import { FC, useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   Grid,
   TextField,
@@ -57,7 +57,7 @@ import 'react-quill/dist/quill.snow.css';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { Listing } from '../../../types';
+import { Listing, ListingStatus } from '../../../types';
 
 interface ListingFormProps {
   listing: Listing;
@@ -196,14 +196,19 @@ interface FormData {
   region: string;
   isRegionLocked: boolean;
   expirationDate: Date | null;
+  categoryId: string;
   supportedLanguages: string[];
   thumbnailUrl: string;
+  autoDelivery: boolean;
   tags: string[];
-  status: string;
+  status: ListingStatus;
   sellerNotes: string;
   codes:
     | Array<{ code: string; soldStatus: string; soldAt?: string | Date }>
     | undefined;
+  code: string;
+  soldStatus: string;
+  soldAt?: string | Date;
   newCode: string;
 }
 
@@ -219,38 +224,46 @@ interface FormErrors {
   newCode: string;
 }
 
-const ListingForm: FC<ListingFormProps> = ({
+const ListingForm = forwardRef<
+  { 
+    validateForm: () => boolean; 
+    getFormData: () => Partial<Listing>;
+  },
+  ListingFormProps
+>(({
   listing,
   onSubmit,
   isSubmitting,
   section = 'general',
   hideSubmitButton = false,
   onCodesChange
-}) => {
+}, ref) => {
   const theme = useTheme();
-
-  // Initialize form data from listing
+  const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     title: listing.title || '',
     description: listing.description || '',
-    price: listing.price?.toString() || '',
-    originalPrice: listing.originalPrice?.toString() || '',
+    price: listing.price ? listing.price.toString() : '',
+    originalPrice: listing.originalPrice ? listing.originalPrice.toString() : '',
     platform: listing.platform || '',
-    region: listing.region || '',
+    region: listing.region || 'Global',
     isRegionLocked: listing.isRegionLocked || false,
-    expirationDate: listing.expirationDate
-      ? new Date(listing.expirationDate)
-      : null,
+    expirationDate: listing.expirationDate ? new Date(listing.expirationDate) : null,
+    categoryId: typeof listing.categoryId === 'object' ? listing.categoryId._id : (listing.categoryId || ''),
     supportedLanguages: listing.supportedLanguages || [],
     thumbnailUrl: listing.thumbnailUrl || '',
+    autoDelivery: listing.autoDelivery || false,
     tags: listing.tags || [],
-    status: listing.status || 'active',
+    status: listing.status as ListingStatus,
     sellerNotes: listing.sellerNotes || '',
     codes: listing.codes || [],
+    code: '',
+    soldStatus: 'active',
+    soldAt: undefined,
     newCode: ''
   });
 
-  // Form validation errors
+  // Initialize form data from listing
   const [formErrors, setFormErrors] = useState<FormErrors>({
     title: '',
     description: '',
@@ -335,7 +348,6 @@ const ListingForm: FC<ListingFormProps> = ({
   ];
 
   // UI state
-  const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [formTouched, setFormTouched] = useState(false);
   const quillRef = useRef<ReactQuill>(null);
@@ -716,7 +728,7 @@ const ListingForm: FC<ListingFormProps> = ({
       supportedLanguages: formData.supportedLanguages,
       thumbnailUrl: formData.thumbnailUrl,
       tags: formData.tags,
-      status: formData.status as any,
+      status: formData.status as ListingStatus,
       sellerNotes: formData.sellerNotes,
       codes: formData.codes
     };
@@ -1424,7 +1436,53 @@ const ListingForm: FC<ListingFormProps> = ({
     }
   };
 
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    validateForm: () => {
+      return validateForm();
+    },
+    getFormData: () => {
+      // Convert form data to listing data format
+      const listingData: Partial<Listing> = {};
+      
+      // Only include fields that are relevant to the current section
+      if (section === 'general') {
+        listingData.title = formData.title;
+        listingData.description = formData.description;
+        listingData.price = parseFloat(formData.price);
+        if (formData.originalPrice) {
+          listingData.originalPrice = parseFloat(formData.originalPrice);
+        }
+        listingData.platform = formData.platform;
+        listingData.region = formData.region;
+        listingData.isRegionLocked = formData.isRegionLocked;
+        listingData.categoryId = formData.categoryId;
+        listingData.status = formData.status as ListingStatus;
+        listingData.autoDelivery = formData.autoDelivery;
+      }
+      
+      if (section === 'codes') {
+        listingData.codes = formData.codes;
+        if (formData.expirationDate) {
+          listingData.expirationDate = formData.expirationDate;
+        }
+        listingData.sellerNotes = formData.sellerNotes;
+      }
+      
+      if (section === 'tagsLanguages') {
+        listingData.tags = formData.tags;
+        listingData.supportedLanguages = formData.supportedLanguages;
+      }
+      
+      if (section === 'images') {
+        listingData.thumbnailUrl = formData.thumbnailUrl;
+      }
+      
+      return listingData;
+    }
+  }));
+
   return <Box>{renderFormSection()}</Box>;
-};
+});
 
 export default ListingForm;

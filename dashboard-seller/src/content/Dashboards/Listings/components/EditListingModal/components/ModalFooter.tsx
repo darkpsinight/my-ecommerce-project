@@ -7,7 +7,7 @@ interface ModalFooterProps {
   onClose: () => void;
   lastUpdated?: string | Date | null;
   showSaveButton?: boolean;
-  onSave?: (updatedData: Partial<Listing>) => Promise<void>;
+  onSave?: (updatedData: Partial<Listing>) => void;
   isSubmitting?: boolean;
 }
 
@@ -38,6 +38,8 @@ const ModalFooter: FC<ModalFooterProps> = ({
 
   const handleSave = () => {
     if (onSave) {
+      // The actual form data will be collected in the ListingForm component
+      // This just triggers the save action
       onSave({});
     }
   };

@@ -1,4 +1,4 @@
-import { FC, useState, useContext, useEffect } from 'react';
+import { FC, useState, useContext, useEffect, useCallback } from 'react';
 import { Card } from '@mui/material';
 import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
 
@@ -38,22 +38,30 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [activeFilters, setActiveFilters] = useState<ActiveFilterDisplay>({});
+  const [categoriesLoaded, setCategoriesLoaded] = useState<boolean>(false);
 
+  // Fetch categories and platforms from API - but only when needed
+  const fetchCategories = useCallback(async () => {
+    if (categoriesLoaded) return; // Skip if already loaded
+    
+    const data = await getCategories();
+    if (data && data.success && Array.isArray(data.data)) {
+      setCategories(data.data);
+      const allPlatforms = data.data.flatMap((cat) => cat.platforms.filter((p) => p.isActive));
+      setPlatforms(allPlatforms);
+      setCategoriesLoaded(true);
+    } else {
+      setCategories([]);
+      setPlatforms([]);
+    }
+  }, [categoriesLoaded]);
+
+  // Only fetch categories when filters are shown or modal is opened
   useEffect(() => {
-    // Fetch categories and platforms from API
-    const fetchCategories = async () => {
-      const data = await getCategories();
-      if (data && data.success && Array.isArray(data.data)) {
-        setCategories(data.data);
-        const allPlatforms = data.data.flatMap((cat) => cat.platforms.filter((p) => p.isActive));
-        setPlatforms(allPlatforms);
-      } else {
-        setCategories([]);
-        setPlatforms([]);
-      }
-    };
-    fetchCategories();
-  }, []);
+    if (showFilters || openModal) {
+      fetchCategories();
+    }
+  }, [showFilters, openModal, fetchCategories]);
 
   // Update platforms when category changes
   useEffect(() => {
@@ -123,40 +131,41 @@ const ListingsActions: FC<ListingsActionsProps> = ({
       endDate: endDateISO
     };
     
-    // Update active filters for UI display
+    // Update the active filters display
     const newActiveFilters: ActiveFilterDisplay = {};
     
     if (category !== 'all') {
-      const categoryName = categories.find(cat => cat._id === category)?.name || category;
-      newActiveFilters.category = `Category: ${categoryName}`;
+      const selectedCat = categories.find(c => c._id === category);
+      newActiveFilters.category = selectedCat ? selectedCat.name : category;
     }
     
     if (platform !== 'all') {
-      newActiveFilters.platform = `Platform: ${platform}`;
+      const selectedPlat = platforms.find(p => p.slug === platform);
+      newActiveFilters.platform = selectedPlat ? selectedPlat.name : platform;
     }
     
     if (status !== 'all') {
-      newActiveFilters.status = `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+      newActiveFilters.status = status.charAt(0).toUpperCase() + status.slice(1);
     }
     
     if (searchTerm) {
-      newActiveFilters.title = `Title: ${searchTerm}`;
+      newActiveFilters.title = searchTerm;
     }
     
     if (minPrice) {
-      newActiveFilters.minPrice = `Min: ${minPrice}`;
+      newActiveFilters.minPrice = `$${minPrice}`;
     }
     
     if (maxPrice) {
-      newActiveFilters.maxPrice = `Max: ${maxPrice}`;
+      newActiveFilters.maxPrice = `$${maxPrice}`;
     }
     
     if (startDate) {
-      newActiveFilters.startDate = `From: ${startDate}`;
+      newActiveFilters.startDate = startDate;
     }
     
     if (endDate) {
-      newActiveFilters.endDate = `To: ${endDate}`;
+      newActiveFilters.endDate = endDate;
     }
     
     setActiveFilters(newActiveFilters);
@@ -165,6 +174,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   };
 
   const handleClearFilters = () => {
+    // Reset all filter values
     setCategory('all');
     setPlatform('all');
     setStatus('all');
@@ -173,20 +183,18 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     setMaxPrice('');
     setStartDate('');
     setEndDate('');
+    
+    // Clear active filters display
     setActiveFilters({});
-    setFilters({
-      category: undefined,
-      platform: undefined,
-      status: undefined,
-      title: undefined,
-      minPrice: undefined,
-      maxPrice: undefined,
-      startDate: undefined,
-      endDate: undefined
-    });
+    
+    // Reset context filters
+    setFilters({});
+    
+    // Hide filter panel
+    setShowFilters(false);
   };
 
-  const handleRemoveFilter = (key) => {
+  const handleRemoveFilter = (key: string) => {
     // Update the UI state first
     const newActiveFilters = { ...activeFilters };
     delete newActiveFilters[key];
@@ -304,6 +312,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
         open={openModal}
         onClose={handleCloseModal}
         onSubmit={handleCreateListing}
+        initialCategories={categories}
       />
       <ToastContainer />
     </Card>

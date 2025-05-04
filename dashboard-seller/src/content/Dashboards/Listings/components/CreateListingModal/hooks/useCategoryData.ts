@@ -6,8 +6,12 @@ import { Category } from '../types';
 /**
  * Hook to manage category and platform data
  */
-export const useCategoryData = (open: boolean, setError: (error: string | null) => void) => {
-  const [categories, setCategories] = useState<Category[]>([]);
+export const useCategoryData = (
+  open: boolean, 
+  setError: (error: string | null) => void,
+  initialCategories: Category[] = []
+) => {
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [availablePlatforms, setAvailablePlatforms] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [patterns, setPatterns] = useState<Pattern[]>([]);
@@ -15,6 +19,7 @@ export const useCategoryData = (open: boolean, setError: (error: string | null) 
   const [patternLoading, setPatternLoading] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [categoriesLoaded, setCategoriesLoaded] = useState<boolean>(initialCategories.length > 0);
   
   // Default regions
   const regions = [
@@ -28,7 +33,7 @@ export const useCategoryData = (open: boolean, setError: (error: string | null) 
     'Other'
   ];
 
-  // Fetch categories when component mounts or when modal opens
+  // Fetch categories only when the modal is actually opened
   useEffect(() => {
     const fetchCategoriesData = async () => {
       try {
@@ -36,6 +41,7 @@ export const useCategoryData = (open: boolean, setError: (error: string | null) 
         const response = await getCategories();
         if (response && response.success && response.data) {
           setCategories(response.data);
+          setCategoriesLoaded(true);
         } else {
           setError(
             'Failed to load categories: ' +
@@ -50,10 +56,11 @@ export const useCategoryData = (open: boolean, setError: (error: string | null) 
       }
     };
 
-    if (open) {
+    // Only fetch categories if the modal is open and we haven't loaded them yet
+    if (open && !categoriesLoaded) {
       fetchCategoriesData();
     }
-  }, [open, setError]);
+  }, [open, setError, categoriesLoaded]);
 
   return {
     categories,

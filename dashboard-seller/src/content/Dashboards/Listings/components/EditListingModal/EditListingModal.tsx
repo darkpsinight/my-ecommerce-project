@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, Zoom, useTheme, alpha, CircularProgress, Box, Tabs, Tab, Typography } from '@mui/material';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -15,6 +15,9 @@ import TabNavigation from '../ViewListingDetailsModal/components/TabNavigation';
 import TabPanel from '../ViewListingDetailsModal/components/TabPanel';
 import ListingForm from './components/ListingForm';
 import ModalFooter from './components/ModalFooter';
+
+// Import API service
+import { updateListing } from '../../../../../services/api/listings';
 
 // Import icons
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -43,6 +46,12 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [activeCodes, setActiveCodes] = useState(0);
+  
+  // Create refs to access the ListingForm components
+  const generalFormRef = useRef<any>(null);
+  const codesFormRef = useRef<any>(null);
+  const tagsLanguagesFormRef = useRef<any>(null);
+  const imagesFormRef = useRef<any>(null);
 
   useEffect(() => {
     if (open) {
@@ -81,30 +90,88 @@ const EditListingModal: FC<EditListingModalProps> = ({
     setActiveCodes(codesCount);
   };
 
-  const handleSubmit = async (updatedData: Partial<Listing>) => {
+  // Get the current form ref based on the active tab
+  const getCurrentFormRef = () => {
+    switch (tabValue) {
+      case 0:
+        return generalFormRef;
+      case 1:
+        return codesFormRef;
+      case 2:
+        return tagsLanguagesFormRef;
+      case 3:
+        return imagesFormRef;
+      default:
+        return generalFormRef;
+    }
+  };
+
+  // Collect form data from all tabs
+  const collectFormData = () => {
+    const formData: Partial<Listing> = {};
+    
+    // Get data from each form if available
+    if (generalFormRef.current?.getFormData) {
+      Object.assign(formData, generalFormRef.current.getFormData());
+    }
+    
+    if (codesFormRef.current?.getFormData) {
+      Object.assign(formData, codesFormRef.current.getFormData());
+    }
+    
+    if (tagsLanguagesFormRef.current?.getFormData) {
+      Object.assign(formData, tagsLanguagesFormRef.current.getFormData());
+    }
+    
+    if (imagesFormRef.current?.getFormData) {
+      Object.assign(formData, imagesFormRef.current.getFormData());
+    }
+    
+    return formData;
+  };
+
+  const handleSubmit = async (updatedData: Partial<Listing> = {}) => {
     if (!listing) return;
+    
+    // Get the current form ref
+    const currentFormRef = getCurrentFormRef();
+    
+    // Validate the current form
+    if (currentFormRef.current?.validateForm && !currentFormRef.current.validateForm()) {
+      toast.error('Please fix the errors in the form before submitting');
+      return;
+    }
+    
+    // Collect data from all forms
+    const formData = collectFormData();
+    
+    // Convert categoryId to string if it's an object
+    const apiData: any = { ...formData };
+    if (apiData.categoryId && typeof apiData.categoryId === 'object') {
+      apiData.categoryId = apiData.categoryId._id;
+    }
     
     setIsSubmitting(true);
     try {
-      // Here you would make an API call to update the listing
-      // For now, we'll simulate a successful update
+      // Make the API call to update the listing
+      const response = await updateListing(listing._id, apiData);
+      
+      // Create an updated listing object with the response data and existing data
       const updatedListing = {
         ...listing,
-        ...updatedData,
+        ...formData,
         updatedAt: new Date().toISOString()
       };
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Call the onListingUpdated callback with the updated listing
       onListingUpdated(updatedListing as Listing);
       
       toast.success('Listing updated successfully');
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update listing:', error);
-      toast.error('Failed to update listing. Please try again.');
+      const errorMessage = error.response?.data?.message || 'Failed to update listing. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -172,6 +239,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
             {/* General Info Tab */}
             <TabPanel value={tabValue} index={0}>
               <ListingForm 
+                ref={generalFormRef}
                 listing={listing} 
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
@@ -184,6 +252,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
             {/* Codes Tab */}
             <TabPanel value={tabValue} index={1}>
               <ListingForm 
+                ref={codesFormRef}
                 listing={listing} 
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
@@ -196,6 +265,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
             {/* Tags & Languages Tab */}
             <TabPanel value={tabValue} index={2}>
               <ListingForm 
+                ref={tagsLanguagesFormRef}
                 listing={listing} 
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
@@ -209,6 +279,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
             {listing.thumbnailUrl && (
               <TabPanel value={tabValue} index={3}>
                 <ListingForm 
+                  ref={imagesFormRef}
                   listing={listing} 
                   onSubmit={handleSubmit}
                   isSubmitting={isSubmitting}
@@ -225,6 +296,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
             showSaveButton={true}
             onSave={handleSubmit}
             isSubmitting={isSubmitting}
+            lastUpdated={listing.updatedAt}
           />
           <Toaster position="top-right" />
         </>

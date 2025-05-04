@@ -44,6 +44,8 @@ export interface ListingFormProps {
   section?: 'general' | 'codes' | 'tagsLanguages' | 'images';
   hideSubmitButton?: boolean;
   onCodesChange?: (codesCount: number) => void;
+  categories?: any[];
+  availablePlatforms?: string[];
 }
 
 export interface FormData {

@@ -48,14 +48,16 @@ const iconComponents = {
 /**
  * Main ListingForm component that integrates all form sections
  */
-const ListingForm = forwardRef<FormRef, ListingFormProps>((
-  {
+const ListingForm = forwardRef<FormRef, ListingFormProps>(
+  ({
     listing,
     onSubmit,
     isSubmitting,
     section = 'general',
     hideSubmitButton = false,
-    onCodesChange
+    onCodesChange,
+    categories = [],
+    availablePlatforms = []
   }, 
   ref
 ) => {
@@ -316,6 +318,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>((
               formErrors={formErrors}
               handleTextChange={handleTextChange}
               handleSelectChange={handleSelectChange}
+              availablePlatforms={availablePlatforms}
             />
             
             <Description

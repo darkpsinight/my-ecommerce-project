@@ -19,6 +19,17 @@ const Description: React.FC<DescriptionProps> = ({
 }) => {
   const quillRef = useRef<ReactQuill>(null);
 
+  // Quill modules configuration with image upload support
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link', 'image'], 
+      ['clean']
+    ]
+  };
+
   return (
     <SectionContainer>
       <SectionHeader icon="description" title="Description" />
@@ -29,15 +40,7 @@ const Description: React.FC<DescriptionProps> = ({
           value={formData.description}
           onChange={handleDescriptionChange}
           placeholder="Provide a detailed description of your product..."
-          modules={{
-            toolbar: [
-              [{ header: [1, 2, 3, false] }],
-              ['bold', 'italic', 'underline', 'strike'],
-              [{ list: 'ordered' }, { list: 'bullet' }],
-              ['link'],
-              ['clean']
-            ]
-          }}
+          modules={modules}
         />
         {formErrors.description && (
           <FormHelperText error>{formErrors.description}</FormHelperText>

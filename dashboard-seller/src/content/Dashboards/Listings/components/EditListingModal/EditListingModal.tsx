@@ -17,7 +17,7 @@ import ListingForm from './components/ListingForm';
 import ModalFooter from './components/ModalFooter';
 
 // Import API service
-import { updateListing } from '../../../../../services/api/listings';
+import { updateListing, getCategories } from '../../../../../services/api/listings';
 
 // Import icons
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -46,6 +46,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [activeCodes, setActiveCodes] = useState(0);
+  const [categories, setCategories] = useState([]);
+  const [availablePlatforms, setAvailablePlatforms] = useState([]);
   
   // Create refs to access the ListingForm components
   const generalFormRef = useRef<any>(null);
@@ -54,32 +56,64 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const imagesFormRef = useRef<any>(null);
 
   useEffect(() => {
-    if (open) {
+    if (open && listingId) {
       setIsLoading(true);
-      // Reset tab to first tab when opening modal
-      setTabValue(0);
-
-      if (listingId && listings.length > 0) {
-        const foundListing = listings.find((item) => item._id === listingId);
-        setListing(foundListing || null);
+      
+      // Find the listing in the listings array
+      const foundListing = listings.find(item => item._id === listingId);
+      
+      if (foundListing) {
+        setListing(foundListing);
+        setActiveCodes(getActiveCodes(foundListing));
         
-        // Set initial active codes count
-        if (foundListing) {
-          const initialActiveCodes = getActiveCodes(foundListing);
-          setActiveCodes(initialActiveCodes);
-        }
-        
-        // Simulate loading for better UX
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 500);
+        // Fetch categories data
+        fetchCategories();
       } else {
-        setListing(null);
-        setActiveCodes(0);
-        setIsLoading(false);
+        console.error('Listing not found:', listingId);
+        setTimeout(() => {
+          toast.error('Listing not found');
+        }, 100);
       }
+      
+      setIsLoading(false);
     }
-  }, [listingId, listings, open]);
+  }, [open, listingId, listings]);
+  
+  // Fetch categories data
+  const fetchCategories = async () => {
+    try {
+      const response = await getCategories();
+      
+      if (response.success) {
+        setCategories(response.data || []);
+        
+        // Extract all available platforms from categories
+        const platforms = response.data.reduce((acc, category) => {
+          if (category.platforms && Array.isArray(category.platforms)) {
+            const platformNames = category.platforms
+              .filter(platform => platform.isActive)
+              .map(platform => platform.name);
+            return [...acc, ...platformNames];
+          }
+          return acc;
+        }, []);
+        
+        // Remove duplicates and sort alphabetically
+        const uniquePlatforms = [...new Set(platforms)].sort();
+        setAvailablePlatforms(uniquePlatforms);
+      } else {
+        console.error('Failed to fetch categories:', response.message);
+        setTimeout(() => {
+          toast.error(`Failed to load categories: ${response.message || 'Unknown error'}`);
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setTimeout(() => {
+        toast.error(`Failed to load categories: ${error.message || 'Network Error'}`);
+      }, 100);
+    }
+  };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -138,7 +172,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
     
     // Validate the current form
     if (currentFormRef.current?.validateForm && !currentFormRef.current.validateForm()) {
-      toast.error('Please fix the errors in the form before submitting');
+      setTimeout(() => {
+        toast.error('Please fix the errors in the form before submitting');
+      }, 100);
       return;
     }
     
@@ -166,12 +202,16 @@ const EditListingModal: FC<EditListingModalProps> = ({
       // Call the onListingUpdated callback with the updated listing
       onListingUpdated(updatedListing as Listing);
       
-      toast.success('Listing updated successfully');
+      setTimeout(() => {
+        toast.success('Listing updated successfully');
+      }, 100);
       onClose();
     } catch (error: any) {
       console.error('Failed to update listing:', error);
       const errorMessage = error.response?.data?.message || 'Failed to update listing. Please try again.';
-      toast.error(errorMessage);
+      setTimeout(() => {
+        toast.error(errorMessage);
+      }, 100);
     } finally {
       setIsSubmitting(false);
     }
@@ -246,7 +286,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 isSubmitting={isSubmitting}
                 section="general"
                 hideSubmitButton={true}
-                onCodesChange={handleCodesChange}
+                categories={categories}
+                availablePlatforms={availablePlatforms}
               />
             </TabPanel>
 

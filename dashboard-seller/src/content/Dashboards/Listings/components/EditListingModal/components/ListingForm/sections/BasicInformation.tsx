@@ -18,14 +18,21 @@ interface BasicInformationProps {
   formErrors: FormErrors;
   handleTextChange: (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => void;
   handleSelectChange: (e: SelectChangeEvent<string>) => void;
+  availablePlatforms?: string[];
 }
 
 const BasicInformation: React.FC<BasicInformationProps> = ({
   formData,
   formErrors,
   handleTextChange,
-  handleSelectChange
+  handleSelectChange,
+  availablePlatforms = []
 }) => {
+  // Default platforms if none provided from API
+  const platforms = availablePlatforms.length > 0 
+    ? availablePlatforms 
+    : ['Steam', 'Epic Games', 'Origin', 'Uplay', 'GOG', 'Battle.net', 'Xbox', 'PlayStation', 'Nintendo Switch', 'Mobile', 'Other'];
+
   return (
     <SectionContainer>
       <SectionHeader icon="description" title="Basic Information" />
@@ -55,10 +62,10 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
               onChange={handleSelectChange}
               label="Platform"
             >
-              <MenuItem value="">
+              <MenuItem value="" disabled={true}>
                 <em>Select platform</em>
               </MenuItem>
-              {['Steam', 'Epic Games', 'Origin', 'Uplay', 'GOG', 'Battle.net', 'Xbox', 'PlayStation', 'Nintendo Switch', 'Mobile', 'Other'].map((platform) => (
+              {platforms.map((platform) => (
                 <MenuItem key={platform} value={platform}>
                   {platform}
                 </MenuItem>

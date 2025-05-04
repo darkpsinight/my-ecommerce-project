@@ -63,7 +63,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
             }} 
           />
           <Typography variant="caption" color="text.secondary">
-            Last updated: {formatDate(lastUpdated)}
+            <b>Last updated:</b> {formatDate(lastUpdated)}
           </Typography>
         </Box>
       )}

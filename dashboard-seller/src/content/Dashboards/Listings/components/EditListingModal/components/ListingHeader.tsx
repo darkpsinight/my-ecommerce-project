@@ -1,10 +1,13 @@
 import React from 'react';
-import { Box, Typography, useTheme, alpha, Chip, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, useTheme, alpha, Chip, IconButton, Tooltip, Grid, Divider } from '@mui/material';
 import { Listing } from '../../../types';
 import ListingStatusBadge from '../../ListingStatusBadge';
 import { formatCurrency } from '../../ViewListingDetailsModal/utils/formatters';
 import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/Update';
+import CategoryIcon from '@mui/icons-material/Category';
+import DevicesIcon from '@mui/icons-material/Devices';
+import LockIcon from '@mui/icons-material/Lock';
 
 interface ListingHeaderProps {
   listing: Listing;
@@ -31,6 +34,20 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
       console.error('Invalid date format:', date);
       return '';
     }
+  };
+
+  // Get category name from the listing object
+  const getCategoryName = () => {
+    if (listing.categoryId && typeof listing.categoryId === 'object' && listing.categoryId.name) {
+      return listing.categoryId.name;
+    }
+    
+    // Fallback to categoryName if available
+    if (listing.categoryName) {
+      return listing.categoryName;
+    }
+    
+    return 'Unknown Category';
   };
 
   return (
@@ -175,6 +192,61 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
             )}
           </Box>
         )}
+      </Box>
+
+      {/* Category and Platform display */}
+      <Box 
+        sx={{ 
+          mt: 2, 
+          mb: 1,
+          p: 1.5,
+          bgcolor: alpha(theme.palette.background.default, 0.6),
+          borderRadius: 1,
+          border: `1px solid ${theme.palette.divider}`
+        }}
+      >
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CategoryIcon color="primary" />
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="subtitle2">Category</Typography>
+                  <Tooltip title="Category cannot be changed after listing creation">
+                    <LockIcon fontSize="small" color="action" sx={{ fontSize: '0.875rem' }} />
+                  </Tooltip>
+                </Box>
+                <Chip 
+                  label={getCategoryName()} 
+                  variant="outlined"
+                  color="primary"
+                  size="small"
+                  sx={{ mt: 0.5, fontWeight: 'medium' }}
+                />
+              </Box>
+            </Box>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DevicesIcon color="primary" />
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="subtitle2">Platform</Typography>
+                  <Tooltip title="Platform cannot be changed after listing creation">
+                    <LockIcon fontSize="small" color="action" sx={{ fontSize: '0.875rem' }} />
+                  </Tooltip>
+                </Box>
+                <Chip 
+                  label={listing.platform || 'Not specified'} 
+                  variant="outlined"
+                  color="primary"
+                  size="small"
+                  sx={{ mt: 0.5, fontWeight: 'medium' }}
+                />
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
       </Box>
     </Box>
   );

@@ -7,11 +7,16 @@ import {
   Select,
   MenuItem,
   FormHelperText,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Typography,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import { FormData, FormErrors } from '../utils/types';
 import SectionHeader from '../components/SectionHeader';
 import { SectionContainer } from '../components/StyledComponents';
+import LockIcon from '@mui/icons-material/Lock';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 interface BasicInformationProps {
   formData: FormData;
@@ -28,10 +33,16 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
   handleSelectChange,
   availablePlatforms = []
 }) => {
-  // Default platforms if none provided from API
-  const platforms = availablePlatforms.length > 0 
-    ? availablePlatforms 
-    : ['Steam', 'Epic Games', 'Origin', 'Uplay', 'GOG', 'Battle.net', 'Xbox', 'PlayStation', 'Nintendo Switch', 'Mobile', 'Other'];
+  // Handle region locked toggle
+  const handleRegionLockedChange = () => {
+    // Simply toggle the current value
+    handleTextChange({
+      target: {
+        name: 'isRegionLocked',
+        value: !formData.isRegionLocked
+      }
+    } as any);
+  };
 
   return (
     <SectionContainer>
@@ -49,30 +60,6 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
             variant="outlined"
             InputLabelProps={{ shrink: true }}
           />
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth error={!!formErrors.platform}>
-            <InputLabel id="platform-label">Platform</InputLabel>
-            <Select
-              labelId="platform-label"
-              id="platform"
-              name="platform"
-              value={formData.platform}
-              onChange={handleSelectChange}
-              label="Platform"
-            >
-              <MenuItem value="" disabled={true}>
-                <em>Select platform</em>
-              </MenuItem>
-              {platforms.map((platform) => (
-                <MenuItem key={platform} value={platform}>
-                  {platform}
-                </MenuItem>
-              ))}
-            </Select>
-            {formErrors.platform && <FormHelperText>{formErrors.platform}</FormHelperText>}
-          </FormControl>
         </Grid>
         
         <Grid item xs={12} md={6}>
@@ -97,6 +84,23 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
             </Select>
             {formErrors.region && <FormHelperText>{formErrors.region}</FormHelperText>}
           </FormControl>
+        </Grid>
+        
+        <Grid item xs={12} md={6}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.isRegionLocked || false}
+                onChange={handleRegionLockedChange}
+                name="isRegionLocked"
+                color="primary"
+              />
+            }
+            label="Region locked"
+          />
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+            Enable if this code is restricted to the selected region
+          </Typography>
         </Grid>
       </Grid>
     </SectionContainer>

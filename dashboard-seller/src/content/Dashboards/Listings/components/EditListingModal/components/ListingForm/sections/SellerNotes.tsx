@@ -1,10 +1,11 @@
 import React, { useRef } from 'react';
-import { FormHelperText } from '@mui/material';
+import { FormHelperText, Box, Typography, Chip } from '@mui/material';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { FormData } from '../utils/types';
 import SectionHeader from '../components/SectionHeader';
 import { SectionContainer, EditorContainer } from '../components/StyledComponents';
+import LockIcon from '@mui/icons-material/Lock';
 
 interface SellerNotesProps {
   formData: FormData;
@@ -19,14 +20,24 @@ const SellerNotes: React.FC<SellerNotesProps> = ({
 
   return (
     <SectionContainer>
-      <SectionHeader icon="notes" title="Seller Notes" />
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+        <SectionHeader icon="notes" title="Seller Notes" />
+        <Chip
+          icon={<LockIcon fontSize="small" />}
+          label="Private"
+          size="small"
+          color="default"
+          variant="outlined"
+          sx={{ fontWeight: 'medium' }}
+        />
+      </Box>
       <EditorContainer>
         <ReactQuill
           ref={quillRef}
           theme="snow"
           value={formData.sellerNotes}
           onChange={handleSellerNotesChange}
-          placeholder="Add any additional notes or instructions for buyers..."
+          placeholder="Add any private notes about this listing..."
           modules={{
             toolbar: [
               [{ header: [1, 2, 3, false] }],
@@ -37,8 +48,8 @@ const SellerNotes: React.FC<SellerNotesProps> = ({
             ]
           }}
         />
-        <FormHelperText>
-          These notes will be visible to buyers after purchase
+        <FormHelperText sx={{ mt: 1, fontStyle: 'italic' }}>
+          These notes are private and only visible to you. They will not be shared with buyers.
         </FormHelperText>
       </EditorContainer>
     </SectionContainer>

@@ -278,11 +278,10 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
       if (formData.originalPrice) {
         listingData.originalPrice = parseFloat(formData.originalPrice);
       }
-      listingData.platform = formData.platform;
       listingData.region = formData.region;
       listingData.isRegionLocked = formData.isRegionLocked;
-      listingData.categoryId = formData.categoryId;
       listingData.autoDelivery = formData.autoDelivery;
+      listingData.sellerNotes = formData.sellerNotes;
     }
     
     if (section === 'codes') {
@@ -290,7 +289,6 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
       if (formData.expirationDate) {
         listingData.expirationDate = formData.expirationDate;
       }
-      listingData.sellerNotes = formData.sellerNotes;
     }
     
     if (section === 'tagsLanguages') {
@@ -334,6 +332,11 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
               getDiscountPercentage={getDiscountPercentage}
             />
             
+            <SellerNotes
+              formData={formData}
+              handleSellerNotesChange={handleSellerNotesChange}
+            />
+            
             {!hideSubmitButton && (
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                 <Button
@@ -368,11 +371,6 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
               handleAddCode={handleAddCode}
               handleDeleteCode={handleDeleteCode}
               handleCodeKeyDown={handleCodeKeyDown}
-            />
-            
-            <SellerNotes
-              formData={formData}
-              handleSellerNotesChange={handleSellerNotesChange}
             />
             
             {!hideSubmitButton && (
@@ -484,11 +482,13 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
         if (formData.originalPrice) {
           listingData.originalPrice = parseFloat(formData.originalPrice);
         }
-        listingData.platform = formData.platform;
+        // Do not include platform and categoryId in updates as they cannot be changed
+        // listingData.platform = formData.platform;
+        // listingData.categoryId = formData.categoryId;
         listingData.region = formData.region;
         listingData.isRegionLocked = formData.isRegionLocked;
-        listingData.categoryId = formData.categoryId;
         listingData.autoDelivery = formData.autoDelivery;
+        listingData.sellerNotes = formData.sellerNotes;
       }
       
       if (section === 'codes') {
@@ -496,7 +496,6 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
         if (formData.expirationDate) {
           listingData.expirationDate = formData.expirationDate;
         }
-        listingData.sellerNotes = formData.sellerNotes;
       }
       
       if (section === 'tagsLanguages') {

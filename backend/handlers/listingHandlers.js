@@ -311,19 +311,31 @@ const updateListing = async (request, reply) => {
     
     // Define valid fields that can be updated
     const validFields = [
-      'title', 'description', 'price', 'originalPrice', 'category',
-      'platform', 'region', 'isRegionLocked', 'expirationDate', 'quantity',
+      'title', 'description', 'price', 'originalPrice',
+      'region', 'isRegionLocked', 'expirationDate', 'quantity',
       'supportedLanguages', 'thumbnailUrl', 'autoDelivery', 'tags',
       'sellerNotes', 'status'
     ];
     
     // Check for invalid fields
     const invalidFields = Object.keys(updateData).filter(key => !validFields.includes(key));
-    if (invalidFields.length > 0) {
+    
+    // Check specifically for category, categoryId, and platform which are not allowed to be updated
+    const restrictedFields = ['category', 'categoryId', 'platform'].filter(field => updateData.hasOwnProperty(field));
+    
+    // Remove restricted fields from updateData
+    restrictedFields.forEach(field => {
+      delete updateData[field];
+    });
+    
+    // Filter out restricted fields from invalidFields
+    const otherInvalidFields = invalidFields.filter(field => !restrictedFields.includes(field));
+    
+    if (otherInvalidFields.length > 0) {
       return reply.code(400).send({
         success: false,
         error: "Invalid fields in request",
-        invalidFields
+        invalidFields: otherInvalidFields
       });
     }
     
@@ -344,7 +356,8 @@ const updateListing = async (request, reply) => {
     // Save the updated listing
     await listing.save();
     
-    return reply.code(200).send({
+    // Prepare response
+    const response = {
       success: true,
       message: "Listing updated successfully",
       data: {
@@ -354,7 +367,17 @@ const updateListing = async (request, reply) => {
         category: listing.category,
         status: listing.status
       }
-    });
+    };
+    
+    // Add warning about restricted fields if any were attempted to be updated
+    if (restrictedFields.length > 0) {
+      response.warnings = {
+        message: "Some fields cannot be updated after listing creation",
+        restrictedFields: restrictedFields
+      };
+    }
+    
+    return reply.code(200).send(response);
   } catch (error) {
     request.log.error(`Error updating listing: ${error.message}`);
     return reply.code(500).send({

@@ -20,6 +20,7 @@ export interface ListingCode {
 // Main Listing interface
 export interface Listing {
   _id?: string;
+  externalId: string;
   title: string;
   description: string;
   price: number;

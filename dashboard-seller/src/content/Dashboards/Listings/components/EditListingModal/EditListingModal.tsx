@@ -60,7 +60,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
       setIsLoading(true);
       
       // Find the listing in the listings array
-      const foundListing = listings.find(item => item._id === listingId);
+      const foundListing = listings.find(item => item.externalId === listingId);
       
       if (foundListing) {
         setListing(foundListing);
@@ -190,7 +190,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
     setIsSubmitting(true);
     try {
       // Make the API call to update the listing
-      const response = await updateListing(listing._id, apiData);
+      const response = await updateListing(listing.externalId, apiData);
       
       // Create an updated listing object with the response data and existing data
       const updatedListing = {

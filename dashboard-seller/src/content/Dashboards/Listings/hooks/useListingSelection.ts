@@ -27,7 +27,7 @@ export const useListingSelection = ({
   const handleSelectAllClick = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.checked) {
-        const newSelecteds = listings.map((listing) => listing._id);
+        const newSelecteds = listings.map((listing) => listing.externalId);
         setSelected(newSelecteds);
         return;
       }

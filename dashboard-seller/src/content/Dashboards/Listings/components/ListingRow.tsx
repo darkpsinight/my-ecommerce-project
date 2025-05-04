@@ -75,7 +75,7 @@ const ListingRow: FC<ListingRowProps> = ({
     (listing.codes ? listing.codes.length : 0);
   
   const isInactive = listing.status === 'sold' || activeCodes === 0;
-  const isNewListing = newListingId === listing._id;
+  const isNewListing = newListingId === listing.externalId;
 
   useEffect(() => {
     if (isNewListing) {
@@ -101,7 +101,7 @@ const ListingRow: FC<ListingRowProps> = ({
   return (
     <TableRow
       hover
-      key={listing._id}
+      key={listing.externalId}
       selected={isSelected}
       aria-checked={isSelected}
       tabIndex={-1}
@@ -123,9 +123,9 @@ const ListingRow: FC<ListingRowProps> = ({
         <Checkbox
           color="primary"
           checked={isSelected}
-          onClick={(event) => onSelectClick(event, listing._id)}
+          onClick={(event) => onSelectClick(event, listing.externalId)}
           inputProps={{
-            'aria-labelledby': `enhanced-table-checkbox-${listing._id}`
+            'aria-labelledby': `enhanced-table-checkbox-${listing.externalId}`
           }}
         />
       </TableCell>
@@ -183,7 +183,7 @@ const ListingRow: FC<ListingRowProps> = ({
       <TableCell align="right">
         <Tooltip title="Actions" arrow>
           <IconButton
-            onClick={(e) => onMenuOpen(e, listing._id)}
+            onClick={(e) => onMenuOpen(e, listing.externalId)}
             size="small"
             sx={{
               color: theme.palette.primary.main,
@@ -198,7 +198,7 @@ const ListingRow: FC<ListingRowProps> = ({
 
         <Menu
           anchorEl={anchorEl}
-          open={Boolean(anchorEl) && activeListingId === listing._id}
+          open={Boolean(anchorEl) && activeListingId === listing.externalId}
           onClose={onMenuClose}
           keepMounted
           anchorOrigin={{
@@ -210,7 +210,7 @@ const ListingRow: FC<ListingRowProps> = ({
             horizontal: 'right'
           }}
         >
-          <MenuItem onClick={() => onViewClick(listing._id)}>
+          <MenuItem onClick={() => onViewClick(listing.externalId)}>
             <VisibilityTwoToneIcon
               fontSize="small"
               sx={{ mr: 1, color: theme.palette.primary.main }}
@@ -219,7 +219,7 @@ const ListingRow: FC<ListingRowProps> = ({
           </MenuItem>
 
           <MenuItem
-            onClick={() => onEditClick(listing._id)}
+            onClick={() => onEditClick(listing.externalId)}
             disabled={listing.status === 'sold' || listing.status === 'expired'}
           >
             <EditTwoToneIcon
@@ -229,7 +229,7 @@ const ListingRow: FC<ListingRowProps> = ({
             Edit Listing
           </MenuItem>
 
-          <MenuItem onClick={() => onDeleteClick(listing._id)}>
+          <MenuItem onClick={() => onDeleteClick(listing.externalId)}>
             <DeleteTwoToneIcon
               fontSize="small"
               sx={{ mr: 1, color: theme.palette.error.main }}

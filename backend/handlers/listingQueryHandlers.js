@@ -46,10 +46,17 @@ const getListings = async (request, reply) => {
     // Count total listings matching the filter
     const total = await Listing.countDocuments(filter);
     
+    // Transform listings to use externalId as primary identifier and remove _id
+    const transformedListings = listings.map(listing => {
+      const listingObj = listing.toObject();
+      const { _id, ...cleanedListing } = listingObj;
+      return cleanedListing;
+    });
+    
     return reply.code(200).send({
       success: true,
       data: {
-        listings,
+        listings: transformedListings,
         pagination: {
           total,
           page,
@@ -73,8 +80,8 @@ const getListingById = async (request, reply) => {
   try {
     const { id } = request.params;
     
-    // Find the listing by ID
-    const listing = await Listing.findById(id);
+    // Find the listing by externalId instead of _id
+    const listing = await Listing.findOne({ externalId: id });
     
     if (!listing) {
       return reply.code(404).send({
@@ -101,9 +108,13 @@ const getListingById = async (request, reply) => {
       });
     }
     
+    // Transform listing to use externalId as primary identifier and remove _id
+    const listingObj = listing.toObject();
+    const { _id, ...cleanedListing } = listingObj;
+    
     return reply.code(200).send({
       success: true,
-      data: listing
+      data: cleanedListing
     });
   } catch (error) {
     request.log.error(`Error fetching listing: ${error.message}`);
@@ -211,24 +222,27 @@ const getSellerListings = async (request, reply) => {
               
               // Return object with masked code and status information
               return {
-                ...codeObj,
+                soldStatus: codeObj.soldStatus,
+                soldAt: codeObj.soldAt,
+                _id: codeObj._id, // Keep code _id for reference
                 code: maskCode(decryptedCode),
-                iv: undefined // Remove IV for security
               };
             } else {
               // If code doesn't exist or can't be decrypted
               return {
-                ...codeObj,
+                soldStatus: codeObj.soldStatus,
+                soldAt: codeObj.soldAt,
+                _id: codeObj._id, // Keep code _id for reference
                 code: codeObj.soldStatus === 'active' ? 'Code unavailable' : `${codeObj.soldStatus} code`,
-                iv: undefined
               };
             }
           } catch (error) {
             request.log.error(`Error processing code: ${error.message}`);
             return {
-              ...codeObj,
+              soldStatus: codeObj.soldStatus,
+              soldAt: codeObj.soldAt,
+              _id: codeObj._id, // Keep code _id for reference
               code: 'Error processing code',
-              iv: undefined
             };
           }
         });
@@ -238,7 +252,10 @@ const getSellerListings = async (request, reply) => {
         listingObj.quantityOfActiveCodes = 0;
       }
       
-      return listingObj;
+      // Use externalId as the primary identifier and remove _id
+      const { _id, ...cleanedListing } = listingObj;
+      
+      return cleanedListing;
     });
     
     return reply.code(200).send({

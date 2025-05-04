@@ -4,7 +4,8 @@ const { listingSchema } = require("./schemas/listingSchema");
 const { 
   createListing,
   updateListing,
-  deleteListing
+  deleteListing,
+  getListingByExternalId
 } = require("../handlers/listingHandlers");
 const {
   getListings,

@@ -99,7 +99,7 @@ const listingSchema = {
       properties: {
         id: { 
           type: "string",
-          description: "Listing ID"
+          description: "Listing external ID (UUID)"
         }
       }
     },
@@ -151,7 +151,10 @@ const listingSchema = {
       type: "object",
       required: ["id"],
       properties: {
-        id: { type: "string" }
+        id: { 
+          type: "string",
+          description: "Listing external ID (UUID)" 
+        }
       }
     }
   },
@@ -202,7 +205,10 @@ const listingSchema = {
       type: "object",
       required: ["id"],
       properties: {
-        id: { type: "string" }
+        id: { 
+          type: "string",
+          description: "Listing external ID (UUID)" 
+        }
       }
     }
   },

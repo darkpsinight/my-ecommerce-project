@@ -60,7 +60,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
               border: `1px solid ${theme.palette.divider}`
             }}
           >
-            ID: {listing._id}
+            ID: {listing.externalId}
           </Typography>
         </Box>
       </Box>

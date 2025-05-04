@@ -41,6 +41,7 @@ export interface ListingResponse {
   message: string;
   data?: {
     id: string;
+    externalId: string;
     title: string;
     price: number;
     platform: string;

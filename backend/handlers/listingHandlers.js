@@ -2,6 +2,7 @@ const { Listing } = require("../models/listing");
 const { Category } = require("../models/category");
 const { validateCodeAgainstPatterns, getPatternsForPlatform } = require("../utils/patternValidator");
 const { checkAndUpdateListingStatus, processListingsExpiration } = require("../utils/listingHelpers");
+const uuidv4 = require('uuid').v4;
 
 /**
  * Masks a code to show only first 3 and last 2 characters
@@ -104,26 +105,38 @@ const getFormatDescription = (pattern, platformName) => {
 /**
  * Checks if any of the provided codes already exist in the database
  * @param {Array<string>} codes - Array of plaintext codes to check
- * @param {string} [excludeListingId] - Optional listing ID to exclude from the check (for updates)
+ * @param {string} [excludeListingId] - Optional listing externalId to exclude from the check (for updates)
  * @returns {Promise<Object>} - Object with duplicates array and success status
  */
 const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
   try {
-    if (!Array.isArray(codes) || codes.length === 0) {
-      return { success: true, duplicates: [] };
+    // Validate input
+    if (!codes || !Array.isArray(codes) || codes.length === 0) {
+      return {
+        success: false,
+        error: "No codes provided for duplicate check",
+        duplicates: []
+      };
     }
-
-    // Get all listings that might contain these codes
-    // We need to include the codes field which is normally not selected
-    const allListings = await Listing.find({}).select('+codes.code +codes.iv');
     
-    // Initialize array to track duplicates
+    // Initialize duplicates array
     const duplicates = [];
     
-    // For each listing, check if any of the codes match
-    for (const listing of allListings) {
-      // Skip the current listing if we're updating
-      if (excludeListingId && listing._id.toString() === excludeListingId) {
+    // Find all listings with codes
+    const query = {};
+    
+    // If excludeListingId is provided, exclude that listing from the check
+    if (excludeListingId) {
+      query.externalId = { $ne: excludeListingId };
+    }
+    
+    // Get all listings with their codes
+    const listings = await Listing.find(query).select("+codes.code +codes.iv");
+    
+    // Check each listing for duplicate codes
+    for (const listing of listings) {
+      // Skip if listing has no codes
+      if (!listing.codes || listing.codes.length === 0) {
         continue;
       }
       
@@ -140,7 +153,7 @@ const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
           duplicates.push({
             code: codes[duplicateIndex],
             index: duplicateIndex,
-            existingListingId: listing._id.toString(),
+            existingListingId: listing.externalId,
             listingTitle: listing.title,
             sellerId: listing.sellerId
           });
@@ -169,6 +182,9 @@ const createListing = async (request, reply) => {
     
     // Add seller ID from authenticated user
     listingData.sellerId = request.user.uid;
+    
+    // Generate externalId (UUID) for the new listing
+    listingData.externalId = uuidv4();
     
     // Check for duplicate code
     if (listingData.code) {
@@ -267,7 +283,7 @@ const createListing = async (request, reply) => {
       success: true,
       message: "Listing created successfully",
       data: {
-        id: listing._id,
+        externalId: listing.externalId,
         title: listing.title,
         price: listing.price,
         category: categoryName, // Category name from the referenced categoryId
@@ -292,8 +308,14 @@ const updateListing = async (request, reply) => {
     const updateData = request.body;
     const sellerId = request.user.uid;
     
-    // Find the listing by ID and seller ID
-    const listing = await Listing.findOne({ _id: id, sellerId }).select("+code +iv");
+    // Check if user is admin (admins can update any listing)
+    const isAdmin = request.user.role === "admin";
+    
+    // Query to find the listing - use externalId instead of _id
+    const query = isAdmin ? { externalId: id } : { externalId: id, sellerId };
+    
+    // Find the listing
+    const listing = await Listing.findOne(query);
     
     if (!listing) {
       return reply.code(404).send({
@@ -361,7 +383,7 @@ const updateListing = async (request, reply) => {
       success: true,
       message: "Listing updated successfully",
       data: {
-        id: listing._id,
+        externalId: listing.externalId,
         title: listing.title,
         price: listing.price,
         category: listing.category,
@@ -397,8 +419,8 @@ const deleteListing = async (request, reply) => {
     // Check if user is admin (admins can delete any listing)
     const isAdmin = request.user.role === "admin";
     
-    // Query to find the listing
-    const query = isAdmin ? { _id: id } : { _id: id, sellerId };
+    // Query to find the listing - use externalId instead of _id
+    const query = isAdmin ? { externalId: id } : { externalId: id, sellerId };
     
     // Find and delete the listing
     const result = await Listing.findOneAndDelete(query);
@@ -424,11 +446,73 @@ const deleteListing = async (request, reply) => {
   }
 };
 
+// Get a listing by externalId
+const getListingByExternalId = async (request, reply) => {
+  try {
+    const { externalId } = request.params;
+    
+    // Find the listing by externalId
+    const listing = await Listing.findOne({ externalId });
+    
+    if (!listing) {
+      return reply.code(404).send({
+        success: false,
+        error: "Listing not found"
+      });
+    }
+    
+    // Get category information
+    let categoryName = "Unknown";
+    if (listing.categoryId) {
+      try {
+        const categoryInfo = await Category.findById(listing.categoryId);
+        if (categoryInfo) {
+          categoryName = categoryInfo.name;
+        }
+      } catch (err) {
+        request.log.error(`Error fetching category: ${err.message}`);
+      }
+    }
+    
+    // Return the listing without sensitive information
+    return reply.code(200).send({
+      success: true,
+      data: {
+        externalId: listing.externalId,
+        title: listing.title,
+        description: listing.description,
+        price: listing.price,
+        originalPrice: listing.originalPrice,
+        category: categoryName,
+        platform: listing.platform,
+        region: listing.region,
+        isRegionLocked: listing.isRegionLocked,
+        supportedLanguages: listing.supportedLanguages,
+        thumbnailUrl: listing.thumbnailUrl,
+        autoDelivery: listing.autoDelivery,
+        tags: listing.tags,
+        status: listing.status,
+        createdAt: listing.createdAt,
+        updatedAt: listing.updatedAt
+      }
+    });
+  } catch (error) {
+    request.log.error(`Error fetching listing: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to fetch listing",
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createListing,
   updateListing,
   deleteListing,
+  getListingByExternalId,
   maskCode,
   getFormatDescription,
   checkForDuplicateCodes
 };
+

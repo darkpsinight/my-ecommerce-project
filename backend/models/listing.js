@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
+const { v4: uuidv4 } = require("uuid");
 const { configs } = require("../configs");
 
 // Define the listing schema
@@ -93,6 +94,13 @@ const listingSchema = new mongoose.Schema({
   sellerId: {
     type: String,
     required: [true, "Seller ID is required"]
+  },
+  externalId: {
+    type: String,
+    required: true,
+    unique: true,
+    default: uuidv4,
+    index: true
   },
   createdAt: {
     type: Date,

@@ -47,7 +47,7 @@ const ViewListingDetailsModal: FC<ViewListingDetailsModalProps> = ({
       setTabValue(0);
 
       if (listingId && listings.length > 0) {
-        const foundListing = listings.find((item) => item._id === listingId);
+        const foundListing = listings.find((item) => item.externalId === listingId);
         setListing(foundListing || null);
         // Simulate loading for better UX
         setTimeout(() => {

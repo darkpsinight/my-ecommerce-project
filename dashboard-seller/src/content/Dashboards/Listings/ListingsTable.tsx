@@ -170,7 +170,7 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
                 <ListingRow
                   key={index}
                   listing={listing}
-                  isSelected={isSelected(listing._id)}
+                  isSelected={isSelected(listing.externalId)}
                   onSelectClick={handleSelectClick}
                   onViewClick={handleViewListing}
                   onEditClick={handleEditListing}

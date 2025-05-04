@@ -1,13 +1,15 @@
 import { FC } from 'react';
 import { Typography } from '@mui/material';
-import { ListingStatus } from '../types';
+
+// Define status type locally to avoid import issues
+type ListingStatusType = 'active' | 'sold' | 'expired' | 'suspended' | 'draft';
 
 interface ListingStatusBadgeProps {
-  status: ListingStatus;
+  status?: ListingStatusType | string;
 }
 
 const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({ status }) => {
-  const getStatusColor = (status: ListingStatus): string => {
+  const getStatusColor = (status: ListingStatusType): string => {
     switch (status) {
       case 'active':
         return 'success.main';
@@ -24,14 +26,32 @@ const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({ status }) => {
     }
   };
 
+  // Ensure status is a valid ListingStatusType
+  const getValidStatus = (statusValue?: ListingStatusType | string): ListingStatusType => {
+    if (!statusValue) return 'active';
+    
+    switch (statusValue) {
+      case 'active':
+      case 'sold':
+      case 'draft':
+      case 'expired':
+      case 'suspended':
+        return statusValue as ListingStatusType;
+      default:
+        return 'active';
+    }
+  };
+
+  const validStatus = getValidStatus(status);
+
   return (
     <Typography
       variant="body1"
       fontWeight="bold"
-      color={getStatusColor(status || 'active')}
+      color={getStatusColor(validStatus)}
       noWrap
     >
-      {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Active'}
+      {status ? status.toString().charAt(0).toUpperCase() + status.toString().slice(1) : 'Active'}
     </Typography>
   );
 };

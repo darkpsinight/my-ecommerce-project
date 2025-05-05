@@ -43,7 +43,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   // Fetch categories and platforms from API - but only when needed
   const fetchCategories = useCallback(async () => {
     if (categoriesLoaded) return; // Skip if already loaded
-    
+
     const data = await getCategories();
     if (data && data.success && Array.isArray(data.data)) {
       setCategories(data.data);
@@ -119,7 +119,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     // Convert date to ISO string if present
     let startDateISO = startDate ? `${startDate}T00:00:00.000Z` : undefined;
     let endDateISO = endDate ? `${endDate}T23:59:59.999Z` : undefined;
-    
+
     const filters = {
       category: category !== 'all' ? category : undefined,
       platform: platform !== 'all' ? platform : undefined,
@@ -130,44 +130,44 @@ const ListingsActions: FC<ListingsActionsProps> = ({
       startDate: startDateISO,
       endDate: endDateISO
     };
-    
+
     // Update the active filters display
     const newActiveFilters: ActiveFilterDisplay = {};
-    
+
     if (category !== 'all') {
       const selectedCat = categories.find(c => c._id === category);
       newActiveFilters.category = selectedCat ? selectedCat.name : category;
     }
-    
+
     if (platform !== 'all') {
       const selectedPlat = platforms.find(p => p.slug === platform);
       newActiveFilters.platform = selectedPlat ? selectedPlat.name : platform;
     }
-    
+
     if (status !== 'all') {
       newActiveFilters.status = status.charAt(0).toUpperCase() + status.slice(1);
     }
-    
+
     if (searchTerm) {
       newActiveFilters.title = searchTerm;
     }
-    
+
     if (minPrice) {
       newActiveFilters.minPrice = `$${minPrice}`;
     }
-    
+
     if (maxPrice) {
       newActiveFilters.maxPrice = `$${maxPrice}`;
     }
-    
+
     if (startDate) {
       newActiveFilters.startDate = startDate;
     }
-    
+
     if (endDate) {
       newActiveFilters.endDate = endDate;
     }
-    
+
     setActiveFilters(newActiveFilters);
     setFilters(filters);
     setShowFilters(false);
@@ -183,13 +183,13 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     setMaxPrice('');
     setStartDate('');
     setEndDate('');
-    
+
     // Clear active filters display
     setActiveFilters({});
-    
+
     // Reset context filters
     setFilters({});
-    
+
     // Hide filter panel
     setShowFilters(false);
   };
@@ -199,7 +199,7 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     const newActiveFilters = { ...activeFilters };
     delete newActiveFilters[key];
     setActiveFilters(newActiveFilters);
-    
+
     // Update the local state based on which filter was removed
     switch(key) {
       case 'category':
@@ -227,12 +227,12 @@ const ListingsActions: FC<ListingsActionsProps> = ({
         setEndDate('');
         break;
     }
-    
+
     // Instead of using fetchListings which would trigger the useEffect,
     // directly call the API with the updated filters
     // This avoids the double API call issue
     const updatedFilters: Partial<FilterValues> = {};
-    
+
     // Only include filters that are active
     if (category !== 'all' && key !== 'category') updatedFilters.category = category;
     if (platform !== 'all' && key !== 'platform') updatedFilters.platform = platform;
@@ -242,23 +242,25 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     if (maxPrice && key !== 'maxPrice') updatedFilters.maxPrice = Number(maxPrice);
     if (startDate && key !== 'startDate') updatedFilters.startDate = `${startDate}T00:00:00.000Z`;
     if (endDate && key !== 'endDate') updatedFilters.endDate = `${endDate}T23:59:59.999Z`;
-    
+
     // Update the context filters in a single operation
     setFilters(updatedFilters);
   };
 
   const handleCreateListing = async (response) => {
     try {
+      console.log('Create listing response received:', response);
+
       if (response && response.success) {
         setOpenModal(false);
         showSuccessToast(response.message || 'Listing created successfully!');
-        
-        if (response.data && response.data.listing) {
-          addNewListing(response.data.listing);
-        } else {
-          refreshListings();
-        }
+
+        console.log('Calling addNewListing with response:', response);
+        // Pass the entire response to addNewListing
+        // The backend returns data with externalId directly
+        addNewListing(response);
       } else {
+        console.error('Failed to create listing:', response);
         showErrorToast(response.message || 'Failed to create listing. Please try again.');
       }
     } catch (error) {
@@ -270,19 +272,19 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   return (
     <Card>
       <ResponsiveActionsBox p={3}>
-        <ListingsHeader 
+        <ListingsHeader
           activeFiltersCount={Object.keys(activeFilters).length}
           showFilters={showFilters}
           setShowFilters={setShowFilters}
         />
 
-        <ActiveFilters 
+        <ActiveFilters
           activeFilters={activeFilters}
           handleRemoveFilter={handleRemoveFilter}
           handleClearFilters={handleClearFilters}
         />
 
-        <FilterPanel 
+        <FilterPanel
           showFilters={showFilters}
           searchTerm={searchTerm}
           category={category}

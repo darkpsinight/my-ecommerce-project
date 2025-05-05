@@ -101,7 +101,7 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
       }
       return acc;
     }, {} as Partial<FilterParams>);
-    
+
     // Completely replace the filters state
     setFiltersState(cleanFilters);
   }, []);
@@ -116,6 +116,14 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
         const currentLimit = typeof limitOverride === 'number' ? limitOverride : limit;
         const currentFilters = filterOverride ? { ...filters, ...filterOverride } : filters;
 
+        console.log('Fetching listings with params:', {
+          page: currentPage,
+          limit: currentLimit,
+          sortBy,
+          sortOrder,
+          ...currentFilters
+        });
+
         const response: ListingsResponse = await getSellerListings({
           page: currentPage,
           limit: currentLimit,
@@ -124,7 +132,10 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
           ...currentFilters
         });
 
+        console.log('Listings API response:', response);
+
         if (response && response.success && response.data) {
+          console.log('Setting listings state with', response.data.listings?.length || 0, 'items');
           setListings(response.data.listings || []);
           if (
             response.data.pagination &&
@@ -134,7 +145,7 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
           } else {
             setTotalListings((response.data.listings || []).length);
           }
-          
+
           // If filter override was provided, update the filters state
           if (filterOverride) {
             setFiltersState(prevFilters => ({
@@ -143,6 +154,7 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
             }));
           }
         } else {
+          console.error('Failed response from listings API:', response);
           setError(response.message || 'Failed to fetch listings');
           setListings([]);
           setTotalListings(0);
@@ -159,19 +171,28 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
     [page, limit, sortBy, sortOrder, filters]
   );
 
-  const refreshListings = useCallback(() => fetchListings(), [fetchListings]);
+  const refreshListings = useCallback(async () => {
+    console.log('refreshListings called');
+    await fetchListings();
+  }, [fetchListings]);
 
   const addNewListing = useCallback(async (response: any) => {
-    if (response && response.success && response.data && response.data.id) {
+    console.log('addNewListing called with response:', response);
+
+    if (response && response.success && response.data) {
       // Store the new listing ID to highlight it after refresh
-      const newId = response.data.id;
+      // Backend API returns externalId, not id
+      const newId = response.data.externalId;
+      console.log('Setting new listing ID for highlighting:', newId);
       setNewListingId(newId);
-      
+
       // Refresh the listings from the API to get the complete data
+      console.log('Refreshing listings after new listing creation');
       await fetchListings(0, limit); // Reset to first page to show the new listing
-      
+
       // Clear the highlight after 5 seconds
       setTimeout(() => {
+        console.log('Clearing new listing highlight');
         setNewListingId(null);
       }, 5000);
     } else {

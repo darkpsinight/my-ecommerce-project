@@ -106,7 +106,6 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           }
           id="listing-tab-1"
           aria-controls="listing-tabpanel-1"
-          disabled={!listing.codes || listing.codes.length === 0}
         />
         <Tab
           icon={<LocalOfferIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
@@ -125,32 +124,25 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           }
           id="listing-tab-2"
           aria-controls="listing-tabpanel-2"
-          disabled={
-            (!listing.tags || listing.tags.length === 0) &&
-            (!listing.supportedLanguages ||
-              listing.supportedLanguages.length === 0)
-          }
         />
-        {listing.thumbnailUrl && (
-          <Tab
-            icon={<ImageIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
-            iconPosition="start"
-            label={
-              <Typography
-                component="span"
-                sx={{ 
-                  ml: { xs: 0.25, sm: 0.5, md: 1 }, 
-                  display: { xs: 'none', sm: 'inline-block' }, 
-                  fontWeight: 'bold' 
-                }}
-              >
-                Thumbnail
-              </Typography>
-            }
-            id="listing-tab-3"
-            aria-controls="listing-tabpanel-3"
-          />
-        )}
+        <Tab
+          icon={<ImageIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
+          iconPosition="start"
+          label={
+            <Typography
+              component="span"
+              sx={{ 
+                ml: { xs: 0.25, sm: 0.5, md: 1 }, 
+                display: { xs: 'none', sm: 'inline-block' }, 
+                fontWeight: 'bold' 
+              }}
+            >
+              Thumbnail
+            </Typography>
+          }
+          id="listing-tab-3"
+          aria-controls="listing-tabpanel-3"
+        />
       </Tabs>
     </Box>
   );

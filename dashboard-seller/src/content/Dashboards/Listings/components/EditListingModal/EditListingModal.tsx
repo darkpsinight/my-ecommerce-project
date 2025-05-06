@@ -323,19 +323,17 @@ const EditListingModal: FC<EditListingModalProps> = ({
             </TabPanel>
 
             {/* Images Tab */}
-            {listing.thumbnailUrl && (
-              <TabPanel value={tabValue} index={3}>
-                <ListingForm 
-                  ref={imagesFormRef}
-                  listing={listing} 
-                  onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
-                  section="images"
-                  hideSubmitButton={true}
-                  onCodesChange={handleCodesChange}
-                />
-              </TabPanel>
-            )}
+            <TabPanel value={tabValue} index={3}>
+              <ListingForm 
+                ref={imagesFormRef}
+                listing={listing} 
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                section="images"
+                hideSubmitButton={true}
+                onCodesChange={handleCodesChange}
+              />
+            </TabPanel>
           </DialogContent>
 
           <ModalFooter 

@@ -162,11 +162,9 @@ const ViewListingDetailsModal: FC<ViewListingDetailsModalProps> = ({
             </TabPanel>
 
             {/* Images Tab */}
-            {listing.thumbnailUrl && (
-              <TabPanel value={tabValue} index={3}>
-                <ImagesTab listing={listing} />
-              </TabPanel>
-            )}
+            <TabPanel value={tabValue} index={3}>
+              <ImagesTab listing={listing} />
+            </TabPanel>
           </DialogContent>
 
           <ModalFooter 

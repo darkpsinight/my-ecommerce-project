@@ -21,11 +21,48 @@ interface TagsLanguagesTabProps {
 const TagsLanguagesTab: React.FC<TagsLanguagesTabProps> = ({ listing }) => {
   const theme = useTheme();
 
+  // Check if there are any tags or languages
+  const hasTags = listing.tags && listing.tags.length > 0;
+  const hasLanguages = listing.supportedLanguages && listing.supportedLanguages.length > 0;
+  const hasNoContent = !hasTags && !hasLanguages;
+
   return (
     <Grid container spacing={3}>
+      {/* No content message */}
+      {hasNoContent && (
+        <Grid item xs={12}>
+          <Card
+            variant="outlined"
+            sx={{
+              height: '100%',
+              boxShadow: theme.shadows[1]
+            }}
+          >
+            <CardContent sx={{ textAlign: 'center', py: 4 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  color: theme.palette.text.secondary,
+                  mb: 1
+                }}
+              >
+                No Tags or Languages
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                This listing doesn't have any tags or supported languages yet.
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+                You can add tags and languages when editing this listing.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      )}
+
       {/* Tags Section */}
-      {listing.tags && listing.tags.length > 0 && (
-        <Grid item xs={12} md={6}>
+      {hasTags && (
+        <Grid item xs={12} md={hasLanguages ? 6 : 12}>
           <Card
             variant="outlined"
             sx={{
@@ -77,12 +114,11 @@ const TagsLanguagesTab: React.FC<TagsLanguagesTabProps> = ({ listing }) => {
       )}
 
       {/* Languages Section */}
-      {listing.supportedLanguages &&
-        listing.supportedLanguages.length > 0 && (
+      {hasLanguages && (
           <Grid
             item
             xs={12}
-            md={listing.tags && listing.tags.length > 0 ? 6 : 12}
+            md={hasTags ? 6 : 12}
           >
             <Card
               variant="outlined"

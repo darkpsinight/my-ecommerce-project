@@ -104,7 +104,6 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           }
           id="edit-listing-tab-1"
           aria-controls="edit-listing-tabpanel-1"
-          disabled={!listing.codes || listing.codes.length === 0}
         />
         <Tab
           icon={<LocalOfferIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
@@ -124,26 +123,24 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           id="edit-listing-tab-2"
           aria-controls="edit-listing-tabpanel-2"
         />
-        {listing.thumbnailUrl && (
-          <Tab
-            icon={<ImageIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
-            iconPosition="start"
-            label={
-              <Typography
-                component="span"
-                sx={{ 
-                  ml: { xs: 0.25, sm: 0.5, md: 1 }, 
-                  display: { xs: 'none', sm: 'inline-block' }, 
-                  fontWeight: 'bold' 
-                }}
-              >
-                Thumbnail
-              </Typography>
-            }
-            id="edit-listing-tab-3"
-            aria-controls="edit-listing-tabpanel-3"
-          />
-        )}
+        <Tab
+          icon={<ImageIcon sx={{ fontSize: { xs: '0.9rem', sm: '1.2rem' } }} />}
+          iconPosition="start"
+          label={
+            <Typography
+              component="span"
+              sx={{ 
+                ml: { xs: 0.25, sm: 0.5, md: 1 }, 
+                display: { xs: 'none', sm: 'inline-block' }, 
+                fontWeight: 'bold' 
+              }}
+            >
+              Thumbnail
+            </Typography>
+          }
+          id="edit-listing-tab-3"
+          aria-controls="edit-listing-tabpanel-3"
+        />
       </Tabs>
     </Box>
   );

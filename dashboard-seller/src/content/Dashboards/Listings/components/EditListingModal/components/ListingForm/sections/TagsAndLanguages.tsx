@@ -3,7 +3,8 @@ import {
   Grid,
   Autocomplete,
   TextField,
-  Chip
+  Chip,
+  Typography
 } from '@mui/material';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import LanguageIcon from '@mui/icons-material/Language';
@@ -34,6 +35,7 @@ const TagsAndLanguages: React.FC<TagsAndLanguagesProps> = ({
             onChange={(_, newValue) => {
               setFormData(prev => ({ ...prev, tags: newValue }));
             }}
+            freeSolo
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
                 <Chip
@@ -51,7 +53,7 @@ const TagsAndLanguages: React.FC<TagsAndLanguagesProps> = ({
                 variant="outlined"
                 label="Tags"
                 placeholder="Add tags"
-                helperText="Select tags that describe your product"
+                helperText="Select from existing tags or type your own custom tags"
               />
             )}
           />
@@ -66,6 +68,7 @@ const TagsAndLanguages: React.FC<TagsAndLanguagesProps> = ({
             onChange={(_, newValue) => {
               setFormData(prev => ({ ...prev, supportedLanguages: newValue }));
             }}
+            freeSolo
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
                 <Chip
@@ -83,7 +86,7 @@ const TagsAndLanguages: React.FC<TagsAndLanguagesProps> = ({
                 variant="outlined"
                 label="Supported Languages"
                 placeholder="Add languages"
-                helperText="Select languages supported by this product"
+                helperText="Select from existing languages or type your own custom languages"
               />
             )}
           />

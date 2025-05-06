@@ -19,9 +19,7 @@ interface ImagesTabProps {
 const ImagesTab: React.FC<ImagesTabProps> = ({ listing }) => {
   const theme = useTheme();
 
-  if (!listing.thumbnailUrl) {
-    return null;
-  }
+  const hasThumbnail = listing.thumbnailUrl && listing.thumbnailUrl.trim() !== '';
 
   return (
     <Card
@@ -51,31 +49,49 @@ const ImagesTab: React.FC<ImagesTabProps> = ({ listing }) => {
           Product Thumbnail
         </Typography>
 
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            p: 2,
-            backgroundColor: alpha(
-              theme.palette.common.black,
-              0.03
-            ),
-            borderRadius: 1,
-            border: `1px solid ${theme.palette.divider}`
-          }}
-        >
-          <CardMedia
-            component="img"
-            src={listing.thumbnailUrl}
-            alt={listing.title}
+        {hasThumbnail ? (
+          <Box
             sx={{
-              maxWidth: '100%',
-              maxHeight: 300,
-              objectFit: 'contain',
-              borderRadius: 1
+              display: 'flex',
+              justifyContent: 'center',
+              p: 2,
+              backgroundColor: alpha(
+                theme.palette.common.black,
+                0.03
+              ),
+              borderRadius: 1,
+              border: `1px solid ${theme.palette.divider}`
             }}
-          />
-        </Box>
+          >
+            <CardMedia
+              component="img"
+              src={listing.thumbnailUrl}
+              alt={listing.title}
+              sx={{
+                maxWidth: '100%',
+                maxHeight: 300,
+                objectFit: 'contain',
+                borderRadius: 1
+              }}
+            />
+          </Box>
+        ) : (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography
+              variant="body1"
+              color="textSecondary"
+              sx={{ mb: 1 }}
+            >
+              No thumbnail image available for this listing.
+            </Typography>
+            <Typography
+              variant="body2"
+              color="textSecondary"
+            >
+              You can add a thumbnail when editing this listing.
+            </Typography>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

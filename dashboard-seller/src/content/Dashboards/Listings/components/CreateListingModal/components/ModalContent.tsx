@@ -16,6 +16,7 @@ const ModalContent: React.FC = () => {
     formErrors,
     handleChange,
     handleBlur,
+    handleDateChange,
     categories,
     availablePlatforms,
     regions,
@@ -37,7 +38,7 @@ const ModalContent: React.FC = () => {
   // Handle checkbox changes
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newIsLocked = e.target.checked;
-    
+
     if (newIsLocked && formData.region === 'Global') {
       handleChange({
         target: {
@@ -46,7 +47,7 @@ const ModalContent: React.FC = () => {
         }
       } as any);
     }
-    
+
     const event = {
       target: {
         name: e.target.name,
@@ -70,7 +71,7 @@ const ModalContent: React.FC = () => {
   return (
     <Box sx={{ py: 1 }}>
       {/* Basic Information Section */}
-      <BasicInformationSection 
+      <BasicInformationSection
         formData={formData}
         formErrors={formErrors}
         handleChange={handleChange}
@@ -79,7 +80,7 @@ const ModalContent: React.FC = () => {
       />
 
       {/* Product Details Section */}
-      <ProductDetailsSection 
+      <ProductDetailsSection
         formData={formData}
         formErrors={formErrors}
         handleChange={handleChange}
@@ -90,22 +91,23 @@ const ModalContent: React.FC = () => {
       />
 
       {/* Pricing Section */}
-      <PricingSection 
+      <PricingSection
         formData={formData}
         formErrors={formErrors}
         handleChange={handleChange}
       />
 
       {/* Product Code Section */}
-      <ProductCodeSection 
+      <ProductCodeSection
         formData={formData}
         formErrors={formErrors}
         validationError={validationError}
         selectedPattern={selectedPattern}
         handleChange={handleChange}
         handleTagsChange={handleTagsChange}
+        handleDateChange={handleDateChange}
       />
-      
+
       <Toaster position="top-right" />
     </Box>
   );

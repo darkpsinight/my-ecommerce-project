@@ -18,18 +18,18 @@ interface ModalProviderProps {
   initialCategories?: any[];
 }
 
-export const ModalProvider: React.FC<ModalProviderProps> = ({ 
-  children, 
-  open, 
-  onClose, 
+export const ModalProvider: React.FC<ModalProviderProps> = ({
+  children,
+  open,
+  onClose,
   onSubmit,
-  initialCategories = [] 
+  initialCategories = []
 }) => {
   // Use custom hooks to manage different aspects of the component
   const { error, setError, bottomErrorRef } = useErrorHandling();
-  
+
   const { formData, setFormData, formErrors, setFormErrors, resetForm } = useFormState();
-  
+
   const {
     categories,
     availablePlatforms,
@@ -47,12 +47,13 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     regions,
     loading
   } = useCategoryData(open, setError, initialCategories);
-  
+
   const {
     handleChange,
     handleBlur,
     validateForm,
     handleSubmit,
+    handleDateChange,
     submitting
   } = useFormHandlers({
     formData,
@@ -90,6 +91,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     handleChange,
     handleBlur,
     handleSubmit,
+    handleDateChange,
     resetForm
   };
 

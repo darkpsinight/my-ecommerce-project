@@ -97,7 +97,7 @@ export const useFormHandlers = ({
   // Handle input blur events for field validation
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    
+
     // Validate specific fields on blur
     if (name === 'thumbnailUrl' && value) {
       try {
@@ -137,7 +137,7 @@ export const useFormHandlers = ({
 
       // Prepare form data for submission
       const submitData = prepareFormDataForSubmission(formData);
-      
+
       // Force the expirationDate to be in ISO format if it exists
       if (formData.expirationDate) {
         // This ensures the date is properly formatted as ISO 8601
@@ -214,11 +214,20 @@ export const useFormHandlers = ({
     }
   };
 
+  // Handle date change for the DatePicker component
+  const handleDateChange = (date: Date | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      expirationDate: date
+    }));
+  };
+
   return {
     handleChange,
     handleBlur,
     validateForm,
     handleSubmit,
+    handleDateChange,
     submitting,
     setSubmitting
   };

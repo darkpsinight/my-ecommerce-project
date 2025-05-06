@@ -21,11 +21,14 @@ import {
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { SectionCard, SectionTitle } from '../components/StyledComponents';
 import { formatProductCode } from '../utils/formatters';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 interface ProductCodeSectionProps {
   formData: {
     code: string;
-    expirationDate: string;
+    expirationDate: string | Date | null;
     supportedLanguages: string[];
     tags: string[];
     sellerNotes: string;
@@ -41,6 +44,7 @@ interface ProductCodeSectionProps {
   } | null;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleTagsChange: (event: any, newValue: string[]) => void;
+  handleDateChange?: (date: Date | null) => void;
 }
 
 /**
@@ -52,7 +56,8 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
   validationError,
   selectedPattern,
   handleChange,
-  handleTagsChange
+  handleTagsChange,
+  handleDateChange
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -61,7 +66,7 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     const formattedValue = formatProductCode(value, selectedPattern);
-    
+
     // Create a synthetic event with the formatted value
     const syntheticEvent = {
       ...e,
@@ -81,8 +86,8 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
         <SectionTitle variant="h6">
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             Product Code
-            <Tooltip 
-              title="This code will be encrypted and securely stored. It will only be revealed to buyers after purchase." 
+            <Tooltip
+              title="This code will be encrypted and securely stored. It will only be revealed to buyers after purchase."
               arrow
             >
               <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
@@ -102,7 +107,7 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
               placeholder={selectedPattern?.example || "Enter the exact code that buyers will receive"}
               error={Boolean(formErrors.code) || Boolean(validationError)}
               helperText={
-                formErrors.code || validationError || 
+                formErrors.code || validationError ||
                 (selectedPattern ? `Format: ${selectedPattern.description || selectedPattern.regex}` : "The code your buyers will receive after purchase")
               }
               required
@@ -117,17 +122,26 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
             )}
           </Grid>
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Expiration Date (Optional)"
-              name="expirationDate"
-              type="date"
-              value={formData.expirationDate}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-              helperText="Leave blank if the code doesn't expire"
-              size={isMobile ? "small" : "medium"}
-            />
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Expiration Date (Optional)"
+                value={formData.expirationDate ? new Date(formData.expirationDate) : null}
+                onChange={(date: Date | null) => {
+                  if (handleDateChange) {
+                    handleDateChange(date);
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    fullWidth
+                    variant="outlined"
+                    helperText="Leave blank if the code doesn't expire"
+                    size={isMobile ? "small" : "medium"}
+                  />
+                )}
+              />
+            </LocalizationProvider>
           </Grid>
           <Grid item xs={12} md={6}>
             <FormControl fullWidth size={isMobile ? "small" : "medium"}>
@@ -159,12 +173,12 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
               onChange={handleTagsChange}
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => (
-                  <Chip 
+                  <Chip
                     key={`tag-${option}-${index}`}
-                    variant="outlined" 
-                    label={option} 
+                    variant="outlined"
+                    label={option}
                     size="small"
-                    {...getTagProps({ index })} 
+                    {...getTagProps({ index })}
                   />
                 ))
               }

@@ -13,7 +13,7 @@ export interface ListingFormData {
   region: string;
   isRegionLocked: boolean;
   code: string;
-  expirationDate: string;
+  expirationDate: string | Date | null;
   supportedLanguages: string[];
   thumbnailUrl: string;
   autoDelivery: boolean;
@@ -133,19 +133,24 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
 export const prepareFormDataForSubmission = (formData: ListingFormData) => {
   // Create a copy of the form data to avoid mutating the original
   const processedData = { ...formData };
-  
+
   console.log('Original form data:', JSON.stringify(formData, null, 2));
   console.log('Original expirationDate:', formData.expirationDate);
   console.log('Type of expirationDate:', typeof formData.expirationDate);
-  
+
   // Format expirationDate as ISO date-time string if it exists
   let formattedExpirationDate = undefined;
   if (formData.expirationDate) {
-    // Convert YYYY-MM-DD to YYYY-MM-DDT23:59:59.999Z (end of the day in UTC)
-    formattedExpirationDate = `${formData.expirationDate}T23:59:59.999Z`;
+    if (formData.expirationDate instanceof Date) {
+      // If it's a Date object, format it to ISO string
+      formattedExpirationDate = formData.expirationDate.toISOString();
+    } else if (typeof formData.expirationDate === 'string') {
+      // If it's a string (YYYY-MM-DD), convert to ISO format
+      formattedExpirationDate = `${formData.expirationDate}T23:59:59.999Z`;
+    }
     console.log('Formatted expiration date:', formattedExpirationDate);
   }
-  
+
   // Create the final data object with all conversions applied
   const finalData = {
     title: formData.title,
@@ -165,9 +170,9 @@ export const prepareFormDataForSubmission = (formData: ListingFormData) => {
     sellerNotes: formData.sellerNotes,
     status: formData.status
   };
-  
+
   console.log('Final prepared data:', JSON.stringify(finalData, null, 2));
   console.log('Final expirationDate:', finalData.expirationDate);
-  
+
   return finalData;
 };

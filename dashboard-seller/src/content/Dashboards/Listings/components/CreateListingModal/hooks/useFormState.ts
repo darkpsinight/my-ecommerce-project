@@ -16,7 +16,7 @@ export const useFormState = () => {
     region: 'Global',
     isRegionLocked: false,
     code: '',
-    expirationDate: '',
+    expirationDate: null,
     supportedLanguages: [],
     thumbnailUrl: '',
     autoDelivery: true,

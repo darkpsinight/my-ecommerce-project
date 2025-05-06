@@ -41,6 +41,7 @@ export interface ModalContextProps {
   handleChange: (e: any) => void;
   handleBlur: (e: any) => void;
   handleSubmit: () => void;
+  handleDateChange: (date: Date | null) => void;
   resetForm: () => void;
 }
 
@@ -54,7 +55,7 @@ export interface ListingFormData {
   region: string;
   isRegionLocked: boolean;
   code: string;
-  expirationDate: string;
+  expirationDate: string | Date | null;
   supportedLanguages: string[];
   thumbnailUrl: string;
   autoDelivery: boolean;

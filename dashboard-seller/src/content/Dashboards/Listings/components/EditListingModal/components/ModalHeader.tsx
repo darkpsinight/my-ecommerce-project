@@ -1,14 +1,14 @@
 import { FC } from 'react';
-import { 
-  DialogTitle, 
-  IconButton, 
-  Typography, 
+import {
+  DialogTitle,
+  IconButton,
+  Typography,
   Box,
   useTheme,
   alpha
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import EditIcon from '@mui/icons-material/Edit';
+import EditTwoToneIcon from '@mui/icons-material/EditTwoTone';
 
 interface ModalHeaderProps {
   onClose: () => void;
@@ -22,21 +22,22 @@ const ModalHeader: FC<ModalHeaderProps> = ({ onClose, title = 'Edit Listing' }) 
     <DialogTitle
       id="edit-listing-dialog-title"
       sx={{
-        p: 2,
+        p: 2.5,
         background: `linear-gradient(135deg, ${alpha(
           theme.palette.primary.main,
-          0.12
-        )}, ${alpha(theme.palette.primary.dark, 0.05)})`,
-        borderBottom: `1px solid ${theme.palette.divider}`
+          0.15
+        )}, ${alpha(theme.palette.primary.dark, 0.08)})`,
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        boxShadow: `0 2px 4px ${alpha(theme.palette.primary.main, 0.05)}`
       }}
     >
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Box display="flex" alignItems="center">
-          <EditIcon
+          <EditTwoToneIcon
             sx={{
-              mr: 1.5,
-              color: theme.palette.error.main,
-              fontSize: 28
+              mr: 2,
+              color: theme.palette.primary.main,
+              fontSize: 26
             }}
           />
           <Typography
@@ -44,7 +45,9 @@ const ModalHeader: FC<ModalHeaderProps> = ({ onClose, title = 'Edit Listing' }) 
             component="span"
             sx={{
               fontWeight: 600,
-              letterSpacing: '0.5px'
+              letterSpacing: '0.5px',
+              color: theme.palette.text.primary,
+              ml: 0.5
             }}
           >
             {title}
@@ -53,22 +56,27 @@ const ModalHeader: FC<ModalHeaderProps> = ({ onClose, title = 'Edit Listing' }) 
         <IconButton
           aria-label="close"
           onClick={onClose}
+          size="small"
           sx={{
-            color: theme.palette.grey[500],
-            backgroundColor: alpha(theme.palette.grey[100], 0.3),
+            color: theme.palette.text.secondary,
+            backgroundColor: alpha(theme.palette.primary.light, 0.2),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+            borderRadius: 1,
+            p: 1,
             '&:hover': {
-              backgroundColor: alpha(theme.palette.error.light, 0.1),
-              color: theme.palette.error.main
+              backgroundColor: alpha(theme.palette.primary.light, 0.1),
+              color: theme.palette.primary.main,
+              boxShadow: `0 2px 4px ${alpha(theme.palette.primary.main, 0.1)}`
             },
             transition: theme.transitions.create(
-              ['background-color', 'color'],
+              ['background-color', 'color', 'box-shadow'],
               {
                 duration: theme.transitions.duration.shortest
               }
             )
           }}
         >
-          <CloseIcon />
+          <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
     </DialogTitle>

@@ -252,34 +252,47 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
           )}
         </Box>
 
-        {/* ID display - smaller and less prominent */}
-        {!isVerySmallScreen && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
+        {/* Updated timestamp display - smaller and less prominent */}
+        {!isVerySmallScreen && lastUpdated && (
+          <Box
             sx={{
-              fontFamily: 'monospace',
-              fontSize: '0.7rem',
+              display: 'flex',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
               bgcolor: alpha(theme.palette.background.default, 0.7),
               px: 1,
               py: 0.25,
               borderRadius: 1,
               border: `1px solid ${theme.palette.divider}`,
-              alignSelf: 'flex-start',
-              mb: 1,
-              display: 'inline-block'
             }}
           >
-            ID: {listing.externalId}
-          </Typography>
+            <UpdateIcon
+              fontSize="small"
+              sx={{
+                color: theme.palette.text.secondary,
+                mr: 0.5,
+                fontSize: '0.7rem'
+              }}
+            />
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                fontSize: '0.7rem',
+                fontFamily: 'monospace',
+              }}
+            >
+              <b>Last Updated:</b> {formatDate(lastUpdated)}
+            </Typography>
+          </Box>
         )}
       </Box>
 
       {/* Category and Platform display - more compact */}
       <Box
         sx={{
-          mt: isVerySmallScreen ? 0.5 : 1,
-          p: isVerySmallScreen ? 0.75 : 1.25,
+          mt: isVerySmallScreen ? 0.5 : 0.25,
+          p: isVerySmallScreen ? 0.75 : 1,
           bgcolor: alpha(theme.palette.background.default, 0.6),
           borderRadius: 1,
           border: `1px solid ${theme.palette.divider}`
@@ -288,13 +301,6 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
         {isMobileScreen ? (
           // Compact view for mobile screens
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {/* Header with only the lock icon */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: -0.5 }}>
-              <Tooltip title="Category and platform cannot be changed after listing creation">
-                <LockIcon fontSize="small" color="action" sx={{ fontSize: '0.75rem' }} />
-              </Tooltip>
-            </Box>
-
             {/* Compact category and platform display */}
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: isVerySmallScreen ? 0.5 : 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -306,16 +312,21 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
                     Category:
                   </Typography>
                 )}
-                <Chip
-                  label={getCategoryName()}
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  sx={{
-                    height: isVerySmallScreen ? 22 : 24,
-                    '& .MuiChip-label': { px: isVerySmallScreen ? 0.75 : 1, fontSize: isVerySmallScreen ? '0.65rem' : '0.7rem' }
-                  }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Chip
+                    label={getCategoryName()}
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    sx={{
+                      height: isVerySmallScreen ? 22 : 24,
+                      '& .MuiChip-label': { px: isVerySmallScreen ? 0.75 : 1, fontSize: isVerySmallScreen ? '0.65rem' : '0.7rem' }
+                    }}
+                  />
+                  <Tooltip title="Category cannot be changed after listing creation">
+                    <LockIcon fontSize="small" color="action" sx={{ fontSize: '0.75rem' }} />
+                  </Tooltip>
+                </Box>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -327,16 +338,21 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
                     Platform:
                   </Typography>
                 )}
-                <Chip
-                  label={listing.platform || 'Not specified'}
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  sx={{
-                    height: isVerySmallScreen ? 22 : 24,
-                    '& .MuiChip-label': { px: isVerySmallScreen ? 0.75 : 1, fontSize: isVerySmallScreen ? '0.65rem' : '0.7rem' }
-                  }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Chip
+                    label={listing.platform || 'Not specified'}
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    sx={{
+                      height: isVerySmallScreen ? 22 : 24,
+                      '& .MuiChip-label': { px: isVerySmallScreen ? 0.75 : 1, fontSize: isVerySmallScreen ? '0.65rem' : '0.7rem' }
+                    }}
+                  />
+                  <Tooltip title="Platform cannot be changed after listing creation">
+                    <LockIcon fontSize="small" color="action" sx={{ fontSize: '0.75rem' }} />
+                  </Tooltip>
+                </Box>
               </Box>
             </Box>
           </Box>
@@ -387,35 +403,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
         )}
       </Box>
 
-      {/* Last updated info moved to bottom */}
-      {lastUpdated && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            alignSelf: 'flex-end',
-            mt: 0.5
-          }}
-        >
-          <UpdateIcon
-            fontSize="small"
-            sx={{
-              color: theme.palette.text.secondary,
-              mr: 0.5,
-              fontSize: isVerySmallScreen ? '0.7rem' : '0.75rem'
-            }}
-          />
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem'
-            }}
-          >
-            <b>Updated:</b> {formatDate(lastUpdated)}
-          </Typography>
-        </Box>
-      )}
+
     </Box>
   );
 };

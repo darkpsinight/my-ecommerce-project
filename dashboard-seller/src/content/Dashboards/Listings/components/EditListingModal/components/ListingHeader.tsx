@@ -1,5 +1,16 @@
 import React from 'react';
-import { Box, Typography, useTheme, alpha, Chip, Tooltip, Grid, useMediaQuery } from '@mui/material';
+import {
+  Box,
+  Typography,
+  useTheme,
+  alpha,
+  Chip,
+  Tooltip,
+  Grid,
+  useMediaQuery,
+  Switch,
+  FormControlLabel
+} from '@mui/material';
 import { Listing } from '../../../types';
 import ListingStatusBadge from '../../ListingStatusBadge';
 import { formatCurrency } from '../../ViewListingDetailsModal/utils/formatters';
@@ -8,17 +19,33 @@ import CategoryIcon from '@mui/icons-material/Category';
 import DevicesIcon from '@mui/icons-material/Devices';
 import LockIcon from '@mui/icons-material/Lock';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 interface ListingHeaderProps {
   listing: Listing;
   discountPercentage: number | null;
   lastUpdated: string | Date | null;
+  onStatusChange?: (newStatus: 'active' | 'draft') => void;
 }
 
-const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercentage, lastUpdated }) => {
+const ListingHeader: React.FC<ListingHeaderProps> = ({
+  listing,
+  discountPercentage,
+  lastUpdated,
+  onStatusChange
+}) => {
   const theme = useTheme();
   const isVerySmallScreen = useMediaQuery('(max-width:380px)');
   const isMobileScreen = useMediaQuery('(max-width:600px)');
+
+  // Handle status toggle between active and draft
+  const handleStatusChange = () => {
+    if (onStatusChange) {
+      const newStatus = listing.status === 'active' ? 'draft' : 'active';
+      onStatusChange(newStatus);
+    }
+  };
 
   const formatDate = (date: string | Date | null): string => {
     if (!date) return '';
@@ -92,8 +119,73 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
             mb: 1
           }}
         >
-          {/* Status badge */}
-          <ListingStatusBadge status={listing.status} />
+          {/* Status badge and switch */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: { xs: 1, sm: 2 },
+              p: { xs: 0.75, sm: 1 },
+              pl: { xs: 1, sm: 1.5 },
+              pr: { xs: 1.5, sm: 2 },
+              borderRadius: 2,
+              bgcolor: alpha(
+                listing.status === 'active'
+                  ? theme.palette.success.light
+                  : theme.palette.warning.light,
+                0.1
+              ),
+              border: `1px solid ${alpha(
+                listing.status === 'active'
+                  ? theme.palette.success.main
+                  : theme.palette.warning.main,
+                0.2
+              )}`,
+            }}
+          >
+            {/* Status icon */}
+            {!isVerySmallScreen && (
+              listing.status === 'active'
+                ? <VisibilityIcon sx={{ color: theme.palette.success.main, fontSize: '1rem' }} />
+                : <VisibilityOffIcon sx={{ color: theme.palette.warning.main, fontSize: '1rem' }} />
+            )}
+
+            {/* Status badge */}
+            <ListingStatusBadge status={listing.status} />
+
+            {/* Status switch */}
+            {onStatusChange && (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={listing.status === 'active'}
+                    onChange={handleStatusChange}
+                    name="status"
+                    color={listing.status === 'active' ? 'success' : 'warning'}
+                    size="small"
+                  />
+                }
+                label={
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                      display: { xs: 'none', sm: 'block' }
+                    }}
+                  >
+                    {listing.status === 'active' ? 'Set Draft' : 'Publish'}
+                  </Typography>
+                }
+                sx={{
+                  m: 0,
+                  ml: { xs: 0.5, sm: 1 },
+                  '.MuiFormControlLabel-label': {
+                    ml: 0.5
+                  }
+                }}
+              />
+            )}
+          </Box>
 
           {/* Price display */}
           {listing.price !== undefined && (
@@ -219,9 +311,9 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
                   variant="outlined"
                   color="primary"
                   size="small"
-                  sx={{ 
-                    height: isVerySmallScreen ? 22 : 24, 
-                    '& .MuiChip-label': { px: isVerySmallScreen ? 0.75 : 1, fontSize: isVerySmallScreen ? '0.65rem' : '0.7rem' } 
+                  sx={{
+                    height: isVerySmallScreen ? 22 : 24,
+                    '& .MuiChip-label': { px: isVerySmallScreen ? 0.75 : 1, fontSize: isVerySmallScreen ? '0.65rem' : '0.7rem' }
                   }}
                 />
               </Box>
@@ -240,9 +332,9 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
                   variant="outlined"
                   color="primary"
                   size="small"
-                  sx={{ 
-                    height: isVerySmallScreen ? 22 : 24, 
-                    '& .MuiChip-label': { px: isVerySmallScreen ? 0.75 : 1, fontSize: isVerySmallScreen ? '0.65rem' : '0.7rem' } 
+                  sx={{
+                    height: isVerySmallScreen ? 22 : 24,
+                    '& .MuiChip-label': { px: isVerySmallScreen ? 0.75 : 1, fontSize: isVerySmallScreen ? '0.65rem' : '0.7rem' }
                   }}
                 />
               </Box>

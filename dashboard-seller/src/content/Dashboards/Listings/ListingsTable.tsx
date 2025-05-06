@@ -1,4 +1,4 @@
-import { FC, useContext, useState } from 'react';
+import { FC, useContext, useState, useEffect } from 'react';
 import {
   Card,
   CardHeader,
@@ -100,7 +100,7 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   const handleBulkAction = (action: string) => {
     handleBulkMenuClose();
     if (selected.length === 0) return;
-    
+
     switch (action) {
       case 'delete':
         window.alert(`Delete Selected: ${selected.join(', ')}`);
@@ -119,13 +119,33 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   // Handle listing update from the edit modal
   const handleListingUpdated = (updatedListing: any) => {
     console.log('Listing updated:', updatedListing);
-    
+
     // Refresh the listings to show the updated data
     refreshListings();
-    
+
     // Close the modal
     setEditModalOpen(false);
   };
+
+  // Listen for status updates from the modal
+  useEffect(() => {
+    const handleStatusUpdate = (event: CustomEvent) => {
+      console.log('Status update event received:', event.detail);
+
+      // Refresh the listings to show the updated data
+      refreshListings();
+
+      // Note: We don't close the modal here, allowing the user to continue editing
+    };
+
+    // Add event listener for the custom event
+    window.addEventListener('listingStatusUpdated', handleStatusUpdate as EventListener);
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('listingStatusUpdated', handleStatusUpdate as EventListener);
+    };
+  }, [refreshListings]);
 
   // Constants
   const TABLE_COLUMNS_COUNT = 10; // Including checkbox column

@@ -48,7 +48,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [activeCodes, setActiveCodes] = useState(0);
   const [categories, setCategories] = useState([]);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
-  
+
   // Create refs to access the ListingForm components
   const generalFormRef = useRef<any>(null);
   const codesFormRef = useRef<any>(null);
@@ -58,14 +58,14 @@ const EditListingModal: FC<EditListingModalProps> = ({
   useEffect(() => {
     if (open && listingId) {
       setIsLoading(true);
-      
+
       // Find the listing in the listings array
       const foundListing = listings.find(item => item.externalId === listingId);
-      
+
       if (foundListing) {
         setListing(foundListing);
         setActiveCodes(getActiveCodes(foundListing));
-        
+
         // Fetch categories data
         fetchCategories();
       } else {
@@ -74,19 +74,19 @@ const EditListingModal: FC<EditListingModalProps> = ({
           toast.error('Listing not found');
         }, 100);
       }
-      
+
       setIsLoading(false);
     }
   }, [open, listingId, listings]);
-  
+
   // Fetch categories data
   const fetchCategories = async () => {
     try {
       const response = await getCategories();
-      
+
       if (response.success) {
         setCategories(response.data || []);
-        
+
         // Extract all available platforms from categories
         const platforms = response.data.reduce((acc, category) => {
           if (category.platforms && Array.isArray(category.platforms)) {
@@ -97,7 +97,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
           }
           return acc;
         }, []);
-        
+
         // Remove duplicates and sort alphabetically
         const uniquePlatforms = [...new Set(platforms)].sort();
         setAvailablePlatforms(uniquePlatforms);
@@ -124,6 +124,62 @@ const EditListingModal: FC<EditListingModalProps> = ({
     setActiveCodes(codesCount);
   };
 
+  // Handle status change from the header
+  const handleStatusChange = async (newStatus: 'active' | 'draft') => {
+    if (!listing) return;
+
+    // Update the local state first for immediate UI feedback
+    setListing({
+      ...listing,
+      status: newStatus
+    });
+
+    // Prepare the data for API call
+    const apiData = {
+      status: newStatus
+    };
+
+    setIsSubmitting(true);
+    try {
+      // Make the API call to update the listing status
+      const response = await updateListing(listing.externalId, apiData);
+
+      // Create an updated listing object with the response data and existing data
+      const updatedListing = {
+        ...listing,
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      };
+
+      // Update the listings array in the parent component without closing the modal
+      // We're using a custom event to notify the parent component about the update
+      // This prevents the modal from closing when the status is updated
+      const customEvent = new CustomEvent('listingStatusUpdated', {
+        detail: { updatedListing }
+      });
+      window.dispatchEvent(customEvent);
+
+      setTimeout(() => {
+        toast.success(`Listing status updated to ${newStatus}`);
+      }, 100);
+    } catch (error: any) {
+      console.error('Failed to update listing status:', error);
+
+      // Revert the local state if the API call fails
+      setListing({
+        ...listing,
+        status: listing.status // Revert to original status
+      });
+
+      const errorMessage = error.response?.data?.message || 'Failed to update listing status. Please try again.';
+      setTimeout(() => {
+        toast.error(errorMessage);
+      }, 100);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Get the current form ref based on the active tab
   const getCurrentFormRef = () => {
     switch (tabValue) {
@@ -143,38 +199,38 @@ const EditListingModal: FC<EditListingModalProps> = ({
   // Collect form data from all tabs
   const collectFormData = () => {
     const formData: Partial<Listing> = {};
-    
+
     // Get data from each form if available
     if (generalFormRef.current?.getFormData) {
       Object.assign(formData, generalFormRef.current.getFormData());
     }
-    
+
     if (codesFormRef.current?.getFormData) {
       Object.assign(formData, codesFormRef.current.getFormData());
     }
-    
+
     if (tagsLanguagesFormRef.current?.getFormData) {
       Object.assign(formData, tagsLanguagesFormRef.current.getFormData());
     }
-    
+
     if (imagesFormRef.current?.getFormData) {
       Object.assign(formData, imagesFormRef.current.getFormData());
     }
-    
+
     return formData;
   };
 
   const handleSubmit = async (updatedData: Partial<Listing> = {}) => {
     if (!listing) return;
-    
+
     // Get the current form ref
     const currentFormRef = getCurrentFormRef();
-    
+
     // Validate the current form
     if (currentFormRef.current?.validateForm) {
       // Directly call validateForm to trigger validation and display errors
       const isValid = currentFormRef.current.validateForm();
-      
+
       if (!isValid) {
         setTimeout(() => {
           toast.error('Please fix the errors in the form before submitting');
@@ -182,31 +238,31 @@ const EditListingModal: FC<EditListingModalProps> = ({
         return;
       }
     }
-    
+
     // Collect data from all forms
     const formData = collectFormData();
-    
+
     // Convert categoryId to string if it's an object
     const apiData: any = { ...formData };
     if (apiData.categoryId && typeof apiData.categoryId === 'object') {
       apiData.categoryId = apiData.categoryId._id;
     }
-    
+
     setIsSubmitting(true);
     try {
       // Make the API call to update the listing
       const response = await updateListing(listing.externalId, apiData);
-      
+
       // Create an updated listing object with the response data and existing data
       const updatedListing = {
         ...listing,
         ...formData,
         updatedAt: new Date().toISOString()
       };
-      
+
       // Call the onListingUpdated callback with the updated listing
       onListingUpdated(updatedListing as Listing);
-      
+
       setTimeout(() => {
         toast.success('Listing updated successfully');
       }, 100);
@@ -262,15 +318,16 @@ const EditListingModal: FC<EditListingModalProps> = ({
         </div>
       ) : (
         <>
-          <ListingHeader 
-            listing={listing} 
-            discountPercentage={discountPercentage} 
+          <ListingHeader
+            listing={listing}
+            discountPercentage={discountPercentage}
             lastUpdated={listing.updatedAt}
+            onStatusChange={handleStatusChange}
           />
 
-          <TabNavigation 
-            tabValue={tabValue} 
-            handleTabChange={handleTabChange} 
+          <TabNavigation
+            tabValue={tabValue}
+            handleTabChange={handleTabChange}
             listing={listing}
             activeCodes={activeCodes}
           />
@@ -284,9 +341,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
           >
             {/* General Info Tab */}
             <TabPanel value={tabValue} index={0}>
-              <ListingForm 
+              <ListingForm
                 ref={generalFormRef}
-                listing={listing} 
+                listing={listing}
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
                 section="general"
@@ -298,9 +355,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
             {/* Codes Tab */}
             <TabPanel value={tabValue} index={1}>
-              <ListingForm 
+              <ListingForm
                 ref={codesFormRef}
-                listing={listing} 
+                listing={listing}
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
                 section="codes"
@@ -311,9 +368,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
             {/* Tags & Languages Tab */}
             <TabPanel value={tabValue} index={2}>
-              <ListingForm 
+              <ListingForm
                 ref={tagsLanguagesFormRef}
-                listing={listing} 
+                listing={listing}
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
                 section="tagsLanguages"
@@ -324,9 +381,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
             {/* Images Tab */}
             <TabPanel value={tabValue} index={3}>
-              <ListingForm 
+              <ListingForm
                 ref={imagesFormRef}
-                listing={listing} 
+                listing={listing}
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
                 section="images"
@@ -336,8 +393,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
             </TabPanel>
           </DialogContent>
 
-          <ModalFooter 
-            onClose={onClose} 
+          <ModalFooter
+            onClose={onClose}
             showSaveButton={true}
             onSave={handleSubmit}
             isSubmitting={isSubmitting}

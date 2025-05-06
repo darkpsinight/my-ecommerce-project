@@ -46,6 +46,8 @@ export interface ListingFormProps {
   onCodesChange?: (codesCount: number) => void;
   categories?: any[];
   availablePlatforms?: string[];
+  sharedFormData?: FormData | null;
+  onFormDataChange?: (formData: FormData) => void;
 }
 
 export interface FormData {
@@ -83,6 +85,7 @@ export interface FormErrors {
 export interface FormRef {
   validateForm: () => boolean;
   getFormData: () => Partial<Listing>;
+  getFormDataRaw: () => FormData;
 }
 
 export interface SectionHeaderProps {

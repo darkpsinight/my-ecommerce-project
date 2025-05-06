@@ -4,6 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 // Import types
 import { Listing } from '../../types';
+import { FormData as ListingFormData } from './components/ListingForm/utils/types';
 
 // Import utility functions
 import { getActiveCodes, getTotalCodes, getDiscountPercentage } from '../ViewListingDetailsModal/utils/listingHelpers';
@@ -49,6 +50,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [categories, setCategories] = useState([]);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
 
+  // Shared form state to persist data across tabs
+  const [sharedFormData, setSharedFormData] = useState<ListingFormData | null>(null);
+
   // Create refs to access the ListingForm components
   const generalFormRef = useRef<any>(null);
   const codesFormRef = useRef<any>(null);
@@ -65,6 +69,27 @@ const EditListingModal: FC<EditListingModalProps> = ({
       if (foundListing) {
         setListing(foundListing);
         setActiveCodes(getActiveCodes(foundListing));
+
+        // Initialize shared form data from the listing
+        setSharedFormData({
+          title: foundListing.title || '',
+          description: foundListing.description || '',
+          price: foundListing.price ? foundListing.price.toString() : '',
+          originalPrice: foundListing.originalPrice ? foundListing.originalPrice.toString() : '',
+          platform: foundListing.platform || '',
+          region: foundListing.region || '',
+          isRegionLocked: foundListing.isRegionLocked || false,
+          expirationDate: foundListing.expirationDate ? new Date(foundListing.expirationDate) : null,
+          categoryId: foundListing.categoryId || '',
+          status: foundListing.status || 'active',
+          autoDelivery: foundListing.autoDelivery || false,
+          thumbnailUrl: foundListing.thumbnailUrl || '',
+          tags: foundListing.tags || [],
+          supportedLanguages: foundListing.supportedLanguages || [],
+          sellerNotes: foundListing.sellerNotes || '',
+          codes: foundListing.codes || [],
+          newCode: ''
+        });
 
         // Fetch categories data
         fetchCategories();
@@ -116,6 +141,21 @@ const EditListingModal: FC<EditListingModalProps> = ({
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    // Save the current tab's form data before switching
+    const currentFormRef = getCurrentFormRef();
+
+    if (currentFormRef.current?.getFormData && sharedFormData) {
+      // Get the current form data
+      const currentFormData = currentFormRef.current.getFormDataRaw();
+
+      // Update the shared form data with the current tab's data
+      setSharedFormData({
+        ...sharedFormData,
+        ...currentFormData
+      });
+    }
+
+    // Switch to the new tab
     setTabValue(newValue);
   };
 
@@ -350,6 +390,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 hideSubmitButton={true}
                 categories={categories}
                 availablePlatforms={availablePlatforms}
+                sharedFormData={sharedFormData}
+                onFormDataChange={setSharedFormData}
               />
             </TabPanel>
 
@@ -363,6 +405,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 section="codes"
                 hideSubmitButton={true}
                 onCodesChange={handleCodesChange}
+                sharedFormData={sharedFormData}
+                onFormDataChange={setSharedFormData}
               />
             </TabPanel>
 
@@ -376,6 +420,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 section="tagsLanguages"
                 hideSubmitButton={true}
                 onCodesChange={handleCodesChange}
+                sharedFormData={sharedFormData}
+                onFormDataChange={setSharedFormData}
               />
             </TabPanel>
 
@@ -389,6 +435,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 section="images"
                 hideSubmitButton={true}
                 onCodesChange={handleCodesChange}
+                sharedFormData={sharedFormData}
+                onFormDataChange={setSharedFormData}
               />
             </TabPanel>
           </DialogContent>

@@ -43,6 +43,7 @@ const Pricing: React.FC<PricingProps> = ({
             error={!!formErrors.price}
             helperText={formErrors.price || 'Enter the selling price'}
             variant="outlined"
+            required
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

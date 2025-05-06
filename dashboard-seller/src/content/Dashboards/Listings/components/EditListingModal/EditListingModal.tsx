@@ -171,11 +171,16 @@ const EditListingModal: FC<EditListingModalProps> = ({
     const currentFormRef = getCurrentFormRef();
     
     // Validate the current form
-    if (currentFormRef.current?.validateForm && !currentFormRef.current.validateForm()) {
-      setTimeout(() => {
-        toast.error('Please fix the errors in the form before submitting');
-      }, 100);
-      return;
+    if (currentFormRef.current?.validateForm) {
+      // Directly call validateForm to trigger validation and display errors
+      const isValid = currentFormRef.current.validateForm();
+      
+      if (!isValid) {
+        setTimeout(() => {
+          toast.error('Please fix the errors in the form before submitting');
+        }, 100);
+        return;
+      }
     }
     
     // Collect data from all forms

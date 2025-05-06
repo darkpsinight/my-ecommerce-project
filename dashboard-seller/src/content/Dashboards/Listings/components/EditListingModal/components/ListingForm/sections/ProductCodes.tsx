@@ -55,6 +55,7 @@ const ProductCodes: React.FC<ProductCodesProps> = ({
             error={!!formErrors.newCode}
             helperText={formErrors.newCode || 'Enter a valid product code'}
             variant="outlined"
+            required
             placeholder="Enter code and press Enter or Add button"
             onKeyDown={handleCodeKeyDown}
             InputProps={{

@@ -35,11 +35,24 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
 }) => {
   // Handle region locked toggle
   const handleRegionLockedChange = () => {
-    // Simply toggle the current value
+    const newIsLocked = !formData.isRegionLocked;
+    
+    // If turning region lock on and region is currently Global, clear the selection
+    if (newIsLocked && formData.region === 'Global') {
+      // Clear region selection when enabling region lock
+      handleTextChange({
+        target: {
+          name: 'region',
+          value: ''
+        }
+      } as any);
+    }
+    
+    // Toggle the region locked value
     handleTextChange({
       target: {
         name: 'isRegionLocked',
-        value: !formData.isRegionLocked
+        value: newIsLocked
       }
     } as any);
   };
@@ -59,12 +72,13 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
             helperText={formErrors.title || 'Enter a descriptive title for your listing'}
             variant="outlined"
             InputLabelProps={{ shrink: true }}
+            required
           />
         </Grid>
         
         <Grid item xs={12} md={6}>
           <FormControl fullWidth error={!!formErrors.region}>
-            <InputLabel id="region-label">Region</InputLabel>
+            <InputLabel id="region-label">Region *</InputLabel>
             <Select
               labelId="region-label"
               id="region"
@@ -73,11 +87,13 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
               onChange={handleSelectChange}
               label="Region"
             >
-              <MenuItem value="">
-                <em>Select region</em>
-              </MenuItem>
+              
               {['Global', 'North America', 'Europe', 'Asia', 'Oceania', 'South America', 'Africa'].map((region) => (
-                <MenuItem key={region} value={region}>
+                <MenuItem 
+                  key={region} 
+                  value={region}
+                  disabled={region === 'Global' && formData.isRegionLocked}
+                >
                   {region}
                 </MenuItem>
               ))}

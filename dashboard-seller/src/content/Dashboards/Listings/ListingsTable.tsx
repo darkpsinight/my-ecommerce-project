@@ -35,7 +35,8 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
     page,
     limit,
     setPage,
-    setLimit
+    setLimit,
+    refreshListings
   } = useContext(ListingsContext);
 
   // Use selection hook
@@ -117,11 +118,12 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
 
   // Handle listing update from the edit modal
   const handleListingUpdated = (updatedListing: any) => {
-    // In a real application, you would update the listings in the context
-    // or make an API call to refresh the data
     console.log('Listing updated:', updatedListing);
     
-    // For now, we'll just close the modal
+    // Refresh the listings to show the updated data
+    refreshListings();
+    
+    // Close the modal
     setEditModalOpen(false);
   };
 

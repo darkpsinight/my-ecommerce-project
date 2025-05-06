@@ -74,7 +74,6 @@ export interface FormErrors {
   title: string;
   description: string;
   price: string;
-  platform: string;
   region: string;
   thumbnailUrl: string;
   codes: string;

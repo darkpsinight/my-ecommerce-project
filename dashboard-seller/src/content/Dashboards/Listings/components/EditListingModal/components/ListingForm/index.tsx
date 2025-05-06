@@ -90,7 +90,6 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
     title: '',
     description: '',
     price: '',
-    platform: '',
     region: '',
     thumbnailUrl: '',
     codes: '',
@@ -251,8 +250,15 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
   const handleSubmit = () => {
     const { errors, isValid } = validateForm(formData);
     
+    // Always update form errors to show validation feedback
+    setFormErrors(errors);
+    
     if (!isValid) {
-      setFormErrors(errors);
+      // Scroll to the first error if possible
+      const firstErrorField = document.querySelector('.Mui-error');
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
     
@@ -467,7 +473,21 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     validateForm: () => {
-      const { isValid } = validateForm(formData);
+      const { errors, isValid } = validateForm(formData);
+      
+      // Update form errors to display validation feedback
+      setFormErrors(errors);
+      
+      // Scroll to the first error if validation fails
+      if (!isValid) {
+        setTimeout(() => {
+          const firstErrorField = document.querySelector('.Mui-error');
+          if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+      
       return isValid;
     },
     getFormData: () => {

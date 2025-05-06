@@ -32,7 +32,7 @@ const Description: React.FC<DescriptionProps> = ({
 
   return (
     <SectionContainer>
-      <SectionHeader icon="description" title="Description" />
+      <SectionHeader icon="description" title="Description *" />
       <EditorContainer className={formErrors.description ? 'error' : ''}>
         <ReactQuill
           ref={quillRef}

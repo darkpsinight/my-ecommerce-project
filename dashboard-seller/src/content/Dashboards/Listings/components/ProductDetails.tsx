@@ -51,10 +51,24 @@ export const ProductDetails: FC<ProductDetailsProps> = ({
 }) => {
   // Function to handle checkbox changes specifically
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newIsLocked = e.target.checked;
+    
+    // If turning region lock on and region is currently Global, clear the selection
+    if (newIsLocked && formData.region === 'Global') {
+      // Clear region selection when enabling region lock
+      handleChange({
+        target: {
+          name: 'region',
+          value: ''
+        }
+      } as any);
+    }
+    
+    // Update the region locked value
     const event = {
       target: {
         name: e.target.name,
-        value: e.target.checked
+        value: newIsLocked
       }
     };
     handleChange(event as any);
@@ -117,7 +131,11 @@ export const ProductDetails: FC<ProductDetailsProps> = ({
             label="Region"
           >
             {regions.map((region) => (
-              <MenuItem key={region} value={region}>
+              <MenuItem 
+                key={region} 
+                value={region}
+                disabled={region === 'Global' && formData.isRegionLocked}
+              >
                 {region}
               </MenuItem>
             ))}

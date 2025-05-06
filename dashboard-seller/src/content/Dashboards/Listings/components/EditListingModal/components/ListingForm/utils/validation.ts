@@ -33,14 +33,20 @@ export const validateBasicInfo = (
   } else if (formData.title.length < 5) {
     errors.title = 'Title must be at least 5 characters';
     isValid = false;
+  } else if (formData.title.length > 100) {
+    errors.title = 'Title must be less than 100 characters';
+    isValid = false;
   } else {
     errors.title = '';
   }
 
-  if (!formData.description.trim()) {
+  // Check if description is empty or only contains HTML tags without actual content
+  // ReactQuill can return '<p><br></p>' or similar when it's visually empty
+  const strippedDescription = formData.description.replace(/<[^>]*>/g, '').trim();
+  if (!strippedDescription) {
     errors.description = 'Description is required';
     isValid = false;
-  } else if (formData.description.length < 20) {
+  } else if (strippedDescription.length < 20) {
     errors.description = 'Description must be at least 20 characters';
     isValid = false;
   } else {
@@ -62,13 +68,6 @@ export const validateProductDetails = (
 ): { errors: FormErrors; isValid: boolean } => {
   const errors = { ...formErrors };
   let isValid = true;
-
-  if (!formData.platform) {
-    errors.platform = 'Platform is required';
-    isValid = false;
-  } else {
-    errors.platform = '';
-  }
 
   if (!formData.region) {
     errors.region = 'Region is required';
@@ -128,10 +127,9 @@ export const validateImages = (
   const errors = { ...formErrors };
   let isValid = true;
 
-  if (!formData.thumbnailUrl) {
-    errors.thumbnailUrl = 'Thumbnail URL is required';
-    isValid = false;
-  } else if (!isValidUrl(formData.thumbnailUrl)) {
+  // Make thumbnail URL validation match Create Listing Modal
+  // Only validate if URL is provided, but don't require it
+  if (formData.thumbnailUrl && !isValidUrl(formData.thumbnailUrl)) {
     errors.thumbnailUrl = 'Please enter a valid URL';
     isValid = false;
   } else {
@@ -174,27 +172,33 @@ export const validateForm = (formData: FormData): { errors: FormErrors; isValid:
     title: '',
     description: '',
     price: '',
-    platform: '',
     region: '',
     thumbnailUrl: '',
     codes: '',
     newCode: ''
   };
 
-  // Validate all sections
-  const { errors: basicErrors, isValid: isBasicValid } = validateBasicInfo(formData, initialErrors);
-  const { errors: detailsErrors, isValid: isDetailsValid } = validateProductDetails(
-    formData,
-    basicErrors
-  );
-  const { errors: pricingErrors, isValid: isPricingValid } = validatePricing(
-    formData,
-    detailsErrors
-  );
-  const { errors: imagesErrors, isValid: isImagesValid } = validateImages(formData, pricingErrors);
-  const { errors: codesErrors, isValid: isCodesValid } = validateCodes(formData, imagesErrors);
+  // Validate each section independently to collect all errors
+  const { errors: basicErrors, isValid: isBasicValid } = validateBasicInfo(formData, { ...initialErrors });
+  const { errors: detailsErrors, isValid: isDetailsValid } = validateProductDetails(formData, { ...initialErrors });
+  const { errors: pricingErrors, isValid: isPricingValid } = validatePricing(formData, { ...initialErrors });
+  const { errors: imagesErrors, isValid: isImagesValid } = validateImages(formData, { ...initialErrors });
+  const { errors: codesErrors, isValid: isCodesValid } = validateCodes(formData, { ...initialErrors });
+
+  // Combine all errors from different sections
+  const combinedErrors: FormErrors = {
+    title: basicErrors.title,
+    description: basicErrors.description,
+    price: pricingErrors.price,
+    region: detailsErrors.region,
+    thumbnailUrl: imagesErrors.thumbnailUrl,
+    codes: codesErrors.codes,
+    newCode: codesErrors.newCode
+  };
 
   const isValid = isBasicValid && isDetailsValid && isPricingValid && isImagesValid && isCodesValid;
 
-  return { errors: codesErrors, isValid };
+  // Return the combined errors from all validation steps
+  // This ensures all validation errors are displayed at once
+  return { errors: combinedErrors, isValid };
 };

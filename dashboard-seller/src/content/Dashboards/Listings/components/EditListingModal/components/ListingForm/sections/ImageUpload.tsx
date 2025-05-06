@@ -27,7 +27,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <SectionContainer>
-      <SectionHeader icon={<ImageIcon />} title="Product Image" />
+      <SectionHeader icon={<ImageIcon />} title="Product Thumbnail" />
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <TextField

@@ -48,7 +48,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({ listing }) => {
               fontSize: 20
             }}
           />
-          Product Images
+          Product Thumbnail
         </Typography>
 
         <Box

@@ -144,7 +144,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
                   fontWeight: 'bold' 
                 }}
               >
-                Images
+                Thumbnail
               </Typography>
             }
             id="listing-tab-3"

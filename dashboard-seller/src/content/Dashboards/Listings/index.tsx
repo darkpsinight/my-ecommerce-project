@@ -8,6 +8,7 @@ import ListingsTable from './ListingsTable';
 import ListingsSummary from './ListingsSummary';
 import ListingsActions from './ListingsActions';
 import { ListingsProvider } from './context/ListingsContext';
+import NetworkErrorAlert from './components/NetworkErrorAlert';
 
 import { useState } from 'react';
 
@@ -18,11 +19,12 @@ function DashboardListings() {
       <Helmet>
         <title>Listings Management</title>
       </Helmet>
-      <PageTitleWrapper>
-        <PageHeader />
-      </PageTitleWrapper>
-      <Container maxWidth="lg">
-        <ListingsProvider>
+      <ListingsProvider>
+        <NetworkErrorAlert />
+        <PageTitleWrapper>
+          <PageHeader />
+        </PageTitleWrapper>
+        <Container maxWidth="lg">
           <Grid
             container
             direction="row"
@@ -40,8 +42,8 @@ function DashboardListings() {
               <ListingsTable selected={selected} setSelected={setSelected} />
             </Grid>
           </Grid>
-        </ListingsProvider>
-      </Container>
+        </Container>
+      </ListingsProvider>
       <Footer />
     </>
   );

@@ -32,7 +32,7 @@ const SummaryCard = styled(Paper)(
     height: 100%;
     position: relative;
     transition: all .2s;
-    
+
     &:hover {
       box-shadow: ${theme.shadows[3]};
       transform: translateY(-5px);
@@ -44,7 +44,7 @@ const ButtonAdd = styled(Button)(
   ({ theme }) => `
     background-color: ${theme.colors.primary.main};
     color: ${theme.colors.alpha.white[100]};
-    
+
     &:hover {
       background-color: ${theme.colors.primary.dark};
     }
@@ -163,12 +163,6 @@ const ListingsSummary: FC = () => {
       </Box>
       <Divider />
       <Box sx={{ p: 3 }}>
-        {error ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        ) : null}
-
         <Grid container spacing={3}>
           {loading
             ? // Loading skeleton state
@@ -214,7 +208,7 @@ const ListingsSummary: FC = () => {
               ))}
         </Grid>
       </Box>
-      <CreateListingModal 
+      <CreateListingModal
         open={openModal}
         onClose={() => setOpenModal(false)}
         onSubmit={addNewListing}

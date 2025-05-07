@@ -64,16 +64,16 @@ const ListingRow: FC<ListingRowProps> = ({
   const theme = useTheme();
   const { newListingId } = useContext(ListingsContext);
   const [isFlashing, setIsFlashing] = useState(false);
-  
+
   // Get quantity values from API or calculate as fallback
-  const activeCodes = listing.quantityOfActiveCodes !== undefined ? 
-    listing.quantityOfActiveCodes : 
+  const activeCodes = listing.quantityOfActiveCodes !== undefined ?
+    listing.quantityOfActiveCodes :
     (listing.codes ? listing.codes.filter(code => code.soldStatus === 'active').length : 0);
-  
-  const totalCodes = listing.quantityOfAllCodes !== undefined ? 
-    listing.quantityOfAllCodes : 
+
+  const totalCodes = listing.quantityOfAllCodes !== undefined ?
+    listing.quantityOfAllCodes :
     (listing.codes ? listing.codes.length : 0);
-  
+
   const isInactive = listing.status === 'sold' || activeCodes === 0;
   const isNewListing = newListingId === listing.externalId;
 
@@ -85,7 +85,7 @@ const ListingRow: FC<ListingRowProps> = ({
 
   const formatDate = (dateValue: Date | string | null): string => {
     if (!dateValue) return 'N/A';
-    
+
     try {
       // Handle both string dates and Date objects
       const dateObj = typeof dateValue === 'string'
@@ -130,9 +130,11 @@ const ListingRow: FC<ListingRowProps> = ({
         />
       </TableCell>
       <TableCell>
-        <Typography variant="body1" fontWeight="bold" noWrap>
-          {listing.title}
-        </Typography>
+        <Tooltip title={listing.title.length > 29 ? listing.title : ''} arrow placement="top">
+          <Typography variant="body1" fontWeight="bold" noWrap>
+            {listing.title.length > 29 ? `${listing.title.substring(0, 29)}...` : listing.title}
+          </Typography>
+        </Tooltip>
       </TableCell>
       <TableCell>
         <Typography variant="body1" noWrap>
@@ -149,9 +151,9 @@ const ListingRow: FC<ListingRowProps> = ({
         )}
       </TableCell>
       <TableCell align="center">
-        <Tooltip 
-          title="Format: Active/Total (Active codes available / Total codes listed)" 
-          arrow 
+        <Tooltip
+          title="Format: Active/Total (Active codes available / Total codes listed)"
+          arrow
           placement="top"
         >
           <Typography

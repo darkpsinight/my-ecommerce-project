@@ -46,7 +46,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
           <Card
             variant="outlined"
             sx={{
-              mb: 3,
               overflow: 'hidden',
               boxShadow: theme.shadows[1]
             }}

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { getSellerListings } from 'src/services/api/listings';
 import { Listing, ListingsResponse } from '../types';
+import { useError } from 'src/contexts/ErrorContext';
 
 interface FilterParams {
   status?: string;
@@ -66,9 +67,10 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
   initialPage = 0,
   initialLimit = 5
 }) => {
+  const { setError } = useError();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setLocalError] = useState<string | null>(null);
   const [totalListings, setTotalListings] = useState<number>(0);
   const [page, setPage] = useState<number>(initialPage);
   const [limit, setLimit] = useState<number>(initialLimit);
@@ -76,6 +78,12 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [filters, setFiltersState] = useState<FilterParams>({});
   const [newListingId, setNewListingId] = useState<string | null>(null);
+
+  // Update both local and global error states
+  const updateError = (errorMessage: string | null) => {
+    setLocalError(errorMessage);
+    setError(errorMessage);
+  };
 
   // Function to handle sorting changes
   const setSorting = useCallback((field: string) => {
@@ -110,7 +118,7 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
     async (pageOverride?: number, limitOverride?: number, filterOverride?: Partial<FilterParams>) => {
       try {
         setLoading(true);
-        setError(null);
+        updateError(null);
 
         const currentPage = typeof pageOverride === 'number' ? pageOverride : page;
         const currentLimit = typeof limitOverride === 'number' ? limitOverride : limit;
@@ -155,13 +163,13 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
           }
         } else {
           console.error('Failed response from listings API:', response);
-          setError(response.message || 'Failed to fetch listings');
+          updateError(response.message || 'Failed to fetch listings');
           setListings([]);
           setTotalListings(0);
         }
       } catch (error) {
         console.error('Error fetching listings:', error);
-        setError('An error occurred while fetching listings. Please try again.');
+        updateError('Network Error');
         setListings([]);
         setTotalListings(0);
       } finally {

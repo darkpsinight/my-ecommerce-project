@@ -13,6 +13,7 @@ import { useConfigFetcher } from 'src/hooks/useConfigFetcher';
 import { useTokenRestoration } from 'src/hooks/useTokenRestoration';
 import { useAuthRefresh } from 'src/hooks/useAuthRefresh';
 import AuthProvider from './providers/AuthProvider';
+import { ErrorProvider } from './contexts/ErrorContext';
 import { Toaster } from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { RootState } from './redux/store';
@@ -22,17 +23,17 @@ function AppContent() {
   const content = useRoutes(router);
   const token = useSelector((state: RootState) => state.auth.token);
   const hasInitializedRef = useRef(false);
-  
+
   useConfigFetcher();
   useTokenRestoration();
   const { refreshToken } = useAuthRefresh();
-  
+
   // Initial token refresh only if we don't already have a token
   useEffect(() => {
     // Only attempt refresh once per session and only if no token is present
     if (!hasInitializedRef.current) {
       hasInitializedRef.current = true;
-      
+
       // Short delay to ensure DOM is ready
       const timer = setTimeout(() => {
         console.log('App: Attempting initial token refresh on page load');
@@ -40,7 +41,7 @@ function AppContent() {
           console.log('App initial refresh result:', success ? 'successful' : 'failed');
         });
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, []);
@@ -72,7 +73,9 @@ function App() {
   return (
     <Provider store={store}>
       <AuthProvider>
-        <AppContent />
+        <ErrorProvider>
+          <AppContent />
+        </ErrorProvider>
       </AuthProvider>
     </Provider>
   );

@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 
 import Sidebar from './Sidebar';
 import Header from './Header';
+import NetworkErrorAlert from 'src/components/NetworkErrorAlert';
 
 interface SidebarLayoutProps {
   children?: ReactNode;
@@ -43,6 +44,7 @@ const SidebarLayout: FC<SidebarLayoutProps> = () => {
       >
         <Header />
         <Sidebar />
+        <NetworkErrorAlert />
         <Box
           sx={{
             position: 'relative',

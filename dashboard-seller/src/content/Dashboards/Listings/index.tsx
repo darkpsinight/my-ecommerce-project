@@ -8,7 +8,6 @@ import ListingsTable from './ListingsTable';
 import ListingsSummary from './ListingsSummary';
 import ListingsActions from './ListingsActions';
 import { ListingsProvider } from './context/ListingsContext';
-import NetworkErrorAlert from './components/NetworkErrorAlert';
 
 import { useState } from 'react';
 
@@ -20,7 +19,6 @@ function DashboardListings() {
         <title>Listings Management</title>
       </Helmet>
       <ListingsProvider>
-        <NetworkErrorAlert />
         <PageTitleWrapper>
           <PageHeader />
         </PageTitleWrapper>

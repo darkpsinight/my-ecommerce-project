@@ -9,6 +9,7 @@ import {
   TableContainer,
   TablePagination
 } from '@mui/material';
+import { showSuccessToast, showErrorToast } from './components/ListingsActions/ToastNotifications';
 
 // Import custom hooks
 import { useListingSelection, useListingMenus } from './hooks';
@@ -23,7 +24,10 @@ import ViewListingDetailsModal from './components/ViewListingDetailsModal';
 import { EditListingModal } from './components/EditListingModal';
 
 // Import API service
-import { getCategories } from '../../../services/api/listings';
+import { getCategories, deleteListing } from '../../../services/api/listings';
+
+// Import confirmation dialog
+import ConfirmationDialog from '../../../components/ConfirmationDialog';
 
 // Import types
 import { ListingsTableProps } from './types';
@@ -80,6 +84,16 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
 
+  // State for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+  const [listingDetailsForDelete, setListingDetailsForDelete] = useState<any>(null);
+
+  // State for bulk delete confirmation dialog
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkDeleteInProgress, setBulkDeleteInProgress] = useState(false);
+
   // State for categories
   const [categories, setCategories] = useState<any[]>([]);
   const [categoriesLoaded, setCategoriesLoaded] = useState<boolean>(false);
@@ -119,9 +133,94 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
 
   const handleDeleteConfirmation = (id: string) => {
     console.log('Delete listing:', id);
-    // Show confirmation dialog before deleting
-    // You could implement this with a Dialog component
+
+    // Find the listing details
+    const listingToDelete = listings.find(listing => listing.externalId === id);
+
+    if (listingToDelete) {
+      // Set the listing ID to delete and prepare details for the dialog
+      setListingToDelete(id);
+
+      // Format price with currency symbol
+      const formattedPrice = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(listingToDelete.price);
+
+      // Format date
+      const formattedDate = new Date(listingToDelete.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+
+      // Get code count from the listing
+      const codeCount = listingToDelete.codes?.length || 0;
+
+      // Create additional warning message based on code count
+      let additionalWarning = '';
+      if (codeCount > 0) {
+        additionalWarning = `This listing contains ${codeCount} ${codeCount === 1 ? 'code' : 'codes'} that will be permanently deleted. Make sure you have backed up any important information before proceeding.`;
+      }
+
+      // Set details for the confirmation dialog
+      setListingDetailsForDelete({
+        title: listingToDelete.title, // Pass the full title, truncation will be handled in the ConfirmationDialog
+        fullTitle: listingToDelete.title, // Store the full title for responsive display
+        subtitle: `${listingToDelete.platform} • ${listingToDelete.status}`,
+        metadata: [
+          { label: 'Price', value: formattedPrice },
+          { label: 'Created', value: formattedDate },
+          { label: 'Category', value: listingToDelete.categoryName || 'N/A' }
+        ],
+        codeCount: codeCount,
+        additionalWarning: additionalWarning
+      });
+
+      setDeleteDialogOpen(true);
+    } else {
+      showErrorToast('Listing not found');
+    }
+
     handleCloseMenu();
+  };
+
+  const handleDeleteCancel = () => {
+    // Close the dialog and reset state
+    setDeleteDialogOpen(false);
+    setListingToDelete(null);
+    setListingDetailsForDelete(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!listingToDelete) return;
+
+    setDeleteInProgress(true);
+    try {
+      // Call the API to delete the listing
+      const response = await deleteListing(listingToDelete);
+
+      if (response && response.success) {
+        // Show success notification
+        showSuccessToast('Listing deleted successfully');
+
+        // Refresh the listings to update the UI
+        refreshListings();
+      } else {
+        // Show error notification
+        showErrorToast(response?.message || 'Failed to delete listing');
+      }
+    } catch (error: any) {
+      console.error('Error deleting listing:', error);
+      // Show error notification with more details if available
+      showErrorToast(error.response?.data?.message || error.message || 'Failed to delete listing');
+    } finally {
+      // Reset state
+      setDeleteInProgress(false);
+      setDeleteDialogOpen(false);
+      setListingToDelete(null);
+      setListingDetailsForDelete(null);
+    }
   };
 
   const handleBulkAction = (action: string) => {
@@ -130,7 +229,8 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
 
     switch (action) {
       case 'delete':
-        window.alert(`Delete Selected: ${selected.join(', ')}`);
+        // Open bulk delete confirmation dialog
+        setBulkDeleteDialogOpen(true);
         break;
       case 'suspend':
         window.alert(`Suspend Selected: ${selected.join(', ')}`);
@@ -140,6 +240,112 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
         break;
       default:
         break;
+    }
+  };
+
+  // Helper function to get selected listings details
+  const getSelectedListingsDetails = () => {
+    // Get the first 3 selected listings to show in the dialog
+    const selectedListings = listings
+      .filter(listing => selected.includes(listing.externalId))
+      .slice(0, 3);
+
+    // Calculate total price of selected listings
+    const totalPrice = listings
+      .filter(listing => selected.includes(listing.externalId))
+      .reduce((sum, listing) => sum + (listing.price || 0), 0);
+
+    // Calculate total code count
+    const totalCodeCount = listings
+      .filter(listing => selected.includes(listing.externalId))
+      .reduce((sum, listing) => sum + (listing.codes?.length || 0), 0);
+
+    // Format total price
+    const formattedTotalPrice = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(totalPrice);
+
+    // Create additional warning message based on code count
+    let additionalWarning = '';
+    if (totalCodeCount > 0) {
+      additionalWarning = `You are about to delete a total of ${totalCodeCount} ${totalCodeCount === 1 ? 'code' : 'codes'} across ${selected.length} listings. This action cannot be undone and all code data will be permanently lost.`;
+    }
+
+    return {
+      title: `${selected.length} Listings Selected`,
+      subtitle: `Total value: ${formattedTotalPrice}`,
+      metadata: [
+        ...selectedListings.map(listing => {
+          const codeCount = listing.codes?.length || 0;
+          return {
+            label: listing.title.length > 25 ? listing.title.substring(0, 25) + '...' : listing.title,
+            value: `${new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD'
+            }).format(listing.price || 0)}${codeCount > 0 ? ` (${codeCount} ${codeCount === 1 ? 'code' : 'codes'})` : ''}`
+          };
+        }),
+        ...(selected.length > 3 ? [{ label: `And ${selected.length - 3} more...`, value: '' }] : [])
+      ],
+      codeCount: totalCodeCount,
+      additionalWarning: additionalWarning
+    };
+  };
+
+  const handleBulkDeleteCancel = () => {
+    // Close the dialog and reset state
+    setBulkDeleteDialogOpen(false);
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (selected.length === 0) return;
+
+    setBulkDeleteInProgress(true);
+
+    try {
+      // Track success and failures
+      let successCount = 0;
+      let failureCount = 0;
+
+      // Process each selected listing
+      for (const id of selected) {
+        try {
+          // Call the API to delete the listing
+          const response = await deleteListing(id);
+
+          if (response && response.success) {
+            successCount++;
+          } else {
+            failureCount++;
+          }
+        } catch (error) {
+          console.error(`Error deleting listing ${id}:`, error);
+          failureCount++;
+        }
+      }
+
+      // Show appropriate notification based on results
+      if (successCount > 0 && failureCount === 0) {
+        showSuccessToast(`Successfully deleted ${successCount} listings`);
+      } else if (successCount > 0 && failureCount > 0) {
+        showErrorToast(`Deleted ${successCount} listings, but failed to delete ${failureCount} listings`);
+      } else {
+        showErrorToast(`Failed to delete ${failureCount} listings`);
+      }
+
+      // Refresh the listings to update the UI
+      refreshListings();
+
+      // Clear selection
+      setSelected([]);
+    } catch (error: any) {
+      console.error('Error in bulk delete operation:', error);
+      showErrorToast('An error occurred during the bulk delete operation');
+    } finally {
+      // Reset state
+      setBulkDeleteInProgress(false);
+      setBulkDeleteDialogOpen(false);
     }
   };
 
@@ -264,6 +470,34 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
         listings={listings}
         onListingUpdated={handleListingUpdated}
         initialCategories={categories}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        title="Delete Listing"
+        message="Are you sure you want to delete this listing? This action cannot be undone."
+        confirmButtonText="Delete"
+        cancelButtonText="Cancel"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteInProgress}
+        severity="error"
+        itemDetails={listingDetailsForDelete}
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={bulkDeleteDialogOpen}
+        title="Delete Selected Listings"
+        message={`Are you sure you want to delete ${selected.length} selected listings? This action cannot be undone.`}
+        confirmButtonText="Delete All"
+        cancelButtonText="Cancel"
+        onConfirm={handleBulkDeleteConfirm}
+        onCancel={handleBulkDeleteCancel}
+        isLoading={bulkDeleteInProgress}
+        severity="error"
+        itemDetails={selected.length > 0 ? getSelectedListingsDetails() : undefined}
       />
     </Card>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, TextField, Typography, useMediaQuery, useTheme, CardContent } from '@mui/material';
+import { Grid, TextField, Typography, useMediaQuery, useTheme, CardContent, FormHelperText } from '@mui/material';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { SectionCard, SectionTitle, EditorContainer } from '../components/StyledComponents';
@@ -93,9 +93,9 @@ const BasicInformationSection: React.FC<BasicInformationSectionProps> = ({
                 placeholder="Provide a detailed description of your product. Include important features, usage instructions, and any other information buyers should know."
               />
               {formErrors.description && (
-                <div className="MuiFormHelperText-root Mui-error">
+                <FormHelperText error>
                   {formErrors.description}
-                </div>
+                </FormHelperText>
               )}
             </EditorContainer>
           </Grid>

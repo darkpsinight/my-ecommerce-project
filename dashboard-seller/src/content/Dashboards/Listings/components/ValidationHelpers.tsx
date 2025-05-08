@@ -78,8 +78,13 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
   }
 
   // Description validation
-  if (!formData.description.trim()) {
+  // Strip HTML tags to get the actual text content
+  const strippedDescription = formData.description.replace(/<[^>]*>/g, '').trim();
+  if (!strippedDescription) {
     errors.description = 'Description is required';
+    isValid = false;
+  } else if (strippedDescription.length < 20) {
+    errors.description = 'Description must be at least 20 characters';
     isValid = false;
   }
 

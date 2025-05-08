@@ -5,6 +5,7 @@ export type ListingStatusType = 'active' | 'sold' | 'expired' | 'suspended' | 'd
 
 // Interface for a product code
 export interface ListingCode {
+  codeId?: string; // UUID for the code
   code: string;
   soldStatus: string;
   soldAt?: string | Date;
@@ -67,7 +68,7 @@ export interface FormData {
   supportedLanguages: string[];
   sellerNotes: string;
   codes:
-    | Array<{ code: string; soldStatus: string; soldAt?: string | Date }>
+    | Array<{ codeId?: string; code: string; soldStatus: string; soldAt?: string | Date }>
     | undefined;
   newCode: string;
 }
@@ -94,6 +95,7 @@ export interface SectionHeaderProps {
 }
 
 export interface CodeItemProps {
+  codeId?: string;
   code: string;
   soldStatus: string;
   soldAt?: string | Date;

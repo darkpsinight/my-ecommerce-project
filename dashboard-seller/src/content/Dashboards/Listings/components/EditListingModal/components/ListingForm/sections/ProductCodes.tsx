@@ -66,8 +66,8 @@ const ProductCodes: React.FC<ProductCodesProps> = ({
               ),
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton 
-                    color="primary" 
+                  <IconButton
+                    color="primary"
                     onClick={handleAddCode}
                     disabled={!formData.newCode.trim()}
                   >
@@ -99,12 +99,12 @@ const ProductCodes: React.FC<ProductCodesProps> = ({
 
         <Grid item xs={12}>
           <Divider sx={{ my: 2 }} />
-          
+
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="subtitle1" fontWeight="500">
               Product Codes ({codesCount})
             </Typography>
-            
+
             {codesCount > 0 && (
               <Typography variant="body2" color="text.secondary">
                 {codesCount} code{codesCount !== 1 ? 's' : ''} added
@@ -126,7 +126,8 @@ const ProductCodes: React.FC<ProductCodesProps> = ({
             <Stack spacing={1} sx={{ mb: 2 }}>
               {formData.codes?.map((codeItem) => (
                 <CodeItemComponent
-                  key={codeItem.code}
+                  key={codeItem.codeId || codeItem.code}
+                  codeId={codeItem.codeId}
                   code={codeItem.code}
                   soldStatus={codeItem.soldStatus}
                   soldAt={codeItem.soldAt}

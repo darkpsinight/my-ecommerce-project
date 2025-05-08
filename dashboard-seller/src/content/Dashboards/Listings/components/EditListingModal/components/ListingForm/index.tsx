@@ -217,6 +217,8 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
     const updatedCodes = [
       ...(formData.codes || []),
       {
+        // We don't generate a UUID here as it will be generated on the server
+        // when the code is saved to the database
         code: formData.newCode.trim(),
         soldStatus: 'active'
       }

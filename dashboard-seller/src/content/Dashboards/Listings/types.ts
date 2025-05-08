@@ -12,6 +12,7 @@ export type ListingStatusType = 'active' | 'sold' | 'expired' | 'suspended' | 'd
 
 // Interface for a product code
 export interface ListingCode {
+  codeId?: string; // UUID for the code
   code: string;
   soldStatus: string;
   soldAt?: string | Date;

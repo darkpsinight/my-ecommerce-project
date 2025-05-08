@@ -30,6 +30,7 @@ export interface Listing {
 }
 
 export interface ListingCode {
+  codeId?: string; // UUID for the code
   code: string;
   soldStatus: string;
   soldAt?: string | Date;

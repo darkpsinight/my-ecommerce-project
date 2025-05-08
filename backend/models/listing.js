@@ -46,6 +46,11 @@ const listingSchema = new mongoose.Schema({
   },
   // Replace single code with codes array
   codes: [{
+    codeId: {
+      type: String,
+      required: true,
+      default: uuidv4
+    },
     code: {
       type: String,
       required: [true, "Please provide a code"],
@@ -119,12 +124,12 @@ listingSchema.index({ status: 1, expirationDate: 1 });
 listingSchema.pre("save", function(next) {
   // Update the updatedAt timestamp
   this.updatedAt = Date.now();
-  
+
   // Skip status calculation if explicitly set to not recalculate
   if (this._skipStatusCalculation) {
     return next();
   }
-  
+
   // Calculate status based on codes
   if (this.codes && this.codes.length > 0) {
     // Count codes by status
@@ -135,20 +140,20 @@ listingSchema.pre("save", function(next) {
       suspended: 0,
       draft: 0
     };
-    
+
     this.codes.forEach(code => {
       if (statusCounts.hasOwnProperty(code.soldStatus)) {
         statusCounts[code.soldStatus]++;
       }
     });
-    
+
     // Check if listing is expired by date
     const isExpired = this.expirationDate && new Date(this.expirationDate) < new Date();
-    
+
     if (isExpired) {
       // If expired by date, set status to expired regardless of other conditions
       this.status = "expired";
-      
+
       // Also mark all active codes as expired
       if (statusCounts.active > 0) {
         this.codes.forEach(code => {
@@ -192,7 +197,7 @@ listingSchema.pre("save", function(next) {
       this.status = "suspended";
     }
   }
-  
+
   next();
 });
 
@@ -200,18 +205,18 @@ listingSchema.pre("save", function(next) {
 listingSchema.methods.encryptCode = function(code) {
   // Create an initialization vector
   const iv = crypto.randomBytes(16);
-  
+
   // Create cipher using the secret key from configs and the iv
   const cipher = crypto.createCipheriv(
-    "aes-256-cbc", 
-    Buffer.from(configs.CODE_ENCRYPTION_KEY || crypto.randomBytes(32)), 
+    "aes-256-cbc",
+    Buffer.from(configs.CODE_ENCRYPTION_KEY || crypto.randomBytes(32)),
     iv
   );
-  
+
   // Encrypt the code
   let encrypted = cipher.update(code, "utf8", "hex");
   encrypted += cipher.final("hex");
-  
+
   return {
     code: encrypted,
     iv: iv.toString("hex")
@@ -227,11 +232,11 @@ listingSchema.methods.decryptCode = function(encryptedCode, iv) {
       Buffer.from(configs.CODE_ENCRYPTION_KEY || crypto.randomBytes(32)),
       Buffer.from(iv, "hex")
     );
-    
+
     // Decrypt the code
     let decrypted = decipher.update(encryptedCode, "hex", "utf8");
     decrypted += decipher.final("utf8");
-    
+
     return decrypted;
   } catch (error) {
     console.error("Error decrypting code:", error);
@@ -244,17 +249,18 @@ listingSchema.methods.addCodes = function(plainTextCodes) {
   if (!Array.isArray(plainTextCodes)) {
     plainTextCodes = [plainTextCodes];
   }
-  
+
   // Encrypt each code and add to the codes array
   plainTextCodes.forEach(plainCode => {
     const { code, iv } = this.encryptCode(plainCode);
     this.codes.push({
+      codeId: uuidv4(), // Generate a unique UUID for each code
       code,
       iv,
       soldStatus: "active"
     });
   });
-  
+
   return this.codes.length;
 };
 
@@ -262,29 +268,29 @@ listingSchema.methods.addCodes = function(plainTextCodes) {
 listingSchema.methods.purchaseCode = function() {
   // Find the first active code
   const activeCodeIndex = this.codes.findIndex(code => code.soldStatus === "active");
-  
+
   if (activeCodeIndex === -1) {
     throw new Error("No active codes available for purchase");
   }
-  
+
   // Get the active code
   const codeObj = this.codes[activeCodeIndex];
-  
+
   // Decrypt the code
   const decryptedCode = this.decryptCode(codeObj.code, codeObj.iv);
-  
+
   if (!decryptedCode) {
     throw new Error("Failed to decrypt the code");
   }
-  
+
   // Mark the code as sold
   this.codes[activeCodeIndex].soldStatus = "sold";
   this.codes[activeCodeIndex].soldAt = new Date();
-  
+
   // Save the listing to trigger the pre-save middleware
   // This will update quantity and status automatically
   this.save();
-  
+
   return decryptedCode;
 };
 
@@ -300,7 +306,7 @@ listingSchema.statics.determineListingStatus = function(codes, isExpired, curren
   if (isExpired) {
     return "expired";
   }
-  
+
   // If no codes, return draft if it's already draft, otherwise suspended
   if (!codes || codes.length === 0) {
     return currentStatus === "draft" ? "draft" : "suspended";
@@ -354,17 +360,17 @@ listingSchema.statics.determineListingStatus = function(codes, isExpired, curren
 // Add a static method to fix inconsistent listings
 listingSchema.statics.auditAndFixListings = async function() {
   const Listing = this;
-  
+
   // Find all listings
   const listings = await Listing.find({}).select("+codes");
   let fixedCount = 0;
-  
+
   for (const listing of listings) {
     let needsUpdate = false;
-    
+
     // Check if expired by date
     const isExpired = listing.expirationDate && new Date(listing.expirationDate) < new Date();
-    
+
     // If expired, mark active codes as expired
     if (isExpired && listing.codes && listing.codes.length > 0) {
       for (const code of listing.codes) {
@@ -374,15 +380,15 @@ listingSchema.statics.auditAndFixListings = async function() {
         }
       }
     }
-    
+
     // Determine correct status using the shared logic
     const correctStatus = Listing.determineListingStatus(listing.codes, isExpired, listing.status);
-    
+
     if (listing.status !== correctStatus) {
       listing.status = correctStatus;
       needsUpdate = true;
     }
-    
+
     // Save if changes were made
     if (needsUpdate) {
       // Skip status recalculation in pre-save hook since we just did it
@@ -391,7 +397,7 @@ listingSchema.statics.auditAndFixListings = async function() {
       fixedCount++;
     }
   }
-  
+
   return {
     total: listings.length,
     fixed: fixedCount

@@ -20,6 +20,7 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
         <TableHead>
           <TableRow>
             <TableCell>Code</TableCell>
+            <TableCell>Code ID</TableCell>
             <TableCell>Status</TableCell>
             <TableCell align="right">Actions</TableCell>
           </TableRow>
@@ -34,15 +35,20 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography 
-                    variant="body2" 
-                    color={codeObj.soldStatus === 'active' ? 'success.main' : 
-                          codeObj.soldStatus === 'expired' ? 'error.main' : 
+                  <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem" color="text.secondary">
+                    {codeObj.codeId || 'N/A'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    variant="body2"
+                    color={codeObj.soldStatus === 'active' ? 'success.main' :
+                          codeObj.soldStatus === 'expired' ? 'error.main' :
                           codeObj.soldStatus === 'draft' ? 'warning.main' : 'text.secondary'}
                   >
-                    {codeObj.soldStatus === 'active' ? 'Active' : 
-                      codeObj.soldStatus === 'sold' ? `Sold${codeObj.soldAt ? ` on ${format(new Date(codeObj.soldAt), 'MM/dd/yyyy')}` : ''}` : 
-                      codeObj.soldStatus === 'expired' ? 'Expired' : 
+                    {codeObj.soldStatus === 'active' ? 'Active' :
+                      codeObj.soldStatus === 'sold' ? `Sold${codeObj.soldAt ? ` on ${format(new Date(codeObj.soldAt), 'MM/dd/yyyy')}` : ''}` :
+                      codeObj.soldStatus === 'expired' ? 'Expired' :
                       codeObj.soldStatus === 'draft' ? 'Draft' : codeObj.soldStatus}
                   </Typography>
                 </TableCell>
@@ -60,7 +66,7 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={3} align="center" sx={{ py: 2 }}>
+              <TableCell colSpan={4} align="center" sx={{ py: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   No codes match your search
                 </Typography>

@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  CardContent, 
-  Typography, 
-  Box, 
-  IconButton, 
+import {
+  CardContent,
+  Typography,
+  Box,
+  IconButton,
   Chip,
   Tooltip
 } from '@mui/material';
@@ -16,24 +16,25 @@ import { CodeItem as StyledCodeItem } from './StyledComponents';
 /**
  * Component for displaying a single product code
  */
-const CodeItemComponent: React.FC<CodeItemProps> = ({ 
-  code, 
-  soldStatus, 
-  soldAt, 
-  onDelete 
+const CodeItemComponent: React.FC<CodeItemProps> = ({
+  codeId,
+  code,
+  soldStatus,
+  soldAt,
+  onDelete
 }) => {
   const isSold = soldStatus === 'sold';
-  
+
   return (
     <StyledCodeItem className={isSold ? 'sold' : ''}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography 
-              variant="body1" 
-              fontFamily="monospace" 
-              fontWeight="500" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              fontFamily="monospace"
+              fontWeight="500"
+              sx={{
                 mr: 2,
                 textDecoration: isSold ? 'line-through' : 'none',
                 opacity: isSold ? 0.7 : 1
@@ -41,7 +42,7 @@ const CodeItemComponent: React.FC<CodeItemProps> = ({
             >
               {code}
             </Typography>
-            
+
             {isSold && (
               <Chip
                 size="small"
@@ -53,11 +54,11 @@ const CodeItemComponent: React.FC<CodeItemProps> = ({
               />
             )}
           </Box>
-          
+
           <Tooltip title="Delete code">
-            <IconButton 
-              size="small" 
-              color="error" 
+            <IconButton
+              size="small"
+              color="error"
               onClick={() => onDelete(code)}
               sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}
             >

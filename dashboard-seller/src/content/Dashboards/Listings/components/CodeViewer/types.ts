@@ -1,4 +1,5 @@
 export interface CodeObject {
+  codeId?: string;
   code: string;
   soldStatus: string;
   soldAt?: string | Date;

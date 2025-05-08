@@ -5,54 +5,54 @@ const { maskCode } = require("./listingHandlers");
 // Get all listings with filters
 const getListings = async (request, reply) => {
   try {
-    const { 
-      category, platform, region, minPrice, maxPrice, 
-      sellerId, status, page = 1, limit = 10 
+    const {
+      category, platform, region, minPrice, maxPrice,
+      sellerId, status, page = 1, limit = 10
     } = request.query;
-    
+
     // Build filter object
     const filter = {};
-    
+
     if (category) filter.category = category;
     if (platform) filter.platform = platform;
     if (region) filter.region = region;
     if (sellerId) filter.sellerId = sellerId;
     if (status) filter.status = status;
-    
+
     // Price range filter
     if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {};
       if (minPrice !== undefined) filter.price.$gte = minPrice;
       if (maxPrice !== undefined) filter.price.$lte = maxPrice;
     }
-    
+
     // If user is not authenticated or not an admin, only show active listings
     if (!request.user || request.user.role !== "admin") {
       filter.status = "active";
     }
-    
+
     // Calculate pagination
     const skip = (page - 1) * limit;
-    
+
     // Find listings with filters and pagination
     const listings = await Listing.find(filter)
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
-    
+
     // Perform real-time expiration check on the results
     processListingsExpiration(listings, request.server);
-    
+
     // Count total listings matching the filter
     const total = await Listing.countDocuments(filter);
-    
+
     // Transform listings to use externalId as primary identifier and remove _id
     const transformedListings = listings.map(listing => {
       const listingObj = listing.toObject();
       const { _id, ...cleanedListing } = listingObj;
       return cleanedListing;
     });
-    
+
     return reply.code(200).send({
       success: true,
       data: {
@@ -79,27 +79,27 @@ const getListings = async (request, reply) => {
 const getListingById = async (request, reply) => {
   try {
     const { id } = request.params;
-    
+
     // Find the listing by externalId instead of _id
     const listing = await Listing.findOne({ externalId: id });
-    
+
     if (!listing) {
       return reply.code(404).send({
         success: false,
         error: "Listing not found"
       });
     }
-    
+
     // Check if the listing is expired
     if (listing.expirationDate && new Date(listing.expirationDate) < new Date()) {
       listing.status = "expired";
       await listing.save();
     }
-    
+
     // Check if user is the seller or an admin to show more details
     const isSeller = request.user && request.user.uid === listing.sellerId;
     const isAdmin = request.user && request.user.role === "admin";
-    
+
     // If not active and not the seller or admin, don't show
     if (listing.status !== "active" && !isSeller && !isAdmin) {
       return reply.code(404).send({
@@ -107,11 +107,11 @@ const getListingById = async (request, reply) => {
         error: "Listing not found"
       });
     }
-    
+
     // Transform listing to use externalId as primary identifier and remove _id
     const listingObj = listing.toObject();
     const { _id, ...cleanedListing } = listingObj;
-    
+
     return reply.code(200).send({
       success: true,
       data: cleanedListing
@@ -129,40 +129,40 @@ const getListingById = async (request, reply) => {
 // Get seller listings with masked codes
 const getSellerListings = async (request, reply) => {
   try {
-    const { 
-      categoryId, platform, region, minPrice, maxPrice, 
+    const {
+      categoryId, platform, region, minPrice, maxPrice,
       status, page = 1, limit = 5, sortBy = "createdAt", sortOrder = "desc",
       startDate, endDate, title
     } = request.query;
-    
+
     // Get the seller ID from the authenticated user
     const sellerId = request.user.uid;
-    
+
     // Build filter object - always filter by the authenticated seller's ID
     const filter = { sellerId };
-    
+
     // Handle category filtering with support for "all" option
     if (categoryId && categoryId.toLowerCase() !== 'all') {
-      filter.categoryId = categoryId; 
+      filter.categoryId = categoryId;
     } else if (request.query.category && request.query.category.toLowerCase() !== 'all') {
       filter.categoryId = request.query.category;
     }
-    
+
     // Handle platform filtering with support for "all" option
     if (platform && platform.toLowerCase() !== 'all') {
       filter.platform = platform;
     }
-    
+
     if (region) filter.region = region;
     if (status) filter.status = status;
-    
+
     // Price range filter
     if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {};
       if (minPrice !== undefined) filter.price.$gte = minPrice;
       if (maxPrice !== undefined) filter.price.$lte = maxPrice;
     }
-    
+
     // Add date range filter for createdAt
     let createdAtFilter = {};
     if (request.query.startDate) createdAtFilter.$gte = new Date(request.query.startDate);
@@ -170,19 +170,19 @@ const getSellerListings = async (request, reply) => {
     if (Object.keys(createdAtFilter).length > 0) {
       filter.createdAt = createdAtFilter;
     }
-    
+
     // Title case-insensitive search filter
     if (request.query.title) {
       filter.title = { $regex: request.query.title, $options: 'i' };
     }
-    
+
     // Calculate pagination
     const skip = (page - 1) * limit;
-    
+
     // Build sort object based on sortBy and sortOrder parameters
     const sort = {};
     sort[sortBy] = sortOrder === "asc" ? 1 : -1;
-    
+
     // Find listings with filters, pagination, and sorting
     // We need to explicitly select the codes field which is normally excluded
     const listings = await Listing.find(filter)
@@ -191,40 +191,41 @@ const getSellerListings = async (request, reply) => {
       .skip(skip)
       .limit(limit)
       .sort(sort);
-    
+
     // Perform real-time expiration check on the results
     processListingsExpiration(listings, request.server);
-    
+
     // Count total listings matching the filter
     const total = await Listing.countDocuments(filter);
-    
+
     // Process listings to include masked codes
     const processedListings = listings.map(listing => {
       const listingObj = listing.toObject();
-      
+
       // Add category name from the populated field
       if (listingObj.categoryId && listingObj.categoryId.name) {
         listingObj.categoryName = listingObj.categoryId.name;
       }
-      
+
       // Process codes array to decrypt and mask each code
       if (listingObj.codes && listingObj.codes.length > 0) {
         // Calculate quantity metrics
         listingObj.quantityOfAllCodes = listingObj.codes.length;
         listingObj.quantityOfActiveCodes = listingObj.codes.filter(code => code.soldStatus === 'active').length;
-        
+
         listingObj.codes = listingObj.codes.map(codeObj => {
           // Process all codes regardless of status
           try {
             // Decrypt the code if it exists
             if (codeObj.code && codeObj.iv) {
               const decryptedCode = listing.decryptCode(codeObj.code, codeObj.iv);
-              
+
               // Return object with masked code and status information
               return {
                 soldStatus: codeObj.soldStatus,
                 soldAt: codeObj.soldAt,
                 _id: codeObj._id, // Keep code _id for reference
+                codeId: codeObj.codeId, // Include the codeId for external reference
                 code: maskCode(decryptedCode),
               };
             } else {
@@ -233,6 +234,7 @@ const getSellerListings = async (request, reply) => {
                 soldStatus: codeObj.soldStatus,
                 soldAt: codeObj.soldAt,
                 _id: codeObj._id, // Keep code _id for reference
+                codeId: codeObj.codeId, // Include the codeId for external reference
                 code: codeObj.soldStatus === 'active' ? 'Code unavailable' : `${codeObj.soldStatus} code`,
               };
             }
@@ -242,6 +244,7 @@ const getSellerListings = async (request, reply) => {
               soldStatus: codeObj.soldStatus,
               soldAt: codeObj.soldAt,
               _id: codeObj._id, // Keep code _id for reference
+              codeId: codeObj.codeId, // Include the codeId for external reference
               code: 'Error processing code',
             };
           }
@@ -251,13 +254,13 @@ const getSellerListings = async (request, reply) => {
         listingObj.quantityOfAllCodes = 0;
         listingObj.quantityOfActiveCodes = 0;
       }
-      
+
       // Use externalId as the primary identifier and remove _id
       const { _id, ...cleanedListing } = listingObj;
-      
+
       return cleanedListing;
     });
-    
+
     return reply.code(200).send({
       success: true,
       data: {
@@ -285,13 +288,13 @@ const getListingsSummary = async (request, reply) => {
   try {
     // Get the seller ID from the authenticated user
     const sellerId = request.user.uid;
-    
+
     // Get count of active listings
-    const activeListingsCount = await Listing.countDocuments({ 
-      sellerId, 
-      status: "active" 
+    const activeListingsCount = await Listing.countDocuments({
+      sellerId,
+      status: "active"
     });
-    
+
     // Get count of delivered/sold codes
     const soldCodesCount = await Listing.aggregate([
       { $match: { sellerId } },
@@ -299,9 +302,9 @@ const getListingsSummary = async (request, reply) => {
       { $match: { "codes.soldStatus": "sold" } },
       { $count: "total" }
     ]);
-    
+
     const totalSoldCodes = soldCodesCount.length > 0 ? soldCodesCount[0].total : 0;
-    
+
     // Calculate total revenue (assuming each sold code generates revenue equal to the listing price)
     const revenueData = await Listing.aggregate([
       { $match: { sellerId } },
@@ -313,9 +316,9 @@ const getListingsSummary = async (request, reply) => {
         }
       }
     ]);
-    
+
     const totalRevenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
-    
+
     return reply.code(200).send({
       success: true,
       data: {

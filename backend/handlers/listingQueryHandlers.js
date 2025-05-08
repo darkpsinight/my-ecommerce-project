@@ -224,8 +224,7 @@ const getSellerListings = async (request, reply) => {
               return {
                 soldStatus: codeObj.soldStatus,
                 soldAt: codeObj.soldAt,
-                _id: codeObj._id, // Keep code _id for reference
-                codeId: codeObj.codeId, // Include the codeId for external reference
+                codeId: codeObj.codeId, // Include only the codeId for external reference
                 code: maskCode(decryptedCode),
               };
             } else {
@@ -233,8 +232,7 @@ const getSellerListings = async (request, reply) => {
               return {
                 soldStatus: codeObj.soldStatus,
                 soldAt: codeObj.soldAt,
-                _id: codeObj._id, // Keep code _id for reference
-                codeId: codeObj.codeId, // Include the codeId for external reference
+                codeId: codeObj.codeId, // Include only the codeId for external reference
                 code: codeObj.soldStatus === 'active' ? 'Code unavailable' : `${codeObj.soldStatus} code`,
               };
             }
@@ -243,8 +241,7 @@ const getSellerListings = async (request, reply) => {
             return {
               soldStatus: codeObj.soldStatus,
               soldAt: codeObj.soldAt,
-              _id: codeObj._id, // Keep code _id for reference
-              codeId: codeObj.codeId, // Include the codeId for external reference
+              codeId: codeObj.codeId, // Include only the codeId for external reference
               code: 'Error processing code',
             };
           }

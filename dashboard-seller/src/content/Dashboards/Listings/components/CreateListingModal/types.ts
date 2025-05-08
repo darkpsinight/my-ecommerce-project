@@ -24,6 +24,11 @@ export interface CreateListingModalProps {
   initialCategories?: Category[];
 }
 
+// Define a custom type for the multi-field update
+export type MultiFieldUpdate = {
+  fields: Record<string, any>;
+};
+
 export interface ModalContextProps {
   categories: Category[];
   availablePlatforms: string[];
@@ -38,8 +43,8 @@ export interface ModalContextProps {
   error: string | null;
   formData: ListingFormData;
   formErrors: ListingFormErrors;
-  handleChange: (e: any) => void;
-  handleBlur: (e: any) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement> | MultiFieldUpdate) => void;
+  handleBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   handleSubmit: () => void;
   handleDateChange: (date: Date | null) => void;
   resetForm: () => void;

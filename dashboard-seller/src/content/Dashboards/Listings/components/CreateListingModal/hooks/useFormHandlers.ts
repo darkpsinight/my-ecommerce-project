@@ -28,69 +28,116 @@ export const useFormHandlers = ({
 
   // Handle form field changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    let newValue = value;
-
-    // Handle checkbox values
-    if (e.target.type === 'checkbox') {
-      newValue = e.target.checked;
-    }
-
-    // If changing category, update available platforms
-    if (name === 'categoryId') {
-      // Find the selected category from the categories array
-      const category = categories.find((cat) => cat._id === value);
-
-      setSelectedCategory(category || null);
-
-      // Reset platform when category changes
+    // Check if this is a multi-field update
+    if ('fields' in e && e.fields) {
+      // Update multiple fields at once
       setFormData((prev) => ({
         ...prev,
-        [name]: newValue,
-        platform: ''
+        ...e.fields
       }));
+
+      // Clear errors for all updated fields
+      const errorUpdates = {};
+      Object.keys(e.fields).forEach(fieldName => {
+        errorUpdates[fieldName] = '';
+      });
 
       setFormErrors((prev) => ({
         ...prev,
-        [name]: ''
+        ...errorUpdates
       }));
 
-      // Update available platforms
-      if (category && category.platforms) {
-        const platforms = category.platforms
-          .filter((platform) => platform.isActive !== false)
-          .map((platform) => platform.name);
-        setAvailablePlatforms(platforms);
+      // Special handling for category changes
+      if ('categoryId' in e.fields) {
+        const categoryId = e.fields.categoryId;
+        const category = categories.find((cat) => cat._id === categoryId);
+        setSelectedCategory(category || null);
+
+        // Update available platforms
+        if (category && category.platforms) {
+          const platforms = category.platforms
+            .filter((platform) => platform.isActive !== false)
+            .map((platform) => platform.name);
+          setAvailablePlatforms(platforms);
+        } else {
+          setAvailablePlatforms([]);
+        }
+      }
+
+      // Special handling for platform changes
+      if ('platform' in e.fields && formData.categoryId && e.fields.platform) {
+        fetchValidationPatterns(formData.categoryId, e.fields.platform);
+      }
+
+      return;
+    }
+
+    // Handle single field update (original behavior)
+    if ('target' in e) {
+      const { name, value } = e.target;
+      let newValue = value;
+
+      // Handle checkbox values
+      if (e.target.type === 'checkbox') {
+        newValue = e.target.checked;
+      }
+
+      // If changing category, update available platforms
+      if (name === 'categoryId') {
+        // Find the selected category from the categories array
+        const category = categories.find((cat) => cat._id === value);
+
+        setSelectedCategory(category || null);
+
+        // Reset platform when category changes
+        setFormData((prev) => ({
+          ...prev,
+          [name]: newValue,
+          platform: ''
+        }));
+
+        setFormErrors((prev) => ({
+          ...prev,
+          [name]: ''
+        }));
+
+        // Update available platforms
+        if (category && category.platforms) {
+          const platforms = category.platforms
+            .filter((platform) => platform.isActive !== false)
+            .map((platform) => platform.name);
+          setAvailablePlatforms(platforms);
+        } else {
+          setAvailablePlatforms([]);
+        }
+      }
+      // If changing platform, fetch validation patterns
+      else if (name === 'platform') {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: newValue
+        }));
+
+        setFormErrors((prev) => ({
+          ...prev,
+          [name]: ''
+        }));
+
+        // Fetch validation patterns for the selected category and platform
+        if (formData.categoryId && newValue) {
+          fetchValidationPatterns(formData.categoryId, newValue);
+        }
       } else {
-        setAvailablePlatforms([]);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: newValue
+        }));
+
+        setFormErrors((prev) => ({
+          ...prev,
+          [name]: ''
+        }));
       }
-    }
-    // If changing platform, fetch validation patterns
-    else if (name === 'platform') {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: newValue
-      }));
-
-      setFormErrors((prev) => ({
-        ...prev,
-        [name]: ''
-      }));
-
-      // Fetch validation patterns for the selected category and platform
-      if (formData.categoryId && newValue) {
-        fetchValidationPatterns(formData.categoryId, newValue);
-      }
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: newValue
-      }));
-
-      setFormErrors((prev) => ({
-        ...prev,
-        [name]: ''
-      }));
     }
   };
 

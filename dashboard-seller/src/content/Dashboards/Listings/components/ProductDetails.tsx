@@ -19,6 +19,11 @@ interface Category {
   description?: string;
 }
 
+// Define a custom type for the multi-field update
+type MultiFieldUpdate = {
+  fields: Record<string, any>;
+};
+
 interface ProductDetailsProps {
   formData: {
     categoryId: string;
@@ -32,7 +37,7 @@ interface ProductDetailsProps {
     platform?: string;
     region?: string;
   };
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement> | MultiFieldUpdate) => void;
   categories: Category[];
   availablePlatforms: string[];
   regions: string[];
@@ -52,26 +57,23 @@ export const ProductDetails: FC<ProductDetailsProps> = ({
   // Function to handle checkbox changes specifically
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newIsLocked = e.target.checked;
-    
-    // If turning region lock on and region is currently Global, clear the selection
-    if (newIsLocked && formData.region === 'Global') {
-      // Clear region selection when enabling region lock
-      handleChange({
-        target: {
-          name: 'region',
-          value: ''
-        }
-      } as any);
-    }
-    
-    // Update the region locked value
-    const event = {
-      target: {
-        name: e.target.name,
-        value: newIsLocked
-      }
+
+    // Create an object with all fields that need to be updated
+    const fieldsToUpdate: Record<string, any> = {
+      [e.target.name]: newIsLocked
     };
-    handleChange(event as any);
+
+    // Update region value based on the new isRegionLocked state
+    if (newIsLocked && formData.region === 'Global') {
+      // If enabling region lock and region is Global, clear the region
+      fieldsToUpdate.region = '';
+    } else if (!newIsLocked && formData.region !== 'Global') {
+      // If disabling region lock, set region to Global
+      fieldsToUpdate.region = 'Global';
+    }
+
+    // Use a custom fields object to update multiple fields at once
+    handleChange({ fields: fieldsToUpdate });
   };
 
   return (
@@ -131,10 +133,11 @@ export const ProductDetails: FC<ProductDetailsProps> = ({
             label="Region"
           >
             {regions.map((region) => (
-              <MenuItem 
-                key={region} 
+              <MenuItem
+                key={region}
                 value={region}
-                disabled={region === 'Global' && formData.isRegionLocked}
+                disabled={(region === 'Global' && formData.isRegionLocked) ||
+                         (region !== 'Global' && !formData.isRegionLocked)}
               >
                 {region}
               </MenuItem>

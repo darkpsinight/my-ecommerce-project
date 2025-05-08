@@ -38,23 +38,21 @@ const ModalContent: React.FC = () => {
   // Handle checkbox changes
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newIsLocked = e.target.checked;
+    const fieldsToUpdate: Record<string, any> = {
+      [e.target.name]: newIsLocked
+    };
 
+    // Update region value based on the new isRegionLocked state
     if (newIsLocked && formData.region === 'Global') {
-      handleChange({
-        target: {
-          name: 'region',
-          value: ''
-        }
-      } as any);
+      // If enabling region lock and region is Global, clear the region
+      fieldsToUpdate.region = '';
+    } else if (!newIsLocked && formData.region !== 'Global') {
+      // If disabling region lock, set region to Global
+      fieldsToUpdate.region = 'Global';
     }
 
-    const event = {
-      target: {
-        name: e.target.name,
-        value: newIsLocked
-      }
-    };
-    handleChange(event as any);
+    // Update all fields at once to ensure UI updates in a single render
+    handleChange({ fields: fieldsToUpdate });
   };
 
   // Handle tags change

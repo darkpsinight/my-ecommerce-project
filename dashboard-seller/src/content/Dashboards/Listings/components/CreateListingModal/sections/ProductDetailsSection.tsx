@@ -116,10 +116,11 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
                 label="Region"
               >
                 {regions.map((region) => (
-                  <MenuItem 
-                    key={region} 
+                  <MenuItem
+                    key={region}
                     value={region}
-                    disabled={region === 'Global' && formData.isRegionLocked}
+                    disabled={(region === 'Global' && formData.isRegionLocked) ||
+                             (region !== 'Global' && !formData.isRegionLocked)}
                   >
                     {region}
                   </MenuItem>

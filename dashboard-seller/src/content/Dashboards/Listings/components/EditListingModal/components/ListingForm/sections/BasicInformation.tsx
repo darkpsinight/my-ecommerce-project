@@ -18,10 +18,17 @@ import { SectionContainer } from '../components/StyledComponents';
 import LockIcon from '@mui/icons-material/Lock';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
+// Define a custom type for the multi-field update
+type MultiFieldUpdate = {
+  fields: Record<string, any>;
+};
+
 interface BasicInformationProps {
   formData: FormData;
   formErrors: FormErrors;
-  handleTextChange: (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => void;
+  handleTextChange: (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | MultiFieldUpdate
+  ) => void;
   handleSelectChange: (e: SelectChangeEvent<string>) => void;
   availablePlatforms?: string[];
 }
@@ -35,26 +42,25 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
 }) => {
   // Handle region locked toggle
   const handleRegionLockedChange = () => {
+    // Get the new state (opposite of current state)
     const newIsLocked = !formData.isRegionLocked;
-    
-    // If turning region lock on and region is currently Global, clear the selection
-    if (newIsLocked && formData.region === 'Global') {
-      // Clear region selection when enabling region lock
-      handleTextChange({
-        target: {
-          name: 'region',
-          value: ''
-        }
-      } as any);
+
+    // Prepare the fields to update
+    const fieldsToUpdate: Record<string, any> = {
+      isRegionLocked: newIsLocked
+    };
+
+    // Update region value based on the new isRegionLocked state
+    if (newIsLocked && (formData.region === 'Global' || formData.region === '')) {
+      // If enabling region lock and region is Global, clear the region
+      fieldsToUpdate.region = '';
+    } else if (!newIsLocked) {
+      // If disabling region lock, set region to Global
+      fieldsToUpdate.region = 'Global';
     }
-    
-    // Toggle the region locked value
-    handleTextChange({
-      target: {
-        name: 'isRegionLocked',
-        value: newIsLocked
-      }
-    } as any);
+
+    // Update all changed fields at once to ensure UI updates in a single render
+    handleTextChange({ fields: fieldsToUpdate });
   };
 
   return (
@@ -75,7 +81,7 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
             required
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <FormControl fullWidth error={!!formErrors.region}>
             <InputLabel id="region-label">Region *</InputLabel>
@@ -87,12 +93,13 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
               onChange={handleSelectChange}
               label="Region"
             >
-              
+
               {['Global', 'North America', 'Europe', 'Asia', 'Oceania', 'South America', 'Africa'].map((region) => (
-                <MenuItem 
-                  key={region} 
+                <MenuItem
+                  key={region}
                   value={region}
-                  disabled={region === 'Global' && formData.isRegionLocked}
+                  disabled={(region === 'Global' && formData.isRegionLocked) ||
+                           (region !== 'Global' && !formData.isRegionLocked)}
                 >
                   {region}
                 </MenuItem>
@@ -101,7 +108,7 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
             {formErrors.region && <FormHelperText>{formErrors.region}</FormHelperText>}
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <FormControlLabel
             control={

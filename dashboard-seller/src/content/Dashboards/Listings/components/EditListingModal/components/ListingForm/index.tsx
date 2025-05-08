@@ -89,18 +89,34 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
 
   /**
    * Handle text field input changes
+   * Can handle either a single field update or multiple field updates at once
    */
   const handleTextChange = (
-    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | { fields?: Record<string, any> }
   ) => {
-    const { name, value } = e.target;
-    if (name) {
-      const updatedFormData = { ...formData, [name]: value };
+    // Check if this is a multi-field update
+    if ('fields' in e && e.fields) {
+      const updatedFormData = { ...formData, ...e.fields };
       setFormData(updatedFormData);
 
       // Notify parent component of form data change
       if (onFormDataChange) {
         onFormDataChange(updatedFormData);
+      }
+      return;
+    }
+
+    // Handle single field update (original behavior)
+    if ('target' in e) {
+      const { name, value } = e.target;
+      if (name) {
+        const updatedFormData = { ...formData, [name]: value };
+        setFormData(updatedFormData);
+
+        // Notify parent component of form data change
+        if (onFormDataChange) {
+          onFormDataChange(updatedFormData);
+        }
       }
     }
   };
@@ -110,6 +126,30 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
    */
   const handleSelectChange = (e: SelectChangeEvent<string>) => {
     const { name, value } = e.target;
+
+    // Special handling for region selection
+    if (name === 'region') {
+      // If selecting Global, ensure region lock is disabled
+      if (value === 'Global' && formData.isRegionLocked) {
+        // Create updated form data with both region and isRegionLocked changes
+        const updatedFormData = {
+          ...formData,
+          [name]: value,
+          isRegionLocked: false
+        };
+
+        // Update the form data state
+        setFormData(updatedFormData);
+
+        // Notify parent component of form data change
+        if (onFormDataChange) {
+          onFormDataChange(updatedFormData);
+        }
+        return;
+      }
+    }
+
+    // For other cases, just update the selected field
     const updatedFormData = { ...formData, [name]: value };
     setFormData(updatedFormData);
 

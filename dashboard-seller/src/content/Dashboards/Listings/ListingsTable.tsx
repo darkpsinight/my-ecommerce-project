@@ -1,4 +1,4 @@
-import { FC, useContext, useState, useEffect } from 'react';
+import { FC, useContext, useState, useEffect, useCallback } from 'react';
 import {
   Card,
   CardHeader,
@@ -21,6 +21,9 @@ import BulkActionsMenu from './components/BulkActionsMenu';
 import { EmptyState, LoadingState, ErrorState } from './components/ListingsTableStates';
 import ViewListingDetailsModal from './components/ViewListingDetailsModal';
 import { EditListingModal } from './components/EditListingModal';
+
+// Import API service
+import { getCategories } from '../../../services/api/listings';
 
 // Import types
 import { ListingsTableProps } from './types';
@@ -77,6 +80,28 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
 
+  // State for categories
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoaded, setCategoriesLoaded] = useState<boolean>(false);
+
+  // Fetch categories only when needed
+  const fetchCategories = useCallback(async () => {
+    if (categoriesLoaded) return; // Skip if already loaded
+
+    try {
+      const data = await getCategories();
+      if (data && data.success && Array.isArray(data.data)) {
+        setCategories(data.data);
+        setCategoriesLoaded(true);
+      } else {
+        setCategories([]);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
+    }
+  }, [categoriesLoaded]);
+
   // Action handlers
   const handleViewListing = (id: string) => {
     setSelectedListingId(id);
@@ -87,6 +112,8 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   const handleEditListing = (id: string) => {
     setSelectedListingId(id);
     setEditModalOpen(true);
+    // Fetch categories when opening the edit modal
+    fetchCategories();
     handleCloseMenu();
   };
 
@@ -236,6 +263,7 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
         listingId={selectedListingId}
         listings={listings}
         onListingUpdated={handleListingUpdated}
+        initialCategories={categories}
       />
     </Card>
   );

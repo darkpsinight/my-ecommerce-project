@@ -1,5 +1,5 @@
 import { FC, useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, Zoom, useTheme, alpha, CircularProgress, Box, Tabs, Tab, Typography } from '@mui/material';
+import { Dialog, DialogContent, Zoom, useTheme, alpha, CircularProgress } from '@mui/material';
 import toast, { Toaster } from 'react-hot-toast';
 
 // Import types
@@ -7,7 +7,7 @@ import { Listing } from '../../types';
 import { FormData as ListingFormData } from './components/ListingForm/utils/types';
 
 // Import utility functions
-import { getActiveCodes, getTotalCodes, getDiscountPercentage } from '../ViewListingDetailsModal/utils/listingHelpers';
+import { getActiveCodes, getDiscountPercentage } from '../ViewListingDetailsModal/utils/listingHelpers';
 
 // Import components
 import ModalHeader from './components/ModalHeader';
@@ -18,13 +18,9 @@ import ListingForm from './components/ListingForm';
 import ModalFooter from './components/ModalFooter';
 
 // Import API service
-import { updateListing, getCategories } from '../../../../../services/api/listings';
+import { updateListing } from '../../../../../services/api/listings';
 
-// Import icons
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import CodeIcon from '@mui/icons-material/Code';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import ImageIcon from '@mui/icons-material/Image';
+// Icons are imported and used in child components
 
 interface EditListingModalProps {
   open: boolean;
@@ -32,6 +28,7 @@ interface EditListingModalProps {
   listingId: string | null;
   listings: Listing[];
   onListingUpdated: (updatedListing: Listing) => void;
+  initialCategories?: any[];
 }
 
 const EditListingModal: FC<EditListingModalProps> = ({
@@ -39,7 +36,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
   onClose,
   listingId,
   listings,
-  onListingUpdated
+  onListingUpdated,
+  initialCategories = []
 }) => {
   const theme = useTheme();
   const [listing, setListing] = useState<Listing | null>(null);
@@ -47,7 +45,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [activeCodes, setActiveCodes] = useState(0);
-  const [categories, setCategories] = useState([]);
+  const [categories] = useState(initialCategories);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
 
   // Shared form state to persist data across tabs
@@ -91,8 +89,10 @@ const EditListingModal: FC<EditListingModalProps> = ({
           newCode: ''
         });
 
-        // Fetch categories data
-        fetchCategories();
+        // If we have categories, just extract platforms
+        if (categories.length > 0) {
+          extractPlatformsFromCategories(categories);
+        }
       } else {
         console.error('Listing not found:', listingId);
         setTimeout(() => {
@@ -102,45 +102,29 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
       setIsLoading(false);
     }
-  }, [open, listingId, listings]);
+  }, [open, listingId, listings, categories]);
 
-  // Fetch categories data
-  const fetchCategories = async () => {
-    try {
-      const response = await getCategories();
+  // We don't need to fetch categories anymore as they're passed from the parent component
 
-      if (response.success) {
-        setCategories(response.data || []);
-
-        // Extract all available platforms from categories
-        const platforms = response.data.reduce((acc, category) => {
-          if (category.platforms && Array.isArray(category.platforms)) {
-            const platformNames = category.platforms
-              .filter(platform => platform.isActive)
-              .map(platform => platform.name);
-            return [...acc, ...platformNames];
-          }
-          return acc;
-        }, []);
-
-        // Remove duplicates and sort alphabetically
-        const uniquePlatforms = [...new Set(platforms)].sort();
-        setAvailablePlatforms(uniquePlatforms);
-      } else {
-        console.error('Failed to fetch categories:', response.message);
-        setTimeout(() => {
-          toast.error(`Failed to load categories: ${response.message || 'Unknown error'}`);
-        }, 100);
+  // Helper function to extract platforms from categories
+  const extractPlatformsFromCategories = (categoriesData: any[]) => {
+    // Extract all available platforms from categories
+    const platforms = categoriesData.reduce((acc: string[], category: any) => {
+      if (category.platforms && Array.isArray(category.platforms)) {
+        const platformNames = category.platforms
+          .filter((platform: any) => platform.isActive)
+          .map((platform: any) => platform.name);
+        return [...acc, ...platformNames];
       }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      setTimeout(() => {
-        toast.error(`Failed to load categories: ${error.message || 'Network Error'}`);
-      }, 100);
-    }
+      return acc;
+    }, []);
+
+    // Remove duplicates and sort alphabetically
+    const uniquePlatforms = [...new Set(platforms)].sort();
+    setAvailablePlatforms(uniquePlatforms);
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     // Save the current tab's form data before switching
     const currentFormRef = getCurrentFormRef();
 
@@ -182,7 +166,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
     setIsSubmitting(true);
     try {
       // Make the API call to update the listing status
-      const response = await updateListing(listing.externalId, apiData);
+      await updateListing(listing.externalId, apiData);
 
       // Create an updated listing object with the response data and existing data
       const updatedListing = {
@@ -260,7 +244,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
     return formData;
   };
 
-  const handleSubmit = async (updatedData: Partial<Listing> = {}) => {
+  const handleSubmit = async (_updatedData: Partial<Listing> = {}) => {
     if (!listing) return;
 
     // Get the current form ref
@@ -291,7 +275,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
     setIsSubmitting(true);
     try {
       // Make the API call to update the listing
-      const response = await updateListing(listing.externalId, apiData);
+      await updateListing(listing.externalId, apiData);
 
       // Create an updated listing object with the response data and existing data
       const updatedListing = {
@@ -322,7 +306,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
     return null;
   }
 
-  const totalCodes = listing ? getTotalCodes(listing) : 0;
+  // We don't need totalCodes here as it's not used in the UI
   const discountPercentage = listing ? getDiscountPercentage(listing) : null;
 
   return (

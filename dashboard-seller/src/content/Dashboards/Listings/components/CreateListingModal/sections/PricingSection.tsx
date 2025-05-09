@@ -37,8 +37,12 @@ const PricingSection: React.FC<PricingSectionProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // State for slider values
-  const [priceValue, setPriceValue] = useState<number>(parseFloat(formData.price) || 0);
-  const [originalPriceValue, setOriginalPriceValue] = useState<number>(parseFloat(formData.originalPrice) || 0);
+  const [priceValue, setPriceValue] = useState<number>(
+    parseFloat(formData.price) || 0
+  );
+  const [originalPriceValue, setOriginalPriceValue] = useState<number>(
+    parseFloat(formData.originalPrice) || 0
+  );
 
   // Update slider values when form data changes
   useEffect(() => {
@@ -63,7 +67,10 @@ const PricingSection: React.FC<PricingSectionProps> = ({
   };
 
   // Handle original price slider change
-  const handleOriginalPriceChange = (_event: Event, newValue: number | number[]) => {
+  const handleOriginalPriceChange = (
+    _event: Event,
+    newValue: number | number[]
+  ) => {
     const value = newValue as number;
     setOriginalPriceValue(value);
 
@@ -80,22 +87,26 @@ const PricingSection: React.FC<PricingSectionProps> = ({
 
   // Calculate discount percentage
   const getDiscountPercentage = () => {
-    if (originalPriceValue > 0 && priceValue > 0 && originalPriceValue > priceValue) {
-      const discount = ((originalPriceValue - priceValue) / originalPriceValue) * 100;
+    if (
+      originalPriceValue > 0 &&
+      priceValue > 0 &&
+      originalPriceValue > priceValue
+    ) {
+      const discount =
+        ((originalPriceValue - priceValue) / originalPriceValue) * 100;
       return discount.toFixed(0);
     }
     return '0';
   };
 
   // Check if there's a discount
-  const hasDiscount = originalPriceValue > 0 && priceValue > 0 && originalPriceValue > priceValue;
+  const hasDiscount =
+    originalPriceValue > 0 && priceValue > 0 && originalPriceValue > priceValue;
 
   return (
     <SectionCard>
       <CardContent>
-        <SectionTitle variant="h6">
-          Pricing
-        </SectionTitle>
+        <SectionTitle variant="h6">Pricing</SectionTitle>
         <Grid container spacing={3}>
           {/* Price Slider */}
           <Grid item xs={12}>
@@ -103,7 +114,12 @@ const PricingSection: React.FC<PricingSectionProps> = ({
               <Typography variant="subtitle1" gutterBottom>
                 Price*
               </Typography>
-              <Stack spacing={2} direction="row" alignItems="center" sx={{ mb: 1 }}>
+              <Stack
+                spacing={2}
+                direction="row"
+                alignItems="center"
+                sx={{ mb: 1 }}
+              >
                 <AttachMoneyIcon color="primary" />
                 <Slider
                   value={priceValue}
@@ -131,14 +147,20 @@ const PricingSection: React.FC<PricingSectionProps> = ({
                       }
                     }}
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                      inputProps: { min: 0, step: 0.01, style: { textAlign: 'right' } }
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                      inputProps: {
+                        min: 0,
+                        step: 0.01,
+                        style: { textAlign: 'right' }
+                      }
                     }}
                   />
                 </Box>
               </Stack>
               {formErrors.price && (
-                <Typography color="error" variant="caption">
+                <Typography color="error" sx={{ fontWeight: 'bold' }}>
                   {formErrors.price}
                 </Typography>
               )}
@@ -156,7 +178,12 @@ const PricingSection: React.FC<PricingSectionProps> = ({
               <Typography variant="subtitle1" gutterBottom>
                 Original Price (Optional)
               </Typography>
-              <Stack spacing={2} direction="row" alignItems="center" sx={{ mb: 1 }}>
+              <Stack
+                spacing={2}
+                direction="row"
+                alignItems="center"
+                sx={{ mb: 1 }}
+              >
                 <AttachMoneyIcon color="action" />
                 <Slider
                   value={originalPriceValue}
@@ -184,8 +211,14 @@ const PricingSection: React.FC<PricingSectionProps> = ({
                       }
                     }}
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                      inputProps: { min: 0, step: 0.01, style: { textAlign: 'right' } }
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                      inputProps: {
+                        min: 0,
+                        step: 0.01,
+                        style: { textAlign: 'right' }
+                      }
                     }}
                   />
                 </Box>
@@ -200,7 +233,11 @@ const PricingSection: React.FC<PricingSectionProps> = ({
           {hasDiscount && (
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mr: 1 }}
+                >
                   You're offering a discount of:
                 </Typography>
                 <Box

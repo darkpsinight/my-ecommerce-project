@@ -1,6 +1,14 @@
 import { Pattern } from 'src/services/api/validation';
 
 /**
+ * Interface for a code item
+ */
+export interface CodeItem {
+  code: string;
+  expirationDate: string | Date | null;
+}
+
+/**
  * Interface for form data
  */
 export interface ListingFormData {
@@ -12,8 +20,9 @@ export interface ListingFormData {
   platform: string;
   region: string;
   isRegionLocked: boolean;
-  code: string;
-  expirationDate: string | Date | null;
+  codes: CodeItem[];
+  newCode: string;
+  newExpirationDate: string | Date | null;
   supportedLanguages: string[];
   thumbnailUrl: string;
   autoDelivery: boolean;
@@ -32,7 +41,8 @@ export interface ListingFormErrors {
   categoryId: string;
   platform: string;
   region: string;
-  code: string;
+  newCode: string;
+  codes: string;
   thumbnailUrl: string;
 }
 
@@ -63,7 +73,8 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
     categoryId: '',
     platform: '',
     region: '',
-    code: '',
+    newCode: '',
+    codes: '',
     thumbnailUrl: ''
   };
   let isValid = true;
@@ -116,8 +127,8 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
   }
 
   // Code validation
-  if (!formData.code.trim()) {
-    errors.code = 'Product code is required';
+  if (!formData.codes || formData.codes.length === 0) {
+    errors.codes = 'At least one product code is required';
     isValid = false;
   }
 
@@ -140,24 +151,34 @@ export const prepareFormDataForSubmission = (formData: ListingFormData) => {
   const processedData = { ...formData };
 
   console.log('Original form data:', JSON.stringify(formData, null, 2));
-  console.log('Original expirationDate:', formData.expirationDate);
-  console.log('Type of expirationDate:', typeof formData.expirationDate);
 
-  // Format expirationDate as ISO date-time string if it exists
-  let formattedExpirationDate = undefined;
-  if (formData.expirationDate) {
-    if (formData.expirationDate instanceof Date) {
-      // If it's a Date object, format it to ISO string
-      formattedExpirationDate = formData.expirationDate.toISOString();
-    } else if (typeof formData.expirationDate === 'string') {
-      // If it's a string (YYYY-MM-DD), convert to ISO format
-      formattedExpirationDate = `${formData.expirationDate}T23:59:59.999Z`;
+  // Extract the first code for backward compatibility
+  let firstCode = '';
+  let firstCodeExpirationDate = undefined;
+
+  if (formData.codes && formData.codes.length > 0) {
+    const firstCodeItem = formData.codes[0];
+    firstCode = firstCodeItem.code;
+
+    // Format expirationDate as ISO date-time string if it exists
+    if (firstCodeItem.expirationDate) {
+      if (firstCodeItem.expirationDate instanceof Date) {
+        // If it's a Date object, format it to ISO string
+        firstCodeExpirationDate = firstCodeItem.expirationDate.toISOString();
+      } else if (typeof firstCodeItem.expirationDate === 'string') {
+        // If it's a string, check if it already contains 'T' (already in ISO format)
+        if (firstCodeItem.expirationDate.includes('T')) {
+          firstCodeExpirationDate = firstCodeItem.expirationDate;
+        } else {
+          // Convert YYYY-MM-DD to ISO format
+          firstCodeExpirationDate = `${firstCodeItem.expirationDate}T23:59:59.999Z`;
+        }
+      }
     }
-    console.log('Formatted expiration date:', formattedExpirationDate);
   }
 
   // Create the final data object with all conversions applied
-  const finalData = {
+  const finalData: any = {
     title: formData.title,
     description: formData.description,
     price: parseFloat(formData.price),
@@ -166,8 +187,8 @@ export const prepareFormDataForSubmission = (formData: ListingFormData) => {
     platform: formData.platform,
     region: formData.region,
     isRegionLocked: Boolean(formData.isRegionLocked),
-    code: formData.code,
-    expirationDate: formattedExpirationDate, // Use the formatted date
+    code: firstCode,
+    codeExpirationDate: firstCodeExpirationDate, // Use the formatted date for the first code
     supportedLanguages: Array.isArray(formData.supportedLanguages) ? formData.supportedLanguages : [],
     thumbnailUrl: formData.thumbnailUrl,
     autoDelivery: Boolean(formData.autoDelivery),
@@ -176,8 +197,31 @@ export const prepareFormDataForSubmission = (formData: ListingFormData) => {
     status: formData.status
   };
 
+  // Add additional codes if there are more than one
+  if (formData.codes && formData.codes.length > 1) {
+    finalData.additionalCodes = formData.codes.slice(1).map(codeItem => {
+      const codeData: any = { code: codeItem.code };
+
+      if (codeItem.expirationDate) {
+        if (codeItem.expirationDate instanceof Date) {
+          codeData.expirationDate = codeItem.expirationDate.toISOString();
+        } else if (typeof codeItem.expirationDate === 'string') {
+          // Check if it already contains 'T' (already in ISO format)
+          if (codeItem.expirationDate.includes('T')) {
+            codeData.expirationDate = codeItem.expirationDate;
+          } else {
+            // Convert YYYY-MM-DD to ISO format
+            codeData.expirationDate = `${codeItem.expirationDate}T23:59:59.999Z`;
+          }
+        }
+      }
+
+      return codeData;
+    });
+  }
+
   console.log('Final prepared data:', JSON.stringify(finalData, null, 2));
-  console.log('Final expirationDate:', finalData.expirationDate);
+  console.log('Final codeExpirationDate:', finalData.codeExpirationDate);
 
   return finalData;
 };

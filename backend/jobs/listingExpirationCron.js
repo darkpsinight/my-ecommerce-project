@@ -36,12 +36,11 @@ const updateListingStatuses = async (fastify) => {
     // Process each listing
     for (const listing of allListings) {
       let statusChanged = false;
-      const isExpired = listing.expirationDate && new Date(listing.expirationDate) < now;
 
-      // If expired, update all active codes to expired
-      if (isExpired && listing.codes && listing.codes.length > 0) {
+      // Check each code for expiration
+      if (listing.codes && listing.codes.length > 0) {
         for (const code of listing.codes) {
-          if (code.soldStatus === 'active') {
+          if (code.soldStatus === 'active' && code.expirationDate && new Date(code.expirationDate) < now) {
             code.soldStatus = 'expired';
             updatedCodes++;
             statusChanged = true;
@@ -57,13 +56,9 @@ const updateListingStatuses = async (fastify) => {
         const allSold = listing.codes.every(code => code.soldStatus === 'sold');
         if (allSold) {
           newStatus = 'sold';
-        } else if (isExpired) {
-          // If expired by date, mark as expired
-          newStatus = 'expired';
         } else {
-          // Otherwise use the standard determination logic from listingHelpers
-          const isExpired = false; // We already checked for expiration above
-          newStatus = determineListingStatus(listing.codes, isExpired, listing.status);
+          // Use the standard determination logic from listingHelpers
+          newStatus = determineListingStatus(listing.codes, listing.status);
         }
       } else {
         // No codes

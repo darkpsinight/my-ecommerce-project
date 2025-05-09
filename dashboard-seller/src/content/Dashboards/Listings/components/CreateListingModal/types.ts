@@ -47,7 +47,15 @@ export interface ModalContextProps {
   handleBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   handleSubmit: () => void;
   handleDateChange: (date: Date | null) => void;
+  handleAddCode: () => void;
+  handleDeleteCode: (code: string) => void;
+  handleCodeKeyDown: (e: React.KeyboardEvent) => void;
   resetForm: () => void;
+}
+
+export interface CodeItem {
+  code: string;
+  expirationDate: string | Date | null;
 }
 
 export interface ListingFormData {
@@ -59,8 +67,9 @@ export interface ListingFormData {
   platform: string;
   region: string;
   isRegionLocked: boolean;
-  code: string;
-  expirationDate: string | Date | null;
+  codes: CodeItem[];
+  newCode: string;
+  newExpirationDate: string | Date | null;
   supportedLanguages: string[];
   thumbnailUrl: string;
   autoDelivery: boolean;
@@ -76,6 +85,7 @@ export interface ListingFormErrors {
   categoryId: string;
   platform: string;
   region: string;
-  code: string;
+  newCode: string;
+  codes: string;
   thumbnailUrl: string;
 }

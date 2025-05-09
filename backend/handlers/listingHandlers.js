@@ -13,11 +13,11 @@ const maskCode = (code) => {
   if (!code || code.length <= 5) {
     return code; // Return as is if too short to mask
   }
-  
+
   const firstThree = code.substring(0, 3);
   const lastTwo = code.substring(code.length - 2);
   const maskedMiddle = '*'.repeat(10); // Fixed 10 asterisks for all codes
-  
+
   return `${firstThree}${maskedMiddle}${lastTwo}`;
 };
 
@@ -32,41 +32,41 @@ const getFormatDescription = (pattern, platformName) => {
   if (!pattern || !pattern.regex) {
     return `${platformName} code format not available. Please contact support.`;
   }
-  
+
   try {
     const regex = pattern.regex;
     let description = '';
-    
+
     // Determine character types allowed
     const allowsUppercase = regex.includes('A-Z');
     const allowsLowercase = regex.includes('a-z');
     const allowsNumbers = regex.includes('0-9');
-    
+
     // Determine format structure
     const hasSeparators = regex.includes('-');
     let charClasses = [];
     if (allowsUppercase) charClasses.push('uppercase letters');
     if (allowsLowercase) charClasses.push('lowercase letters');
     if (allowsNumbers) charClasses.push('numbers');
-    
+
     // Try to determine length from regex (common pattern: {n} for exact length)
     let totalLength = null;
     let groupStructure = null;
-    
+
     // Check for fixed-length pattern with groups (like XXXXX-XXXXX-XXXXX)
     const groupMatch = regex.match(/\[([A-Za-z0-9]+-)+[A-Za-z0-9]+\]\{([0-9]+)\}/);
     const exactLengthMatch = regex.match(/\{([0-9]+)\}$/);
-    
+
     // Count hyphens in example to determine group structure
     const exampleHyphens = (pattern.example?.match(/-/g) || []).length;
-    
+
     if (exactLengthMatch) {
       totalLength = parseInt(exactLengthMatch[1], 10);
     } else if (pattern.example) {
       // Determine length from example if regex analysis fails
       totalLength = pattern.example.replace(/-/g, '').length;
     }
-    
+
     if (hasSeparators && exampleHyphens > 0) {
       // Calculate group size if there are separators
       const parts = pattern.example.split('-');
@@ -78,7 +78,7 @@ const getFormatDescription = (pattern, platformName) => {
         groupStructure = `${exampleHyphens + 1} groups separated by ${exampleHyphens} hyphens`;
       }
     }
-    
+
     // Build the description
     if (totalLength) {
       description += `${platformName} keys must be ${totalLength} characters`;
@@ -94,7 +94,7 @@ const getFormatDescription = (pattern, platformName) => {
     } else {
       description = `${platformName} keys must match a specific format. See example.`;
     }
-    
+
     return description;
   } catch (error) {
     console.error('Error creating format description:', error);
@@ -118,36 +118,36 @@ const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
         duplicates: []
       };
     }
-    
+
     // Initialize duplicates array
     const duplicates = [];
-    
+
     // Find all listings with codes
     const query = {};
-    
+
     // If excludeListingId is provided, exclude that listing from the check
     if (excludeListingId) {
       query.externalId = { $ne: excludeListingId };
     }
-    
+
     // Get all listings with their codes
     const listings = await Listing.find(query).select("+codes.code +codes.iv");
-    
+
     // Check each listing for duplicate codes
     for (const listing of listings) {
       // Skip if listing has no codes
       if (!listing.codes || listing.codes.length === 0) {
         continue;
       }
-      
+
       // For each code in the listing
       for (const codeObj of listing.codes) {
         // Decrypt the code
         const decryptedCode = listing.decryptCode(codeObj.code, codeObj.iv);
-        
+
         // Check if this code exists in our input codes
         const duplicateIndex = codes.findIndex(code => code === decryptedCode);
-        
+
         if (duplicateIndex !== -1) {
           // Found a duplicate
           duplicates.push({
@@ -160,7 +160,7 @@ const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
         }
       }
     }
-    
+
     return {
       success: duplicates.length === 0,
       duplicates
@@ -179,22 +179,48 @@ const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
 const createListing = async (request, reply) => {
   try {
     const listingData = request.body;
-    
+
     // Add seller ID from authenticated user
     listingData.sellerId = request.user.uid;
-    
+
     // Generate externalId (UUID) for the new listing
     listingData.externalId = uuidv4();
-    
-    // Check for duplicate code
-    if (listingData.code) {
-      const duplicateCheck = await checkForDuplicateCodes([listingData.code]);
-      
+
+    // Extract codes from the request
+    let codesToAdd = [];
+
+    // Handle all possible code formats
+    if (listingData.codes && Array.isArray(listingData.codes) && listingData.codes.length > 0) {
+      // New format: array of code objects
+      codesToAdd = listingData.codes;
+    } else if (listingData.code) {
+      // Legacy format: single code with optional expiration date
+      codesToAdd = [{
+        code: listingData.code,
+        expirationDate: listingData.codeExpirationDate
+      }];
+
+      // Check for additional codes
+      if (listingData.additionalCodes && Array.isArray(listingData.additionalCodes) && listingData.additionalCodes.length > 0) {
+        // Add additional codes to the codesToAdd array
+        codesToAdd = [...codesToAdd, ...listingData.additionalCodes];
+      }
+    }
+
+    // Check for duplicate codes
+    if (codesToAdd.length > 0) {
+      // Extract just the code strings for duplicate checking
+      const codeStrings = codesToAdd.map(codeItem =>
+        typeof codeItem === 'string' ? codeItem : codeItem.code
+      );
+
+      const duplicateCheck = await checkForDuplicateCodes(codeStrings);
+
       if (!duplicateCheck.success) {
-        // Found a duplicate code
+        // Found duplicate codes
         return reply.code(400).send({
           success: false,
-          message: "Validation failed: The code already exists in another listing",
+          message: "Validation failed: One or more codes already exist in another listing",
           error: {
             duplicates: duplicateCheck.duplicates.map(dup => ({
               code: maskCode(dup.code),
@@ -204,47 +230,61 @@ const createListing = async (request, reply) => {
           }
         });
       }
-    }
-    
-    // Validate code against patterns if categoryId is provided
-    if (listingData.code && listingData.categoryId && listingData.platform) {
-      // Get patterns for this category and platform
-      const patternResult = await getPatternsForPlatform(
-        listingData.categoryId, 
-        listingData.platform, 
-        Category
-      );
-      
-      // Check if we found patterns
-      if (patternResult.error) {
-        request.log.warn(`Pattern validation warning: ${patternResult.error}`);
-        // We'll continue without validation if patterns aren't found
-      } else if (patternResult.patterns && patternResult.patterns.length > 0) {
-        // Validate the code against the patterns
-        const validationResult = validateCodeAgainstPatterns(listingData.code, patternResult.patterns);
-        
-        // If code doesn't match any pattern, reject it
-        if (!validationResult.isValid) {
-          return reply.code(400).send({
-            success: false,
-            message: "The provided code doesn't match any valid pattern for this platform",
-            details: {
-              invalidPatterns: validationResult.invalidPatterns,
-              platform: patternResult.platform,
-              category: patternResult.category
+
+      // Validate codes against patterns if categoryId is provided
+      if (listingData.categoryId && listingData.platform) {
+        // Get patterns for this category and platform
+        const patternResult = await getPatternsForPlatform(
+          listingData.categoryId,
+          listingData.platform,
+          Category
+        );
+
+        // Check if we found patterns
+        if (patternResult.error) {
+          request.log.warn(`Pattern validation warning: ${patternResult.error}`);
+          // We'll continue without validation if patterns aren't found
+        } else if (patternResult.patterns && patternResult.patterns.length > 0) {
+          // Validate each code against the patterns
+          const invalidCodes = [];
+
+          for (let i = 0; i < codeStrings.length; i++) {
+            const codeString = codeStrings[i];
+            const validationResult = validateCodeAgainstPatterns(codeString, patternResult.patterns);
+
+            // If code doesn't match any pattern, add to invalid list
+            if (!validationResult.isValid) {
+              invalidCodes.push({
+                code: maskCode(codeString),
+                index: i,
+                errors: validationResult.invalidPatterns
+              });
             }
-          });
+          }
+
+          // If any codes are invalid, reject the request
+          if (invalidCodes.length > 0) {
+            return reply.code(400).send({
+              success: false,
+              message: "One or more codes don't match any valid pattern for this platform",
+              details: {
+                invalidCodes,
+                platform: patternResult.platform,
+                category: patternResult.category
+              }
+            });
+          }
+
+          // Log success
+          request.log.info(`All codes validated successfully against patterns`);
         }
-        
-        // Log which patterns matched
-        request.log.info(`Code validated successfully against ${validationResult.matchedPatterns.length} patterns`);
       }
     }
-    
+
     // Get category information before creating the listing
     let categoryName = null;
     let categoryInfo = null;
-    
+
     // Validate that categoryId exists in the database
     if (listingData.categoryId) {
       try {
@@ -266,18 +306,27 @@ const createListing = async (request, reply) => {
         });
       }
     }
-    
-    // Create a new listing instance
-    const listing = new Listing(listingData);
-    
-    // Add the code to the listing's codes array if provided
-    if (listingData.code) {
-      listing.addCodes([listingData.code]);
+
+    // Remove code-related fields from listingData before creating the listing instance
+    // This prevents the codes from being added directly to the listing document
+    const listingDataCopy = { ...listingData };
+    delete listingDataCopy.code;
+    delete listingDataCopy.codeExpirationDate;
+    delete listingDataCopy.codes;
+    delete listingDataCopy.additionalCodes;
+
+    // Create a new listing instance without the codes
+    const listing = new Listing(listingDataCopy);
+
+    // Add codes to the listing if provided
+    if (codesToAdd.length > 0) {
+      // Add the codes to the listing using the addCodes method which encrypts them
+      listing.addCodes(codesToAdd);
     }
-    
+
     // Save the listing
     await listing.save();
-    
+
     // Return success response without the code
     return reply.code(201).send({
       success: true,
@@ -307,52 +356,128 @@ const updateListing = async (request, reply) => {
     const { id } = request.params;
     const updateData = request.body;
     const sellerId = request.user.uid;
-    
+
     // Check if user is admin (admins can update any listing)
     const isAdmin = request.user.role === "admin";
-    
+
     // Query to find the listing - use externalId instead of _id
     const query = isAdmin ? { externalId: id } : { externalId: id, sellerId };
-    
+
     // Find the listing
     const listing = await Listing.findOne(query);
-    
+
     if (!listing) {
       return reply.code(404).send({
         success: false,
         error: "Listing not found or you don't have permission to update it"
       });
     }
-    
-    // If code is provided, encrypt it
-    if (updateData.code) {
-      listing.encryptCode(updateData.code);
-      // Remove code from updateData to prevent overwriting the encrypted value
-      delete updateData.code;
+
+    // Handle codes in the update
+    let codesToAdd = [];
+
+    // Remove code-related fields from updateData before processing
+    // This prevents the codes from being added directly to the listing document
+    const updateDataCopy = { ...updateData };
+
+    // Handle all possible code formats
+    if (updateData.codes && Array.isArray(updateData.codes) && updateData.codes.length > 0) {
+      // New format: array of code objects
+      codesToAdd = updateData.codes;
+
+      // Check for duplicate codes
+      const codeStrings = codesToAdd.map(codeItem =>
+        typeof codeItem === 'string' ? codeItem : codeItem.code
+      );
+
+      const duplicateCheck = await checkForDuplicateCodes(codeStrings, id);
+
+      if (!duplicateCheck.success) {
+        // Found duplicate codes
+        return reply.code(400).send({
+          success: false,
+          message: "Validation failed: One or more codes already exist in another listing",
+          error: {
+            duplicates: duplicateCheck.duplicates.map(dup => ({
+              code: maskCode(dup.code),
+              listingTitle: dup.listingTitle,
+              sellerId: dup.sellerId
+            }))
+          }
+        });
+      }
+
+      // Add the codes to the listing
+      listing.addCodes(codesToAdd);
+
+      // Remove codes from updateData to prevent overwriting
+      delete updateDataCopy.codes;
+    } else if (updateData.code) {
+      // Legacy format: single code with optional expiration date
+      let codesToCheck = [updateData.code];
+      let singleCodeToAdd = [{
+        code: updateData.code,
+        expirationDate: updateData.codeExpirationDate
+      }];
+
+      // Check for additional codes
+      if (updateData.additionalCodes && Array.isArray(updateData.additionalCodes) && updateData.additionalCodes.length > 0) {
+        // Add additional codes to the arrays
+        codesToCheck = [...codesToCheck, ...updateData.additionalCodes.map(c => c.code)];
+        singleCodeToAdd = [...singleCodeToAdd, ...updateData.additionalCodes];
+      }
+
+      const duplicateCheck = await checkForDuplicateCodes(codesToCheck, id);
+
+      if (!duplicateCheck.success) {
+        // Found a duplicate code
+        return reply.code(400).send({
+          success: false,
+          message: "Validation failed: One or more codes already exist in another listing",
+          error: {
+            duplicates: duplicateCheck.duplicates.map(dup => ({
+              code: maskCode(dup.code),
+              listingTitle: dup.listingTitle,
+              sellerId: dup.sellerId
+            }))
+          }
+        });
+      }
+
+      // Add the codes to the listing
+      listing.addCodes(singleCodeToAdd);
+
+      // Remove code-related fields from updateData
+      delete updateDataCopy.code;
+      delete updateDataCopy.codeExpirationDate;
+      delete updateDataCopy.additionalCodes;
     }
-    
+
+    // Use the cleaned updateDataCopy for the rest of the function
+    updateData = updateDataCopy;
+
     // Define valid fields that can be updated
     const validFields = [
       'title', 'description', 'price', 'originalPrice',
-      'region', 'isRegionLocked', 'expirationDate', 'quantity',
+      'region', 'isRegionLocked', 'quantity',
       'supportedLanguages', 'thumbnailUrl', 'autoDelivery', 'tags',
       'sellerNotes', 'status'
     ];
-    
+
     // Check for invalid fields
     const invalidFields = Object.keys(updateData).filter(key => !validFields.includes(key));
-    
+
     // Check specifically for category, categoryId, and platform which are not allowed to be updated
     const restrictedFields = ['category', 'categoryId', 'platform'].filter(field => updateData.hasOwnProperty(field));
-    
+
     // Remove restricted fields from updateData
     restrictedFields.forEach(field => {
       delete updateData[field];
     });
-    
+
     // Filter out restricted fields from invalidFields
     const otherInvalidFields = invalidFields.filter(field => !restrictedFields.includes(field));
-    
+
     if (otherInvalidFields.length > 0) {
       return reply.code(400).send({
         success: false,
@@ -360,7 +485,7 @@ const updateListing = async (request, reply) => {
         invalidFields: otherInvalidFields
       });
     }
-    
+
     // Check if there are any valid fields to update
     const fieldsToUpdate = Object.keys(updateData).filter(key => validFields.includes(key));
     if (fieldsToUpdate.length === 0) {
@@ -369,15 +494,15 @@ const updateListing = async (request, reply) => {
         error: "No valid fields to update"
       });
     }
-    
+
     // Update only valid fields
     fieldsToUpdate.forEach(key => {
       listing[key] = updateData[key];
     });
-    
+
     // Save the updated listing
     await listing.save();
-    
+
     // Prepare response
     const response = {
       success: true,
@@ -386,11 +511,11 @@ const updateListing = async (request, reply) => {
         externalId: listing.externalId,
         title: listing.title,
         price: listing.price,
-        category: listing.category,
+        categoryId: listing.categoryId,
         status: listing.status
       }
     };
-    
+
     // Add warning about restricted fields if any were attempted to be updated
     if (restrictedFields.length > 0) {
       response.warnings = {
@@ -398,7 +523,7 @@ const updateListing = async (request, reply) => {
         restrictedFields: restrictedFields
       };
     }
-    
+
     return reply.code(200).send(response);
   } catch (error) {
     request.log.error(`Error updating listing: ${error.message}`);
@@ -415,23 +540,23 @@ const deleteListing = async (request, reply) => {
   try {
     const { id } = request.params;
     const sellerId = request.user.uid;
-    
+
     // Check if user is admin (admins can delete any listing)
     const isAdmin = request.user.role === "admin";
-    
+
     // Query to find the listing - use externalId instead of _id
     const query = isAdmin ? { externalId: id } : { externalId: id, sellerId };
-    
+
     // Find and delete the listing
     const result = await Listing.findOneAndDelete(query);
-    
+
     if (!result) {
       return reply.code(404).send({
         success: false,
         error: "Listing not found or you don't have permission to delete it"
       });
     }
-    
+
     return reply.code(200).send({
       success: true,
       message: "Listing deleted successfully"
@@ -450,17 +575,17 @@ const deleteListing = async (request, reply) => {
 const getListingByExternalId = async (request, reply) => {
   try {
     const { externalId } = request.params;
-    
+
     // Find the listing by externalId
     const listing = await Listing.findOne({ externalId });
-    
+
     if (!listing) {
       return reply.code(404).send({
         success: false,
         error: "Listing not found"
       });
     }
-    
+
     // Get category information
     let categoryName = "Unknown";
     if (listing.categoryId) {
@@ -473,7 +598,7 @@ const getListingByExternalId = async (request, reply) => {
         request.log.error(`Error fetching category: ${err.message}`);
       }
     }
-    
+
     // Return the listing without sensitive information
     return reply.code(200).send({
       success: true,

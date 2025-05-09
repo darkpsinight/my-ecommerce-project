@@ -54,6 +54,9 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     validateForm,
     handleSubmit,
     handleDateChange,
+    handleAddCode,
+    handleDeleteCode,
+    handleCodeKeyDown,
     submitting
   } = useFormHandlers({
     formData,
@@ -92,6 +95,9 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     handleBlur,
     handleSubmit,
     handleDateChange,
+    handleAddCode,
+    handleDeleteCode,
+    handleCodeKeyDown,
     resetForm
   };
 

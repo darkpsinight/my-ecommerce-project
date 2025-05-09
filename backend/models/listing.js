@@ -67,11 +67,11 @@ const listingSchema = new mongoose.Schema({
     },
     soldAt: {
       type: Date
+    },
+    expirationDate: {
+      type: Date
     }
   }],
-  expirationDate: {
-    type: Date
-  },
   supportedLanguages: {
     type: [String],
     default: ["English"]
@@ -117,8 +117,8 @@ const listingSchema = new mongoose.Schema({
   }
 });
 
-// Add compound index for status and expirationDate to optimize expiration queries
-listingSchema.index({ status: 1, expirationDate: 1 });
+// Add compound index for status to optimize queries
+listingSchema.index({ status: 1 });
 
 // Middleware to update the updatedAt field and handle code-related logic on save
 listingSchema.pre("save", function(next) {
@@ -147,22 +147,23 @@ listingSchema.pre("save", function(next) {
       }
     });
 
-    // Check if listing is expired by date
-    const isExpired = this.expirationDate && new Date(this.expirationDate) < new Date();
+    // Check if any codes are expired by date
+    const now = new Date();
+    let hasExpiredCodes = false;
 
-    if (isExpired) {
-      // If expired by date, set status to expired regardless of other conditions
-      this.status = "expired";
+    // Check each code for expiration
+    if (statusCounts.active > 0) {
+      this.codes.forEach(code => {
+        if (code.soldStatus === "active" && code.expirationDate && new Date(code.expirationDate) < now) {
+          code.soldStatus = "expired";
+          statusCounts.active--;
+          statusCounts.expired++;
+          hasExpiredCodes = true;
+        }
+      });
+    }
 
-      // Also mark all active codes as expired
-      if (statusCounts.active > 0) {
-        this.codes.forEach(code => {
-          if (code.soldStatus === "active") {
-            code.soldStatus = "expired";
-          }
-        });
-      }
-    } else if (this.status === "draft") {
+    if (this.status === "draft") {
       // Preserve draft status if explicitly set
       // Do nothing to change the status
     } else {
@@ -245,19 +246,41 @@ listingSchema.methods.decryptCode = function(encryptedCode, iv) {
 };
 
 // Method to add codes to the listing
-listingSchema.methods.addCodes = function(plainTextCodes) {
+listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate = null) {
   if (!Array.isArray(plainTextCodes)) {
     plainTextCodes = [plainTextCodes];
   }
 
   // Encrypt each code and add to the codes array
-  plainTextCodes.forEach(plainCode => {
+  plainTextCodes.forEach(plainCodeItem => {
+    // Check if the item is a string or an object with code and expirationDate
+    let plainCode, expirationDate;
+
+    if (typeof plainCodeItem === 'string') {
+      plainCode = plainCodeItem;
+      expirationDate = defaultExpirationDate;
+    } else if (plainCodeItem && typeof plainCodeItem === 'object') {
+      plainCode = plainCodeItem.code;
+      // Use the code-specific expiration date if provided, otherwise use the default
+      expirationDate = plainCodeItem.expirationDate || defaultExpirationDate;
+    } else {
+      // Skip invalid items
+      console.warn('Invalid code item:', plainCodeItem);
+      return;
+    }
+
+    // Skip empty codes
+    if (!plainCode) {
+      return;
+    }
+
     const { code, iv } = this.encryptCode(plainCode);
     this.codes.push({
       codeId: uuidv4(), // Generate a unique UUID for each code
       code,
       iv,
-      soldStatus: "active"
+      soldStatus: "active",
+      expirationDate: expirationDate
     });
   });
 
@@ -297,16 +320,10 @@ listingSchema.methods.purchaseCode = function() {
 /**
  * Determines the correct listing status based on the status of its codes
  * @param {Array} codes - Array of code objects with soldStatus property
- * @param {Boolean} isExpired - Whether the listing's expiration date has passed
  * @param {String} currentStatus - The current status of the listing
  * @returns {String} - The correct listing status
  */
-listingSchema.statics.determineListingStatus = function(codes, isExpired, currentStatus) {
-  // If expired by date, always return expired
-  if (isExpired) {
-    return "expired";
-  }
-
+listingSchema.statics.determineListingStatus = function(codes, currentStatus) {
   // If no codes, return draft if it's already draft, otherwise suspended
   if (!codes || codes.length === 0) {
     return currentStatus === "draft" ? "draft" : "suspended";
@@ -368,13 +385,13 @@ listingSchema.statics.auditAndFixListings = async function() {
   for (const listing of listings) {
     let needsUpdate = false;
 
-    // Check if expired by date
-    const isExpired = listing.expirationDate && new Date(listing.expirationDate) < new Date();
+    // Check if any codes are expired by date
+    const now = new Date();
 
-    // If expired, mark active codes as expired
-    if (isExpired && listing.codes && listing.codes.length > 0) {
+    // Check each code for expiration
+    if (listing.codes && listing.codes.length > 0) {
       for (const code of listing.codes) {
-        if (code.soldStatus === "active") {
+        if (code.soldStatus === "active" && code.expirationDate && new Date(code.expirationDate) < now) {
           code.soldStatus = "expired";
           needsUpdate = true;
         }
@@ -382,7 +399,7 @@ listingSchema.statics.auditAndFixListings = async function() {
     }
 
     // Determine correct status using the shared logic
-    const correctStatus = Listing.determineListingStatus(listing.codes, isExpired, listing.status);
+    const correctStatus = Listing.determineListingStatus(listing.codes, listing.status);
 
     if (listing.status !== correctStatus) {
       listing.status = correctStatus;

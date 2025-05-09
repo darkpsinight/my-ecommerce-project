@@ -17,6 +17,9 @@ const ModalContent: React.FC = () => {
     handleChange,
     handleBlur,
     handleDateChange,
+    handleAddCode,
+    handleDeleteCode,
+    handleCodeKeyDown,
     categories,
     availablePlatforms,
     regions,
@@ -104,6 +107,9 @@ const ModalContent: React.FC = () => {
         handleChange={handleChange}
         handleTagsChange={handleTagsChange}
         handleDateChange={handleDateChange}
+        handleAddCode={handleAddCode}
+        handleDeleteCode={handleDeleteCode}
+        handleCodeKeyDown={handleCodeKeyDown}
       />
 
       <Toaster position="top-right" />

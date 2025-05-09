@@ -90,10 +90,21 @@ const getListingById = async (request, reply) => {
       });
     }
 
-    // Check if the listing is expired
-    if (listing.expirationDate && new Date(listing.expirationDate) < new Date()) {
-      listing.status = "expired";
-      await listing.save();
+    // Check if any codes are expired
+    const now = new Date();
+    let needsUpdate = false;
+
+    if (listing.codes && listing.codes.length > 0) {
+      for (const code of listing.codes) {
+        if (code.soldStatus === 'active' && code.expirationDate && new Date(code.expirationDate) < now) {
+          code.soldStatus = 'expired';
+          needsUpdate = true;
+        }
+      }
+
+      if (needsUpdate) {
+        await listing.save();
+      }
     }
 
     // Check if user is the seller or an admin to show more details

@@ -58,12 +58,14 @@ const createTestListing = async () => {
         {
           code: 'encrypted-code-1',
           iv: crypto.randomBytes(16).toString('hex'),
-          soldStatus: 'active'
+          soldStatus: 'active',
+          expirationDate: new Date(Date.now() + 86400000) // 1 day in the future
         },
         {
           code: 'encrypted-code-2',
           iv: crypto.randomBytes(16).toString('hex'),
-          soldStatus: 'active'
+          soldStatus: 'active',
+          expirationDate: new Date(Date.now() + 86400000) // 1 day in the future
         }
       ]
     });

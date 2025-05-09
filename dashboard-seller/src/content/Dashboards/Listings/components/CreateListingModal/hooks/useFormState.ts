@@ -15,8 +15,9 @@ export const useFormState = () => {
     platform: '',
     region: 'Global',
     isRegionLocked: false,
-    code: '',
-    expirationDate: null,
+    codes: [],
+    newCode: '',
+    newExpirationDate: null,
     supportedLanguages: [],
     thumbnailUrl: '',
     autoDelivery: true,
@@ -33,7 +34,8 @@ export const useFormState = () => {
     categoryId: '',
     platform: '',
     region: '',
-    code: '',
+    newCode: '',
+    codes: '',
     thumbnailUrl: ''
   };
 

@@ -183,12 +183,52 @@ export const useFormHandlers = ({
       setError(null);
 
       // Prepare form data for submission
-      const submitData = prepareFormDataForSubmission(formData);
+      const submitData: any = prepareFormDataForSubmission(formData);
 
-      // Force the expirationDate to be in ISO format if it exists
-      if (formData.expirationDate) {
-        // This ensures the date is properly formatted as ISO 8601
-        submitData.expirationDate = `${formData.expirationDate}T23:59:59.999Z`;
+      // If we have codes, use the first code for backward compatibility
+      if (formData.codes && formData.codes.length > 0) {
+        const firstCode = formData.codes[0];
+        submitData.code = firstCode.code;
+
+        // If the first code has an expiration date, format it as ISO 8601
+        if (firstCode.expirationDate) {
+          // Check if it's a Date object
+          if (firstCode.expirationDate instanceof Date) {
+            submitData.codeExpirationDate = firstCode.expirationDate.toISOString();
+          } else if (typeof firstCode.expirationDate === 'string') {
+            // Check if it already contains 'T' (already in ISO format)
+            if (firstCode.expirationDate.includes('T')) {
+              submitData.codeExpirationDate = firstCode.expirationDate;
+            } else {
+              // Convert YYYY-MM-DD to ISO format
+              submitData.codeExpirationDate = `${firstCode.expirationDate}T23:59:59.999Z`;
+            }
+          }
+        }
+
+        // If there are multiple codes, add them as an array
+        if (formData.codes.length > 1) {
+          submitData.additionalCodes = formData.codes.slice(1).map(codeItem => {
+            const codeData: any = { code: codeItem.code };
+
+            if (codeItem.expirationDate) {
+              // Check if it's a Date object
+              if (codeItem.expirationDate instanceof Date) {
+                codeData.expirationDate = codeItem.expirationDate.toISOString();
+              } else if (typeof codeItem.expirationDate === 'string') {
+                // Check if it already contains 'T' (already in ISO format)
+                if (codeItem.expirationDate.includes('T')) {
+                  codeData.expirationDate = codeItem.expirationDate;
+                } else {
+                  // Convert YYYY-MM-DD to ISO format
+                  codeData.expirationDate = `${codeItem.expirationDate}T23:59:59.999Z`;
+                }
+              }
+            }
+
+            return codeData;
+          });
+        }
       }
 
       const response = await createListing(submitData);
@@ -210,7 +250,7 @@ export const useFormHandlers = ({
 
           setFormErrors((prev) => ({
             ...prev,
-            code: `Invalid format for ${response.details.platform} on ${response.details.category}`
+            newCode: `Invalid format for ${response.details.platform} on ${response.details.category}`
           }));
         } else {
           setError(
@@ -265,8 +305,61 @@ export const useFormHandlers = ({
   const handleDateChange = (date: Date | null) => {
     setFormData((prev) => ({
       ...prev,
-      expirationDate: date
+      newExpirationDate: date
     }));
+  };
+
+  // Handle adding a new code with optional expiration date
+  const handleAddCode = () => {
+    // Validate the code
+    if (!formData.newCode.trim()) {
+      setFormErrors(prev => ({ ...prev, newCode: 'Please enter a code' }));
+      return;
+    }
+
+    // Check if code already exists
+    if (formData.codes.some(c => c.code === formData.newCode.trim())) {
+      setFormErrors(prev => ({ ...prev, newCode: 'This code already exists' }));
+      return;
+    }
+
+    // Add the new code to the codes array
+    const updatedCodes = [
+      ...formData.codes,
+      {
+        code: formData.newCode.trim(),
+        expirationDate: formData.newExpirationDate
+      }
+    ];
+
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      codes: updatedCodes,
+      newCode: '',
+      newExpirationDate: null
+    }));
+
+    // Clear errors
+    setFormErrors(prev => ({ ...prev, newCode: '', codes: '' }));
+  };
+
+  // Handle deleting a code
+  const handleDeleteCode = (codeToDelete: string) => {
+    const updatedCodes = formData.codes.filter(c => c.code !== codeToDelete);
+
+    setFormData(prev => ({
+      ...prev,
+      codes: updatedCodes
+    }));
+  };
+
+  // Handle keydown events for the code input
+  const handleCodeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddCode();
+    }
   };
 
   return {
@@ -275,6 +368,9 @@ export const useFormHandlers = ({
     validateForm,
     handleSubmit,
     handleDateChange,
+    handleAddCode,
+    handleDeleteCode,
+    handleCodeKeyDown,
     submitting,
     setSubmitting
   };

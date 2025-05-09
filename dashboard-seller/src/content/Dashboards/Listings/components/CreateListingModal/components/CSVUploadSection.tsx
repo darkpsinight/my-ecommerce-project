@@ -33,6 +33,9 @@ const CSVUploadSection: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+  const [duplicatesInCsv, setDuplicatesInCsv] = useState<string[]>([]);
+  const [duplicatesWithExisting, setDuplicatesWithExisting] = useState<string[]>([]);
+  const [finalCodesToAdd, setFinalCodesToAdd] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,44 +67,100 @@ const CSVUploadSection: React.FC = () => {
     setLoading(true);
     setError(null);
     setSuccess(false);
+    setDuplicatesInCsv([]);
+    setDuplicatesWithExisting([]);
+    setFinalCodesToAdd([]);
 
     try {
       // Read the file content
       const reader = new FileReader();
-      
+
       reader.onload = async (event) => {
         const csvData = event.target?.result as string;
-        
+
         // Parse the CSV data
         const parsedCodes = parseCSV(csvData);
-        
+
         if (parsedCodes.length === 0) {
           setError('No valid codes found in the CSV file');
           setLoading(false);
           return;
         }
-        
-        // Update the form data with the parsed codes
+
+        // Check for duplicates within the CSV file itself
+        const uniqueCodesMap = new Map();
+        const duplicatesInCsvArray = [];
+        const uniqueCodesFromCsv = [];
+
+        // First pass: identify duplicates within the CSV
+        parsedCodes.forEach(codeItem => {
+          if (uniqueCodesMap.has(codeItem.code)) {
+            duplicatesInCsvArray.push(codeItem.code);
+          } else {
+            uniqueCodesMap.set(codeItem.code, codeItem);
+            uniqueCodesFromCsv.push(codeItem);
+          }
+        });
+
+        // Check for duplicates with existing codes
+        const existingCodes = new Set(formData.codes.map(c => c.code));
+        const duplicatesWithExistingArray = [];
+        const finalCodesToAddArray = [];
+
+        uniqueCodesFromCsv.forEach(codeItem => {
+          if (existingCodes.has(codeItem.code)) {
+            duplicatesWithExistingArray.push(codeItem.code);
+          } else {
+            finalCodesToAddArray.push(codeItem);
+          }
+        });
+
+        // Update state with the results
+        setDuplicatesInCsv(duplicatesInCsvArray);
+        setDuplicatesWithExisting(duplicatesWithExistingArray);
+        setFinalCodesToAdd(finalCodesToAddArray);
+
+        // Update the form data with the unique codes
         setFormData({
           ...formData,
-          codes: [...formData.codes, ...parsedCodes]
+          codes: [...formData.codes, ...finalCodesToAddArray]
         });
-        
-        setSuccess(true);
+
+        // Show appropriate success/warning message
         setFile(null);
+
         // Reset file input
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
-        
+
+        // Set appropriate message based on duplicates
+        if (duplicatesInCsv.length > 0 || duplicatesWithExisting.length > 0) {
+          const totalDuplicates = duplicatesInCsv.length + duplicatesWithExisting.length;
+
+          if (finalCodesToAdd.length === 0) {
+            // If no codes were added, show only error
+            setError(`All ${totalDuplicates} codes were duplicates. No new codes were added.`);
+            setSuccess(false);
+          } else {
+            // If some codes were added, show only success with warning info
+            setError(null);
+            setSuccess(true);
+          }
+        } else {
+          // If no duplicates, show simple success message
+          setError(null);
+          setSuccess(true);
+        }
+
         setLoading(false);
       };
-      
+
       reader.onerror = () => {
         setError('Failed to read the file');
         setLoading(false);
       };
-      
+
       reader.readAsText(file);
     } catch (error) {
       console.error('Error uploading CSV:', error);
@@ -114,47 +173,47 @@ const CSVUploadSection: React.FC = () => {
   const parseCSV = (csvData: string) => {
     const lines = csvData.split('\n');
     const result = [];
-    
+
     // Find the header line
     const headerLine = lines.find(line => line.toLowerCase().includes('code') && line.toLowerCase().includes('expirationdate'));
-    
+
     if (!headerLine) {
       setError('Invalid CSV format. The file must have "code" and "expirationDate" columns.');
       return [];
     }
-    
+
     const headers = headerLine.split(',').map(header => header.trim().toLowerCase());
     const codeIndex = headers.indexOf('code');
     const expirationDateIndex = headers.indexOf('expirationdate');
-    
+
     if (codeIndex === -1) {
       setError('Invalid CSV format. The file must have a "code" column.');
       return [];
     }
-    
+
     // Process data lines
     for (let i = 0; i < lines.length; i++) {
       // Skip empty lines and the header line
       if (lines[i].trim() === '' || lines[i] === headerLine) {
         continue;
       }
-      
+
       const values = lines[i].split(',').map(value => value.trim());
-      
+
       // Skip if there's no code
       if (!values[codeIndex]) {
         continue;
       }
-      
+
       const codeObj: any = {
         code: values[codeIndex],
         soldStatus: 'active'
       };
-      
+
       // Add expiration date if it exists
       if (expirationDateIndex !== -1 && values[expirationDateIndex]) {
         const expirationDate = values[expirationDateIndex];
-        
+
         // Convert to ISO format if it's not already
         if (expirationDate.includes('T')) {
           codeObj.expirationDate = expirationDate;
@@ -163,34 +222,34 @@ const CSVUploadSection: React.FC = () => {
           codeObj.expirationDate = `${expirationDate}T23:59:59.999Z`;
         }
       }
-      
+
       result.push(codeObj);
     }
-    
+
     return result;
   };
 
   const handleDownloadTemplate = () => {
     // Create CSV template content
     const templateContent = 'code,expirationDate\ncode1,2025-12-31\ncode2,2026-12-31\ncode3,';
-    
+
     // Create a blob from the content
     const blob = new Blob([templateContent], { type: 'text/csv' });
-    
+
     // Create a URL for the blob
     const url = URL.createObjectURL(blob);
-    
+
     // Create a temporary link element
     const link = document.createElement('a');
     link.href = url;
     link.download = 'codes_template.csv';
-    
+
     // Append the link to the document
     document.body.appendChild(link);
-    
+
     // Click the link to trigger the download
     link.click();
-    
+
     // Clean up
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
@@ -212,16 +271,16 @@ const CSVUploadSection: React.FC = () => {
             </Tooltip>
           </Box>
         </SectionTitle>
-        
+
         <Box sx={{ mb: 3, p: 2, backgroundColor: alpha(theme.palette.primary.main, 0.03), borderRadius: 1 }}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             CSV Format
           </Typography>
-          
+
           <Typography variant="body2" color="text.secondary" paragraph>
             Upload a CSV file with codes and optional expiration dates. The CSV file should have the following columns:
           </Typography>
-          
+
           <Box sx={{ mb: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
             <Typography variant="body2" fontFamily="monospace">
               code,expirationDate
@@ -236,7 +295,7 @@ const CSVUploadSection: React.FC = () => {
               code3,
             </Typography>
           </Box>
-          
+
           <Button
             variant="outlined"
             startIcon={<DownloadIcon />}
@@ -245,7 +304,7 @@ const CSVUploadSection: React.FC = () => {
           >
             Download Template
           </Button>
-          
+
           <Box
             sx={{
               border: '2px dashed',
@@ -263,13 +322,13 @@ const CSVUploadSection: React.FC = () => {
               style={{ display: 'none' }}
               ref={fileInputRef}
             />
-            
+
             <UploadFileIcon sx={{ fontSize: 48, color: 'action.active', mb: 1 }} />
-            
+
             <Typography variant="body1" gutterBottom>
               {file ? file.name : 'Select a CSV file to upload'}
             </Typography>
-            
+
             <Button
               variant="contained"
               onClick={() => fileInputRef.current?.click()}
@@ -279,7 +338,7 @@ const CSVUploadSection: React.FC = () => {
               Browse Files
             </Button>
           </Box>
-          
+
           {file && (
             <Button
               variant="contained"
@@ -292,18 +351,29 @@ const CSVUploadSection: React.FC = () => {
               {loading ? 'Processing...' : 'Process Codes'}
             </Button>
           )}
-          
+
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>
               <AlertTitle>Error</AlertTitle>
               {error}
             </Alert>
           )}
-          
+
           {success && (
             <Alert severity="success" sx={{ mt: 2 }}>
               <AlertTitle>Success</AlertTitle>
-              Codes have been added to your listing.
+              {duplicatesInCsv && duplicatesInCsv.length > 0 || duplicatesWithExisting && duplicatesWithExisting.length > 0 ? (
+                <>
+                  Added {finalCodesToAdd.length} unique codes.
+                  {(duplicatesInCsv && duplicatesInCsv.length > 0) || (duplicatesWithExisting && duplicatesWithExisting.length > 0) ? (
+                    <> Skipped {(duplicatesInCsv ? duplicatesInCsv.length : 0) + (duplicatesWithExisting ? duplicatesWithExisting.length : 0)} duplicate {((duplicatesInCsv ? duplicatesInCsv.length : 0) + (duplicatesWithExisting ? duplicatesWithExisting.length : 0)) === 1 ? 'code' : 'codes'}.</>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  Codes have been successfully added to your listing.
+                </>
+              )}
             </Alert>
           )}
         </Box>

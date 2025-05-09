@@ -1,4 +1,4 @@
-import { Pattern } from 'src/services/api/validation';
+
 
 /**
  * Interface for a code item
@@ -130,6 +130,26 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
   if (!formData.codes || formData.codes.length === 0) {
     errors.codes = 'At least one product code is required';
     isValid = false;
+  } else {
+    // Check for duplicate codes
+    const codeMap = new Map();
+    const duplicates = new Set<string>();
+
+    formData.codes.forEach(codeItem => {
+      const code = codeItem.code;
+      if (codeMap.has(code)) {
+        duplicates.add(code);
+      } else {
+        codeMap.set(code, true);
+      }
+    });
+
+    if (duplicates.size > 0) {
+      const duplicatesList = Array.from(duplicates).slice(0, 3).join(', ');
+      const additionalCount = duplicates.size > 3 ? ` and ${duplicates.size - 3} more` : '';
+      errors.codes = `Duplicate codes found: ${duplicatesList}${additionalCount}. Please remove duplicates before submitting.`;
+      isValid = false;
+    }
   }
 
   // Thumbnail URL validation
@@ -147,9 +167,6 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
  * @returns The prepared data ready for submission
  */
 export const prepareFormDataForSubmission = (formData: ListingFormData) => {
-  // Create a copy of the form data to avoid mutating the original
-  const processedData = { ...formData };
-
   console.log('Original form data:', JSON.stringify(formData, null, 2));
 
   // Extract the first code for backward compatibility

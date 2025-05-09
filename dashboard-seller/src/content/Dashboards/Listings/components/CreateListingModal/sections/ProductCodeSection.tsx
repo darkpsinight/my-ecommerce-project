@@ -35,6 +35,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { CodeItem } from '../types';
+import PaginatedCodesTable from '../components/PaginatedCodesTable';
 
 interface ProductCodeSectionProps {
   formData: {
@@ -99,62 +100,7 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
     handleChange(syntheticEvent);
   };
 
-  // Render a single code item
-  const renderCodeItem = (codeItem: CodeItem, index: number) => {
-    return (
-      <Paper
-        key={`code-${index}`}
-        elevation={0}
-        sx={{
-          p: 2,
-          mb: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          backgroundColor: theme.palette.background.default
-        }}
-      >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle2" fontWeight="bold">
-              Code:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontFamily="monospace"
-              sx={{
-                p: 1,
-                backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                borderRadius: 1,
-                wordBreak: 'break-all'
-              }}
-            >
-              {codeItem.code}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={5}>
-            <Typography variant="subtitle2" fontWeight="bold">
-              Expiration Date:
-            </Typography>
-            <Typography variant="body2">
-              {codeItem.expirationDate
-                ? new Date(codeItem.expirationDate).toLocaleDateString()
-                : 'No expiration date'}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={1} sx={{ textAlign: 'right' }}>
-            <IconButton
-              color="error"
-              onClick={() => handleDeleteCode && handleDeleteCode(codeItem.code)}
-              size="small"
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Grid>
-        </Grid>
-      </Paper>
-    );
-  };
+
 
   return (
     <SectionCard>
@@ -251,19 +197,10 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
 
         {/* Display added codes */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-            Added Codes ({formData.codes.length})
-          </Typography>
-
-          {formData.codes.length === 0 ? (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              No codes added yet. Add at least one product code.
-            </Alert>
-          ) : (
-            <Box>
-              {formData.codes.map((codeItem, index) => renderCodeItem(codeItem, index))}
-            </Box>
-          )}
+          <PaginatedCodesTable
+            codes={formData.codes}
+            onDeleteCode={(code) => handleDeleteCode && handleDeleteCode(code)}
+          />
 
           {formErrors.codes && (
             <Alert severity="error" sx={{ mt: 2 }}>

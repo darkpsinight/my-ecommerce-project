@@ -8,7 +8,7 @@
 		"bcryptjs": "^2.4.3",
 		"csv-parser": "^3.2.0",
 		"dotenv": "^10.0.0",
-		"fastify": "^5.3.2",
+		"fastify": "^3.29.4",
 		"fastify-cookie": "^5.3.1",
 		"fastify-cors": "^6.0.2",
 		"fastify-csrf": "^3.1.0",

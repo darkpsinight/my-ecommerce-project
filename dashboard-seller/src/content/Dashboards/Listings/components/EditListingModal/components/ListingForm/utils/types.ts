@@ -14,6 +14,7 @@ export interface ListingCode {
 // Main Listing interface for local use
 export interface Listing {
   _id?: string;
+  externalId?: string; // Added externalId property
   title: string;
   description: string;
   price: number;

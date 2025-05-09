@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect, useImperativeHandle } from 'react';
+import React, { forwardRef, useState, useEffect, useImperativeHandle } from 'react';
 import {
   Box,
   Button,
@@ -425,6 +425,30 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
               handleDeleteCode={handleDeleteCode}
               handleCodeKeyDown={handleCodeKeyDown}
             />
+
+            {/* CSV Upload Component */}
+            {listing && listing.externalId && (
+              <Box sx={{ mt: 3 }}>
+                {/* Import dynamically to avoid circular dependencies */}
+                {React.createElement(
+                  require('../../../../components/CSVUpload').default,
+                  {
+                    listingId: listing.externalId,
+                    onSuccess: (data) => {
+                      // Update the codes count in the parent component
+                      if (onCodesChange) {
+                        onCodesChange(data.totalCodes);
+                      }
+
+                      // Refresh the listing data
+                      if (onSubmit) {
+                        onSubmit({});
+                      }
+                    }
+                  }
+                )}
+              </Box>
+            )}
 
             {!hideSubmitButton && (
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

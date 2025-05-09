@@ -6,7 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api
 // Axios instance with auth header
 const getAuthAxios = () => {
   const token = store.getState().auth.token;
-  
+
   return axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -70,7 +70,7 @@ export const createListing = async (listingData: ListingData): Promise<ListingRe
         console.log('API service fixed date format:', listingData.expirationDate);
       }
     }
-    
+
     console.log('Creating listing with data:', JSON.stringify(listingData, null, 2));
     const api = getAuthAxios();
     const response = await api.post('/listings', listingData);
@@ -78,7 +78,7 @@ export const createListing = async (listingData: ListingData): Promise<ListingRe
     return response.data;
   } catch (error) {
     console.error('Error creating listing:', error);
-    
+
     // Handle API errors
     if (error.response) {
       // The request was made and the server responded with a status code
@@ -108,8 +108,8 @@ export const createListing = async (listingData: ListingData): Promise<ListingRe
 };
 
 // Get all listings
-export const getListings = async (params?: { 
-  page?: number; 
+export const getListings = async (params?: {
+  page?: number;
   limit?: number;
   status?: string;
   platform?: string;
@@ -141,8 +141,8 @@ export const getListings = async (params?: {
 };
 
 // Get seller listings with masked codes
-export const getSellerListings = async (params?: { 
-  page?: number; 
+export const getSellerListings = async (params?: {
+  page?: number;
   limit?: number;
   status?: string;
   platform?: string;
@@ -214,6 +214,43 @@ export const deleteListing = async (id: string) => {
   } catch (error) {
     console.error(`Error deleting listing ${id}:`, error);
     throw error;
+  }
+};
+
+// Upload codes from CSV to a listing
+export const uploadCodesCSV = async (id: string, csvData: string) => {
+  try {
+    const api = getAuthAxios();
+    const response = await api.post(`/listings/${id}/upload-codes-csv`, { csvData });
+    return response.data;
+  } catch (error) {
+    console.error(`Error uploading codes to listing ${id}:`, error);
+
+    // Handle API errors
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.log('API error response:', error.response.data);
+      return {
+        success: false,
+        message: error.response.data.message || 'Failed to upload codes',
+        error: error.response.data.error
+      };
+    } else if (error.request) {
+      // The request was made but no response was received
+      return {
+        success: false,
+        message: 'No response from server. Please check your connection.',
+        error: 'Network error'
+      };
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      return {
+        success: false,
+        message: 'Request failed. Please try again.',
+        error: error.message
+      };
+    }
   }
 };
 

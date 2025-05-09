@@ -1,7 +1,7 @@
 // listings.js
 const { verifyAuth } = require("../plugins/authVerify");
 const { listingSchema } = require("./schemas/listingSchema");
-const { 
+const {
   createListing,
   updateListing,
   deleteListing,
@@ -17,6 +17,9 @@ const {
   auditAndFixListings,
   bulkCreateListings
 } = require("../handlers/listingAdminHandlers");
+const {
+  uploadCodesCSV
+} = require("../handlers/listingCSVHandlers");
 
 const listingsRoutes = async (fastify, opts) => {
   // Configure rate limits for different operations
@@ -32,7 +35,7 @@ const listingsRoutes = async (fastify, opts) => {
       };
     }
   };
-  
+
   const bulkCreateRateLimit = {
     max: 5,
     timeWindow: '1 minute',
@@ -45,7 +48,7 @@ const listingsRoutes = async (fastify, opts) => {
       };
     }
   };
-  
+
   const updateRateLimit = {
     max: 30,
     timeWindow: '1 minute',
@@ -57,7 +60,7 @@ const listingsRoutes = async (fastify, opts) => {
       };
     }
   };
-  
+
   const readRateLimit = {
     max: 60,
     timeWindow: '1 minute',
@@ -69,7 +72,7 @@ const listingsRoutes = async (fastify, opts) => {
       };
     }
   };
-  
+
   const deleteRateLimit = {
     max: 10,
     timeWindow: '1 minute',
@@ -181,6 +184,18 @@ const listingsRoutes = async (fastify, opts) => {
     preHandler: verifyAuth(["seller"]),
     schema: listingSchema.bulkCreateListings,
     handler: bulkCreateListings
+  });
+
+  // Upload codes from CSV file to an existing listing
+  fastify.route({
+    config: {
+      rateLimit: updateRateLimit
+    },
+    method: "POST",
+    url: "/:id/upload-codes-csv",
+    preHandler: verifyAuth(["seller"]),
+    schema: listingSchema.uploadCodesCSV,
+    handler: uploadCodesCSV
   });
 };
 

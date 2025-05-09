@@ -6,6 +6,7 @@ import BasicInformationSection from '../sections/BasicInformationSection';
 import ProductDetailsSection from '../sections/ProductDetailsSection';
 import PricingSection from '../sections/PricingSection';
 import ProductCodeSection from '../sections/ProductCodeSection';
+import CSVUploadSection from './CSVUploadSection';
 
 /**
  * Main content component for the Create New Listing modal
@@ -111,6 +112,9 @@ const ModalContent: React.FC = () => {
         handleDeleteCode={handleDeleteCode}
         handleCodeKeyDown={handleCodeKeyDown}
       />
+
+      {/* CSV Upload Section */}
+      <CSVUploadSection />
 
       <Toaster position="top-right" />
     </Box>

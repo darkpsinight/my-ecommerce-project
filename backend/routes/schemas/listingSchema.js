@@ -392,6 +392,28 @@ const listingSchema = {
         }
       }
     }
+  },
+  // Schema for uploading codes via CSV
+  uploadCodesCSV: {
+    params: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: {
+          type: "string",
+          description: "Listing external ID (UUID)"
+        }
+      }
+    },
+    body: {
+      type: "object",
+      properties: {
+        csvData: {
+          type: "string",
+          description: "CSV data as a string with code and optional expirationDate columns"
+        }
+      }
+    }
   }
 };
 

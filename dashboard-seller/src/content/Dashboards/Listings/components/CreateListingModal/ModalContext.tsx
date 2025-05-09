@@ -90,6 +90,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     submitting,
     error,
     formData,
+    setFormData,
     formErrors,
     handleChange,
     handleBlur,

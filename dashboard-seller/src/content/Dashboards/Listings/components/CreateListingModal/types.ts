@@ -42,6 +42,7 @@ export interface ModalContextProps {
   submitting: boolean;
   error: string | null;
   formData: ListingFormData;
+  setFormData: React.Dispatch<React.SetStateAction<ListingFormData>>;
   formErrors: ListingFormErrors;
   handleChange: (e: React.ChangeEvent<HTMLInputElement> | MultiFieldUpdate) => void;
   handleBlur: (e: React.FocusEvent<HTMLInputElement>) => void;

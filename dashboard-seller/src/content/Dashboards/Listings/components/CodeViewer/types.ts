@@ -3,6 +3,7 @@ export interface CodeObject {
   code: string;
   soldStatus: string;
   soldAt?: string | Date;
+  expirationDate?: string | Date;
 }
 
 export interface CodeViewerProps {

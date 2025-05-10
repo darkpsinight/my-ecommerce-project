@@ -22,6 +22,7 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
             <TableCell>Code</TableCell>
             <TableCell>Code ID</TableCell>
             <TableCell>Status</TableCell>
+            <TableCell>Expiration</TableCell>
             <TableCell align="right">Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -52,6 +53,13 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
                       codeObj.soldStatus === 'draft' ? 'Draft' : codeObj.soldStatus}
                   </Typography>
                 </TableCell>
+                <TableCell>
+                  <Typography variant="body2">
+                    {codeObj.expirationDate
+                      ? format(new Date(codeObj.expirationDate), 'yyyy-MM-dd')
+                      : 'No expiration'}
+                  </Typography>
+                </TableCell>
                 <TableCell align="right">
                   <Button
                     size="small"
@@ -66,7 +74,7 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} align="center" sx={{ py: 2 }}>
+              <TableCell colSpan={5} align="center" sx={{ py: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   No codes match your search
                 </Typography>

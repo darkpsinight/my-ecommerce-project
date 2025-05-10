@@ -237,6 +237,7 @@ const getSellerListings = async (request, reply) => {
                 soldAt: codeObj.soldAt,
                 codeId: codeObj.codeId, // Include only the codeId for external reference
                 code: maskCode(decryptedCode),
+                expirationDate: codeObj.expirationDate, // Include the expiration date
               };
             } else {
               // If code doesn't exist or can't be decrypted
@@ -245,6 +246,7 @@ const getSellerListings = async (request, reply) => {
                 soldAt: codeObj.soldAt,
                 codeId: codeObj.codeId, // Include only the codeId for external reference
                 code: codeObj.soldStatus === 'active' ? 'Code unavailable' : `${codeObj.soldStatus} code`,
+                expirationDate: codeObj.expirationDate, // Include the expiration date
               };
             }
           } catch (error) {
@@ -254,6 +256,7 @@ const getSellerListings = async (request, reply) => {
               soldAt: codeObj.soldAt,
               codeId: codeObj.codeId, // Include only the codeId for external reference
               code: 'Error processing code',
+              expirationDate: codeObj.expirationDate, // Include the expiration date
             };
           }
         });

@@ -6,7 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api
 // Axios instance with auth header
 const getAuthAxios = () => {
   const token = store.getState().auth.token;
-  
+
   return axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -65,6 +65,62 @@ export const getValidationPatterns = async (
 };
 
 /**
+ * Validate a code against a pattern
+ * @param code The code to validate
+ * @param pattern The pattern to validate against
+ * @returns An object with isValid and reason properties
+ */
+export const validateCodeAgainstPattern = (
+  code: string,
+  pattern: Pattern
+): { isValid: boolean; reason?: string } => {
+  if (!code || !pattern || !pattern.regex) {
+    return { isValid: false, reason: 'Missing code or pattern' };
+  }
+
+  try {
+    const regex = new RegExp(pattern.regex);
+    const isValid = regex.test(code);
+
+    if (!isValid) {
+      // Try to provide a helpful reason
+      if (pattern.description) {
+        return {
+          isValid: false,
+          reason: `Code doesn't match the required format: ${pattern.description}`
+        };
+      }
+
+      // Check for common issues
+      const lengthMatch = pattern.regex.match(/\{(\d+)\}$/);
+      if (lengthMatch) {
+        const expectedLength = parseInt(lengthMatch[1], 10);
+        if (code.length !== expectedLength) {
+          return {
+            isValid: false,
+            reason: `Invalid length: expected ${expectedLength} characters, got ${code.length}`
+          };
+        }
+      }
+
+      // Default reason
+      return {
+        isValid: false,
+        reason: `Code doesn't match the required format for this platform`
+      };
+    }
+
+    return { isValid: true };
+  } catch (error) {
+    console.error('Error validating code against pattern:', error);
+    return {
+      isValid: false,
+      reason: 'Invalid pattern format'
+    };
+  }
+};
+
+/**
  * Convert a regex pattern to an IMask compatible pattern
  * This is a simple conversion that works for basic patterns
  */
@@ -76,27 +132,27 @@ export const regexToMask = (pattern: string, example: string): string | RegExp =
     if (example) {
       return example;
     }
-    
+
     // Try to build a mask from the regex
     // This is a simplified approach that works for basic patterns
     if (pattern.startsWith('^') && pattern.endsWith('$')) {
       // Remove ^ and $ anchors
       const innerPattern = pattern.substring(1, pattern.length - 1);
-      
+
       // Common patterns
       if (/^\[A-Z0-9\]\{\d+\}$/.test(innerPattern)) {
         // Pattern like [A-Z0-9]{5}
         const length = innerPattern.match(/\{(\d+)\}/)[1];
         return Array(parseInt(length, 10) + 1).join('*');
       }
-      
+
       if (/^\[A-Z0-9\]\{(\d+),(\d+)\}$/.test(innerPattern)) {
         // Pattern like [A-Z0-9]{5,10}
         const minLength = innerPattern.match(/\{(\d+),(\d+)\}/)[1];
         return Array(parseInt(minLength, 10) + 1).join('*');
       }
     }
-    
+
     // Fallback to using the regex directly
     return new RegExp(pattern);
   } catch (error) {

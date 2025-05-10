@@ -67,6 +67,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     selectedCategory,
     setSelectedCategory,
     setPatterns,
+    selectedPattern,
     setSelectedPattern,
     setPatternLoading,
     setValidationError,

@@ -57,6 +57,8 @@ export interface ModalContextProps {
 export interface CodeItem {
   code: string;
   expirationDate: string | Date | null;
+  isInvalid?: boolean;
+  invalidReason?: string;
 }
 
 export interface ListingFormData {

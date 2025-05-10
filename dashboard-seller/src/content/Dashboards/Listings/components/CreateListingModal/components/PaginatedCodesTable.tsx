@@ -17,11 +17,13 @@ import {
   useTheme,
   alpha,
   Chip,
-  Tooltip
+  Tooltip,
+  Badge
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { format } from 'date-fns';
 import { CodeItem } from '../types';
 
@@ -55,6 +57,13 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDele
 
   // Count duplicates
   const duplicateCount = duplicateCodes.size;
+
+  // Count invalid codes
+  const invalidCodes = useMemo(() => {
+    return codes.filter(codeItem => codeItem.isInvalid);
+  }, [codes]);
+
+  const invalidCount = invalidCodes.length;
 
   // Reset to first page when codes array changes
   useEffect(() => {
@@ -133,6 +142,18 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDele
               />
             </Tooltip>
           )}
+
+          {invalidCount > 0 && (
+            <Tooltip title={`${invalidCount} code${invalidCount > 1 ? 's' : ''} don't match the platform pattern. Please remove or correct them before submitting.`}>
+              <Chip
+                icon={<WarningAmberIcon />}
+                label={`${invalidCount} invalid pattern${invalidCount > 1 ? 's' : ''}`}
+                color="warning"
+                size="small"
+                sx={{ ml: 1 }}
+              />
+            </Tooltip>
+          )}
         </Box>
         <TextField
           placeholder="Search codes..."
@@ -159,6 +180,15 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDele
         </Alert>
       )}
 
+      {invalidCount > 0 && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+        >
+          {invalidCount} code{invalidCount > 1 ? 's' : ''} don't match the required pattern for this platform. These codes are highlighted in yellow. Please remove them before submitting your listing.
+        </Alert>
+      )}
+
       <Paper sx={{ width: '100%', mb: 2, overflow: 'hidden' }}>
         <TableContainer sx={{ maxHeight: 400, overflowX: 'auto' }}>
           <Table stickyHeader size="small" sx={{ minWidth: 500 }}>
@@ -175,16 +205,26 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDele
                   <TableRow
                     key={`code-${index}-${codeItem.code}`}
                     sx={{
-                      '&:nth-of-type(odd)': {
-                        backgroundColor: alpha(theme.palette.background.default, 0.5)
-                      },
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.05)
-                      },
+                      // Apply conditional styling first based on code status
                       ...(duplicateCodes.has(codeItem.code) && {
-                        backgroundColor: alpha(theme.palette.error.light, 0.15),
+                        backgroundColor: `${alpha(theme.palette.error.light, 0.15)} !important`,
                         '&:hover': {
-                          backgroundColor: alpha(theme.palette.error.light, 0.25)
+                          backgroundColor: `${alpha(theme.palette.error.light, 0.25)} !important`
+                        }
+                      }),
+                      ...(codeItem.isInvalid && {
+                        backgroundColor: `${alpha(theme.palette.warning.light, 0.15)} !important`,
+                        '&:hover': {
+                          backgroundColor: `${alpha(theme.palette.warning.light, 0.25)} !important`
+                        }
+                      }),
+                      // Then apply default styling if no conditions are met
+                      ...(!duplicateCodes.has(codeItem.code) && !codeItem.isInvalid && {
+                        '&:nth-of-type(odd)': {
+                          backgroundColor: alpha(theme.palette.background.default, 0.5)
+                        },
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.05)
                         }
                       })
                     }}
@@ -195,6 +235,15 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDele
                           <Tooltip title="Duplicate code - please remove this duplicate before submitting">
                             <ErrorOutlineIcon
                               color="error"
+                              fontSize="small"
+                              sx={{ mr: 1, flexShrink: 0 }}
+                            />
+                          </Tooltip>
+                        )}
+                        {codeItem.isInvalid && (
+                          <Tooltip title={codeItem.invalidReason || "This code doesn't match the platform pattern"}>
+                            <WarningAmberIcon
+                              color="warning"
                               fontSize="small"
                               sx={{ mr: 1, flexShrink: 0 }}
                             />
@@ -211,6 +260,9 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDele
                               textOverflow: 'ellipsis',
                               ...(duplicateCodes.has(codeItem.code) && {
                                 color: theme.palette.error.main
+                              }),
+                              ...(codeItem.isInvalid && {
+                                color: theme.palette.warning.dark
                               })
                             }}
                           >
@@ -224,13 +276,25 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDele
                         <Chip
                           label={formatDate(codeItem.expirationDate)}
                           size="small"
-                          color={duplicateCodes.has(codeItem.code) ? "error" : "primary"}
+                          color={
+                            duplicateCodes.has(codeItem.code)
+                              ? "error"
+                              : codeItem.isInvalid
+                                ? "warning"
+                                : "primary"
+                          }
                           variant="outlined"
                         />
                       ) : (
                         <Typography
                           variant="body2"
-                          color={duplicateCodes.has(codeItem.code) ? "error" : "text.secondary"}
+                          color={
+                            duplicateCodes.has(codeItem.code)
+                              ? "error"
+                              : codeItem.isInvalid
+                                ? "warning.dark"
+                                : "text.secondary"
+                          }
                         >
                           No expiration
                         </Typography>

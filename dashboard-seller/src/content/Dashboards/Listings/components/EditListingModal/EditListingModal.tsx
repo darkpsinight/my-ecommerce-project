@@ -5,6 +5,7 @@ import toast, { Toaster } from 'react-hot-toast';
 // Import types
 import { Listing } from '../../types';
 import { FormData as ListingFormData } from './components/ListingForm/utils/types';
+import { getValidationPatterns, Pattern } from 'src/services/api/validation';
 
 // Import utility functions
 import { getActiveCodes, getDiscountPercentage } from '../ViewListingDetailsModal/utils/listingHelpers';
@@ -47,6 +48,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [activeCodes, setActiveCodes] = useState(0);
   const [categories] = useState(initialCategories);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
+  const [patterns, setPatterns] = useState([]);
+  const [selectedPattern, setSelectedPattern] = useState(null);
 
   // Shared form state to persist data across tabs
   const [sharedFormData, setSharedFormData] = useState<ListingFormData | null>(null);
@@ -86,12 +89,23 @@ const EditListingModal: FC<EditListingModalProps> = ({
           supportedLanguages: foundListing.supportedLanguages || [],
           sellerNotes: foundListing.sellerNotes || '',
           codes: foundListing.codes || [],
-          newCode: ''
+          newCode: '',
+          newExpirationDate: null // Explicitly set to null to ensure it's not defaulting to current date
         });
 
         // If we have categories, just extract platforms
         if (categories.length > 0) {
           extractPlatformsFromCategories(categories);
+        }
+
+        // Fetch validation patterns for the listing's category and platform
+        if (foundListing.categoryId && foundListing.platform) {
+          // Convert categoryId to string if it's an object
+          const categoryIdValue = typeof foundListing.categoryId === 'object' && foundListing.categoryId._id
+            ? foundListing.categoryId._id
+            : foundListing.categoryId;
+          // Explicitly cast to string to satisfy TypeScript
+          fetchValidationPatterns(categoryIdValue as string, foundListing.platform);
         }
       } else {
         console.error('Listing not found:', listingId);
@@ -124,6 +138,33 @@ const EditListingModal: FC<EditListingModalProps> = ({
     setAvailablePlatforms(uniquePlatforms);
   };
 
+  // Fetch validation patterns for the selected category and platform
+  const fetchValidationPatterns = async (categoryId: string, platformName: string) => {
+    if (!categoryId || !platformName) return;
+
+    try {
+      const response = await getValidationPatterns(categoryId, platformName);
+
+      if (response && response.success && response.data) {
+        const { patterns: responsePatterns } = response.data;
+        setPatterns(responsePatterns);
+
+        // If there's only one pattern, select it automatically
+        if (responsePatterns.length === 1) {
+          setSelectedPattern(responsePatterns[0]);
+        } else {
+          setSelectedPattern(null);
+        }
+      } else {
+        console.error('Failed to load validation patterns:', response.message || 'Unknown error');
+        toast.error('Failed to load validation patterns');
+      }
+    } catch (err) {
+      console.error('Error fetching validation patterns:', err);
+      toast.error('Failed to load validation patterns');
+    }
+  };
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     // Save the current tab's form data before switching
     const currentFormRef = getCurrentFormRef();
@@ -152,6 +193,14 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const handleStatusChange = async (newStatus: 'active' | 'draft') => {
     if (!listing) return;
 
+    // Check if the listing has codes when trying to set it to active
+    if (newStatus === 'active' && (!listing.codes || listing.codes.length === 0)) {
+      setTimeout(() => {
+        toast.error('A listing must have at least one code to be active');
+      }, 100);
+      return;
+    }
+
     // Update the local state first for immediate UI feedback
     setListing({
       ...listing,
@@ -166,14 +215,20 @@ const EditListingModal: FC<EditListingModalProps> = ({
     setIsSubmitting(true);
     try {
       // Make the API call to update the listing status
-      await updateListing(listing.externalId, apiData);
+      const response = await updateListing(listing.externalId, apiData);
+
+      // Get the actual status from the API response
+      const actualStatus = response?.data?.status || newStatus;
 
       // Create an updated listing object with the response data and existing data
       const updatedListing = {
         ...listing,
-        status: newStatus,
+        status: actualStatus,
         updatedAt: new Date().toISOString()
       };
+
+      // Update the local state with the actual status from the API
+      setListing(updatedListing);
 
       // Update the listings array in the parent component without closing the modal
       // We're using a custom event to notify the parent component about the update
@@ -183,8 +238,27 @@ const EditListingModal: FC<EditListingModalProps> = ({
       });
       window.dispatchEvent(customEvent);
 
+      // Show the correct toast message based on the actual status
       setTimeout(() => {
-        toast.success(`Listing status updated to ${newStatus}`);
+        if (actualStatus !== newStatus) {
+          // If the status in the response is different from what we requested
+          if (actualStatus === 'suspended') {
+            toast.error('Listing cannot be activated: A listing must have at least one code to be active');
+          } else {
+            // Use custom toast instead of toast.info which doesn't exist in react-hot-toast
+            toast(`Listing status is ${actualStatus}`, {
+              icon: '📝',
+              style: {
+                borderRadius: '10px',
+                background: '#f0f9ff',
+                color: '#0369a1',
+                border: '1px solid #bae6fd'
+              }
+            });
+          }
+        } else {
+          toast.success(`Listing status updated to ${actualStatus}`);
+        }
       }, 100);
     } catch (error: any) {
       console.error('Failed to update listing status:', error);
@@ -274,6 +348,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      // Log the API data for debugging
+      console.log('Updating listing with data:', apiData);
+
       // Make the API call to update the listing
       await updateListing(listing.externalId, apiData);
 
@@ -391,6 +468,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 onCodesChange={handleCodesChange}
                 sharedFormData={sharedFormData}
                 onFormDataChange={setSharedFormData}
+                selectedPattern={selectedPattern}
               />
             </TabPanel>
 

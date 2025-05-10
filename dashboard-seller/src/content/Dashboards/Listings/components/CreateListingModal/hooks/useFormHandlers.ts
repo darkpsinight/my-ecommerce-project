@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createListing } from 'src/services/api/listings';
 import { validateListingForm, prepareFormDataForSubmission } from '../../ValidationHelpers';
-import { getValidationPatterns, Pattern } from 'src/services/api/validation';
+import { getValidationPatterns, Pattern, validateCodeAgainstPattern } from 'src/services/api/validation';
 import { Category } from '../types';
 
 /**
@@ -16,6 +16,7 @@ export const useFormHandlers = ({
   selectedCategory,
   setSelectedCategory,
   setPatterns,
+  selectedPattern,
   setSelectedPattern,
   setPatternLoading,
   setValidationError,
@@ -233,14 +234,47 @@ export const useFormHandlers = ({
 
       const response = await createListing(submitData);
 
+      // Define a type for the response details with invalidCodes
+      interface ResponseDetails {
+        invalidCodes?: Array<{ index: number; code: string; errors?: any[] }>;
+        invalidPatterns?: Array<{ regex: string; description?: string }>;
+        platform?: string;
+        category?: string;
+      }
+
       if (response.success) {
         onSubmit(response);
         // Explicitly close the modal after successful submission
         onClose();
       } else {
         // Check for code validation errors
-        if (response.details && response.details.invalidPatterns) {
-          const invalidPatternsInfo = response.details.invalidPatterns
+        const details = response.details as ResponseDetails;
+        if (details && details.invalidCodes && details.invalidCodes.length > 0) {
+          // Mark the invalid codes in the UI
+          const updatedCodes = [...formData.codes];
+          const invalidCodes = details.invalidCodes;
+          const invalidCodeIndices = new Set(invalidCodes.map(ic => ic.index));
+
+          // Update the codes array to mark invalid codes
+          updatedCodes.forEach((codeItem, index) => {
+            if (invalidCodeIndices.has(index)) {
+              const invalidCodeInfo = invalidCodes.find(ic => ic.index === index);
+              codeItem.isInvalid = true;
+              codeItem.invalidReason = `This code doesn't match the pattern for ${details.platform || 'this platform'}`;
+            }
+          });
+
+          // Update form data with marked invalid codes
+          setFormData(prev => ({
+            ...prev,
+            codes: updatedCodes
+          }));
+
+          setValidationError(
+            `One or more codes don't match the required format for ${details.platform || 'this platform'}. Please remove or correct the highlighted codes.`
+          );
+        } else if (details && details.invalidPatterns) {
+          const invalidPatternsInfo = details.invalidPatterns
             .map((pattern) => pattern.description || pattern.regex)
             .join(', ');
 
@@ -250,7 +284,7 @@ export const useFormHandlers = ({
 
           setFormErrors((prev) => ({
             ...prev,
-            newCode: `Invalid format for ${response.details.platform} on ${response.details.category}`
+            newCode: `Invalid format for ${details.platform || ''} on ${details.category || ''}`
           }));
         } else {
           setError(
@@ -281,11 +315,42 @@ export const useFormHandlers = ({
       if (response && response.success && response.data) {
         const { patterns: responsePatterns } = response.data;
         setPatterns(responsePatterns);
+
         // If there's only one pattern, select it automatically
+        let newSelectedPattern = null;
         if (responsePatterns.length === 1) {
-          setSelectedPattern(responsePatterns[0]);
+          newSelectedPattern = responsePatterns[0];
+          setSelectedPattern(newSelectedPattern);
         } else {
           setSelectedPattern(null);
+        }
+
+        // Validate existing codes against the new pattern
+        if (newSelectedPattern && formData.codes.length > 0) {
+          const updatedCodes = formData.codes.map(codeItem => {
+            // Create a new object to avoid mutating the original
+            const updatedItem = { ...codeItem };
+
+            // Validate the code against the new pattern
+            const validationResult = validateCodeAgainstPattern(codeItem.code, newSelectedPattern);
+
+            if (!validationResult.isValid) {
+              updatedItem.isInvalid = true;
+              updatedItem.invalidReason = validationResult.reason;
+            } else {
+              // Clear any previous invalid status
+              updatedItem.isInvalid = false;
+              updatedItem.invalidReason = undefined;
+            }
+
+            return updatedItem;
+          });
+
+          // Update form data with validated codes
+          setFormData(prev => ({
+            ...prev,
+            codes: updatedCodes
+          }));
         }
       } else {
         setError(
@@ -323,13 +388,30 @@ export const useFormHandlers = ({
       return;
     }
 
+    // Create the new code item
+    const newCodeItem = {
+      code: formData.newCode.trim(),
+      expirationDate: formData.newExpirationDate
+    };
+
+    // Get the currently selected pattern from the context
+    const currentPattern = selectedPattern;
+
+    // Validate against the selected pattern if available
+    if (currentPattern && currentPattern.regex) {
+      const validationResult = validateCodeAgainstPattern(newCodeItem.code, currentPattern);
+
+      if (!validationResult.isValid) {
+        // Add the code but mark it as invalid
+        newCodeItem['isInvalid'] = true;
+        newCodeItem['invalidReason'] = validationResult.reason;
+      }
+    }
+
     // Add the new code to the codes array
     const updatedCodes = [
       ...formData.codes,
-      {
-        code: formData.newCode.trim(),
-        expirationDate: formData.newExpirationDate
-      }
+      newCodeItem
     ];
 
     // Update form data

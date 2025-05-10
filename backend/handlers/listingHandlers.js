@@ -354,7 +354,7 @@ const createListing = async (request, reply) => {
 const updateListing = async (request, reply) => {
   try {
     const { id } = request.params;
-    const updateData = request.body;
+    let updateData = request.body;
     const sellerId = request.user.uid;
 
     // Check if user is admin (admins can update any listing)
@@ -631,11 +631,109 @@ const getListingByExternalId = async (request, reply) => {
   }
 };
 
+// Delete a specific code from a listing
+const deleteListingCode = async (request, reply) => {
+  try {
+    const { id, codeId } = request.params;
+    const sellerId = request.user.uid;
+
+    // Check if user is admin (admins can update any listing)
+    const isAdmin = request.user.role === "admin";
+
+    // Query to find the listing - use externalId instead of _id
+    const query = isAdmin ? { externalId: id } : { externalId: id, sellerId };
+
+    // Find the listing - explicitly select the code and iv fields which are hidden by default
+    const listing = await Listing.findOne(query).select('+codes.code +codes.iv');
+
+    if (!listing) {
+      return reply.code(404).send({
+        success: false,
+        error: "Listing not found or you don't have permission to update it"
+      });
+    }
+
+    // Log the listing codes before deletion for debugging
+    console.log('Listing codes before deletion:', listing.codes.map(c => ({
+      codeId: c.codeId,
+      hasCode: !!c.code,
+      hasIv: !!c.iv,
+      soldStatus: c.soldStatus
+    })));
+
+    // Check if the listing has codes
+    if (!listing.codes || listing.codes.length === 0) {
+      return reply.code(404).send({
+        success: false,
+        error: "No codes found in this listing"
+      });
+    }
+
+    // Find the code in the listing
+    const codeIndex = listing.codes.findIndex(code => code.codeId === codeId);
+
+    if (codeIndex === -1) {
+      return reply.code(404).send({
+        success: false,
+        error: "Code not found in this listing"
+      });
+    }
+
+    // Check if the code is already sold
+    if (listing.codes[codeIndex].soldStatus === 'sold') {
+      return reply.code(400).send({
+        success: false,
+        error: "Cannot delete a sold code"
+      });
+    }
+
+    // Remove the code from the listing
+    listing.codes.splice(codeIndex, 1);
+
+    // Set the _skipStatusCalculation flag to prevent automatic status recalculation
+    // This is important to prevent any side effects during save
+    listing._skipStatusCalculation = true;
+
+    // Save the updated listing
+    await listing.save();
+
+    // Log the updated listing for debugging
+    console.log('Updated listing after code deletion:', {
+      externalId: listing.externalId,
+      codesCount: listing.codes.length,
+      codes: listing.codes.map(c => ({
+        codeId: c.codeId,
+        hasCode: !!c.code,
+        hasIv: !!c.iv,
+        soldStatus: c.soldStatus
+      }))
+    });
+
+    return reply.code(200).send({
+      success: true,
+      message: "Code deleted successfully",
+      data: {
+        externalId: listing.externalId,
+        title: listing.title,
+        codesCount: listing.codes.length
+      }
+    });
+  } catch (error) {
+    request.log.error(`Error deleting code: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to delete code",
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createListing,
   updateListing,
   deleteListing,
   getListingByExternalId,
+  deleteListingCode,
   maskCode,
   getFormatDescription,
   checkForDuplicateCodes

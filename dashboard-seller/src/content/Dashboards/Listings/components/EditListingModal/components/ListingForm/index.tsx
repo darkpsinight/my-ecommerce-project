@@ -19,6 +19,7 @@ import ImageUpload from './sections/ImageUpload';
 // Import types and utilities
 import { FormData, FormErrors, FormRef, ListingFormProps, Listing } from './utils/types';
 import { validateForm } from './utils/validation';
+import { validateCodeAgainstPattern } from 'src/services/api/validation';
 
 /**
  * Main ListingForm component that integrates all form sections
@@ -33,7 +34,8 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
     onCodesChange,
     availablePlatforms = [],
     sharedFormData = null,
-    onFormDataChange
+    onFormDataChange,
+    selectedPattern
   },
   ref
 ) => {
@@ -56,7 +58,8 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
       supportedLanguages: listing.supportedLanguages || [],
       sellerNotes: listing.sellerNotes || '',
       codes: listing.codes || [],
-      newCode: ''
+      newCode: '',
+      newExpirationDate: null
     }
   );
 
@@ -163,7 +166,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
    * Handle date change
    */
   const handleDateChange = (date: Date | null) => {
-    const updatedFormData = { ...formData, expirationDate: date };
+    const updatedFormData = { ...formData, newExpirationDate: date };
     setFormData(updatedFormData);
 
     // Notify parent component of form data change
@@ -213,21 +216,38 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
       return;
     }
 
+    // Create the new code item
+    const newCodeItem = {
+      // We don't generate a UUID here as it will be generated on the server
+      // when the code is saved to the database
+      code: formData.newCode.trim(),
+      soldStatus: 'active',
+      // Add the expiration date to the individual code if it exists
+      expirationDate: formData.newExpirationDate
+    };
+
+    // Validate against the selected pattern if available
+    if (selectedPattern && selectedPattern.regex) {
+      const validationResult = validateCodeAgainstPattern(newCodeItem.code, selectedPattern);
+
+      if (!validationResult.isValid) {
+        // Mark the code as invalid but still add it
+        newCodeItem['isInvalid'] = true;
+        newCodeItem['invalidReason'] = validationResult.reason;
+      }
+    }
+
     // Add new code
     const updatedCodes = [
       ...(formData.codes || []),
-      {
-        // We don't generate a UUID here as it will be generated on the server
-        // when the code is saved to the database
-        code: formData.newCode.trim(),
-        soldStatus: 'active'
-      }
+      newCodeItem
     ];
 
     const updatedFormData = {
       ...formData,
       codes: updatedCodes,
-      newCode: ''
+      newCode: '',
+      newExpirationDate: null
     };
 
     setFormData(updatedFormData);
@@ -338,9 +358,36 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
     }
 
     if (section === 'codes') {
-      listingData.codes = formData.codes;
-      if (formData.expirationDate) {
-        listingData.expirationDate = formData.expirationDate;
+      // Process codes to handle existing and new codes properly
+      if (formData.codes && formData.codes.length > 0) {
+        // Filter and process codes
+        const processedCodes = formData.codes.map(codeItem => {
+          if (codeItem.codeId) {
+            // For existing codes (with codeId), only send the codeId and status
+            // This prevents sending masked codes back to the server
+            return {
+              codeId: codeItem.codeId,
+              soldStatus: codeItem.soldStatus
+            };
+          } else if (codeItem.code) {
+            // For new codes (without codeId), send the full code and expiration date
+            return {
+              code: codeItem.code,
+              soldStatus: codeItem.soldStatus,
+              expirationDate: codeItem.expirationDate
+            };
+          } else {
+            // Fallback case (should not happen)
+            console.error('Invalid code item:', codeItem);
+            return {
+              soldStatus: codeItem.soldStatus || 'active'
+            };
+          }
+        });
+
+        listingData.codes = processedCodes;
+      } else {
+        listingData.codes = [];
       }
     }
 
@@ -424,6 +471,14 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
               handleAddCode={handleAddCode}
               handleDeleteCode={handleDeleteCode}
               handleCodeKeyDown={handleCodeKeyDown}
+              selectedPattern={selectedPattern}
+              listingId={listing.externalId}
+              onRefresh={() => {
+                // No need to refresh the listing data with a PUT API call
+                // The code is already deleted from the database by the DELETE API call
+                // and the local state is updated by onDeleteCode
+                console.log('Code deleted successfully - local state already updated');
+              }}
             />
 
             {/* CSV Upload Component */}
@@ -431,18 +486,29 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
               <Box sx={{ mt: 3 }}>
                 {/* Import dynamically to avoid circular dependencies */}
                 {React.createElement(
-                  require('../../../../components/CSVUpload').default,
+                  require('../../../../components/CSVUpload/CSVUploadWithValidation').default,
                   {
                     listingId: listing.externalId,
+                    selectedPattern: selectedPattern,
                     onSuccess: (data) => {
                       // Update the codes count in the parent component
                       if (onCodesChange) {
                         onCodesChange(data.totalCodes);
                       }
 
-                      // Refresh the listing data
-                      if (onSubmit) {
-                        onSubmit({});
+                      // If there are invalid codes, mark them in the form data
+                      if (data.invalidCodes && data.invalidCodes.length > 0) {
+                        // We need to fetch the updated codes and mark the invalid ones
+                        // For CSV uploads, we still need to refresh the listing data
+                        // since we need to get the newly added codes with their codeIds
+                        if (onSubmit) {
+                          onSubmit({});
+                        }
+                      } else {
+                        // Refresh the listing data for CSV uploads
+                        if (onSubmit) {
+                          onSubmit({});
+                        }
                       }
                     }
                   }
@@ -583,9 +649,33 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
       }
 
       if (section === 'codes') {
-        listingData.codes = formData.codes;
-        if (formData.expirationDate) {
-          listingData.expirationDate = formData.expirationDate;
+        // Only send new codes to be added, not existing ones
+        if (formData.codes && formData.codes.length > 0) {
+          // Filter to only include new codes (those without codeId)
+          const newCodes = formData.codes.filter(codeItem => !codeItem.codeId);
+
+          if (newCodes.length > 0) {
+            // Process new codes to include required properties
+            const processedNewCodes = newCodes.map(codeItem => {
+              if (codeItem.code) {
+                // For new codes, send the full code and expiration date
+                return {
+                  code: codeItem.code,
+                  soldStatus: codeItem.soldStatus || 'active',
+                  expirationDate: codeItem.expirationDate
+                };
+              } else {
+                // Fallback case (should not happen)
+                console.error('Invalid code item:', codeItem);
+                return null;
+              }
+            }).filter(Boolean); // Remove any null items
+
+            // Only set codes if there are new ones to add
+            if (processedNewCodes.length > 0) {
+              listingData.newCodes = processedNewCodes;
+            }
+          }
         }
       }
 

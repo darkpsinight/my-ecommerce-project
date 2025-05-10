@@ -16,9 +16,11 @@ import { FormData, FormErrors } from '../utils/types';
 import SectionHeader from '../components/SectionHeader';
 import { SectionContainer, AddButton } from '../components/StyledComponents';
 import CodeItemComponent from '../components/CodeItem';
+import PaginatedCodesTable from '../components/PaginatedCodesTable';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { validateCodeAgainstPattern, Pattern } from 'src/services/api/validation';
 
 interface ProductCodesProps {
   formData: FormData;
@@ -28,6 +30,9 @@ interface ProductCodesProps {
   handleAddCode: () => void;
   handleDeleteCode: (codeToDelete: string) => void;
   handleCodeKeyDown: (e: React.KeyboardEvent) => void;
+  selectedPattern?: Pattern | null;
+  listingId?: string;
+  onRefresh?: () => void;
 }
 
 const ProductCodes: React.FC<ProductCodesProps> = ({
@@ -37,7 +42,10 @@ const ProductCodes: React.FC<ProductCodesProps> = ({
   handleDateChange,
   handleAddCode,
   handleDeleteCode,
-  handleCodeKeyDown
+  handleCodeKeyDown,
+  selectedPattern,
+  listingId,
+  onRefresh
 }) => {
   const codesCount = formData.codes?.length || 0;
 
@@ -83,14 +91,15 @@ const ProductCodes: React.FC<ProductCodesProps> = ({
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label="Expiration Date (Optional)"
-              value={formData.expirationDate}
+              value={formData.newExpirationDate}
               onChange={handleDateChange}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   fullWidth
                   variant="outlined"
-                  helperText="Set if codes have an expiration date"
+                  helperText="Leave blank if the code doesn't expire"
+                  placeholder=""
                 />
               )}
             />
@@ -100,42 +109,19 @@ const ProductCodes: React.FC<ProductCodesProps> = ({
         <Grid item xs={12}>
           <Divider sx={{ my: 2 }} />
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" fontWeight="500">
-              Product Codes ({codesCount})
-            </Typography>
-
-            {codesCount > 0 && (
-              <Typography variant="body2" color="text.secondary">
-                {codesCount} code{codesCount !== 1 ? 's' : ''} added
-              </Typography>
-            )}
-          </Box>
-
           {formErrors.codes && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {formErrors.codes}
             </Alert>
           )}
 
-          {codesCount === 0 ? (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              No codes added yet. Add at least one product code.
-            </Alert>
-          ) : (
-            <Stack spacing={1} sx={{ mb: 2 }}>
-              {formData.codes?.map((codeItem) => (
-                <CodeItemComponent
-                  key={codeItem.codeId || codeItem.code}
-                  codeId={codeItem.codeId}
-                  code={codeItem.code}
-                  soldStatus={codeItem.soldStatus}
-                  soldAt={codeItem.soldAt}
-                  onDelete={handleDeleteCode}
-                />
-              ))}
-            </Stack>
-          )}
+          {/* Display added codes using the paginated table */}
+          <PaginatedCodesTable
+            codes={formData.codes || []}
+            onDeleteCode={handleDeleteCode}
+            listingId={listingId || ''}
+            onCodeDeleted={onRefresh}
+          />
 
           <AddButton
             startIcon={<AddIcon />}

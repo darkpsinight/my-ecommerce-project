@@ -25,7 +25,7 @@ export interface ListingData {
   platform: string;
   region: string;
   isRegionLocked?: boolean;
-  code: string;
+  code?: string;
   expirationDate?: string;
   quantity?: number | string;
   supportedLanguages?: string[];
@@ -34,6 +34,12 @@ export interface ListingData {
   tags?: string[];
   sellerNotes?: string;
   status?: string;
+  // New property for adding codes to an existing listing
+  newCodes?: Array<{
+    code: string;
+    soldStatus?: string;
+    expirationDate?: string | Date | null;
+  }>;
 }
 
 export interface ListingResponse {
@@ -196,9 +202,34 @@ export const getListingById = async (id: string) => {
 // Update a listing
 export const updateListing = async (id: string, updateData: Partial<ListingData>) => {
   try {
-    const api = getAuthAxios();
-    const response = await api.put(`/listings/${id}`, updateData);
-    return response.data;
+    // Check if we have newCodes to add
+    if (updateData.newCodes && Array.isArray(updateData.newCodes) && updateData.newCodes.length > 0) {
+      // Extract newCodes from updateData
+      const newCodes = updateData.newCodes;
+
+      // Remove newCodes from updateData to avoid sending it in the main update
+      const { newCodes: _, ...cleanUpdateData } = updateData;
+
+      // First, update the listing without the codes
+      const api = getAuthAxios();
+      let response;
+
+      // Only make the main update API call if there are other fields to update
+      if (Object.keys(cleanUpdateData).length > 0) {
+        response = await api.put(`/listings/${id}`, cleanUpdateData);
+      }
+
+      // Then, add the new codes using our addListingCodes function
+      const codesResponse = await addListingCodes(id, newCodes);
+
+      // Return the codes response if that's all we did, otherwise return the main response
+      return response ? response.data : codesResponse;
+    } else {
+      // Regular update without new codes
+      const api = getAuthAxios();
+      const response = await api.put(`/listings/${id}`, updateData);
+      return response.data;
+    }
   } catch (error) {
     console.error(`Error updating listing ${id}:`, error);
     throw error;
@@ -245,6 +276,101 @@ export const uploadCodesCSV = async (id: string, csvData: string) => {
       };
     } else {
       // Something happened in setting up the request that triggered an Error
+      return {
+        success: false,
+        message: 'Request failed. Please try again.',
+        error: error.message
+      };
+    }
+  }
+};
+
+// Delete a specific code from a listing
+export const deleteListingCode = async (listingId: string, codeId: string) => {
+  try {
+    const api = getAuthAxios();
+    const response = await api.delete(`/listings/${listingId}/codes/${codeId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting code ${codeId} from listing ${listingId}:`, error);
+
+    // Handle API errors
+    if (error.response) {
+      console.error('API error response:', error.response.data);
+      return {
+        success: false,
+        message: error.response.data.message || 'Failed to delete code',
+        error: error.response.data.error
+      };
+    } else if (error.request) {
+      return {
+        success: false,
+        message: 'No response from server. Please check your connection.',
+        error: 'Network error'
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Request failed. Please try again.',
+        error: error.message
+      };
+    }
+  }
+};
+
+// Add codes to a listing
+export const addListingCodes = async (listingId: string, codes: Array<{
+  code: string;
+  soldStatus?: string;
+  expirationDate?: string | Date | null;
+}>) => {
+  try {
+    const api = getAuthAxios();
+
+    // Format expiration dates if needed
+    const formattedCodes = codes.map(codeItem => {
+      const formattedCode = { ...codeItem };
+
+      if (formattedCode.expirationDate) {
+        // If it's a Date object, convert to ISO string
+        if (formattedCode.expirationDate instanceof Date) {
+          formattedCode.expirationDate = formattedCode.expirationDate.toISOString();
+        }
+        // If it's a string but not in ISO format, convert it
+        else if (typeof formattedCode.expirationDate === 'string' && !formattedCode.expirationDate.includes('T')) {
+          formattedCode.expirationDate = `${formattedCode.expirationDate}T23:59:59.999Z`;
+        }
+      }
+
+      return formattedCode;
+    });
+
+    // Use the existing updateListing endpoint with the codes property
+    // Add a dummy valid field (sellerNotes) to prevent "No valid fields to update" error
+    // The backend will handle adding these codes to the listing
+    const response = await api.put(`/listings/${listingId}`, {
+      codes: formattedCodes,
+      sellerNotes: ''  // Empty string instead of undefined to ensure it's included in the request
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error adding codes to listing ${listingId}:`, error);
+
+    // Handle API errors
+    if (error.response) {
+      console.error('API error response:', error.response.data);
+      return {
+        success: false,
+        message: error.response.data.message || 'Failed to add codes',
+        error: error.response.data.error
+      };
+    } else if (error.request) {
+      return {
+        success: false,
+        message: 'No response from server. Please check your connection.',
+        error: 'Network error'
+      };
+    } else {
       return {
         success: false,
         message: 'Request failed. Please try again.',

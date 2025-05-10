@@ -149,7 +149,6 @@ listingSchema.pre("save", function(next) {
 
     // Check if any codes are expired by date
     const now = new Date();
-    let hasExpiredCodes = false;
 
     // Check each code for expiration
     if (statusCounts.active > 0) {
@@ -158,7 +157,6 @@ listingSchema.pre("save", function(next) {
           code.soldStatus = "expired";
           statusCounts.active--;
           statusCounts.expired++;
-          hasExpiredCodes = true;
         }
       });
     }
@@ -261,8 +259,14 @@ listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate 
       expirationDate = defaultExpirationDate;
     } else if (plainCodeItem && typeof plainCodeItem === 'object') {
       plainCode = plainCodeItem.code;
+
       // Use the code-specific expiration date if provided, otherwise use the default
-      expirationDate = plainCodeItem.expirationDate || defaultExpirationDate;
+      // Fix: Properly handle the expirationDate field
+      if (plainCodeItem.expirationDate !== undefined && plainCodeItem.expirationDate !== null) {
+        expirationDate = plainCodeItem.expirationDate;
+      } else {
+        expirationDate = defaultExpirationDate;
+      }
     } else {
       // Skip invalid items
       console.warn('Invalid code item:', plainCodeItem);
@@ -275,13 +279,22 @@ listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate 
     }
 
     const { code, iv } = this.encryptCode(plainCode);
-    this.codes.push({
+
+    // Create the code object with all required fields
+    const codeObj = {
       codeId: uuidv4(), // Generate a unique UUID for each code
       code,
       iv,
-      soldStatus: "active",
-      expirationDate: expirationDate
-    });
+      soldStatus: "active"
+    };
+
+    // Only add expirationDate if it's defined
+    if (expirationDate !== undefined && expirationDate !== null) {
+      codeObj.expirationDate = expirationDate;
+    }
+
+    // Add the code to the listing
+    this.codes.push(codeObj);
   });
 
   return this.codes.length;

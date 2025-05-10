@@ -6,9 +6,12 @@ export type ListingStatusType = 'active' | 'sold' | 'expired' | 'suspended' | 'd
 // Interface for a product code
 export interface ListingCode {
   codeId?: string; // UUID for the code
-  code: string;
+  code?: string; // Make code optional for API requests with existing codes
   soldStatus: string;
   soldAt?: string | Date;
+  expirationDate?: string | Date | null;
+  isInvalid?: boolean;
+  invalidReason?: string;
 }
 
 // Main Listing interface for local use
@@ -37,6 +40,12 @@ export interface Listing {
   quantityOfActiveCodes?: number;
   quantityOfAllCodes?: number;
   categoryName?: string;
+  // New property for adding new codes to an existing listing
+  newCodes?: Array<{
+    code: string;
+    soldStatus?: string;
+    expirationDate?: string | Date | null;
+  }>;
 }
 
 export interface ListingFormProps {
@@ -50,6 +59,7 @@ export interface ListingFormProps {
   availablePlatforms?: string[];
   sharedFormData?: FormData | null;
   onFormDataChange?: (formData: FormData) => void;
+  selectedPattern?: any;
 }
 
 export interface FormData {
@@ -69,9 +79,10 @@ export interface FormData {
   supportedLanguages: string[];
   sellerNotes: string;
   codes:
-    | Array<{ codeId?: string; code: string; soldStatus: string; soldAt?: string | Date }>
+    | Array<{ codeId?: string; code?: string; soldStatus: string; soldAt?: string | Date; expirationDate?: string | Date | null }>
     | undefined;
   newCode: string;
+  newExpirationDate?: Date | null;
 }
 
 export interface FormErrors {
@@ -97,7 +108,7 @@ export interface SectionHeaderProps {
 
 export interface CodeItemProps {
   codeId?: string;
-  code: string;
+  code?: string;
   soldStatus: string;
   soldAt?: string | Date;
   onDelete: (code: string) => void;

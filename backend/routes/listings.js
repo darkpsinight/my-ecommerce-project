@@ -5,7 +5,8 @@ const {
   createListing,
   updateListing,
   deleteListing,
-  getListingByExternalId
+  getListingByExternalId,
+  deleteListingCode
 } = require("../handlers/listingHandlers");
 const {
   getListings,
@@ -196,6 +197,17 @@ const listingsRoutes = async (fastify, opts) => {
     preHandler: verifyAuth(["seller"]),
     schema: listingSchema.uploadCodesCSV,
     handler: uploadCodesCSV
+  });
+
+  // Delete a specific code from a listing
+  fastify.route({
+    config: {
+      rateLimit: updateRateLimit
+    },
+    method: "DELETE",
+    url: "/:id/codes/:codeId",
+    preHandler: verifyAuth(["seller"]),
+    handler: deleteListingCode
   });
 };
 

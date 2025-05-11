@@ -407,6 +407,28 @@ const listingSchema = {
         }
       }
     }
+  },
+  // Schema for checking if a code exists
+  checkCodeExists: {
+    body: {
+      type: "object",
+      required: ["code"],
+      properties: {
+        code: {
+          type: "string",
+          description: "The code to check for existence in the database"
+        }
+      }
+    },
+    querystring: {
+      type: "object",
+      properties: {
+        excludeListingId: {
+          type: "string",
+          description: "Optional listing ID to exclude from the check (for updates)"
+        }
+      }
+    }
   }
 };
 

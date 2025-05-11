@@ -20,6 +20,7 @@ import ImageUpload from './sections/ImageUpload';
 import { FormData, FormErrors, FormRef, ListingFormProps, Listing } from './utils/types';
 import { validateForm } from './utils/validation';
 import { validateCodeAgainstPattern } from 'src/services/api/validation';
+import { checkCodeExists } from 'src/services/api/listings';
 
 /**
  * Main ListingForm component that integrates all form sections
@@ -204,16 +205,56 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
   /**
    * Handle code addition
    */
-  const handleAddCode = () => {
+  const handleAddCode = async () => {
     if (!formData.newCode.trim()) {
       setFormErrors(prev => ({ ...prev, newCode: 'Please enter a code' }));
       return;
     }
 
-    // Check if code already exists
+    // Check if code already exists in the current form
     if (formData.codes?.some(c => c.code === formData.newCode.trim())) {
-      setFormErrors(prev => ({ ...prev, newCode: 'This code already exists' }));
+      setFormErrors(prev => ({ ...prev, newCode: 'This code already exists in this listing' }));
       return;
+    }
+
+    // Check if code exists in the database
+    try {
+      // Show loading state
+      setFormErrors(prev => ({ ...prev, newCode: 'Checking code...' }));
+
+      const result = await checkCodeExists(formData.newCode.trim(), listing?.externalId);
+
+      if (result.exists) {
+        // Check if it's a duplicate within the same batch
+        if (result.listing.isSameBatch) {
+          setFormErrors(prev => ({
+            ...prev,
+            newCode: `This code is a duplicate within the current batch`
+          }));
+        }
+        // Check if it's a duplicate within the same listing
+        else if (result.listing.inSameListing) {
+          setFormErrors(prev => ({
+            ...prev,
+            newCode: `This code already exists in this listing`
+          }));
+        }
+        else {
+          // Code exists in another listing
+          setFormErrors(prev => ({
+            ...prev,
+            newCode: `This code already exists in another listing: ${result.listing.title}`
+          }));
+        }
+        return;
+      }
+
+      // Clear the checking message
+      setFormErrors(prev => ({ ...prev, newCode: '' }));
+    } catch (error) {
+      console.error('Error checking if code exists:', error);
+      // Continue with adding the code even if the check fails
+      // This is a fallback in case the API is down
     }
 
     // Create the new code item
@@ -284,7 +325,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
   const handleCodeKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleAddCode();
+      void handleAddCode(); // Use void to handle the Promise without awaiting
     }
   };
 

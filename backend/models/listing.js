@@ -60,6 +60,11 @@ const listingSchema = new mongoose.Schema({
       type: String,
       select: false
     },
+    hashCode: {
+      type: String,
+      required: true,
+      index: true // Add index for faster lookups
+    },
     soldStatus: {
       type: String,
       enum: ["active", "sold", "expired", "suspended", "draft"],
@@ -200,6 +205,16 @@ listingSchema.pre("save", function(next) {
   next();
 });
 
+// Method to generate a hash for a code
+listingSchema.methods.generateCodeHash = function(code) {
+  // Create a hash of the code using SHA-256
+  // This hash will be used for duplicate checking without decrypting
+  return crypto
+    .createHash('sha256')
+    .update(code.toLowerCase()) // Convert to lowercase for case-insensitive comparison
+    .digest('hex');
+};
+
 // Method to encrypt a single code
 listingSchema.methods.encryptCode = function(code) {
   // Create an initialization vector
@@ -249,6 +264,19 @@ listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate 
     plainTextCodes = [plainTextCodes];
   }
 
+  // Keep track of added codes to prevent duplicates
+  const addedCodes = new Set();
+
+  // Get existing hashCodes from the listing
+  const existingHashCodes = new Set();
+  if (this.codes && this.codes.length > 0) {
+    this.codes.forEach(codeObj => {
+      if (codeObj.hashCode) {
+        existingHashCodes.add(codeObj.hashCode);
+      }
+    });
+  }
+
   // Encrypt each code and add to the codes array
   plainTextCodes.forEach(plainCodeItem => {
     // Check if the item is a string or an object with code and expirationDate
@@ -278,6 +306,26 @@ listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate 
       return;
     }
 
+    // Generate hash first to check for duplicates
+    const hashCode = this.generateCodeHash(plainCode);
+
+    // Skip if this code has already been added in this batch
+    if (addedCodes.has(hashCode)) {
+      console.warn('Duplicate code detected in the same batch:', plainCode);
+      return;
+    }
+
+    // Skip if this code already exists in the listing
+    if (existingHashCodes.has(hashCode)) {
+      console.warn('Code already exists in this listing:', plainCode);
+      return;
+    }
+
+    // Add to tracking sets
+    addedCodes.add(hashCode);
+    existingHashCodes.add(hashCode);
+
+    // Now encrypt the code
     const { code, iv } = this.encryptCode(plainCode);
 
     // Create the code object with all required fields
@@ -285,6 +333,7 @@ listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate 
       codeId: uuidv4(), // Generate a unique UUID for each code
       code,
       iv,
+      hashCode,
       soldStatus: "active"
     };
 

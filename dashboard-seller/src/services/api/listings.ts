@@ -418,3 +418,27 @@ export const getListingsSummary = async () => {
     };
   }
 };
+
+// Check if a code exists in any listing
+export const checkCodeExists = async (code: string, excludeListingId?: string) => {
+  try {
+    const api = getAuthAxios();
+    const params = excludeListingId ? { excludeListingId } : {};
+    const response = await api.post('/listings/check-code-exists', { code }, { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error checking if code exists:', error);
+    if (error.response) {
+      return {
+        success: false,
+        error: error.response.data.error || 'Failed to check if code exists',
+        message: error.response.data.message || 'Error occurred while checking if code exists'
+      };
+    }
+    return {
+      success: false,
+      error: 'Failed to check if code exists',
+      message: error.message
+    };
+  }
+};

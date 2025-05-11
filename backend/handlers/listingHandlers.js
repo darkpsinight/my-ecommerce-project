@@ -106,9 +106,10 @@ const getFormatDescription = (pattern, platformName) => {
  * Checks if any of the provided codes already exist in the database
  * @param {Array<string>} codes - Array of plaintext codes to check
  * @param {string} [excludeListingId] - Optional listing externalId to exclude from the check (for updates)
+ * @param {boolean} [checkWithinListing=true] - Whether to check for duplicates within the same listing
  * @returns {Promise<Object>} - Object with duplicates array and success status
  */
-const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
+const checkForDuplicateCodes = async (codes, excludeListingId = null, checkWithinListing = true) => {
   try {
     // Validate input
     if (!codes || !Array.isArray(codes) || codes.length === 0) {
@@ -122,18 +123,71 @@ const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
     // Initialize duplicates array
     const duplicates = [];
 
+    // Create a temporary listing instance to generate hash codes
+    const tempListing = new Listing({
+      title: "Temporary",
+      description: "Temporary",
+      price: 0,
+      categoryId: "000000000000000000000000", // Dummy ID
+      platform: "Temporary",
+      region: "Global",
+      sellerId: "Temporary"
+    });
+
+    // Generate hash codes for all input codes
+    const codeHashes = codes.map(code => tempListing.generateCodeHash(code));
+
+    // Check for duplicates within the input codes themselves
+    if (checkWithinListing) {
+      const hashesSet = new Set();
+      const duplicateIndices = new Set();
+
+      codeHashes.forEach((hash, index) => {
+        if (hashesSet.has(hash)) {
+          // This is a duplicate within the input codes
+          duplicateIndices.add(index);
+        } else {
+          hashesSet.add(hash);
+        }
+      });
+
+      // Add duplicates within the input to the duplicates array
+      duplicateIndices.forEach(index => {
+        duplicates.push({
+          code: codes[index],
+          index: index,
+          existingListingId: 'same-batch',
+          listingTitle: 'Current Batch',
+          sellerId: 'current-user'
+        });
+      });
+
+      // If we already found duplicates within the input, return early
+      if (duplicates.length > 0) {
+        return {
+          success: false,
+          duplicates
+        };
+      }
+    }
+
     // Find all listings with codes
     const query = {};
 
     // If excludeListingId is provided, exclude that listing from the check
+    // but we'll check it separately
+    let excludedListing = null;
     if (excludeListingId) {
       query.externalId = { $ne: excludeListingId };
+
+      // Get the excluded listing to check for duplicates within it
+      excludedListing = await Listing.findOne({ externalId: excludeListingId });
     }
 
-    // Get all listings with their codes
-    const listings = await Listing.find(query).select("+codes.code +codes.iv");
+    // Get all listings with their codes, including hashCode field
+    const listings = await Listing.find(query);
 
-    // Check each listing for duplicate codes
+    // Check each listing for duplicate codes using hash comparison
     for (const listing of listings) {
       // Skip if listing has no codes
       if (!listing.codes || listing.codes.length === 0) {
@@ -142,11 +196,8 @@ const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
 
       // For each code in the listing
       for (const codeObj of listing.codes) {
-        // Decrypt the code
-        const decryptedCode = listing.decryptCode(codeObj.code, codeObj.iv);
-
-        // Check if this code exists in our input codes
-        const duplicateIndex = codes.findIndex(code => code === decryptedCode);
+        // Check if the hash exists in our input code hashes
+        const duplicateIndex = codeHashes.findIndex(hash => hash === codeObj.hashCode);
 
         if (duplicateIndex !== -1) {
           // Found a duplicate
@@ -159,6 +210,34 @@ const checkForDuplicateCodes = async (codes, excludeListingId = null) => {
           });
         }
       }
+    }
+
+    // Now check for duplicates within the excluded listing if it exists
+    if (excludedListing && excludedListing.codes && excludedListing.codes.length > 0) {
+      // Create a set of existing hash codes in the excluded listing
+      const existingHashCodes = new Set();
+
+      // Collect all hash codes from the excluded listing
+      for (const codeObj of excludedListing.codes) {
+        if (codeObj.hashCode) {
+          existingHashCodes.add(codeObj.hashCode);
+        }
+      }
+
+      // Check each input code against the existing hash codes
+      codeHashes.forEach((hash, index) => {
+        if (existingHashCodes.has(hash)) {
+          // Found a duplicate within the excluded listing
+          duplicates.push({
+            code: codes[index],
+            index: index,
+            existingListingId: excludedListing.externalId,
+            listingTitle: excludedListing.title,
+            sellerId: excludedListing.sellerId,
+            inSameListing: true // Flag to indicate it's in the same listing
+          });
+        }
+      });
     }
 
     return {
@@ -728,6 +807,86 @@ const deleteListingCode = async (request, reply) => {
   }
 };
 
+/**
+ * Check if a code exists in any listing
+ * @param {string} code - The code to check
+ * @param {string} [excludeListingId] - Optional listing externalId to exclude from the check
+ * @returns {Promise<Object>} - Object with exists flag and listing details if found
+ */
+const checkCodeExists = async (request, reply) => {
+  try {
+    const { code } = request.body;
+    const { excludeListingId } = request.query;
+
+    if (!code) {
+      return reply.code(400).send({
+        success: false,
+        error: "No code provided for check"
+      });
+    }
+
+    // Use the existing checkForDuplicateCodes function
+    const result = await checkForDuplicateCodes([code], excludeListingId, true);
+
+    if (!result.success && result.duplicates && result.duplicates.length > 0) {
+      // Code exists in another listing or is a duplicate within the same batch
+      const duplicate = result.duplicates[0];
+
+      // Check if it's a duplicate within the same batch
+      if (duplicate.existingListingId === 'same-batch') {
+        return reply.code(200).send({
+          success: true,
+          exists: true,
+          listing: {
+            title: 'Current Batch',
+            id: 'same-batch',
+            code: maskCode(duplicate.code),
+            isSameBatch: true
+          }
+        });
+      }
+
+      // Check if it's a duplicate within the same listing
+      if (duplicate.inSameListing) {
+        return reply.code(200).send({
+          success: true,
+          exists: true,
+          listing: {
+            title: duplicate.listingTitle,
+            id: duplicate.existingListingId,
+            code: maskCode(duplicate.code),
+            inSameListing: true
+          }
+        });
+      }
+
+      // Code exists in another listing
+      return reply.code(200).send({
+        success: true,
+        exists: true,
+        listing: {
+          title: duplicate.listingTitle,
+          id: duplicate.existingListingId,
+          code: maskCode(duplicate.code)
+        }
+      });
+    }
+
+    // Code doesn't exist in any other listing
+    return reply.code(200).send({
+      success: true,
+      exists: false
+    });
+  } catch (error) {
+    request.log.error(`Error checking if code exists: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to check if code exists",
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createListing,
   updateListing,
@@ -736,6 +895,7 @@ module.exports = {
   deleteListingCode,
   maskCode,
   getFormatDescription,
-  checkForDuplicateCodes
+  checkForDuplicateCodes,
+  checkCodeExists
 };
 

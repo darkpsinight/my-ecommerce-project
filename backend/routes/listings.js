@@ -6,7 +6,8 @@ const {
   updateListing,
   deleteListing,
   getListingByExternalId,
-  deleteListingCode
+  deleteListingCode,
+  checkCodeExists
 } = require("../handlers/listingHandlers");
 const {
   getListings,
@@ -208,6 +209,18 @@ const listingsRoutes = async (fastify, opts) => {
     url: "/:id/codes/:codeId",
     preHandler: verifyAuth(["seller"]),
     handler: deleteListingCode
+  });
+
+  // Check if a code exists in any listing
+  fastify.route({
+    config: {
+      rateLimit: readRateLimit
+    },
+    method: "POST",
+    url: "/check-code-exists",
+    preHandler: verifyAuth(["seller"]),
+    schema: listingSchema.checkCodeExists,
+    handler: checkCodeExists
   });
 };
 

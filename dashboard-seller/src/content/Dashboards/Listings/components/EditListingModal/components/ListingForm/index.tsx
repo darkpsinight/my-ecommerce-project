@@ -243,7 +243,9 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
           // Code exists in another listing
           setFormErrors(prev => ({
             ...prev,
-            newCode: `This code already exists in another listing: ${result.listing.title}`
+            newCode: result.listing.title
+              ? `This code already exists in another listing: ${result.listing.title}`
+              : `This code already exists in another listing`
           }));
         }
         return;

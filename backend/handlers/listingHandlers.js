@@ -817,6 +817,7 @@ const checkCodeExists = async (request, reply) => {
   try {
     const { code } = request.body;
     const { excludeListingId } = request.query;
+    const currentUserId = request.user.uid; // Get the current user's ID
 
     if (!code) {
       return reply.code(400).send({
@@ -861,15 +862,25 @@ const checkCodeExists = async (request, reply) => {
       }
 
       // Code exists in another listing
-      return reply.code(200).send({
+      // Check if the current user is the owner of the listing where the code exists
+      const isOwner = currentUserId === duplicate.sellerId;
+
+      // Create response object
+      const responseObj = {
         success: true,
         exists: true,
         listing: {
-          title: duplicate.listingTitle,
           id: duplicate.existingListingId,
           code: maskCode(duplicate.code)
         }
-      });
+      };
+
+      // Only include the title if the user owns the listing
+      if (isOwner) {
+        responseObj.listing.title = duplicate.listingTitle;
+      }
+
+      return reply.code(200).send(responseObj);
     }
 
     // Code doesn't exist in any other listing

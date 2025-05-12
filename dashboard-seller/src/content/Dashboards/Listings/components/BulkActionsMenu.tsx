@@ -34,8 +34,8 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
       icon: <DeleteTwoToneIcon fontSize="small" />
     },
     {
-      action: 'suspend',
-      label: 'Suspend Selected',
+      action: 'draft',
+      label: 'Draft Selected',
       icon: <BlockTwoToneIcon fontSize="small" />
     },
     {

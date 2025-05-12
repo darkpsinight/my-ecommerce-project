@@ -127,7 +127,7 @@ const PricingSection: React.FC<PricingSectionProps> = ({
                   aria-labelledby="price-slider"
                   valueLabelDisplay="auto"
                   min={0}
-                  max={1000}
+                  max={100}
                   step={0.01}
                   sx={{
                     color: theme.palette.primary.main,
@@ -191,7 +191,7 @@ const PricingSection: React.FC<PricingSectionProps> = ({
                   aria-labelledby="original-price-slider"
                   valueLabelDisplay="auto"
                   min={0}
-                  max={1000}
+                  max={100}
                   step={0.01}
                   sx={{
                     color: theme.palette.grey[500],

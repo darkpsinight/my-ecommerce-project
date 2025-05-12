@@ -232,8 +232,8 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
         // Open bulk delete confirmation dialog
         setBulkDeleteDialogOpen(true);
         break;
-      case 'suspend':
-        window.alert(`Suspend Selected: ${selected.join(', ')}`);
+      case 'draft':
+        window.alert(`Draft Selected: ${selected.join(', ')}`);
         break;
       case 'export':
         window.alert(`Export Selected to CSV: ${selected.join(', ')}`);

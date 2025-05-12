@@ -30,7 +30,6 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
     'codes': 'codes',
     'quantity': 'quantity',
     'price': 'price',
-    'expiration': 'expirationDate',
     'status': 'status',
     'created': 'createdAt'
   };
@@ -39,16 +38,15 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
     { id: 'title', label: 'TITLE', align: 'left', sortable: true },
     { id: 'platform', label: 'PLATFORM', align: 'left', sortable: true },
     { id: 'codes', label: 'CODES', align: 'left', sortable: false },
-    { 
-      id: 'quantity', 
-      label: 'QTY (A/T)', 
-      align: 'center', 
+    {
+      id: 'quantity',
+      label: 'QTY (A/T)',
+      align: 'center',
       sortable: false,
       tooltip: 'Quantity: Active codes available / Total codes listed',
       style: { whiteSpace: 'nowrap' } // Ensure label stays on one line
     },
     { id: 'price', label: 'PRICE', align: 'left', sortable: true },
-    { id: 'expiration', label: 'EXPIRATION', align: 'left', sortable: true },
     { id: 'status', label: 'STATUS', align: 'left', sortable: true },
     { id: 'created', label: 'CREATED', align: 'left', sortable: true },
     { id: 'actions', label: 'ACTIONS', align: 'right', sortable: false }
@@ -63,11 +61,11 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
   // Custom styling for specific columns
   const getColumnStyle = (headerId: string) => {
     if (headerId === 'quantity') {
-      return { 
-        width: '100px', 
+      return {
+        width: '100px',
         minWidth: '100px',
         whiteSpace: 'nowrap' // Prevent text wrapping
-      }; 
+      };
     }
     return {};
   };
@@ -85,8 +83,8 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
           />
         </TableCell>
         {headers.map((header) => (
-          <TableCell 
-            key={header.id} 
+          <TableCell
+            key={header.id}
             align={header.align as any}
             style={getColumnStyle(header.id)}
           >

@@ -20,7 +20,6 @@ import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone';
 import { Listing } from '../types';
 import { CodeViewer } from './CodeViewer';
 import ListingStatusBadge from './ListingStatusBadge';
-import ExpirationDateCell from './ExpirationDateCell';
 import { ListingsContext } from '../context/ListingsContext';
 import { keyframes } from '@emotion/react';
 
@@ -170,9 +169,6 @@ const ListingRow: FC<ListingRowProps> = ({
         <Typography variant="body2">
           ${(listing.price || 0).toFixed(2)}
         </Typography>
-      </TableCell>
-      <TableCell align="center">
-        <ExpirationDateCell expirationDate={listing.expirationDate} />
       </TableCell>
       <TableCell>
         <ListingStatusBadge status={listing.status} />

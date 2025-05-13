@@ -248,8 +248,38 @@ export const deleteListing = async (id: string) => {
   }
 };
 
+// Interface for standardized validation error response
+export interface ValidationErrorResponse {
+  success: boolean;
+  message: string;
+  errors?: Array<{
+    type: string;
+    code: string;
+    details: string;
+    suggestion: string;
+    [key: string]: any;
+  }>;
+  context?: {
+    platform?: string;
+    category?: string;
+    patterns?: Array<{
+      description?: string;
+      example?: string;
+    }>;
+    [key: string]: any;
+  };
+  error?: any; // For backward compatibility
+  data?: {
+    listingId?: string;
+    title?: string;
+    codesAdded?: number;
+    totalCodes?: number;
+    [key: string]: any;
+  }; // For success responses
+}
+
 // Upload codes from CSV to a listing
-export const uploadCodesCSV = async (id: string, csvData: string) => {
+export const uploadCodesCSV = async (id: string, csvData: string): Promise<ValidationErrorResponse> => {
   try {
     const api = getAuthAxios();
     const response = await api.post(`/listings/${id}/upload-codes-csv`, { csvData });
@@ -262,6 +292,14 @@ export const uploadCodesCSV = async (id: string, csvData: string) => {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       console.log('API error response:', error.response.data);
+
+      // Check if it's the new standardized error format
+      if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+        // Return the standardized error response directly
+        return error.response.data;
+      }
+
+      // Handle legacy error format
       return {
         success: false,
         message: error.response.data.message || 'Failed to upload codes',

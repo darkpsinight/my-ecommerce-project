@@ -16,9 +16,10 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { uploadCodesCSV } from 'src/services/api/listings';
+import { uploadCodesCSV, ValidationErrorResponse } from 'src/services/api/listings';
 import { toast } from 'react-hot-toast';
 import { validateCodeAgainstPattern, Pattern } from 'src/services/api/validation';
+import ValidationErrorDisplay from 'src/components/ValidationErrorDisplay';
 
 interface CSVUploadWithValidationProps {
   listingId: string;
@@ -34,6 +35,7 @@ const CSVUploadWithValidation: React.FC<CSVUploadWithValidationProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<ValidationErrorResponse | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
   const [successData, setSuccessData] = useState<any>(null);
   const [invalidCodes, setInvalidCodes] = useState<Array<{code: string, reason: string}>>([]);
@@ -55,6 +57,7 @@ const CSVUploadWithValidation: React.FC<CSVUploadWithValidationProps> = ({
 
       setFile(selectedFile);
       setError(null);
+      setValidationError(null);
       setSuccess(false);
       setInvalidCodes([]);
     }
@@ -68,6 +71,7 @@ const CSVUploadWithValidation: React.FC<CSVUploadWithValidationProps> = ({
 
     setLoading(true);
     setError(null);
+    setValidationError(null);
     setSuccess(false);
     setInvalidCodes([]);
 
@@ -94,7 +98,33 @@ const CSVUploadWithValidation: React.FC<CSVUploadWithValidationProps> = ({
 
         if (response.success) {
           setSuccess(true);
-          setSuccessData(response.data);
+          // Check if data exists in the response
+          if (response.data) {
+            setSuccessData(response.data);
+
+            // Call onSuccess callback if provided
+            if (onSuccess) {
+              onSuccess({
+                ...response.data,
+                invalidCodes: invalidCodes
+              });
+            }
+          } else {
+            // Fallback for older API responses
+            setSuccessData({
+              codesAdded: 0,
+              totalCodes: 0
+            });
+
+            if (onSuccess) {
+              onSuccess({
+                codesAdded: 0,
+                totalCodes: 0,
+                invalidCodes: invalidCodes
+              });
+            }
+          }
+
           setFile(null);
           // Reset file input
           if (fileInputRef.current) {
@@ -103,17 +133,16 @@ const CSVUploadWithValidation: React.FC<CSVUploadWithValidationProps> = ({
 
           // Show success toast
           toast.success(response.message || 'Codes uploaded successfully');
-
-          // Call onSuccess callback if provided
-          if (onSuccess) {
-            onSuccess({
-              ...response.data,
-              invalidCodes: invalidCodes
-            });
-          }
         } else {
-          setError(response.message || 'Failed to upload codes');
-          toast.error(response.message || 'Failed to upload codes');
+          // Check if it's the new standardized error format
+          if (response.errors && Array.isArray(response.errors)) {
+            setValidationError(response);
+            toast.error(response.message || 'Validation failed');
+          } else {
+            // Legacy error format
+            setError(response.message || 'Failed to upload codes');
+            toast.error(response.message || 'Failed to upload codes');
+          }
         }
 
         setLoading(false);
@@ -307,6 +336,16 @@ const CSVUploadWithValidation: React.FC<CSVUploadWithValidationProps> = ({
               <AlertTitle>Error</AlertTitle>
               {error}
             </Alert>
+          </Grid>
+        )}
+
+        {validationError && validationError.errors && (
+          <Grid item xs={12}>
+            <ValidationErrorDisplay
+              message={validationError.message}
+              errors={validationError.errors}
+              context={validationError.context}
+            />
           </Grid>
         )}
 

@@ -2,6 +2,11 @@ const { Listing } = require("../models/listing");
 const { Category } = require("../models/category");
 const { checkForDuplicateCodes, maskCode } = require("./listingHandlers");
 const { validateCodeAgainstPatterns, getPatternsForPlatform } = require("../utils/patternValidator");
+const {
+  createValidationErrorResponse,
+  formatDuplicateErrors,
+  formatPatternErrors
+} = require("../utils/errorResponseFormatter");
 const csvParser = require('csv-parser');
 const { Readable } = require('stream');
 
@@ -140,13 +145,16 @@ const uploadCodesCSV = async (request, reply) => {
 
     // If duplicates found within the CSV, reject the upload
     if (duplicatesInCSV.length > 0) {
-      return reply.code(400).send({
-        success: false,
-        message: "Validation failed: Duplicate codes found within the CSV file",
-        error: {
-          duplicatesInCSV: duplicatesInCSV.map(code => maskCode(code))
-        }
-      });
+      const maskedDuplicates = duplicatesInCSV.map(code => maskCode(code));
+      const errors = formatDuplicateErrors(maskedDuplicates, 'csv');
+
+      return reply.code(400).send(
+        createValidationErrorResponse(
+          "Validation failed: Duplicate codes found within the CSV file",
+          errors,
+          { platform: listing.platform, category: listing.category }
+        )
+      );
     }
 
     // Check for duplicate codes with existing listings in the database
@@ -154,17 +162,21 @@ const uploadCodesCSV = async (request, reply) => {
 
     if (!duplicateCheck.success) {
       // Found duplicate codes in other listings
-      return reply.code(400).send({
-        success: false,
-        message: "Validation failed: One or more codes already exist in another listing",
-        error: {
-          duplicates: duplicateCheck.duplicates.map(dup => ({
-            code: dup.code,
-            listingTitle: dup.listingTitle,
-            sellerId: dup.sellerId
-          }))
-        }
-      });
+      const maskedDuplicates = duplicateCheck.duplicates.map(dup => dup.code);
+      const duplicateInfo = duplicateCheck.duplicates.map(dup => ({
+        listingTitle: dup.listingTitle,
+        sellerId: dup.sellerId
+      }));
+
+      const errors = formatDuplicateErrors(maskedDuplicates, 'existing_listing', duplicateInfo);
+
+      return reply.code(400).send(
+        createValidationErrorResponse(
+          "Validation failed: One or more codes already exist in another listing",
+          errors,
+          { platform: listing.platform, category: listing.category }
+        )
+      );
     }
 
     // Check for duplicate codes within the current listing
@@ -189,13 +201,16 @@ const uploadCodesCSV = async (request, reply) => {
 
     // If duplicates found with existing codes in the listing, reject the upload
     if (duplicatesWithExisting.length > 0) {
-      return reply.code(400).send({
-        success: false,
-        message: "Validation failed: One or more codes already exist in this listing",
-        error: {
-          duplicatesWithExisting: duplicatesWithExisting.map(code => maskCode(code))
-        }
-      });
+      const maskedDuplicates = duplicatesWithExisting.map(code => maskCode(code));
+      const errors = formatDuplicateErrors(maskedDuplicates, 'current_listing');
+
+      return reply.code(400).send(
+        createValidationErrorResponse(
+          "Validation failed: One or more codes already exist in this listing",
+          errors,
+          { platform: listing.platform, category: listing.category }
+        )
+      );
     }
 
     // STRICT VALIDATION: Validate codes against the platform's pattern requirements
@@ -223,18 +238,27 @@ const uploadCodesCSV = async (request, reply) => {
 
       // If any codes are invalid, reject the request
       if (invalidCodes.length > 0) {
-        return reply.code(400).send({
-          success: false,
-          message: "Validation failed: One or more codes don't match the pattern for this platform",
-          error: {
-            invalidCodes: invalidCodes.map(ic => ({
-              code: ic.code,
-              errors: ic.errors
-            })),
-            platform: patternResult.platform,
-            category: patternResult.category
-          }
-        });
+        const formattedInvalidCodes = invalidCodes.map(ic => ({
+          code: ic.code,
+          errors: ic.errors
+        }));
+
+        const errors = formatPatternErrors(formattedInvalidCodes);
+
+        return reply.code(400).send(
+          createValidationErrorResponse(
+            "Validation failed: One or more codes don't match the pattern for this platform",
+            errors,
+            {
+              platform: patternResult.platform,
+              category: patternResult.category,
+              patterns: patternResult.patterns.map(p => ({
+                description: p.description,
+                example: p.example
+              }))
+            }
+          )
+        );
       }
 
       // Log success

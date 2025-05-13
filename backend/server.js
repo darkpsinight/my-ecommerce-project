@@ -31,6 +31,7 @@ const { adminRoutes } = require("./routes/admin");
 const publicRoutes = require("./routes/public");
 const { sellerRoutes } = require("./routes/seller");
 const { listingsRoutes } = require("./routes/listings");
+const performanceRoutes = require("./routes/performanceRoutes");
 const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
 const fastifyCsrf = require("fastify-csrf");
@@ -49,7 +50,7 @@ if (configs.COOKIE_SECRET) {
   fastify.register(fastifyCookie, {
     secret: configs.COOKIE_SECRET, // For signing cookies
   });
-  
+
   // Create CSRF cookie options without expiration (session cookie)
   const csrfCookieOpts = {
     httpOnly: true,
@@ -58,7 +59,7 @@ if (configs.COOKIE_SECRET) {
     sameSite: configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV ? "strict" : "lax",
     secure: configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV
   };
-  
+
   fastify.register(fastifyCsrf, {
     cookieOpts: csrfCookieOpts,
   });
@@ -118,6 +119,9 @@ fastify.register(sellerRoutes, { prefix: "/api/v1/seller" });
 
 // Register listings routes
 fastify.register(listingsRoutes, { prefix: "/api/v1/listings" });
+
+// Register performance monitoring routes
+fastify.register(performanceRoutes, { prefix: "/api/v1" });
 
 // Auth Service health check
 fastify.get("/", async (request, reply) => {

@@ -2,6 +2,7 @@ const { Listing } = require("../models/listing");
 const { Category } = require("../models/category");
 const { validateCodeAgainstPatterns, getPatternsForPlatform } = require("../utils/patternValidator");
 const { checkAndUpdateListingStatus, processListingsExpiration } = require("../utils/listingHelpers");
+const { measureQueryTime } = require("../utils/queryPerformanceMonitor");
 const uuidv4 = require('uuid').v4;
 
 /**
@@ -171,45 +172,80 @@ const checkForDuplicateCodes = async (codes, excludeListingId = null, checkWithi
       }
     }
 
-    // Find all listings with codes
-    const query = {};
-
     // If excludeListingId is provided, exclude that listing from the check
     // but we'll check it separately
     let excludedListing = null;
     if (excludeListingId) {
-      query.externalId = { $ne: excludeListingId };
-
       // Get the excluded listing to check for duplicates within it
-      excludedListing = await Listing.findOne({ externalId: excludeListingId });
+      excludedListing = await measureQueryTime(
+        () => Listing.findOne({ externalId: excludeListingId }),
+        'findExcludedListing',
+        { excludeListingId }
+      );
     }
 
-    // Get all listings with their codes, including hashCode field
-    const listings = await Listing.find(query);
+    // OPTIMIZATION: Instead of fetching all listings and then checking each code,
+    // use the hashCode index to directly query for matching codes
+    // This is much more efficient with large datasets
+    const duplicateResults = await measureQueryTime(
+      async () => {
+        const results = [];
 
-    // Check each listing for duplicate codes using hash comparison
-    for (const listing of listings) {
+        // Process in batches of 100 hashes to avoid query size limits
+        const batchSize = 100;
+        for (let i = 0; i < codeHashes.length; i += batchSize) {
+          const batchHashes = codeHashes.slice(i, i + batchSize);
+
+          // Query for listings that contain any of the hash codes in this batch
+          const query = {
+            'codes.hashCode': { $in: batchHashes }
+          };
+
+          // Exclude the specified listing if provided
+          if (excludeListingId) {
+            query.externalId = { $ne: excludeListingId };
+          }
+
+          // Find listings with matching hash codes
+          // Only select the fields we need to minimize data transfer
+          const matchingListings = await Listing.find(query)
+            .select('externalId title sellerId codes.hashCode')
+            .lean();
+
+          results.push(...matchingListings);
+        }
+
+        return results;
+      },
+      'findDuplicateCodesByHash',
+      { codesCount: codeHashes.length, excludeListingId }
+    );
+
+    // Process the results to find which specific codes are duplicates
+    for (const listing of duplicateResults) {
       // Skip if listing has no codes
       if (!listing.codes || listing.codes.length === 0) {
         continue;
       }
 
-      // For each code in the listing
-      for (const codeObj of listing.codes) {
-        // Check if the hash exists in our input code hashes
-        const duplicateIndex = codeHashes.findIndex(hash => hash === codeObj.hashCode);
+      // Create a set of hash codes in this listing for faster lookup
+      const listingHashCodes = new Set(
+        listing.codes.map(codeObj => codeObj.hashCode)
+      );
 
-        if (duplicateIndex !== -1) {
+      // Check each input hash against this listing's hash codes
+      codeHashes.forEach((hash, index) => {
+        if (listingHashCodes.has(hash)) {
           // Found a duplicate
           duplicates.push({
-            code: codes[duplicateIndex],
-            index: duplicateIndex,
+            code: codes[index],
+            index: index,
             existingListingId: listing.externalId,
             listingTitle: listing.title,
             sellerId: listing.sellerId
           });
         }
-      }
+      });
     }
 
     // Now check for duplicates within the excluded listing if it exists
@@ -826,8 +862,12 @@ const checkCodeExists = async (request, reply) => {
       });
     }
 
-    // Use the existing checkForDuplicateCodes function
-    const result = await checkForDuplicateCodes([code], excludeListingId, true);
+    // Use the existing checkForDuplicateCodes function with performance monitoring
+    const result = await measureQueryTime(
+      () => checkForDuplicateCodes([code], excludeListingId, true),
+      'checkCodeExists',
+      { excludeListingId }
+    );
 
     if (!result.success && result.duplicates && result.duplicates.length > 0) {
       // Code exists in another listing or is a duplicate within the same batch

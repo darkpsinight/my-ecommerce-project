@@ -534,24 +534,20 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
                     listingId: listing.externalId,
                     selectedPattern: selectedPattern,
                     onSuccess: (data) => {
+                      console.log('CSV upload successful:', data);
+
                       // Update the codes count in the parent component
                       if (onCodesChange) {
                         onCodesChange(data.totalCodes);
                       }
 
-                      // If there are invalid codes, mark them in the form data
-                      if (data.invalidCodes && data.invalidCodes.length > 0) {
-                        // We need to fetch the updated codes and mark the invalid ones
-                        // For CSV uploads, we still need to refresh the listing data
-                        // since we need to get the newly added codes with their codeIds
-                        if (onSubmit) {
-                          onSubmit({});
-                        }
-                      } else {
-                        // Refresh the listing data for CSV uploads
-                        if (onSubmit) {
-                          onSubmit({});
-                        }
+                      // Always refresh the listing data after a successful CSV upload
+                      // This ensures the codes table is updated with the latest data from the server
+                      if (onSubmit) {
+                        console.log('Refreshing listing data after CSV upload');
+                        // Pass an object with csvUpload flag to trigger a refresh without validation
+                        // and indicate this is a CSV upload (to prevent modal closing)
+                        onSubmit({ csvUpload: true });
                       }
                     }
                   }

@@ -48,9 +48,14 @@ export interface Listing {
   }>;
 }
 
+// Extended Listing type with additional UI-specific properties
+export interface ExtendedListing extends Partial<Listing> {
+  csvUpload?: boolean;
+}
+
 export interface ListingFormProps {
   listing: Listing;
-  onSubmit: (updatedListing: Partial<Listing>) => void;
+  onSubmit: (updatedListing: ExtendedListing) => void;
   isSubmitting: boolean;
   section?: 'general' | 'codes' | 'tagsLanguages' | 'images';
   hideSubmitButton?: boolean;

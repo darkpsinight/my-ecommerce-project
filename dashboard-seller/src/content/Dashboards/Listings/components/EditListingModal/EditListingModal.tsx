@@ -4,8 +4,8 @@ import toast, { Toaster } from 'react-hot-toast';
 
 // Import types
 import { Listing } from '../../types';
-import { FormData as ListingFormData } from './components/ListingForm/utils/types';
-import { getValidationPatterns, Pattern } from 'src/services/api/validation';
+import { FormData as ListingFormData, ExtendedListing } from './components/ListingForm/utils/types';
+import { getValidationPatterns } from 'src/services/api/validation';
 
 // Import utility functions
 import { getActiveCodes, getDiscountPercentage } from '../ViewListingDetailsModal/utils/listingHelpers';
@@ -18,8 +18,8 @@ import TabPanel from '../ViewListingDetailsModal/components/TabPanel';
 import ListingForm from './components/ListingForm';
 import ModalFooter from './components/ModalFooter';
 
-// Import API service
-import { updateListing } from '../../../../../services/api/listings';
+// Import API services
+import { updateListing, getListingById } from '../../../../../services/api/listings';
 
 // Icons are imported and used in child components
 
@@ -48,7 +48,6 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [activeCodes, setActiveCodes] = useState(0);
   const [categories] = useState(initialCategories);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
-  const [patterns, setPatterns] = useState([]);
   const [selectedPattern, setSelectedPattern] = useState(null);
 
   // Shared form state to persist data across tabs
@@ -147,7 +146,6 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
       if (response && response.success && response.data) {
         const { patterns: responsePatterns } = response.data;
-        setPatterns(responsePatterns);
 
         // If there's only one pattern, select it automatically
         if (responsePatterns.length === 1) {
@@ -318,14 +316,46 @@ const EditListingModal: FC<EditListingModalProps> = ({
     return formData;
   };
 
-  const handleSubmit = async (_updatedData: Partial<Listing> = {}) => {
+  // Function to fetch the updated listing data from the server
+  const fetchUpdatedListing = async (listingId: string) => {
+    try {
+      console.log('Fetching updated listing data for:', listingId);
+      const response = await getListingById(listingId);
+
+      if (response && response.success && response.data) {
+        // Update the local state with the fresh data from the server
+        setListing(response.data);
+        setActiveCodes(getActiveCodes(response.data));
+
+        // Update the shared form data with the fresh data
+        setSharedFormData(prevData => ({
+          ...prevData,
+          codes: response.data.codes || []
+        }));
+
+        console.log('Updated listing data fetched successfully:', response.data);
+        return response.data;
+      } else {
+        console.error('Failed to fetch updated listing data:', response);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching updated listing data:', error);
+      return null;
+    }
+  };
+
+  const handleSubmit = async (_updatedData: ExtendedListing = {}) => {
     if (!listing) return;
 
     // Get the current form ref
     const currentFormRef = getCurrentFormRef();
 
-    // Validate the current form
-    if (currentFormRef.current?.validateForm) {
+    // Check if this is a refresh request (empty object passed)
+    const isRefreshRequest = Object.keys(_updatedData).length === 0;
+
+    // Only validate the form if this is not a refresh request
+    if (!isRefreshRequest && currentFormRef.current?.validateForm) {
       // Directly call validateForm to trigger validation and display errors
       const isValid = currentFormRef.current.validateForm();
 
@@ -337,7 +367,38 @@ const EditListingModal: FC<EditListingModalProps> = ({
       }
     }
 
-    // Collect data from all forms
+    // If this is a refresh request, fetch the updated listing data
+    if (isRefreshRequest) {
+      setIsSubmitting(true);
+      try {
+        // Fetch the updated listing data from the server
+        const updatedListing = await fetchUpdatedListing(listing.externalId);
+
+        if (updatedListing) {
+          // Call the onListingUpdated callback with the updated listing
+          onListingUpdated(updatedListing as Listing);
+
+          // Show a success toast for CSV uploads
+          if (_updatedData.csvUpload) {
+            setTimeout(() => {
+              toast.success('Codes uploaded successfully');
+            }, 100);
+          }
+        }
+      } catch (error: any) {
+        console.error('Failed to refresh listing data:', error);
+        const errorMessage = error.response?.data?.message || 'Failed to refresh listing data. Please try again.';
+        setTimeout(() => {
+          toast.error(errorMessage);
+        }, 100);
+      } finally {
+        setIsSubmitting(false);
+      }
+      // Don't close the modal, just return
+      return;
+    }
+
+    // For normal updates, collect data from all forms
     const formData = collectFormData();
 
     // Convert categoryId to string if it's an object

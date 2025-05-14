@@ -456,11 +456,14 @@ const EditListingModal: FC<EditListingModalProps> = ({
     // Check if this is a refresh request (empty object passed) or a save action from the footer
     const isRefreshRequest = Object.keys(_updatedData).length === 0;
     const isSaveAction = _updatedData._saveAction === true;
+    // Check if this is a CSV upload request
+    const isCsvUpload = _updatedData.csvUpload === true;
 
     console.log('handleSubmit called with:', {
       updatedDataKeys: Object.keys(_updatedData),
       isRefreshRequest,
-      isSaveAction
+      isSaveAction,
+      isCsvUpload
     });
 
     // Remove the _saveAction flag if it exists
@@ -468,8 +471,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
       delete _updatedData._saveAction;
     }
 
-    // Only validate the form if this is not a refresh request
-    if ((!isRefreshRequest || isSaveAction) && currentFormRef.current?.validateForm) {
+    // Only validate the form if this is not a refresh request or CSV upload
+    if ((!isRefreshRequest || isSaveAction) && !isCsvUpload && currentFormRef.current?.validateForm) {
       // Directly call validateForm to trigger validation and display errors
       const isValid = currentFormRef.current.validateForm();
 
@@ -481,8 +484,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
       }
     }
 
-    // If this is a refresh request and not a save action, fetch the updated listing data
-    if (isRefreshRequest && !isSaveAction) {
+    // If this is a refresh request, CSV upload, and not a save action, fetch the updated listing data
+    if ((isRefreshRequest || isCsvUpload) && !isSaveAction) {
       setIsSubmitting(true);
       try {
         // Fetch the updated listing data from the server
@@ -493,7 +496,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
           onListingUpdated(updatedListing as Listing);
 
           // Show a success toast for CSV uploads
-          if (_updatedData.csvUpload) {
+          if (isCsvUpload) {
             setTimeout(() => {
               toast.success('Codes uploaded successfully');
             }, 100);

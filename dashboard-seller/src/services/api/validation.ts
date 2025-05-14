@@ -78,6 +78,14 @@ export const validateCodeAgainstPattern = (
     return { isValid: false, reason: 'Missing code or pattern' };
   }
 
+  // Check for spaces in the code first
+  if (code.includes(' ')) {
+    return {
+      isValid: false,
+      reason: 'Spaces are not allowed in codes'
+    };
+  }
+
   try {
     const regex = new RegExp(pattern.regex);
     const isValid = regex.test(code);

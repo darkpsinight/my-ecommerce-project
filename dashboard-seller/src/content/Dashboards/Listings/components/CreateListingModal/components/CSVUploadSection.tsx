@@ -215,8 +215,22 @@ const CSVUploadSection: React.FC = () => {
         continue;
       }
 
+      // Check for spaces in the code
+      const code = values[codeIndex];
+      if (code.includes(' ')) {
+        // Mark the code as invalid due to spaces
+        const codeObj: any = {
+          code: code,
+          soldStatus: 'active',
+          isInvalid: true,
+          invalidReason: 'Spaces are not allowed in codes'
+        };
+        result.push(codeObj);
+        continue;
+      }
+
       const codeObj: any = {
-        code: values[codeIndex],
+        code: code,
         soldStatus: 'active'
       };
 
@@ -272,7 +286,7 @@ const CSVUploadSection: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             Bulk Upload Codes
             <Tooltip
-              title="Upload multiple codes at once using a CSV file. The CSV file should have 'code' and 'expirationDate' columns."
+              title="Upload multiple codes at once using a CSV file. The CSV file should have 'code' and 'expirationDate' columns. Spaces are not allowed in codes."
               arrow
             >
               <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
@@ -288,7 +302,7 @@ const CSVUploadSection: React.FC = () => {
           </Typography>
 
           <Typography variant="body2" color="text.secondary" paragraph>
-            Upload a CSV file with codes and optional expiration dates. The CSV file should have the following columns:
+            Upload a CSV file with codes and optional expiration dates. The CSV file should have the following columns. <strong>Note: Spaces are not allowed in codes.</strong>
           </Typography>
 
           <Box sx={{ mb: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>

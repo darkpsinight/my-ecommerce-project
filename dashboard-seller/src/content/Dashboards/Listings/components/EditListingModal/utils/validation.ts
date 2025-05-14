@@ -14,6 +14,14 @@ export const validateCodeAgainstPattern = (
     return { isValid: false, reason: 'Missing code or pattern' };
   }
 
+  // Check for spaces in the code first
+  if (code.includes(' ')) {
+    return {
+      isValid: false,
+      reason: 'Spaces are not allowed in codes'
+    };
+  }
+
   try {
     const regex = new RegExp(pattern.regex);
     const isValid = regex.test(code);
@@ -21,37 +29,37 @@ export const validateCodeAgainstPattern = (
     if (!isValid) {
       // Try to provide a helpful reason
       if (pattern.description) {
-        return { 
-          isValid: false, 
-          reason: `Code doesn't match the required format: ${pattern.description}` 
+        return {
+          isValid: false,
+          reason: `Code doesn't match the required format: ${pattern.description}`
         };
       }
-      
+
       // Check for common issues
       const lengthMatch = pattern.regex.match(/\{(\d+)\}$/);
       if (lengthMatch) {
         const expectedLength = parseInt(lengthMatch[1], 10);
         if (code.length !== expectedLength) {
-          return { 
-            isValid: false, 
-            reason: `Invalid length: expected ${expectedLength} characters, got ${code.length}` 
+          return {
+            isValid: false,
+            reason: `Invalid length: expected ${expectedLength} characters, got ${code.length}`
           };
         }
       }
-      
+
       // Default reason
-      return { 
-        isValid: false, 
-        reason: `Code doesn't match the required format for this platform` 
+      return {
+        isValid: false,
+        reason: `Code doesn't match the required format for this platform`
       };
     }
 
     return { isValid: true };
   } catch (error) {
     console.error('Error validating code against pattern:', error);
-    return { 
-      isValid: false, 
-      reason: 'Invalid pattern format' 
+    return {
+      isValid: false,
+      reason: 'Invalid pattern format'
     };
   }
 };

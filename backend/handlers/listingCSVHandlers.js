@@ -45,6 +45,12 @@ const parseCSVData = async (csvData) => {
         // Skip empty codes
         if (!code) return;
 
+        // Check for spaces in the code
+        if (code.includes(' ')) {
+          // We'll reject codes with spaces during validation later
+          // This is handled by validateCodeAgainstPatterns
+        }
+
         // Create code object
         const codeObj = { code };
 
@@ -247,7 +253,7 @@ const uploadCodesCSV = async (request, reply) => {
 
         return reply.code(400).send(
           createValidationErrorResponse(
-            "Validation failed: One or more codes don't match the pattern for this platform",
+            "Validation failed: One or more codes don't match the pattern for this platform. Note: Spaces are not allowed in codes.",
             errors,
             {
               platform: patternResult.platform,

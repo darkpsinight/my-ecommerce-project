@@ -264,7 +264,7 @@ const CSVUploadWithValidation: React.FC<CSVUploadWithValidationProps> = ({
 
           <Typography variant="body2" color="text.secondary" paragraph>
             The <strong>code</strong> column is required. The <strong>expirationDate</strong> column is optional.
-            Leave the expiration date empty for codes that don't expire.
+            Leave the expiration date empty for codes that don't expire. <strong>Spaces are not allowed</strong> in codes.
           </Typography>
         </Grid>
 

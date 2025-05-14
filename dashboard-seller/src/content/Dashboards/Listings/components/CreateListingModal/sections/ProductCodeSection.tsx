@@ -85,6 +85,21 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
   // Handle code input with formatting
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
+
+    // Check for spaces and show error if found
+    if (value.includes(' ')) {
+      // Create a synthetic event with error
+      const errorEvent = {
+        target: {
+          name: 'newCode_error',
+          value: 'Spaces are not allowed in codes'
+        }
+      };
+
+      // Pass the error to the parent component
+      handleChange(errorEvent as React.ChangeEvent<HTMLInputElement>);
+    }
+
     const formattedValue = formatProductCode(value, selectedPattern);
 
     // Create a synthetic event with the formatted value
@@ -109,7 +124,7 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             Product Codes
             <Tooltip
-              title="These codes will be encrypted and securely stored. They will only be revealed to buyers after purchase."
+              title="These codes will be encrypted and securely stored. They will only be revealed to buyers after purchase. Spaces are not allowed in codes."
               arrow
             >
               <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
@@ -136,7 +151,7 @@ const ProductCodeSection: React.FC<ProductCodeSectionProps> = ({
                 error={Boolean(formErrors.newCode) || Boolean(validationError)}
                 helperText={
                   formErrors.newCode || validationError ||
-                  (selectedPattern ? `Format: ${selectedPattern.description || selectedPattern.regex}` : "The code your buyers will receive after purchase")
+                  (selectedPattern ? `Format: ${selectedPattern.description || selectedPattern.regex}. Spaces are not allowed.` : "The code your buyers will receive after purchase. Spaces are not allowed.")
                 }
                 required
                 size={isMobile ? "small" : "medium"}

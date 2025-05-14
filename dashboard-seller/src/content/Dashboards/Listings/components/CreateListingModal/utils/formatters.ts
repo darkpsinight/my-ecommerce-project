@@ -10,8 +10,8 @@ export const formatProductCode = (value: string, pattern: any): string => {
   }
 
   try {
-    // Remove existing dashes
-    let formattedValue = value.replace(/-/g, '');
+    // Remove spaces and existing dashes
+    let formattedValue = value.replace(/\s/g, '').replace(/-/g, '');
     let finalValue = formattedValue;
     const example = pattern.example;
 
@@ -41,10 +41,10 @@ export const formatProductCode = (value: string, pattern: any): string => {
         }
         finalValue += formattedValue[i];
       }
-      
+
       return finalValue;
     }
-    
+
     return formattedValue;
   } catch (error) {
     console.error('Error applying code formatting:', error);

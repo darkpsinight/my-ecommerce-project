@@ -1,10 +1,10 @@
 import { FC, useEffect, useState } from 'react';
-import { 
-  Grid, 
-  TextField, 
-  Typography, 
-  Tooltip, 
-  IconButton, 
+import {
+  Grid,
+  TextField,
+  Typography,
+  Tooltip,
+  IconButton,
   FormHelperText,
   Autocomplete,
   Chip
@@ -51,8 +51,14 @@ export const ProductCode: FC<ProductCodeProps> = ({
   // Handle code input with auto-formatting based on selected pattern
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    let formattedValue = value.replace(/-/g, ''); // Remove existing dashes
+    // Remove spaces and existing dashes
+    let formattedValue = value.replace(/\s/g, '').replace(/-/g, '');
     let finalValue = formattedValue;
+
+    // If the user tried to enter a space, show a validation error
+    if (value.includes(' ')) {
+      setLocalValidationError('Spaces are not allowed in codes');
+    }
 
     // Apply formatting based on the selected pattern
     if (selectedPattern && selectedPattern.example) {
@@ -124,6 +130,19 @@ export const ProductCode: FC<ProductCodeProps> = ({
 
   // Validate code against regex pattern in real-time
   useEffect(() => {
+    if (!formData.code) {
+      setIsValid(true);
+      setLocalValidationError(null);
+      return;
+    }
+
+    // Check for spaces first
+    if (formData.code.includes(' ')) {
+      setIsValid(false);
+      setLocalValidationError('Spaces are not allowed in codes');
+      return;
+    }
+
     if (selectedPattern && formData.code) {
       try {
         const regex = new RegExp(selectedPattern.regex);
@@ -147,12 +166,12 @@ export const ProductCode: FC<ProductCodeProps> = ({
   }, [formData.code, selectedPattern]);
 
   return (
-    <FormSection 
+    <FormSection
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           Product Code
-          <Tooltip 
-            title="This code will be encrypted and securely stored. It will only be revealed to buyers after purchase." 
+          <Tooltip
+            title="This code will be encrypted and securely stored. It will only be revealed to buyers after purchase."
             arrow
           >
             <IconButton size="small" sx={{ p: 0 }}>
@@ -160,7 +179,7 @@ export const ProductCode: FC<ProductCodeProps> = ({
             </IconButton>
           </Tooltip>
         </div>
-      } 
+      }
       marginTop={2}
     >
       <Grid item xs={12}>
@@ -173,7 +192,7 @@ export const ProductCode: FC<ProductCodeProps> = ({
           placeholder={selectedPattern?.example || "Enter the exact code that buyers will receive"}
           error={Boolean(formErrors.code) || Boolean(validationError) || Boolean(localValidationError) || (formData.code ? !isValid : false)}
           helperText={
-            formErrors.code || validationError || localValidationError || 
+            formErrors.code || validationError || localValidationError ||
             (selectedPattern ? `Format: ${selectedPattern.description || selectedPattern.regex}` : undefined)
           }
           required
@@ -206,12 +225,12 @@ export const ProductCode: FC<ProductCodeProps> = ({
           onChange={handleTagsChange}
           renderTags={(value, getTagProps) =>
             value.map((option, index) => (
-              <Chip 
+              <Chip
                 key={`tag-${option}-${index}`}
-                variant="outlined" 
-                label={option} 
+                variant="outlined"
+                label={option}
                 size="small"
-                {...getTagProps({ index })} 
+                {...getTagProps({ index })}
               />
             ))
           }

@@ -294,25 +294,71 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
   // Collect form data from all tabs
   const collectFormData = () => {
+    // First, save the current tab's form data to the shared form data
+    const activeFormRef = getCurrentFormRef();
+
+    if (activeFormRef.current?.getFormDataRaw && sharedFormData) {
+      // Get the current form data
+      const activeFormData = activeFormRef.current.getFormDataRaw();
+
+      // Update the shared form data with the current tab's data
+      setSharedFormData(prevData => ({
+        ...prevData,
+        ...activeFormData
+      }));
+    }
+
+    // Create a comprehensive listing data object from the shared form data
     const formData: Partial<Listing> = {};
 
-    // Get data from each form if available
-    if (generalFormRef.current?.getFormData) {
-      Object.assign(formData, generalFormRef.current.getFormData());
+    if (sharedFormData) {
+      // Convert shared form data to listing data format
+
+      // General tab data
+      formData.title = sharedFormData.title;
+      formData.description = sharedFormData.description;
+      formData.price = parseFloat(sharedFormData.price);
+      if (sharedFormData.originalPrice) {
+        formData.originalPrice = parseFloat(sharedFormData.originalPrice);
+      }
+      formData.region = sharedFormData.region;
+      formData.isRegionLocked = sharedFormData.isRegionLocked;
+      formData.autoDelivery = sharedFormData.autoDelivery;
+      formData.sellerNotes = sharedFormData.sellerNotes;
+
+      // Codes tab data
+      // For codes, we'll use the current codes from the listing as they're updated in real-time
+      formData.codes = listing?.codes || [];
+
+      // Tags & Languages tab data
+      formData.tags = sharedFormData.tags;
+      formData.supportedLanguages = sharedFormData.supportedLanguages;
+
+      // Images tab data
+      formData.thumbnailUrl = sharedFormData.thumbnailUrl;
+    } else {
+      // Fallback to the old method if shared form data is not available
+      console.warn('Shared form data not available, falling back to individual form data collection');
+
+      // Get data from each form if available
+      if (generalFormRef.current?.getFormData) {
+        Object.assign(formData, generalFormRef.current.getFormData());
+      }
+
+      if (codesFormRef.current?.getFormData) {
+        Object.assign(formData, codesFormRef.current.getFormData());
+      }
+
+      if (tagsLanguagesFormRef.current?.getFormData) {
+        Object.assign(formData, tagsLanguagesFormRef.current.getFormData());
+      }
+
+      if (imagesFormRef.current?.getFormData) {
+        Object.assign(formData, imagesFormRef.current.getFormData());
+      }
     }
 
-    if (codesFormRef.current?.getFormData) {
-      Object.assign(formData, codesFormRef.current.getFormData());
-    }
-
-    if (tagsLanguagesFormRef.current?.getFormData) {
-      Object.assign(formData, tagsLanguagesFormRef.current.getFormData());
-    }
-
-    if (imagesFormRef.current?.getFormData) {
-      Object.assign(formData, imagesFormRef.current.getFormData());
-    }
-
+    console.log('Collected form data from all tabs:', formData);
     return formData;
   };
 
@@ -351,11 +397,23 @@ const EditListingModal: FC<EditListingModalProps> = ({
     // Get the current form ref
     const currentFormRef = getCurrentFormRef();
 
-    // Check if this is a refresh request (empty object passed)
+    // Check if this is a refresh request (empty object passed) or a save action from the footer
     const isRefreshRequest = Object.keys(_updatedData).length === 0;
+    const isSaveAction = _updatedData._saveAction === true;
+
+    console.log('handleSubmit called with:', {
+      updatedDataKeys: Object.keys(_updatedData),
+      isRefreshRequest,
+      isSaveAction
+    });
+
+    // Remove the _saveAction flag if it exists
+    if (isSaveAction) {
+      delete _updatedData._saveAction;
+    }
 
     // Only validate the form if this is not a refresh request
-    if (!isRefreshRequest && currentFormRef.current?.validateForm) {
+    if ((!isRefreshRequest || isSaveAction) && currentFormRef.current?.validateForm) {
       // Directly call validateForm to trigger validation and display errors
       const isValid = currentFormRef.current.validateForm();
 
@@ -367,8 +425,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
       }
     }
 
-    // If this is a refresh request, fetch the updated listing data
-    if (isRefreshRequest) {
+    // If this is a refresh request and not a save action, fetch the updated listing data
+    if (isRefreshRequest && !isSaveAction) {
       setIsSubmitting(true);
       try {
         // Fetch the updated listing data from the server
@@ -399,6 +457,16 @@ const EditListingModal: FC<EditListingModalProps> = ({
     }
 
     // For normal updates, collect data from all forms
+    // First, ensure the current tab's form data is saved to the shared form data
+    if (currentFormRef.current?.getFormDataRaw && sharedFormData) {
+      const currentTabFormData = currentFormRef.current.getFormDataRaw();
+      setSharedFormData({
+        ...sharedFormData,
+        ...currentTabFormData
+      });
+    }
+
+    // Now collect data from all tabs
     const formData = collectFormData();
 
     // Convert categoryId to string if it's an object
@@ -406,6 +474,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
     if (apiData.categoryId && typeof apiData.categoryId === 'object') {
       apiData.categoryId = apiData.categoryId._id;
     }
+
+    console.log('Sending API data with all tab changes:', apiData);
 
     setIsSubmitting(true);
     try {

@@ -51,6 +51,7 @@ export interface Listing {
 // Extended Listing type with additional UI-specific properties
 export interface ExtendedListing extends Partial<Listing> {
   csvUpload?: boolean;
+  _saveAction?: boolean; // Flag to indicate the save action from the footer
 }
 
 export interface ListingFormProps {

@@ -202,6 +202,8 @@ export const getListingById = async (id: string) => {
 // Update a listing
 export const updateListing = async (id: string, updateData: Partial<ListingData>) => {
   try {
+    console.log(`Updating listing ${id} with data:`, updateData);
+
     // Check if we have newCodes to add
     if (updateData.newCodes && Array.isArray(updateData.newCodes) && updateData.newCodes.length > 0) {
       // Extract newCodes from updateData
@@ -216,7 +218,9 @@ export const updateListing = async (id: string, updateData: Partial<ListingData>
 
       // Only make the main update API call if there are other fields to update
       if (Object.keys(cleanUpdateData).length > 0) {
+        console.log(`Making PUT request to /listings/${id} with data:`, cleanUpdateData);
         response = await api.put(`/listings/${id}`, cleanUpdateData);
+        console.log('PUT response:', response.data);
       }
 
       // Then, add the new codes using our addListingCodes function
@@ -227,7 +231,9 @@ export const updateListing = async (id: string, updateData: Partial<ListingData>
     } else {
       // Regular update without new codes
       const api = getAuthAxios();
+      console.log(`Making PUT request to /listings/${id} with data:`, updateData);
       const response = await api.put(`/listings/${id}`, updateData);
+      console.log('PUT response:', response.data);
       return response.data;
     }
   } catch (error) {

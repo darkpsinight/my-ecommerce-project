@@ -805,11 +805,12 @@ const deleteListingCode = async (request, reply) => {
     // Remove the code from the listing
     listing.codes.splice(codeIndex, 1);
 
-    // Set the _skipStatusCalculation flag to prevent automatic status recalculation
-    // This is important to prevent any side effects during save
-    listing._skipStatusCalculation = true;
+    // Check if this was the last code and update status accordingly
+    if (listing.codes.length === 0 && listing.status !== 'draft') {
+      listing.status = 'suspended';
+    }
 
-    // Save the updated listing
+    // Save the updated listing - allow the pre-save middleware to recalculate status
     await listing.save();
 
     // Log the updated listing for debugging
@@ -830,7 +831,8 @@ const deleteListingCode = async (request, reply) => {
       data: {
         externalId: listing.externalId,
         title: listing.title,
-        codesCount: listing.codes.length
+        codesCount: listing.codes.length,
+        status: listing.status
       }
     });
   } catch (error) {

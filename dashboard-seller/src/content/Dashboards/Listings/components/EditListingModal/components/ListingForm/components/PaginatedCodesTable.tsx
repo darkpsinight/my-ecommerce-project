@@ -359,6 +359,33 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                                     // This shouldn't happen in normal operation
                                   }
 
+                                  // Check if status was updated (e.g., to suspended when all codes are deleted)
+                                  if (response.data && response.data.status) {
+                                    // Dispatch a custom event to update the listing status in the parent components
+                                    const customEvent = new CustomEvent('listingStatusUpdated', {
+                                      detail: {
+                                        updatedListing: {
+                                          ...response.data,
+                                          status: response.data.status
+                                        }
+                                      }
+                                    });
+                                    window.dispatchEvent(customEvent);
+
+                                    // If status changed to suspended, show an informative toast
+                                    if (response.data.status === 'suspended') {
+                                      toast('Listing status changed to suspended because it has no codes', {
+                                        icon: '📝',
+                                        style: {
+                                          borderRadius: '10px',
+                                          background: '#f0f9ff',
+                                          color: '#0369a1',
+                                          border: '1px solid #bae6fd'
+                                        }
+                                      });
+                                    }
+                                  }
+
                                   // Notify parent component that a code was deleted
                                   if (onCodeDeleted) {
                                     onCodeDeleted();

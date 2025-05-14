@@ -1,16 +1,16 @@
 import { FC } from 'react';
 import { DialogActions, Button, Box, CircularProgress } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
-import { Listing } from '../../../types';
+import { ExtendedListing } from './ListingForm/utils/types';
 
 interface ModalFooterProps {
   onClose: () => void;
   showSaveButton?: boolean;
-  onSave?: (updatedData: Partial<Listing>) => void;
+  onSave?: (updatedData: ExtendedListing) => void;
   isSubmitting?: boolean;
 }
 
-const ModalFooter: FC<ModalFooterProps> = ({ 
+const ModalFooter: FC<ModalFooterProps> = ({
   onClose,
   showSaveButton = false,
   onSave,
@@ -19,8 +19,10 @@ const ModalFooter: FC<ModalFooterProps> = ({
   const handleSave = () => {
     if (onSave) {
       // The actual form data will be collected in the ListingForm component
-      // This just triggers the save action
-      onSave({});
+      // Pass a non-empty object to avoid triggering the refresh logic
+      // and indicate this is a save action from the footer
+      console.log('Save button clicked in ModalFooter');
+      onSave({ _saveAction: true });
     }
   };
 
@@ -42,7 +44,7 @@ const ModalFooter: FC<ModalFooterProps> = ({
         >
           Close
         </Button>
-        
+
         {showSaveButton && onSave && (
           <Button
             onClick={handleSave}

@@ -54,7 +54,7 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
     const codeMap = new Map();
     const duplicates = new Set<string>();
 
-    codes.forEach(codeItem => {
+    codes.forEach((codeItem) => {
       const code = codeItem.code;
       if (code) {
         if (codeMap.has(code)) {
@@ -73,7 +73,7 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
 
   // Count invalid codes
   const invalidCodes = useMemo(() => {
-    return codes.filter(codeItem => codeItem.isInvalid);
+    return codes.filter((codeItem) => codeItem.isInvalid);
   }, [codes]);
 
   const invalidCount = invalidCodes.length;
@@ -88,8 +88,8 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
     if (!searchTerm.trim()) return codes;
 
     const term = searchTerm.toLowerCase().trim();
-    return codes.filter(code =>
-      code.code && code.code.toLowerCase().includes(term)
+    return codes.filter(
+      (code) => code.code && code.code.toLowerCase().includes(term)
     );
   }, [codes, searchTerm]);
 
@@ -107,7 +107,9 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
   };
 
   // Handle rows per page change
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -138,17 +140,38 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ mb: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            width: { xs: '100%', sm: 'auto' }
+          }}
+        >
           <Typography variant="subtitle1" fontWeight="bold">
             Added Codes ({codes.length})
           </Typography>
 
           {duplicateCount > 0 && (
-            <Tooltip title={`${duplicateCount} duplicate code${duplicateCount > 1 ? 's' : ''} found. Please remove duplicates before submitting.`}>
+            <Tooltip
+              title={`${duplicateCount} duplicate code${
+                duplicateCount > 1 ? 's' : ''
+              } found. Please remove duplicates before submitting.`}
+            >
               <Chip
                 icon={<ErrorOutlineIcon />}
-                label={`${duplicateCount} duplicate${duplicateCount > 1 ? 's' : ''}`}
+                label={`${duplicateCount} duplicate${
+                  duplicateCount > 1 ? 's' : ''
+                }`}
                 color="error"
                 size="small"
                 sx={{ ml: 1 }}
@@ -157,10 +180,16 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
           )}
 
           {invalidCount > 0 && (
-            <Tooltip title={`${invalidCount} code${invalidCount > 1 ? 's' : ''} don't match the platform pattern. Please remove or correct them before submitting.`}>
+            <Tooltip
+              title={`${invalidCount} code${
+                invalidCount > 1 ? 's' : ''
+              } don't match the platform pattern. Please remove or correct them before submitting.`}
+            >
               <Chip
                 icon={<WarningAmberIcon />}
-                label={`${invalidCount} invalid pattern${invalidCount > 1 ? 's' : ''}`}
+                label={`${invalidCount} invalid pattern${
+                  invalidCount > 1 ? 's' : ''
+                }`}
                 color="warning"
                 size="small"
                 sx={{ ml: 1 }}
@@ -179,26 +208,25 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
               <InputAdornment position="start">
                 <SearchIcon fontSize="small" />
               </InputAdornment>
-            ),
+            )
           }}
         />
       </Box>
 
       {duplicateCount > 0 && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-        >
-          {duplicateCount} duplicate code{duplicateCount > 1 ? 's' : ''} found. Please remove {duplicateCount > 1 ? 'these duplicates' : 'this duplicate'} before submitting your listing.
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {duplicateCount} duplicate code{duplicateCount > 1 ? 's' : ''} found.
+          Please remove{' '}
+          {duplicateCount > 1 ? 'these duplicates' : 'this duplicate'} before
+          submitting your listing.
         </Alert>
       )}
 
       {invalidCount > 0 && (
-        <Alert
-          severity="warning"
-          sx={{ mb: 2 }}
-        >
-          {invalidCount} code{invalidCount > 1 ? 's' : ''} don't match the required pattern for this platform. These codes are highlighted in yellow. Please remove them before submitting your listing.
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {invalidCount} code{invalidCount > 1 ? 's' : ''} don't match the
+          required pattern for this platform. These codes are highlighted in
+          yellow. Please remove them before submitting your listing.
         </Alert>
       )}
 
@@ -207,10 +235,21 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
           <Table stickyHeader size="small" sx={{ minWidth: 500 }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Code</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Expiration</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Actions</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                  Code
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                  Status
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                  Expiration
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                >
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -219,33 +258,61 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                   const isSold = codeItem.soldStatus === 'sold';
                   return (
                     <TableRow
-                      key={`code-${index}-${codeItem.codeId || codeItem.code || index}`}
+                      key={`code-${index}-${
+                        codeItem.codeId || codeItem.code || index
+                      }`}
                       sx={{
                         // Apply conditional styling first based on code status
-                        ...(codeItem.code && duplicateCodes.has(codeItem.code) && {
-                          backgroundColor: `${alpha(theme.palette.error.light, 0.15)} !important`,
-                          '&:hover': {
-                            backgroundColor: `${alpha(theme.palette.error.light, 0.25)} !important`
-                          }
-                        }),
+                        ...(codeItem.code &&
+                          duplicateCodes.has(codeItem.code) && {
+                            backgroundColor: `${alpha(
+                              theme.palette.error.light,
+                              0.15
+                            )} !important`,
+                            '&:hover': {
+                              backgroundColor: `${alpha(
+                                theme.palette.error.light,
+                                0.25
+                              )} !important`
+                            }
+                          }),
                         ...(codeItem.isInvalid && {
-                          backgroundColor: `${alpha(theme.palette.warning.light, 0.15)} !important`,
+                          backgroundColor: `${alpha(
+                            theme.palette.warning.light,
+                            0.15
+                          )} !important`,
                           '&:hover': {
-                            backgroundColor: `${alpha(theme.palette.warning.light, 0.25)} !important`
+                            backgroundColor: `${alpha(
+                              theme.palette.warning.light,
+                              0.25
+                            )} !important`
                           }
                         }),
                         // Then apply default styling if no conditions are met
-                        ...((codeItem.code ? !duplicateCodes.has(codeItem.code) : true) && !codeItem.isInvalid && {
-                          '&:nth-of-type(odd)': {
-                            backgroundColor: alpha(theme.palette.background.default, 0.5)
-                          },
-                          '&:hover': {
-                            backgroundColor: alpha(theme.palette.primary.main, 0.05)
-                          }
-                        })
+                        ...((codeItem.code
+                          ? !duplicateCodes.has(codeItem.code)
+                          : true) &&
+                          !codeItem.isInvalid && {
+                            '&:nth-of-type(odd)': {
+                              backgroundColor: alpha(
+                                theme.palette.background.default,
+                                0.5
+                              )
+                            },
+                            '&:hover': {
+                              backgroundColor: alpha(
+                                theme.palette.primary.main,
+                                0.05
+                              )
+                            }
+                          })
                       }}
                     >
-                      <TableCell sx={{ maxWidth: { xs: '120px', sm: '200px', md: '300px' } }}>
+                      <TableCell
+                        sx={{
+                          maxWidth: { xs: '120px', sm: '200px', md: '300px' }
+                        }}
+                      >
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           {codeItem.code && duplicateCodes.has(codeItem.code) && (
                             <Tooltip title="Duplicate code - please remove this duplicate before submitting">
@@ -257,7 +324,12 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                             </Tooltip>
                           )}
                           {codeItem.isInvalid && (
-                            <Tooltip title={codeItem.invalidReason || "This code doesn't match the platform pattern"}>
+                            <Tooltip
+                              title={
+                                codeItem.invalidReason ||
+                                "This code doesn't match the platform pattern"
+                              }
+                            >
                               <WarningAmberIcon
                                 color="warning"
                                 fontSize="small"
@@ -265,7 +337,11 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                               />
                             </Tooltip>
                           )}
-                          <Tooltip title={codeItem.code || 'Code ID: ' + codeItem.codeId}>
+                          <Tooltip
+                            title={
+                              codeItem.code || 'Code ID: ' + codeItem.codeId
+                            }
+                          >
                             <Typography
                               variant="body2"
                               fontFamily="monospace"
@@ -274,17 +350,26 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                                 wordBreak: 'break-all',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                textDecoration: isSold ? 'line-through' : 'none',
+                                textDecoration: isSold
+                                  ? 'line-through'
+                                  : 'none',
                                 opacity: isSold ? 0.7 : 1,
-                                ...(codeItem.code && duplicateCodes.has(codeItem.code) && {
-                                  color: theme.palette.error.main
-                                }),
+                                ...(codeItem.code &&
+                                  duplicateCodes.has(codeItem.code) && {
+                                    color: theme.palette.error.main
+                                  }),
                                 ...(codeItem.isInvalid && {
                                   color: theme.palette.warning.dark
                                 })
                               }}
                             >
-                              {codeItem.code || (codeItem.codeId ? `[Code ID: ${codeItem.codeId.substring(0, 8)}...]` : 'Unknown code')}
+                              {codeItem.code ||
+                                (codeItem.codeId
+                                  ? `[Code ID: ${codeItem.codeId.substring(
+                                      0,
+                                      8
+                                    )}...]`
+                                  : 'Unknown code')}
                             </Typography>
                           </Tooltip>
                         </Box>
@@ -293,7 +378,11 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                         {isSold ? (
                           <Chip
                             size="small"
-                            label={codeItem.soldAt ? `Sold: ${formatDate(codeItem.soldAt)}` : 'Sold'}
+                            label={
+                              codeItem.soldAt
+                                ? `Sold: ${formatDate(codeItem.soldAt)}`
+                                : 'Sold'
+                            }
                             color="primary"
                             variant="outlined"
                             icon={<SellIcon fontSize="small" />}
@@ -303,7 +392,7 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                           <Chip
                             size="small"
                             label="Active"
-                            color={codeItem.isInvalid ? "warning" : "success"}
+                            color={codeItem.isInvalid ? 'warning' : 'success'}
                             variant="outlined"
                             sx={{ height: 24 }}
                           />
@@ -320,7 +409,10 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                           </Typography>
                         )}
                       </TableCell>
-                      <TableCell align="right" sx={{ whiteSpace: 'nowrap', width: '1%' }}>
+                      <TableCell
+                        align="right"
+                        sx={{ whiteSpace: 'nowrap', width: '1%' }}
+                      >
                         {!isSold && (
                           <IconButton
                             size="small"
@@ -331,17 +423,23 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                                 if (codeItem.code) {
                                   onDeleteCode(codeItem.code);
                                 } else {
-                                  console.warn('Attempted to delete code with no code property and no codeId');
+                                  console.warn(
+                                    'Attempted to delete code with no code property and no codeId'
+                                  );
                                 }
                                 return;
                               }
 
                               try {
                                 // Show loading state
-                                const loadingToast = toast.loading('Deleting code...');
+                                const loadingToast =
+                                  toast.loading('Deleting code...');
 
                                 // Call the API to delete the code
-                                const response = await deleteListingCode(listingId, codeItem.codeId);
+                                const response = await deleteListingCode(
+                                  listingId,
+                                  codeItem.codeId
+                                );
 
                                 // Dismiss the loading toast
                                 toast.dismiss(loadingToast);
@@ -355,34 +453,41 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                                     onDeleteCode(codeItem.code);
                                   } else {
                                     // If code is undefined, we need to find another way to identify the code
-                                    console.warn('Deleted code with no code property, using codeId instead');
+                                    console.warn(
+                                      'Deleted code with no code property, using codeId instead'
+                                    );
                                     // This shouldn't happen in normal operation
                                   }
 
                                   // Check if status was updated (e.g., to suspended when all codes are deleted)
                                   if (response.data && response.data.status) {
                                     // Dispatch a custom event to update the listing status in the parent components
-                                    const customEvent = new CustomEvent('listingStatusUpdated', {
-                                      detail: {
-                                        updatedListing: {
-                                          ...response.data,
-                                          status: response.data.status
+                                    const customEvent = new CustomEvent(
+                                      'listingStatusUpdated',
+                                      {
+                                        detail: {
+                                          updatedListing: {
+                                            ...response.data,
+                                            status: response.data.status
+                                          }
                                         }
                                       }
-                                    });
+                                    );
                                     window.dispatchEvent(customEvent);
 
                                     // If status changed to suspended, show an informative toast
                                     if (response.data.status === 'suspended') {
-                                      toast('Listing status changed to suspended because it has no codes', {
-                                        icon: '📝',
-                                        style: {
-                                          borderRadius: '10px',
-                                          background: '#f0f9ff',
-                                          color: '#0369a1',
-                                          border: '1px solid #bae6fd'
+                                      toast(
+                                        'Listing status changed to suspended because it has no codes',
+                                        {
+                                          style: {
+                                            borderRadius: '10px',
+                                            background: '#f0f9ff',
+                                            color: '#0369a1',
+                                            border: '1px solid #bae6fd'
+                                          }
                                         }
-                                      });
+                                      );
                                     }
                                   }
 
@@ -392,11 +497,15 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                                   }
                                 } else {
                                   // Show error message
-                                  toast.error(response.message || 'Failed to delete code');
+                                  toast.error(
+                                    response.message || 'Failed to delete code'
+                                  );
                                 }
                               } catch (error) {
                                 console.error('Error deleting code:', error);
-                                toast.error('Failed to delete code. Please try again.');
+                                toast.error(
+                                  'Failed to delete code. Please try again.'
+                                );
                               }
                             }}
                             aria-label="delete code"
@@ -430,7 +539,10 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           labelRowsPerPage={
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+            <Box
+              component="span"
+              sx={{ display: { xs: 'none', sm: 'inline' } }}
+            >
               Rows per page:
             </Box>
           }

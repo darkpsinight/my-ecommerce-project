@@ -327,8 +327,10 @@ const EditListingModal: FC<EditListingModalProps> = ({
       formData.sellerNotes = sharedFormData.sellerNotes;
 
       // Codes tab data
-      // For codes, we'll use the current codes from the listing as they're updated in real-time
-      formData.codes = listing?.codes || [];
+      // Use the codes from the shared form data instead of the original listing
+      // This ensures any newly added codes in the UI are included in the submission
+      // Use type assertion to handle the type mismatch between FormData codes and Listing codes
+      formData.codes = (sharedFormData.codes || []) as any;
 
       // Tags & Languages tab data
       formData.tags = sharedFormData.tags;
@@ -358,7 +360,15 @@ const EditListingModal: FC<EditListingModalProps> = ({
       }
     }
 
+    // Log the collected form data for debugging
     console.log('Collected form data from all tabs:', formData);
+
+    // Log the codes specifically to help debug code-related issues
+    console.log('Codes being sent to API:', formData.codes ? formData.codes.length : 0, 'codes');
+    if (formData.codes && formData.codes.length > 0) {
+      console.log('First few codes:', formData.codes.slice(0, 3));
+    }
+
     return formData;
   };
 
@@ -476,6 +486,13 @@ const EditListingModal: FC<EditListingModalProps> = ({
     }
 
     console.log('Sending API data with all tab changes:', apiData);
+
+    // Log specifically about codes for debugging
+    if (apiData.codes) {
+      console.log(`Submitting ${apiData.codes.length} codes to the API`);
+    } else {
+      console.log('No codes in the API data');
+    }
 
     setIsSubmitting(true);
     try {

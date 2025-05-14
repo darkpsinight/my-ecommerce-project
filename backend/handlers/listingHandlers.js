@@ -522,6 +522,57 @@ const updateListing = async (request, reply) => {
         });
       }
 
+      // STRICT VALIDATION: Validate codes against the platform's pattern requirements
+      // Get validation patterns for the listing's category and platform
+      const patternResult = await getPatternsForPlatform(listing.categoryId, listing.platform, Category);
+
+      // Check if we found patterns
+      if (!patternResult.error && patternResult.patterns && patternResult.patterns.length > 0) {
+        // Validate each code against the patterns
+        const invalidCodes = [];
+
+        for (let i = 0; i < codeStrings.length; i++) {
+          const codeString = codeStrings[i];
+          const validationResult = validateCodeAgainstPatterns(codeString, patternResult.patterns);
+
+          // If code doesn't match any pattern, add to invalid list
+          if (!validationResult.isValid) {
+            // Check if the code has an isInvalid flag set by the frontend
+            const originalCodeItem = codesToAdd[i];
+            const isMarkedInvalid = typeof originalCodeItem === 'object' && originalCodeItem.isInvalid === true;
+
+            invalidCodes.push({
+              code: maskCode(codeString),
+              index: i,
+              errors: validationResult.validationErrors || validationResult.invalidPatterns,
+              isMarkedInvalid
+            });
+          }
+        }
+
+        // If any codes are invalid, reject the request
+        if (invalidCodes.length > 0) {
+          request.log.warn(`Rejecting ${invalidCodes.length} invalid codes that don't match platform pattern`);
+
+          return reply.code(400).send({
+            success: false,
+            message: "Validation failed: One or more codes don't match the pattern for this platform",
+            error: {
+              invalidCodes: invalidCodes.map(ic => ({
+                code: ic.code,
+                errors: ic.errors
+              })),
+              platform: patternResult.platform,
+              category: patternResult.category,
+              patterns: patternResult.patterns.map(p => ({
+                description: p.description,
+                example: p.example
+              }))
+            }
+          });
+        }
+      }
+
       // Add the codes to the listing
       listing.addCodes(codesToAdd);
 
@@ -557,6 +608,52 @@ const updateListing = async (request, reply) => {
             }))
           }
         });
+      }
+
+      // STRICT VALIDATION: Validate codes against the platform's pattern requirements
+      // Get validation patterns for the listing's category and platform
+      const patternResult = await getPatternsForPlatform(listing.categoryId, listing.platform, Category);
+
+      // Check if we found patterns
+      if (!patternResult.error && patternResult.patterns && patternResult.patterns.length > 0) {
+        // Validate each code against the patterns
+        const invalidCodes = [];
+
+        for (let i = 0; i < codesToCheck.length; i++) {
+          const codeString = codesToCheck[i];
+          const validationResult = validateCodeAgainstPatterns(codeString, patternResult.patterns);
+
+          // If code doesn't match any pattern, add to invalid list
+          if (!validationResult.isValid) {
+            invalidCodes.push({
+              code: maskCode(codeString),
+              index: i,
+              errors: validationResult.validationErrors || validationResult.invalidPatterns
+            });
+          }
+        }
+
+        // If any codes are invalid, reject the request
+        if (invalidCodes.length > 0) {
+          request.log.warn(`Rejecting ${invalidCodes.length} invalid codes that don't match platform pattern`);
+
+          return reply.code(400).send({
+            success: false,
+            message: "Validation failed: One or more codes don't match the pattern for this platform",
+            error: {
+              invalidCodes: invalidCodes.map(ic => ({
+                code: ic.code,
+                errors: ic.errors
+              })),
+              platform: patternResult.platform,
+              category: patternResult.category,
+              patterns: patternResult.patterns.map(p => ({
+                description: p.description,
+                example: p.example
+              }))
+            }
+          });
+        }
       }
 
       // Add the codes to the listing

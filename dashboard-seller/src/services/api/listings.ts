@@ -34,6 +34,13 @@ export interface ListingData {
   tags?: string[];
   sellerNotes?: string;
   status?: string;
+  // Property for codes array in the listing
+  codes?: Array<{
+    code?: string;
+    codeId?: string;
+    soldStatus?: string;
+    expirationDate?: string | Date | null;
+  }>;
   // New property for adding codes to an existing listing
   newCodes?: Array<{
     code: string;
@@ -231,6 +238,40 @@ export const updateListing = async (id: string, updateData: Partial<ListingData>
     } else {
       // Regular update without new codes
       const api = getAuthAxios();
+
+      // Check if there are codes in the update data and handle expirationDate
+      if (updateData.codes && Array.isArray(updateData.codes)) {
+        console.log('Processing codes in updateData:', updateData.codes);
+
+        // Process each code to handle expirationDate properly
+        updateData.codes = updateData.codes.map((codeItem: {
+          code?: string;
+          codeId?: string;
+          soldStatus?: string;
+          expirationDate?: string | Date | null;
+        }) => {
+          console.log('Processing code item:', codeItem);
+
+          // If the code has an expirationDate field
+          if ('expirationDate' in codeItem) {
+            // If expirationDate is null or undefined, create a new object without it
+            if (codeItem.expirationDate === null || codeItem.expirationDate === undefined) {
+              console.log('Removing null/undefined expirationDate from code:', codeItem.code);
+              const { expirationDate, ...codeWithoutExpiration } = codeItem;
+              return codeWithoutExpiration;
+            }
+            // Otherwise, keep it as is
+            console.log('Keeping expirationDate for code:', codeItem.code, codeItem.expirationDate);
+            return codeItem;
+          }
+          // If there's no expirationDate field, return the code as is
+          console.log('No expirationDate field found for code:', codeItem.code);
+          return codeItem;
+        });
+
+        console.log('Processed codes for API:', updateData.codes);
+      }
+
       console.log(`Making PUT request to /listings/${id} with data:`, updateData);
       const response = await api.put(`/listings/${id}`, updateData);
       console.log('PUT response:', response.data);
@@ -371,23 +412,41 @@ export const addListingCodes = async (listingId: string, codes: Array<{
   try {
     const api = getAuthAxios();
 
-    // Format expiration dates if needed
+    // Format expiration dates if needed and remove null values
     const formattedCodes = codes.map(codeItem => {
-      const formattedCode = { ...codeItem };
+      // Create a new object without the expirationDate property
+      const { expirationDate, ...codeWithoutExpiration } = codeItem;
 
-      if (formattedCode.expirationDate) {
+      // Only add expirationDate back if it has a valid value
+      if (expirationDate) {
         // If it's a Date object, convert to ISO string
-        if (formattedCode.expirationDate instanceof Date) {
-          formattedCode.expirationDate = formattedCode.expirationDate.toISOString();
+        if (expirationDate instanceof Date) {
+          return {
+            ...codeWithoutExpiration,
+            expirationDate: expirationDate.toISOString()
+          };
         }
         // If it's a string but not in ISO format, convert it
-        else if (typeof formattedCode.expirationDate === 'string' && !formattedCode.expirationDate.includes('T')) {
-          formattedCode.expirationDate = `${formattedCode.expirationDate}T23:59:59.999Z`;
+        else if (typeof expirationDate === 'string' && !expirationDate.includes('T')) {
+          return {
+            ...codeWithoutExpiration,
+            expirationDate: `${expirationDate}T23:59:59.999Z`
+          };
+        }
+        // It's already in the correct format
+        else if (typeof expirationDate === 'string') {
+          return {
+            ...codeWithoutExpiration,
+            expirationDate
+          };
         }
       }
 
-      return formattedCode;
+      // Return the code without an expirationDate field
+      return codeWithoutExpiration;
     });
+
+    console.log('Formatted codes for API:', formattedCodes);
 
     // Use the existing updateListing endpoint with the codes property
     // Add a dummy valid field (sellerNotes) to prevent "No valid fields to update" error

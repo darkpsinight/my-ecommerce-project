@@ -500,88 +500,130 @@ const updateListing = async (request, reply) => {
       // New format: array of code objects
       codesToAdd = updateData.codes;
 
-      // Check for duplicate codes
-      const codeStrings = codesToAdd.map(codeItem =>
-        typeof codeItem === 'string' ? codeItem : codeItem.code
+      // Separate codes with codeId (existing codes) from codes without codeId (new codes)
+      const existingCodes = codesToAdd.filter(codeItem =>
+        typeof codeItem === 'object' && codeItem.codeId
       );
 
-      const duplicateCheck = await checkForDuplicateCodes(codeStrings, id);
+      const newCodes = codesToAdd.filter(codeItem =>
+        typeof codeItem === 'object' && !codeItem.codeId && codeItem.code
+      );
 
-      if (!duplicateCheck.success) {
-        // Found duplicate codes
-        return reply.code(400).send({
-          success: false,
-          message: "Validation failed: One or more codes already exist in another listing",
-          error: {
-            duplicates: duplicateCheck.duplicates.map(dup => ({
-              code: maskCode(dup.code),
-              listingTitle: dup.listingTitle,
-              sellerId: dup.sellerId
-            }))
-          }
-        });
+      // Log the codes for debugging
+      request.log.info(`Received codes update: ${codesToAdd.length} total codes`);
+      request.log.info(`Existing codes with codeId: ${existingCodes.length}`);
+      request.log.info(`New codes without codeId: ${newCodes.length}`);
+
+      // Log the structure of the first few codes for debugging
+      if (codesToAdd.length > 0) {
+        request.log.info(`Sample code structure: ${JSON.stringify(codesToAdd[0])}`);
       }
 
-      // STRICT VALIDATION: Validate codes against the platform's pattern requirements
-      // Get validation patterns for the listing's category and platform
-      const patternResult = await getPatternsForPlatform(listing.categoryId, listing.platform, Category);
+      // Extract code strings from new codes only for validation
+      const newCodeStrings = newCodes.map(codeItem => codeItem.code);
 
-      // Check if we found patterns
-      if (!patternResult.error && patternResult.patterns && patternResult.patterns.length > 0) {
-        // Validate each code against the patterns
-        const invalidCodes = [];
+      // Only check for duplicates if there are new codes
+      if (newCodeStrings.length > 0) {
+        const duplicateCheck = await checkForDuplicateCodes(newCodeStrings, id);
 
-        for (let i = 0; i < codeStrings.length; i++) {
-          const codeString = codeStrings[i];
-          const validationResult = validateCodeAgainstPatterns(codeString, patternResult.patterns);
-
-          // If code doesn't match any pattern, add to invalid list
-          if (!validationResult.isValid) {
-            // Check if the code has an isInvalid flag set by the frontend
-            const originalCodeItem = codesToAdd[i];
-            const isMarkedInvalid = typeof originalCodeItem === 'object' && originalCodeItem.isInvalid === true;
-
-            invalidCodes.push({
-              code: maskCode(codeString),
-              index: i,
-              errors: validationResult.validationErrors || validationResult.invalidPatterns,
-              isMarkedInvalid
-            });
-          }
-        }
-
-        // If any codes are invalid, reject the request
-        if (invalidCodes.length > 0) {
-          request.log.warn(`Rejecting ${invalidCodes.length} invalid codes that don't match platform pattern`);
-
+        if (!duplicateCheck.success) {
+          // Found duplicate codes
           return reply.code(400).send({
             success: false,
-            message: "Validation failed: One or more codes don't match the pattern for this platform",
+            message: "Validation failed: One or more codes already exist in another listing",
             error: {
-              invalidCodes: invalidCodes.map(ic => ({
-                code: ic.code,
-                errors: ic.errors
-              })),
-              platform: patternResult.platform,
-              category: patternResult.category,
-              patterns: patternResult.patterns.map(p => ({
-                description: p.description,
-                example: p.example
+              duplicates: duplicateCheck.duplicates.map(dup => ({
+                code: maskCode(dup.code),
+                listingTitle: dup.listingTitle,
+                sellerId: dup.sellerId
               }))
             }
           });
         }
+
+        // STRICT VALIDATION: Validate only new codes against the platform's pattern requirements
+        // Get validation patterns for the listing's category and platform
+        const patternResult = await getPatternsForPlatform(listing.categoryId, listing.platform, Category);
+
+        // Check if we found patterns
+        if (!patternResult.error && patternResult.patterns && patternResult.patterns.length > 0) {
+          // Validate each new code against the patterns
+          const invalidCodes = [];
+
+          for (let i = 0; i < newCodeStrings.length; i++) {
+            const codeString = newCodeStrings[i];
+            const validationResult = validateCodeAgainstPatterns(codeString, patternResult.patterns);
+
+            // If code doesn't match any pattern, add to invalid list
+            if (!validationResult.isValid) {
+              // Check if the code has an isInvalid flag set by the frontend
+              const originalCodeItem = newCodes[i];
+              const isMarkedInvalid = typeof originalCodeItem === 'object' && originalCodeItem.isInvalid === true;
+
+              invalidCodes.push({
+                code: maskCode(codeString),
+                index: i,
+                errors: validationResult.validationErrors || validationResult.invalidPatterns,
+                isMarkedInvalid
+              });
+            }
+          }
+
+          // If any codes are invalid, reject the request
+          if (invalidCodes.length > 0) {
+            request.log.warn(`Rejecting ${invalidCodes.length} invalid codes that don't match platform pattern`);
+
+            return reply.code(400).send({
+              success: false,
+              message: "Validation failed: One or more codes don't match the pattern for this platform",
+              error: {
+                invalidCodes: invalidCodes.map(ic => ({
+                  code: ic.code,
+                  errors: ic.errors
+                })),
+                platform: patternResult.platform,
+                category: patternResult.category,
+                patterns: patternResult.patterns.map(p => ({
+                  description: p.description,
+                  example: p.example
+                }))
+              }
+            });
+          }
+        }
       }
 
-      // Add the codes to the listing
-      listing.addCodes(codesToAdd);
+      // Log what we're doing for debugging
+      request.log.info(`Processing listing update: ${existingCodes.length} existing codes, ${newCodes.length} new codes`);
+
+      // Only add new codes to the listing
+      if (newCodes.length > 0) {
+        listing.addCodes(newCodes);
+      }
+
+      // Update existing codes if needed (e.g., status changes)
+      if (existingCodes.length > 0) {
+        existingCodes.forEach(codeItem => {
+          const existingCodeIndex = listing.codes.findIndex(c => c.codeId === codeItem.codeId);
+          if (existingCodeIndex !== -1) {
+            // Only update specific fields that are allowed to be updated
+            if (codeItem.soldStatus) {
+              listing.codes[existingCodeIndex].soldStatus = codeItem.soldStatus;
+            }
+            if ('expirationDate' in codeItem) {
+              listing.codes[existingCodeIndex].expirationDate = codeItem.expirationDate;
+            }
+          }
+        });
+      }
 
       // Remove codes from updateData to prevent overwriting
       delete updateDataCopy.codes;
     } else if (updateData.code) {
       // Legacy format: single code with optional expiration date
-      let codesToCheck = [updateData.code];
-      let singleCodeToAdd = [{
+      // Legacy format is only used for new codes, so we don't need to check for existing codes
+      let newCodeStrings = [updateData.code];
+      let newCodesToAdd = [{
         code: updateData.code,
         expirationDate: updateData.codeExpirationDate
       }];
@@ -589,11 +631,11 @@ const updateListing = async (request, reply) => {
       // Check for additional codes
       if (updateData.additionalCodes && Array.isArray(updateData.additionalCodes) && updateData.additionalCodes.length > 0) {
         // Add additional codes to the arrays
-        codesToCheck = [...codesToCheck, ...updateData.additionalCodes.map(c => c.code)];
-        singleCodeToAdd = [...singleCodeToAdd, ...updateData.additionalCodes];
+        newCodeStrings = [...newCodeStrings, ...updateData.additionalCodes.map(c => c.code)];
+        newCodesToAdd = [...newCodesToAdd, ...updateData.additionalCodes];
       }
 
-      const duplicateCheck = await checkForDuplicateCodes(codesToCheck, id);
+      const duplicateCheck = await checkForDuplicateCodes(newCodeStrings, id);
 
       if (!duplicateCheck.success) {
         // Found a duplicate code
@@ -619,8 +661,8 @@ const updateListing = async (request, reply) => {
         // Validate each code against the patterns
         const invalidCodes = [];
 
-        for (let i = 0; i < codesToCheck.length; i++) {
-          const codeString = codesToCheck[i];
+        for (let i = 0; i < newCodeStrings.length; i++) {
+          const codeString = newCodeStrings[i];
           const validationResult = validateCodeAgainstPatterns(codeString, patternResult.patterns);
 
           // If code doesn't match any pattern, add to invalid list
@@ -656,8 +698,11 @@ const updateListing = async (request, reply) => {
         }
       }
 
-      // Add the codes to the listing
-      listing.addCodes(singleCodeToAdd);
+      // Log what we're doing for debugging
+      request.log.info(`Processing listing update with legacy format: adding ${newCodesToAdd.length} new codes`);
+
+      // Add the new codes to the listing
+      listing.addCodes(newCodesToAdd);
 
       // Remove code-related fields from updateData
       delete updateDataCopy.code;

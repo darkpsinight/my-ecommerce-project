@@ -66,6 +66,7 @@ export interface ListingFormProps {
   sharedFormData?: FormData | null;
   onFormDataChange?: (formData: FormData) => void;
   selectedPattern?: any;
+  fetchValidationPatterns?: (categoryId: string, platformName: string) => Promise<void>;
 }
 
 export interface FormData {

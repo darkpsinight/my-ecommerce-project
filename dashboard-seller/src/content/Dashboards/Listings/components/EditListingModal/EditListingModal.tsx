@@ -49,6 +49,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [categories] = useState(initialCategories);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
   const [selectedPattern, setSelectedPattern] = useState(null);
+  const [validationPatternsCache, setValidationPatternsCache] = useState<Record<string, any>>({});
+  const [isPatternLoading, setIsPatternLoading] = useState(false);
 
   // Shared form state to persist data across tabs
   const [sharedFormData, setSharedFormData] = useState<ListingFormData | null>(null);
@@ -103,8 +105,24 @@ const EditListingModal: FC<EditListingModalProps> = ({
           const categoryIdValue = typeof foundListing.categoryId === 'object' && foundListing.categoryId._id
             ? foundListing.categoryId._id
             : foundListing.categoryId;
-          // Explicitly cast to string to satisfy TypeScript
-          fetchValidationPatterns(categoryIdValue as string, foundListing.platform);
+
+          // Create a cache key to check if we already have this pattern
+          const cacheKey = `${categoryIdValue}:${foundListing.platform}`;
+
+          // Only fetch if not already in cache
+          if (!validationPatternsCache[cacheKey]) {
+            // Explicitly cast to string to satisfy TypeScript
+            fetchValidationPatterns(categoryIdValue as string, foundListing.platform);
+          } else {
+            console.log('Using cached validation patterns on modal open for', cacheKey);
+            // Use cached patterns
+            const cachedPatterns = validationPatternsCache[cacheKey];
+            if (cachedPatterns.length === 1) {
+              setSelectedPattern(cachedPatterns[0]);
+            } else {
+              setSelectedPattern(null);
+            }
+          }
         }
       } else {
         console.error('Listing not found:', listingId);
@@ -115,7 +133,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
       setIsLoading(false);
     }
-  }, [open, listingId, listings, categories]);
+  }, [open, listingId, listings, categories, validationPatternsCache]);
 
   // We don't need to fetch categories anymore as they're passed from the parent component
 
@@ -141,11 +159,37 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const fetchValidationPatterns = async (categoryId: string, platformName: string) => {
     if (!categoryId || !platformName) return;
 
+    // Create a cache key using categoryId and platformName
+    const cacheKey = `${categoryId}:${platformName}`;
+
+    // Check if we already have this pattern in the cache
+    if (validationPatternsCache[cacheKey]) {
+      console.log('Using cached validation patterns for', cacheKey);
+      const cachedPatterns = validationPatternsCache[cacheKey];
+
+      // If there's only one pattern, select it automatically
+      if (cachedPatterns.length === 1) {
+        setSelectedPattern(cachedPatterns[0]);
+      } else {
+        setSelectedPattern(null);
+      }
+      return;
+    }
+
+    // If not in cache, make the API call
     try {
+      console.log('Fetching validation patterns for', cacheKey);
+      setIsPatternLoading(true);
       const response = await getValidationPatterns(categoryId, platformName);
 
       if (response && response.success && response.data) {
         const { patterns: responsePatterns } = response.data;
+
+        // Store in cache for future use
+        setValidationPatternsCache(prevCache => ({
+          ...prevCache,
+          [cacheKey]: responsePatterns
+        }));
 
         // If there's only one pattern, select it automatically
         if (responsePatterns.length === 1) {
@@ -160,6 +204,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
     } catch (err) {
       console.error('Error fetching validation patterns:', err);
       toast.error('Failed to load validation patterns');
+    } finally {
+      setIsPatternLoading(false);
     }
   };
 
@@ -601,6 +647,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 availablePlatforms={availablePlatforms}
                 sharedFormData={sharedFormData}
                 onFormDataChange={setSharedFormData}
+                fetchValidationPatterns={fetchValidationPatterns}
               />
             </TabPanel>
 
@@ -617,6 +664,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 sharedFormData={sharedFormData}
                 onFormDataChange={setSharedFormData}
                 selectedPattern={selectedPattern}
+                fetchValidationPatterns={fetchValidationPatterns}
               />
             </TabPanel>
 
@@ -632,6 +680,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 onCodesChange={handleCodesChange}
                 sharedFormData={sharedFormData}
                 onFormDataChange={setSharedFormData}
+                fetchValidationPatterns={fetchValidationPatterns}
               />
             </TabPanel>
 
@@ -647,6 +696,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 onCodesChange={handleCodesChange}
                 sharedFormData={sharedFormData}
                 onFormDataChange={setSharedFormData}
+                fetchValidationPatterns={fetchValidationPatterns}
               />
             </TabPanel>
           </DialogContent>

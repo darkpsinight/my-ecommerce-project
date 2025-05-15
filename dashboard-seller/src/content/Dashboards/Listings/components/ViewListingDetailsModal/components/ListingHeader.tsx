@@ -1,5 +1,12 @@
 import React from 'react';
-import { Box, Typography, useTheme, alpha, Chip, useMediaQuery } from '@mui/material';
+import {
+  Box,
+  Typography,
+  useTheme,
+  alpha,
+  Chip,
+  useMediaQuery
+} from '@mui/material';
 import { Listing } from '../../../types';
 import ListingStatusBadge from '../../ListingStatusBadge';
 import { formatCurrency } from '../utils/formatters';
@@ -12,7 +19,10 @@ interface ListingHeaderProps {
   discountPercentage: number | null;
 }
 
-const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercentage }) => {
+const ListingHeader: React.FC<ListingHeaderProps> = ({
+  listing,
+  discountPercentage
+}) => {
   const theme = useTheme();
   const isVerySmallScreen = useMediaQuery('(max-width:380px)');
 
@@ -77,16 +87,19 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
     const dateObj = new Date(date);
 
     // Format: "May 7, 2025, 08:15 PM"
-    return dateObj.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    }) + ', ' +
-    dateObj.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    return (
+      dateObj.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      }) +
+      ', ' +
+      dateObj.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
+    );
   };
 
   return (
@@ -96,7 +109,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
         pt: { xs: 2, sm: 2.5 },
         pb: { xs: 0.5, sm: 1 },
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'column'
       }}
     >
       {/* Title, Status and Price Row */}
@@ -152,14 +165,25 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
                 pr: { xs: 1, sm: 2 },
                 borderRadius: 2,
                 bgcolor: getStatusBgColor(),
-                border: `1px solid ${getStatusBorderColor()}`,
+                border: `1px solid ${getStatusBorderColor()}`
               }}
             >
               {/* Status icon */}
-              {listing.status === 'active'
-                ? <VisibilityIcon sx={{ color: getStatusColor(), fontSize: { xs: '0.8rem', sm: '1rem' } }} />
-                : <VisibilityOffIcon sx={{ color: getStatusColor(), fontSize: { xs: '0.8rem', sm: '1rem' } }} />
-              }
+              {listing.status === 'active' ? (
+                <VisibilityIcon
+                  sx={{
+                    color: getStatusColor(),
+                    fontSize: { xs: '0.8rem', sm: '1rem' }
+                  }}
+                />
+              ) : (
+                <VisibilityOffIcon
+                  sx={{
+                    color: getStatusColor(),
+                    fontSize: { xs: '0.8rem', sm: '1rem' }
+                  }}
+                />
+              )}
 
               {/* Status badge - custom styling for small screens */}
               <Typography
@@ -171,7 +195,10 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
                   fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' }
                 }}
               >
-                {listing.status ? listing.status.toString().charAt(0).toUpperCase() + listing.status.toString().slice(1) : 'Active'}
+                {listing.status
+                  ? listing.status.toString().charAt(0).toUpperCase() +
+                    listing.status.toString().slice(1)
+                  : 'Active'}
               </Typography>
             </Box>
 
@@ -183,99 +210,62 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ listing, discountPercenta
                   alignItems: 'flex-end',
                   gap: { xs: 0.5, sm: 1 },
                   justifyContent: 'flex-end',
-                  minWidth: { xs: '30%', sm: '25%' },
-                }}
-              >
-            <Typography
-              variant="h4"
-              component="span"
-              sx={{
-                fontWeight: 700,
-                color: theme.palette.primary.main,
-                lineHeight: 1,
-                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
-                textAlign: 'right'
-              }}
-            >
-              {formatCurrency(listing.price)}
-            </Typography>
-
-            {discountPercentage && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-end'
+                  minWidth: { xs: '30%', sm: '25%' }
                 }}
               >
                 <Typography
-                  variant="body2"
+                  variant="h4"
                   component="span"
                   sx={{
-                    textDecoration: 'line-through',
-                    color: theme.palette.text.secondary,
-                    mb: -0.5,
-                    fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                    fontWeight: 700,
+                    color: theme.palette.primary.main,
+                    lineHeight: 1,
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+                    textAlign: 'right'
                   }}
                 >
-                  {formatCurrency(listing.originalPrice)}
+                  {formatCurrency(listing.price)}
                 </Typography>
-                <Chip
-                  label={`-${discountPercentage}%`}
-                  size="small"
-                  color="error"
-                  sx={{
-                    height: { xs: 16, sm: 20 },
-                    fontSize: { xs: '0.6rem', sm: '0.7rem' },
-                    fontWeight: 'bold',
-                    '& .MuiChip-label': {
-                      px: { xs: 0.5, sm: 0.75 }
-                    }
-                  }}
-                />
-              </Box>
-            )}
+
+                {discountPercentage && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end'
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{
+                        textDecoration: 'line-through',
+                        color: theme.palette.text.secondary,
+                        mb: -0.5,
+                        fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                      }}
+                    >
+                      {formatCurrency(listing.originalPrice)}
+                    </Typography>
+                    <Chip
+                      label={`-${discountPercentage}%`}
+                      size="small"
+                      color="error"
+                      sx={{
+                        height: { xs: 16, sm: 20 },
+                        fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                        fontWeight: 'bold',
+                        '& .MuiChip-label': {
+                          px: { xs: 0.5, sm: 0.75 }
+                        }
+                      }}
+                    />
+                  </Box>
+                )}
               </Box>
             )}
           </Box>
         </Box>
-      </Box>
-
-      {/* Created At timestamp - full width below price and above tabs */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
-          mb: { xs: 1, sm: 1.5 },
-          px: { xs: 1, sm: 2 },
-          py: { xs: 0.5, sm: 1 },
-          borderRadius: 1,
-          bgcolor: alpha(theme.palette.background.default, 0.7),
-          border: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <UpdateIcon
-          fontSize="small"
-          sx={{
-            color: theme.palette.text.secondary,
-            mr: { xs: 0.5, sm: 1 },
-            fontSize: { xs: '0.75rem', sm: '0.875rem' }
-          }}
-        />
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            fontSize: { xs: '0.65rem', sm: '0.75rem' },
-            fontFamily: 'monospace',
-            whiteSpace: { xs: 'normal', sm: 'nowrap' },
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }}
-        >
-          <b>Created At:</b> {formatDate(listing.createdAt)}
-        </Typography>
       </Box>
     </Box>
   );

@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   SelectChangeEvent
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
@@ -12,7 +13,8 @@ import BasicInformation from './sections/BasicInformation';
 import Description from './sections/Description';
 import Pricing from './sections/Pricing';
 import TagsAndLanguages from './sections/TagsAndLanguages';
-import ProductCodes from './sections/ProductCodes';
+import UnifiedProductCodeSection from './sections/UnifiedProductCodeSection';
+import PaginatedCodesTable from './components/PaginatedCodesTable';
 import SellerNotes from './sections/SellerNotes';
 import ImageUpload from './sections/ImageUpload';
 
@@ -506,7 +508,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
       case 'codes':
         return (
           <Box>
-            <ProductCodes
+            <UnifiedProductCodeSection
               formData={formData}
               formErrors={formErrors}
               handleTextChange={handleTextChange}
@@ -517,43 +519,29 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
               selectedPattern={selectedPattern}
               listingId={listing.externalId}
               onRefresh={() => {
-                // No need to refresh the listing data with a PUT API call
-                // The code is already deleted from the database by the DELETE API call
-                // and the local state is updated by onDeleteCode
-                console.log('Code deleted successfully - local state already updated');
+                // Always refresh the listing data after a successful CSV upload
+                // This ensures the codes table is updated with the latest data from the server
+                if (onSubmit) {
+                  console.log('Refreshing listing data after CSV upload');
+                  // Pass an object with csvUpload flag to trigger a refresh without validation
+                  // and indicate this is a CSV upload (to prevent modal closing)
+                  onSubmit({ csvUpload: true });
+                }
               }}
             />
 
-            {/* CSV Upload Component */}
-            {listing && listing.externalId && (
-              <Box sx={{ mt: 3 }}>
-                {/* Import dynamically to avoid circular dependencies */}
-                {React.createElement(
-                  require('../../../../components/CSVUpload/CSVUploadWithValidation').default,
-                  {
-                    listingId: listing.externalId,
-                    selectedPattern: selectedPattern,
-                    onSuccess: (data) => {
-                      console.log('CSV upload successful:', data);
-
-                      // Update the codes count in the parent component
-                      if (onCodesChange) {
-                        onCodesChange(data.totalCodes);
-                      }
-
-                      // Always refresh the listing data after a successful CSV upload
-                      // This ensures the codes table is updated with the latest data from the server
-                      if (onSubmit) {
-                        console.log('Refreshing listing data after CSV upload');
-                        // Pass an object with csvUpload flag to trigger a refresh without validation
-                        // and indicate this is a CSV upload (to prevent modal closing)
-                        onSubmit({ csvUpload: true });
-                      }
-                    }
-                  }
-                )}
-              </Box>
-            )}
+            {/* Codes Display Table */}
+            <Box sx={{ mt: 3 }}>
+              <Divider sx={{ mb: 3 }} />
+              <PaginatedCodesTable
+                codes={formData.codes || []}
+                onDeleteCode={handleDeleteCode}
+                listingId={listing.externalId || ''}
+                onCodeDeleted={() => {
+                  console.log('Code deleted successfully - local state already updated');
+                }}
+              />
+            </Box>
 
             {!hideSubmitButton && (
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

@@ -1,12 +1,13 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, Divider } from '@mui/material';
 import { Toaster } from 'react-hot-toast';
 import { useModalContext } from '../ModalContext';
 import BasicInformationSection from '../sections/BasicInformationSection';
 import ProductDetailsSection from '../sections/ProductDetailsSection';
 import PricingSection from '../sections/PricingSection';
-import ProductCodeSection from '../sections/ProductCodeSection';
-import CSVUploadSection from './CSVUploadSection';
+import UnifiedProductCodeSection from '../sections/UnifiedProductCodeSection';
+import AdditionalInformationSection from '../sections/AdditionalInformationSection';
+import PaginatedCodesTable from './PaginatedCodesTable';
 
 /**
  * Main content component for the Create New Listing modal
@@ -14,6 +15,7 @@ import CSVUploadSection from './CSVUploadSection';
 const ModalContent: React.FC = () => {
   const {
     formData,
+    setFormData,
     formErrors,
     handleChange,
     handleBlur,
@@ -99,22 +101,35 @@ const ModalContent: React.FC = () => {
         handleChange={handleChange}
       />
 
-      {/* Product Code Section */}
-      <ProductCodeSection
+      {/* Additional Information Section */}
+      <AdditionalInformationSection
+        formData={formData}
+        handleChange={handleChange}
+        handleTagsChange={handleTagsChange}
+      />
+
+      {/* Unified Product Code Section with Tabs */}
+      <UnifiedProductCodeSection
         formData={formData}
         formErrors={formErrors}
         validationError={validationError}
         selectedPattern={selectedPattern}
         handleChange={handleChange}
-        handleTagsChange={handleTagsChange}
         handleDateChange={handleDateChange}
         handleAddCode={handleAddCode}
         handleDeleteCode={handleDeleteCode}
         handleCodeKeyDown={handleCodeKeyDown}
+        setFormData={setFormData}
       />
 
-      {/* CSV Upload Section */}
-      <CSVUploadSection />
+      {/* Codes Display Table */}
+      <Box sx={{ mt: 3 }}>
+        <Divider sx={{ mb: 3 }} />
+        <PaginatedCodesTable
+          codes={formData.codes}
+          onDeleteCode={(code) => handleDeleteCode && handleDeleteCode(code)}
+        />
+      </Box>
 
       <Toaster position="top-right" />
     </Box>

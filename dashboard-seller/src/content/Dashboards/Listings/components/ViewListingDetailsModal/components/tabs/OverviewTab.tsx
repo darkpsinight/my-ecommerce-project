@@ -298,69 +298,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                   </Box>
                 </Box>
               </Grid>
-
-              <Grid item xs={6}>
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    sx={{ mb: 0.5, fontSize: '0.75rem' }}
-                  >
-                    Auto Delivery
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {listing.autoDelivery ? (
-                      <CheckCircleOutlineIcon
-                        fontSize="small"
-                        sx={{ mr: 1, color: 'success.main' }}
-                      />
-                    ) : (
-                      <ErrorOutlineIcon
-                        fontSize="small"
-                        sx={{ mr: 1, color: 'text.secondary' }}
-                      />
-                    )}
-                    <Typography variant="body2" fontWeight={500}>
-                      {listing.autoDelivery ? 'Yes' : 'No'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid item xs={6}>
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    sx={{ mb: 0.5, fontSize: '0.75rem' }}
-                  >
-                    Expiration Date
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <ScheduleIcon
-                      fontSize="small"
-                      sx={{
-                        mr: 1,
-                        color: 'text.secondary',
-                        opacity: 0.7
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      fontWeight={500}
-                      color={
-                        listing.expirationDate
-                          ? 'text.primary'
-                          : 'text.secondary'
-                      }
-                    >
-                      {listing.expirationDate
-                        ? formatDate(listing.expirationDate)
-                        : 'No expiration'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
             </Grid>
           </CardContent>
         </Card>

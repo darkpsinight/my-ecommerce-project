@@ -89,9 +89,14 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
   // Update form data when sharedFormData changes
   useEffect(() => {
     if (sharedFormData) {
+      console.log('sharedFormData changed in ListingForm:', {
+        section,
+        tags: sharedFormData.tags,
+        supportedLanguages: sharedFormData.supportedLanguages
+      });
       setFormData(sharedFormData);
     }
-  }, [sharedFormData]);
+  }, [sharedFormData, section]);
 
   /**
    * Handle text field input changes
@@ -572,6 +577,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
             <TagsAndLanguages
               formData={formData}
               setFormData={setFormData}
+              onFormDataChange={onFormDataChange}
             />
 
             {!hideSubmitButton && (
@@ -718,6 +724,12 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
       return listingData;
     },
     getFormDataRaw: () => {
+      // Log the raw form data for debugging
+      console.log('getFormDataRaw called in section:', section, {
+        tags: formData.tags,
+        supportedLanguages: formData.supportedLanguages
+      });
+
       // Return the raw form data for saving between tab switches
       return formData;
     }

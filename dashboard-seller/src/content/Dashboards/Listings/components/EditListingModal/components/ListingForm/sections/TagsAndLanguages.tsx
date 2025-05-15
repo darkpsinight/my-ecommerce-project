@@ -16,11 +16,13 @@ import { availableTags, availableLanguages } from '../utils/constants';
 interface TagsAndLanguagesProps {
   formData: FormData;
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
+  onFormDataChange?: (formData: FormData) => void;
 }
 
 const TagsAndLanguages: React.FC<TagsAndLanguagesProps> = ({
   formData,
-  setFormData
+  setFormData,
+  onFormDataChange
 }) => {
   return (
     <SectionContainer>
@@ -33,7 +35,21 @@ const TagsAndLanguages: React.FC<TagsAndLanguagesProps> = ({
             options={availableTags}
             value={formData.tags}
             onChange={(_, newValue) => {
-              setFormData(prev => ({ ...prev, tags: newValue }));
+              console.log('Tags changed:', { oldValue: formData.tags, newValue });
+
+              // Update the form data
+              setFormData(prev => {
+                const updated = { ...prev, tags: newValue };
+                console.log('Updated form data (tags):', updated);
+
+                // Notify parent component of form data change
+                if (onFormDataChange) {
+                  console.log('Calling onFormDataChange with updated tags');
+                  onFormDataChange(updated);
+                }
+
+                return updated;
+              });
             }}
             freeSolo
             renderTags={(value, getTagProps) =>
@@ -58,7 +74,7 @@ const TagsAndLanguages: React.FC<TagsAndLanguagesProps> = ({
             )}
           />
         </Grid>
-        
+
         <Grid item xs={12}>
           <Autocomplete
             multiple
@@ -66,7 +82,21 @@ const TagsAndLanguages: React.FC<TagsAndLanguagesProps> = ({
             options={availableLanguages}
             value={formData.supportedLanguages}
             onChange={(_, newValue) => {
-              setFormData(prev => ({ ...prev, supportedLanguages: newValue }));
+              console.log('Supported Languages changed:', { oldValue: formData.supportedLanguages, newValue });
+
+              // Update the form data
+              setFormData(prev => {
+                const updated = { ...prev, supportedLanguages: newValue };
+                console.log('Updated form data (supportedLanguages):', updated);
+
+                // Notify parent component of form data change
+                if (onFormDataChange) {
+                  console.log('Calling onFormDataChange with updated supportedLanguages');
+                  onFormDataChange(updated);
+                }
+
+                return updated;
+              });
             }}
             freeSolo
             renderTags={(value, getTagProps) =>

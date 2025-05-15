@@ -213,14 +213,33 @@ const EditListingModal: FC<EditListingModalProps> = ({
     // Save the current tab's form data before switching
     const currentFormRef = getCurrentFormRef();
 
-    if (currentFormRef.current?.getFormData && sharedFormData) {
+    if (currentFormRef.current?.getFormDataRaw && sharedFormData) {
       // Get the current form data
       const currentFormData = currentFormRef.current.getFormDataRaw();
 
+      // Log the current tab's form data for debugging
+      console.log('Tab change - Current tab form data:', {
+        fromTabIndex: tabValue,
+        fromTabName: ['general', 'codes', 'tagsLanguages', 'images'][tabValue],
+        toTabIndex: newValue,
+        toTabName: ['general', 'codes', 'tagsLanguages', 'images'][newValue],
+        tags: currentFormData.tags,
+        supportedLanguages: currentFormData.supportedLanguages
+      });
+
       // Update the shared form data with the current tab's data
-      setSharedFormData({
+      const updatedSharedFormData = {
         ...sharedFormData,
         ...currentFormData
+      };
+
+      // Set the updated shared form data
+      setSharedFormData(updatedSharedFormData);
+
+      // Log the updated shared form data for debugging
+      console.log('Tab change - Updated shared form data:', {
+        tags: updatedSharedFormData.tags,
+        supportedLanguages: updatedSharedFormData.supportedLanguages
       });
     }
 
@@ -343,47 +362,65 @@ const EditListingModal: FC<EditListingModalProps> = ({
     // First, save the current tab's form data to the shared form data
     const activeFormRef = getCurrentFormRef();
 
-    if (activeFormRef.current?.getFormDataRaw && sharedFormData) {
+    // Create a local copy of the shared form data to work with
+    let currentSharedFormData = { ...sharedFormData };
+
+    if (activeFormRef.current?.getFormDataRaw && currentSharedFormData) {
       // Get the current form data
       const activeFormData = activeFormRef.current.getFormDataRaw();
 
-      // Update the shared form data with the current tab's data
-      setSharedFormData(prevData => ({
-        ...prevData,
+      // Log the active form data for debugging
+      console.log('Active form data in collectFormData:', {
+        tabIndex: tabValue,
+        tabName: ['general', 'codes', 'tagsLanguages', 'images'][tabValue],
+        tags: activeFormData.tags,
+        supportedLanguages: activeFormData.supportedLanguages
+      });
+
+      // Update the local copy of shared form data with the current tab's data
+      currentSharedFormData = {
+        ...currentSharedFormData,
         ...activeFormData
-      }));
+      };
+
+      // Also update the state for future reference
+      setSharedFormData(currentSharedFormData);
     }
 
     // Create a comprehensive listing data object from the shared form data
     const formData: Partial<Listing> = {};
 
-    if (sharedFormData) {
+    if (currentSharedFormData) {
       // Convert shared form data to listing data format
 
       // General tab data
-      formData.title = sharedFormData.title;
-      formData.description = sharedFormData.description;
-      formData.price = parseFloat(sharedFormData.price);
-      if (sharedFormData.originalPrice) {
-        formData.originalPrice = parseFloat(sharedFormData.originalPrice);
+      formData.title = currentSharedFormData.title;
+      formData.description = currentSharedFormData.description;
+      formData.price = parseFloat(currentSharedFormData.price);
+      if (currentSharedFormData.originalPrice) {
+        formData.originalPrice = parseFloat(currentSharedFormData.originalPrice);
       }
-      formData.region = sharedFormData.region;
-      formData.isRegionLocked = sharedFormData.isRegionLocked;
-      formData.autoDelivery = sharedFormData.autoDelivery;
-      formData.sellerNotes = sharedFormData.sellerNotes;
+      formData.region = currentSharedFormData.region;
+      formData.isRegionLocked = currentSharedFormData.isRegionLocked;
+      formData.autoDelivery = currentSharedFormData.autoDelivery;
+      formData.sellerNotes = currentSharedFormData.sellerNotes;
 
       // Codes tab data
       // Use the codes from the shared form data instead of the original listing
       // This ensures any newly added codes in the UI are included in the submission
       // Use type assertion to handle the type mismatch between FormData codes and Listing codes
-      formData.codes = (sharedFormData.codes || []) as any;
+      formData.codes = (currentSharedFormData.codes || []) as any;
 
       // Tags & Languages tab data
-      formData.tags = sharedFormData.tags;
-      formData.supportedLanguages = sharedFormData.supportedLanguages;
+      formData.tags = currentSharedFormData.tags;
+      formData.supportedLanguages = currentSharedFormData.supportedLanguages;
 
       // Images tab data
-      formData.thumbnailUrl = sharedFormData.thumbnailUrl;
+      formData.thumbnailUrl = currentSharedFormData.thumbnailUrl;
+
+      // Log the tags and languages for debugging
+      console.log('Tags in collectFormData:', formData.tags);
+      console.log('Supported Languages in collectFormData:', formData.supportedLanguages);
     } else {
       // Fallback to the old method if shared form data is not available
       console.warn('Shared form data not available, falling back to individual form data collection');
@@ -519,22 +556,52 @@ const EditListingModal: FC<EditListingModalProps> = ({
     // First, ensure the current tab's form data is saved to the shared form data
     if (currentFormRef.current?.getFormDataRaw && sharedFormData) {
       const currentTabFormData = currentFormRef.current.getFormDataRaw();
-      setSharedFormData({
+
+      // Log the current tab's form data for debugging
+      console.log('Current tab form data before update:', {
+        tabIndex: tabValue,
+        tabName: ['general', 'codes', 'tagsLanguages', 'images'][tabValue],
+        tags: currentTabFormData.tags,
+        supportedLanguages: currentTabFormData.supportedLanguages
+      });
+
+      // Update the shared form data with the current tab's data
+      const updatedSharedFormData = {
         ...sharedFormData,
         ...currentTabFormData
+      };
+
+      // Set the updated shared form data
+      setSharedFormData(updatedSharedFormData);
+
+      // Log the updated shared form data for debugging
+      console.log('Updated shared form data:', {
+        tags: updatedSharedFormData.tags,
+        supportedLanguages: updatedSharedFormData.supportedLanguages
       });
     }
 
-    // Now collect data from all tabs
-    const formData = collectFormData();
+    // Force synchronous update of shared form data before collecting all form data
+    // This is important because setState is asynchronous
+    const updatedFormData = collectFormData();
+
+    // Log the collected form data for debugging
+    console.log('Collected form data after update:', {
+      tags: updatedFormData.tags,
+      supportedLanguages: updatedFormData.supportedLanguages
+    });
 
     // Convert categoryId to string if it's an object
-    const apiData: any = { ...formData };
+    const apiData: any = { ...updatedFormData };
     if (apiData.categoryId && typeof apiData.categoryId === 'object') {
       apiData.categoryId = apiData.categoryId._id;
     }
 
     console.log('Sending API data with all tab changes:', apiData);
+
+    // Log specifically about tags and languages for debugging
+    console.log('Tags being sent to API:', apiData.tags);
+    console.log('Supported Languages being sent to API:', apiData.supportedLanguages);
 
     // Log specifically about codes for debugging
     if (apiData.codes) {
@@ -554,7 +621,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
       // Create an updated listing object with the response data and existing data
       const updatedListing = {
         ...listing,
-        ...formData,
+        ...updatedFormData,
         updatedAt: new Date().toISOString()
       };
 

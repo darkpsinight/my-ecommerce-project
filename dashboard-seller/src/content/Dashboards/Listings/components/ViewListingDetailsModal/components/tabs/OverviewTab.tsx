@@ -9,7 +9,8 @@ import {
   alpha,
   LinearProgress,
   Chip,
-  FormHelperText
+  Tooltip,
+  IconButton
 } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -17,12 +18,12 @@ import GamesIcon from '@mui/icons-material/Games';
 import PublicIcon from '@mui/icons-material/Public';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import ScheduleIcon from '@mui/icons-material/Schedule';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import NotesIcon from '@mui/icons-material/Notes';
 import LockIcon from '@mui/icons-material/Lock';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 import { Listing } from '../../../../types';
 import { formatDate } from '../../utils/formatters';
@@ -114,31 +115,44 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                   mb: 1.5
                 }}
               >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                >
-                  <NotesIcon
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography
+                    variant="h6"
                     sx={{
-                      mr: 1,
-                      color: theme.palette.primary.main,
-                      fontSize: 20
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center'
                     }}
+                  >
+                    <NotesIcon
+                      sx={{
+                        mr: 1,
+                        color: theme.palette.primary.main,
+                        fontSize: 20
+                      }}
+                    />
+                    Seller Notes
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Tooltip
+                    arrow
+                    placement="top"
+                    title="These notes are private and only visible to you. They will not be shared with buyers."
+                  >
+                    <IconButton size="small" sx={{ mr: 1, p: 0.5 }}>
+                      <HelpOutlineIcon fontSize="small" color="action" />
+                    </IconButton>
+                  </Tooltip>
+                  <Chip
+                    icon={<LockIcon fontSize="small" />}
+                    label="Private"
+                    size="small"
+                    color="default"
+                    variant="outlined"
+                    sx={{ fontWeight: 'medium' }}
                   />
-                  Seller Notes
-                </Typography>
-                <Chip
-                  icon={<LockIcon fontSize="small" />}
-                  label="Private"
-                  size="small"
-                  color="default"
-                  variant="outlined"
-                  sx={{ fontWeight: 'medium' }}
-                />
+                </Box>
               </Box>
               <Box
                 dangerouslySetInnerHTML={{
@@ -157,10 +171,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                   }
                 }}
               />
-              <FormHelperText sx={{ mt: 1, fontStyle: 'italic' }}>
-                These notes are private and only visible to you. They will not
-                be shared with buyers.
-              </FormHelperText>
             </CardContent>
           </Card>
         </Grid>

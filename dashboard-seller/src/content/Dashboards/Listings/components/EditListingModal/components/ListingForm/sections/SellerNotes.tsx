@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
-import { FormHelperText, Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip, Tooltip, IconButton } from '@mui/material';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { FormData } from '../utils/types';
 import SectionHeader from '../components/SectionHeader';
 import { SectionContainer, EditorContainer } from '../components/StyledComponents';
 import LockIcon from '@mui/icons-material/Lock';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 interface SellerNotesProps {
   formData: FormData;
@@ -22,14 +23,25 @@ const SellerNotes: React.FC<SellerNotesProps> = ({
     <SectionContainer>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <SectionHeader icon="notes" title="Seller Notes" />
-        <Chip
-          icon={<LockIcon fontSize="small" />}
-          label="Private"
-          size="small"
-          color="default"
-          variant="outlined"
-          sx={{ fontWeight: 'medium' }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Tooltip
+            arrow
+            placement="top"
+            title="These notes are private and only visible to you. They will not be shared with buyers."
+          >
+            <IconButton size="small" sx={{ mr: 1, p: 0.5 }}>
+              <HelpOutlineIcon fontSize="small" color="action" />
+            </IconButton>
+          </Tooltip>
+          <Chip
+            icon={<LockIcon fontSize="small" />}
+            label="Private"
+            size="small"
+            color="default"
+            variant="outlined"
+            sx={{ fontWeight: 'medium' }}
+          />
+        </Box>
       </Box>
       <EditorContainer>
         <ReactQuill
@@ -48,9 +60,6 @@ const SellerNotes: React.FC<SellerNotesProps> = ({
             ]
           }}
         />
-        <FormHelperText sx={{ mt: 1, fontStyle: 'italic' }}>
-          These notes are private and only visible to you. They will not be shared with buyers.
-        </FormHelperText>
       </EditorContainer>
     </SectionContainer>
   );

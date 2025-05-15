@@ -107,6 +107,7 @@ const UnifiedProductCodeSection: React.FC<UnifiedProductCodeSectionProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isVerySmallScreen = useMediaQuery('(max-width:380px)');
   const [tabValue, setTabValue] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -424,17 +425,50 @@ const UnifiedProductCodeSection: React.FC<UnifiedProductCodeSectionProps> = ({
             aria-label="code entry methods"
             textColor="primary"
             indicatorColor="primary"
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                minWidth: { xs: isVerySmallScreen ? 'auto' : '120px', sm: 'auto' },
+                px: { xs: isVerySmallScreen ? 0.5 : 1, sm: 2 },
+                py: { xs: 0.5, sm: 1 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                whiteSpace: 'nowrap'
+              }
+            }}
           >
             <Tab
               icon={<CodeIcon />}
               iconPosition="start"
-              label="Manual Entry"
+              label={
+                <Typography
+                  component="span"
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    ml: { xs: 0.5, sm: 1 }
+                  }}
+                >
+                  {isVerySmallScreen ? 'Manual' : 'Manual Entry'}
+                </Typography>
+              }
               {...a11yProps(0)}
             />
             <Tab
               icon={<UploadFileIcon />}
               iconPosition="start"
-              label="Bulk Upload"
+              label={
+                <Typography
+                  component="span"
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    ml: { xs: 0.5, sm: 1 }
+                  }}
+                >
+                  {isVerySmallScreen ? 'Bulk' : 'Bulk Upload'}
+                </Typography>
+              }
               {...a11yProps(1)}
             />
           </Tabs>

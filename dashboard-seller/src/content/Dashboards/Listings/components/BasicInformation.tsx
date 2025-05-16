@@ -82,13 +82,13 @@ export const BasicInformation: FC<BasicInformationProps> = ({
     handleChange(syntheticEvent);
   };
 
-  // Quill modules configuration
+  // Quill modules configuration without image upload support
   const modules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
       [{ list: 'ordered' }, { list: 'bullet' }],
-      ['link', 'image'],
+      ['link'],
       ['clean'],
     ],
   };

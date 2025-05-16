@@ -33,13 +33,13 @@ const BasicInformationSection: React.FC<BasicInformationSectionProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Quill modules configuration
+  // Quill modules configuration without image upload support
   const modules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ list: 'ordered' }, { list: 'bullet' }],
-      ['link', 'image'],
+      ['link'],
       ['clean'],
     ],
   };

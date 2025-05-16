@@ -40,10 +40,10 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
     { id: 'codes', label: 'CODES', align: 'left', sortable: false },
     {
       id: 'quantity',
-      label: 'QTY (A/T)',
+      label: 'QTY (OS/T)',
       align: 'center',
       sortable: false,
-      tooltip: 'Quantity: Active codes available / Total codes listed',
+      tooltip: 'Quantity: On Sale codes available / Total codes listed',
       style: { whiteSpace: 'nowrap' } // Ensure label stays on one line
     },
     { id: 'price', label: 'PRICE', align: 'left', sortable: true },

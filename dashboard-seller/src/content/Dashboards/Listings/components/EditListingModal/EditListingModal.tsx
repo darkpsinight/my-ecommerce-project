@@ -309,7 +309,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
             toast.error('Listing cannot be activated: A listing must have at least one code to be active');
           } else {
             // Use custom toast instead of toast.info which doesn't exist in react-hot-toast
-            toast(`Listing status is ${actualStatus}`, {
+            toast(`Listing status is ${actualStatus === 'active' ? 'On Sale' : actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)}`, {
               icon: '📝',
               style: {
                 borderRadius: '10px',
@@ -320,7 +320,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
             });
           }
         } else {
-          toast.success(`Listing status updated to ${actualStatus}`);
+          toast.success(`Listing status updated to ${actualStatus === 'active' ? 'On Sale' : actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)}`);
         }
       }, 100);
     } catch (error: any) {

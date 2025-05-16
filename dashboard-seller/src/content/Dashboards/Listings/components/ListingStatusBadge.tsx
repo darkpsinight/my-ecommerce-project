@@ -29,7 +29,7 @@ const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({ status }) => {
   // Ensure status is a valid ListingStatusType
   const getValidStatus = (statusValue?: ListingStatusType | string): ListingStatusType => {
     if (!statusValue) return 'active';
-    
+
     switch (statusValue) {
       case 'active':
       case 'sold':
@@ -51,7 +51,11 @@ const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({ status }) => {
       color={getStatusColor(validStatus)}
       noWrap
     >
-      {status ? status.toString().charAt(0).toUpperCase() + status.toString().slice(1) : 'Active'}
+      {status
+        ? status.toString() === 'active'
+          ? 'On Sale'
+          : status.toString().charAt(0).toUpperCase() + status.toString().slice(1)
+        : 'On Sale'}
     </Typography>
   );
 };

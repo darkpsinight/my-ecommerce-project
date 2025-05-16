@@ -173,7 +173,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
                       display: { xs: 'none', sm: 'block' }
                     }}
                   >
-                    {listing.status === 'active' ? 'Set Draft' : 'Publish'}
+                    {listing.status === 'active' ? 'Set Draft' : 'Set On Sale'}
                   </Typography>
                 }
                 sx={{

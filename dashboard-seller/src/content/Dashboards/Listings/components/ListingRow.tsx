@@ -151,7 +151,7 @@ const ListingRow: FC<ListingRowProps> = ({
       </TableCell>
       <TableCell align="center">
         <Tooltip
-          title="Format: Active/Total (Active codes available / Total codes listed)"
+          title="Format: On Sale/Total (On Sale codes available / Total codes listed)"
           arrow
           placement="top"
         >

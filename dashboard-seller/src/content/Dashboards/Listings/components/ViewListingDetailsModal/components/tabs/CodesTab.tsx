@@ -122,7 +122,7 @@ const CodesTab: React.FC<CodesTabProps> = ({
             </Typography>
 
             <Chip
-              label={`${activeCodes} Active / ${totalCodes} Total`}
+              label={`${activeCodes} On Sale / ${totalCodes} Total`}
               color={activeCodes > 0 ? 'success' : 'default'}
               size="small"
               sx={{ fontWeight: 500, ml: 1 }}
@@ -234,7 +234,7 @@ const CodesTab: React.FC<CodesTabProps> = ({
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={codeItem.soldStatus}
+                          label={codeItem.soldStatus === 'active' ? 'On Sale' : codeItem.soldStatus}
                           size="small"
                           color={
                             codeItem.soldStatus === 'active'

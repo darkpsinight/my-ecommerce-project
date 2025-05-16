@@ -81,8 +81,8 @@ const FilterPanel: FC<FilterPanelProps> = ({
               ),
               endAdornment: searchTerm && (
                 <InputAdornment position="end">
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     onClick={() => setSearchTerm('')}
                     edge="end"
                   >
@@ -139,7 +139,7 @@ const FilterPanel: FC<FilterPanelProps> = ({
               label="Status"
             >
               <MenuItem value="all">All Statuses</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="active">On Sale</MenuItem>
               <MenuItem value="sold">Sold</MenuItem>
               <MenuItem value="expired">Expired</MenuItem>
               <MenuItem value="suspended">Suspended</MenuItem>

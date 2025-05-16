@@ -391,7 +391,7 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                         ) : (
                           <Chip
                             size="small"
-                            label="Active"
+                            label="On Sale"
                             color={codeItem.isInvalid ? 'warning' : 'success'}
                             variant="outlined"
                             sx={{ height: 24 }}

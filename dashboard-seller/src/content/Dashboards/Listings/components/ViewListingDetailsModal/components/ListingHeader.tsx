@@ -196,9 +196,11 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
                 }}
               >
                 {listing.status
-                  ? listing.status.toString().charAt(0).toUpperCase() +
-                    listing.status.toString().slice(1)
-                  : 'Active'}
+                  ? listing.status.toString() === 'active'
+                    ? 'On Sale'
+                    : listing.status.toString().charAt(0).toUpperCase() +
+                      listing.status.toString().slice(1)
+                  : 'On Sale'}
               </Typography>
             </Box>
 

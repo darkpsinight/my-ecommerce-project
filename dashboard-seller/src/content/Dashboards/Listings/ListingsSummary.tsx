@@ -100,7 +100,7 @@ const ListingsSummary: FC = () => {
   const items = [
     {
       id: 1,
-      name: 'Active Listings',
+      name: 'On Sale Listings',
       value: summaryData.activeListings.toString(),
       icon: ShoppingCartTwoToneIcon,
       color: theme.colors.primary.main

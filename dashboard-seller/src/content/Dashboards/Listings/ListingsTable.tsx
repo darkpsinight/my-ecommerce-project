@@ -167,7 +167,7 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
       setListingDetailsForDelete({
         title: listingToDelete.title, // Pass the full title, truncation will be handled in the ConfirmationDialog
         fullTitle: listingToDelete.title, // Store the full title for responsive display
-        subtitle: `${listingToDelete.platform} • ${listingToDelete.status}`,
+        subtitle: `${listingToDelete.platform} • ${listingToDelete.status === 'active' ? 'On Sale' : listingToDelete.status.charAt(0).toUpperCase() + listingToDelete.status.slice(1)}`,
         metadata: [
           { label: 'Price', value: formattedPrice },
           { label: 'Created', value: formattedDate },

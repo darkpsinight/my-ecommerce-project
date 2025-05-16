@@ -1,6 +1,6 @@
 // Listing status enum
 export enum ListingStatus {
-  ACTIVE = 'active',
+  ACTIVE = 'active', // 'active' value remains the same in the backend, only UI display changes
   SOLD = 'sold',
   EXPIRED = 'expired',
   SUSPENDED = 'suspended',

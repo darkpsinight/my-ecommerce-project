@@ -47,7 +47,7 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
                           codeObj.soldStatus === 'expired' ? 'error.main' :
                           codeObj.soldStatus === 'draft' ? 'warning.main' : 'text.secondary'}
                   >
-                    {codeObj.soldStatus === 'active' ? 'Active' :
+                    {codeObj.soldStatus === 'active' ? 'On Sale' :
                       codeObj.soldStatus === 'sold' ? `Sold${codeObj.soldAt ? ` on ${format(new Date(codeObj.soldAt), 'MM/dd/yyyy')}` : ''}` :
                       codeObj.soldStatus === 'expired' ? 'Expired' :
                       codeObj.soldStatus === 'draft' ? 'Draft' : codeObj.soldStatus}

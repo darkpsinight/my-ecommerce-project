@@ -151,7 +151,7 @@ const ListingRow: FC<ListingRowProps> = ({
       </TableCell>
       <TableCell align="center">
         <Tooltip
-          title="Format: On Sale/Total (On Sale codes available / Total codes listed)"
+          title="Number of codes that are currently on sale"
           arrow
           placement="top"
         >
@@ -161,7 +161,22 @@ const ListingRow: FC<ListingRowProps> = ({
             color={activeCodes > 0 ? 'success.main' : 'error.main'}
             sx={{ cursor: 'help' }}
           >
-            {activeCodes}/{totalCodes}
+            {activeCodes}
+          </Typography>
+        </Tooltip>
+      </TableCell>
+      <TableCell align="center">
+        <Tooltip
+          title="Total number of codes for this listing"
+          arrow
+          placement="top"
+        >
+          <Typography
+            variant="body1"
+            fontWeight="bold"
+            sx={{ cursor: 'help' }}
+          >
+            {totalCodes}
           </Typography>
         </Tooltip>
       </TableCell>

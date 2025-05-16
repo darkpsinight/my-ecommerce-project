@@ -39,11 +39,19 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
     { id: 'platform', label: 'PLATFORM', align: 'left', sortable: true },
     { id: 'codes', label: 'CODES', align: 'left', sortable: false },
     {
-      id: 'quantity',
-      label: 'QTY (OS/T)',
+      id: 'onSale',
+      label: 'ON SALE',
       align: 'center',
       sortable: false,
-      tooltip: 'Quantity: On Sale codes available / Total codes listed',
+      tooltip: 'Number of codes that are currently on sale',
+      style: { whiteSpace: 'nowrap' } // Ensure label stays on one line
+    },
+    {
+      id: 'total',
+      label: 'TOTAL',
+      align: 'center',
+      sortable: false,
+      tooltip: 'Total number of codes for this listing',
       style: { whiteSpace: 'nowrap' } // Ensure label stays on one line
     },
     { id: 'price', label: 'PRICE', align: 'left', sortable: true },
@@ -60,10 +68,10 @@ const ListingsTableHeader: FC<ListingsTableHeaderProps> = ({
 
   // Custom styling for specific columns
   const getColumnStyle = (headerId: string) => {
-    if (headerId === 'quantity') {
+    if (headerId === 'onSale' || headerId === 'total') {
       return {
-        width: '100px',
-        minWidth: '100px',
+        width: '80px',
+        minWidth: '80px',
         whiteSpace: 'nowrap' // Prevent text wrapping
       };
     }

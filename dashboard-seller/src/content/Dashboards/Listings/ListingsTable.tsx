@@ -381,7 +381,7 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   }, [refreshListings]);
 
   // Constants
-  const TABLE_COLUMNS_COUNT = 9; // Including checkbox column
+  const TABLE_COLUMNS_COUNT = 10; // Including checkbox column and the new Total column
 
   return (
     <Card>

@@ -519,6 +519,33 @@ const EditListingModal: FC<EditListingModalProps> = ({
         }, 100);
         return;
       }
+
+      // If we're in the images tab or this is a save action from the footer, check if we need to upload an image first
+      if ((tabValue === 3 || isSaveAction) && currentFormRef.current.uploadImageIfNeeded) {
+        console.log('Checking if image upload is needed before form submission');
+
+        // Set submitting state to show loading indicator
+        setIsSubmitting(true);
+
+        try {
+          // Upload the image if needed
+          const uploadSuccess = await currentFormRef.current.uploadImageIfNeeded();
+
+          // If upload failed, stop the submission process
+          if (!uploadSuccess) {
+            console.error('Image upload failed, stopping form submission');
+            setIsSubmitting(false);
+            return;
+          }
+
+          console.log('Image upload check completed, continuing with form submission');
+        } catch (error) {
+          console.error('Error during image upload:', error);
+          toast.error('Failed to upload image. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
     }
 
     // If this is a refresh request, CSV upload, and not a save action, fetch the updated listing data

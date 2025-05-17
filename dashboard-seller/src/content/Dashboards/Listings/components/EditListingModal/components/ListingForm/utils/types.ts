@@ -106,6 +106,7 @@ export interface FormRef {
   validateForm: () => boolean;
   getFormData: () => Partial<Listing>;
   getFormDataRaw: () => FormData;
+  uploadImageIfNeeded?: () => Promise<boolean>;
 }
 
 export interface SectionHeaderProps {

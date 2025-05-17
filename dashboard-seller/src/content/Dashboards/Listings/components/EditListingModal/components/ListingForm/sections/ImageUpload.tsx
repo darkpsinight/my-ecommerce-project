@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Grid,
   Box,
@@ -21,12 +21,14 @@ interface ImageUploadProps {
   onSubmit?: () => void; // For form submission
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({
-  formData,
-  formErrors,
-  handleTextChange,
-  onSubmit
-}) => {
+// Define the ref interface
+export interface ImageUploadRef {
+  uploadImageBeforeSubmit: () => Promise<boolean>;
+  hasTemporaryImage: () => boolean;
+}
+
+const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>((props, ref) => {
+  const { formData, formErrors, handleTextChange, onSubmit } = props;
   const theme = useTheme();
   const [temporaryImageFile, setTemporaryImageFile] = useState<File | null>(null);
   const [imageUploadInProgress, setImageUploadInProgress] = useState<boolean>(false);
@@ -81,40 +83,18 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     handleTextChange(syntheticEvent);
   };
 
-  // Create a custom submit handler that first uploads the image
-  const handleSubmitWithUpload = async () => {
-    if (!onSubmit) return;
-
-    // First upload the image if needed
-    const uploadSuccess = await handleImageUploadBeforeSubmit();
-
-    // Only proceed with form submission if image upload was successful
-    if (uploadSuccess) {
-      // Call the original onSubmit function
-      onSubmit();
+  // Expose methods to parent component through ref
+  useImperativeHandle(ref, () => ({
+    // Method to upload image before form submission
+    uploadImageBeforeSubmit: async () => {
+      console.log('uploadImageBeforeSubmit called, temporaryImageFile:', temporaryImageFile ? temporaryImageFile.name : 'none');
+      return handleImageUploadBeforeSubmit();
+    },
+    // Method to check if there's a temporary image that needs to be uploaded
+    hasTemporaryImage: () => {
+      return temporaryImageFile !== null;
     }
-  };
-
-  // Override the onSubmit prop to handle image upload first
-  useEffect(() => {
-    // Store the original onSubmit function
-    const originalOnSubmit = onSubmit;
-
-    // If we have an onSubmit function and a temporary image file
-    if (originalOnSubmit && temporaryImageFile) {
-      // Replace the onSubmit function with our custom one
-      onSubmit = async () => {
-        // First upload the image if needed
-        const uploadSuccess = await handleImageUploadBeforeSubmit();
-
-        // Only proceed with form submission if image upload was successful
-        if (uploadSuccess && originalOnSubmit) {
-          // Call the original onSubmit function
-          originalOnSubmit();
-        }
-      };
-    }
-  }, [temporaryImageFile]);
+  }));
 
   return (
     <SectionContainer className="image-upload-component">
@@ -143,6 +123,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       </Grid>
     </SectionContainer>
   );
-};
+});
 
 export default ImageUpload;

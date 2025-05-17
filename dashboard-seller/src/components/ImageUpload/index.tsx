@@ -88,16 +88,21 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUrlValue(e.target.value);
+    const newUrl = e.target.value;
+    setUrlValue(newUrl);
+
+    // Pass to parent component for tracking
     if (onUrlChange) {
-      onUrlChange(e.target.value);
+      onUrlChange(newUrl);
     }
   };
 
-  const handleUrlSubmit = () => {
+  // Handle URL validation and update on blur
+  const handleUrlBlur = () => {
     try {
       // Basic URL validation
       new URL(urlValue);
+      // Update the image URL in the parent component
       onChange(urlValue);
       toast.success('Image URL updated');
     } catch (error) {
@@ -448,30 +453,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
             <TabPanel value={tabValue} index={1} sx={{ p: 1.5 }}>
               <Grid container spacing={1} alignItems="center">
-                <Grid item xs={8}>
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
                     size="small"
                     label="Image URL"
                     value={urlValue}
                     onChange={handleUrlChange}
+                    onBlur={handleUrlBlur}
                     placeholder="https://example.com/image.jpg"
                     error={!!error}
-                    helperText={error}
+                    helperText={error || "Enter URL and press Tab or click outside to apply"}
                     variant="outlined"
                     InputProps={{ sx: { fontSize: '0.85rem' } }}
                   />
-                </Grid>
-                <Grid item xs={4}>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={handleUrlSubmit}
-                    fullWidth
-                    sx={{ py: 0.75, fontSize: '0.75rem' }}
-                  >
-                    Use URL
-                  </Button>
                 </Grid>
               </Grid>
             </TabPanel>
@@ -480,60 +475,96 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       </Paper>
 
       {/* Show preview from either the selected file or the existing value */}
-      {(previewUrl || value) && (
+      {(previewUrl || value || uploadInProgress) && (
         <Box
           sx={{
             p: 1,
             border: '1px solid',
-            borderColor: 'divider',
+            borderColor: uploadInProgress ? 'primary.main' : 'divider',
             borderRadius: 1,
-            textAlign: 'center'
+            textAlign: 'center',
+            position: 'relative'
           }}
         >
           <Typography variant="subtitle2" sx={{ fontSize: '0.8rem', mb: 0.5 }}>
-            Image Preview
+            {uploadInProgress ? 'Uploading Image...' : 'Image Preview'}
           </Typography>
+
           <Box sx={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             height: '120px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            position: 'relative'
           }}>
-            <img
-              src={previewUrl || value}
-              alt="Thumbnail Preview"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '120px',
-                objectFit: 'contain',
-                borderRadius: '4px'
-              }}
-              onError={(e) => {
-                const width = 400;
-                const svg = encodeURIComponent(`
-                  <svg width="${width}" height="${Math.round(width * 0.66)}"
-                       xmlns="http://www.w3.org/2000/svg">
-                    <rect width="100%" height="100%" fill="#e0e0e0"/>
-                    <text x="50%" y="50%" dominant-baseline="middle"
-                          text-anchor="middle" font-family="Arial"
-                          font-size="16" fill="#666">
-                      Image Preview Not Available
-                    </text>
-                  </svg>
-                `);
-                e.currentTarget.src = `data:image/svg+xml,${svg}`;
-              }}
-            />
+            {/* Show image with opacity reduced during upload */}
+            {(previewUrl || value) && (
+              <img
+                src={previewUrl || value}
+                alt="Thumbnail Preview"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '120px',
+                  objectFit: 'contain',
+                  borderRadius: '4px',
+                  opacity: uploadInProgress ? 0.5 : 1,
+                  transition: 'opacity 0.3s ease'
+                }}
+                onError={(e) => {
+                  const width = 400;
+                  const svg = encodeURIComponent(`
+                    <svg width="${width}" height="${Math.round(width * 0.66)}"
+                         xmlns="http://www.w3.org/2000/svg">
+                      <rect width="100%" height="100%" fill="#e0e0e0"/>
+                      <text x="50%" y="50%" dominant-baseline="middle"
+                            text-anchor="middle" font-family="Arial"
+                            font-size="16" fill="#666">
+                        Image Preview Not Available
+                      </text>
+                    </svg>
+                  `);
+                  e.currentTarget.src = `data:image/svg+xml,${svg}`;
+                }}
+              />
+            )}
+
+            {/* Overlay loading indicator during upload */}
+            {uploadInProgress && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  zIndex: 1
+                }}
+              >
+                <CircularProgress size={30} />
+                <Typography variant="caption" sx={{ mt: 1, fontWeight: 'medium' }}>
+                  Uploading to server...
+                </Typography>
+              </Box>
+            )}
           </Box>
 
+          {/* Status message below the image */}
           {uploadInProgress && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-              <CircularProgress size={20} />
-              <Typography variant="caption" sx={{ ml: 1 }}>
-                Uploading image...
-              </Typography>
-            </Box>
+            <Alert severity="info" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
+              Your image will be uploaded when you save the listing
+            </Alert>
+          )}
+
+          {file && !uploadInProgress && (
+            <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 0.5 }}>
+              Image selected and ready to upload when you save
+            </Typography>
           )}
         </Box>
       )}

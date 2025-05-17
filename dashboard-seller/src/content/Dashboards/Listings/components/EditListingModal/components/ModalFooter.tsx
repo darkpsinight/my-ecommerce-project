@@ -22,6 +22,9 @@ const ModalFooter: FC<ModalFooterProps> = ({
       // Pass a non-empty object to avoid triggering the refresh logic
       // and indicate this is a save action from the footer
       console.log('Save button clicked in ModalFooter');
+
+      // This will trigger the image upload in the EditListingModal component
+      // before the form is submitted
       onSave({ _saveAction: true });
     }
   };

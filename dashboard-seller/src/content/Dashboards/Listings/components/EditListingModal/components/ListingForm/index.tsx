@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect, useImperativeHandle } from 'react';
+import React, { forwardRef, useState, useEffect, useImperativeHandle, useRef } from 'react';
 import {
   Box,
   Button,
@@ -16,7 +16,7 @@ import TagsAndLanguages from './sections/TagsAndLanguages';
 import UnifiedProductCodeSection from './sections/UnifiedProductCodeSection';
 import PaginatedCodesTable from './components/PaginatedCodesTable';
 import SellerNotes from './sections/SellerNotes';
-import ImageUpload from './sections/ImageUpload';
+import ImageUpload, { ImageUploadRef } from './sections/ImageUpload';
 
 // Import types and utilities
 import { FormData, FormErrors, FormRef, ListingFormProps, Listing } from './utils/types';
@@ -361,10 +361,13 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
 
 
 
+  // Create a ref for the ImageUpload component
+  const imageUploadRef = useRef<ImageUploadRef>(null);
+
   /**
    * Handle form submission
    */
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const { errors, isValid } = validateForm(formData);
 
     // Always update form errors to show validation feedback
@@ -377,6 +380,29 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
         firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       return;
+    }
+
+    // If we're in the images section and have a temporary image, upload it first
+    if (section === 'images' && imageUploadRef.current) {
+      console.log('Checking for temporary image before form submission');
+
+      // Check if there's a temporary image that needs to be uploaded
+      if (imageUploadRef.current.hasTemporaryImage()) {
+        console.log('Temporary image found, uploading before form submission');
+
+        // Upload the image before submitting the form
+        const uploadSuccess = await imageUploadRef.current.uploadImageBeforeSubmit();
+
+        // If upload failed, stop the submission process
+        if (!uploadSuccess) {
+          console.error('Image upload failed, stopping form submission');
+          return;
+        }
+
+        console.log('Image upload successful, continuing with form submission');
+      } else {
+        console.log('No temporary image found, proceeding with form submission');
+      }
     }
 
     // Convert form data to listing data format
@@ -607,6 +633,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
         return (
           <Box>
             <ImageUpload
+              ref={imageUploadRef}
               formData={formData}
               formErrors={formErrors}
               handleTextChange={handleTextChange}
@@ -618,7 +645,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={handleSubmit}
+                  onClick={() => handleSubmit()}
                   disabled={isSubmitting}
                   startIcon={
                     isSubmitting ? (
@@ -733,6 +760,27 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
 
       // Return the raw form data for saving between tab switches
       return formData;
+    },
+    // Add a method to upload image if needed before form submission
+    uploadImageIfNeeded: async () => {
+      // Only relevant for the images section
+      if (section === 'images' && imageUploadRef.current) {
+        console.log('Checking for temporary image before form submission (from ref method)');
+
+        // Check if there's a temporary image that needs to be uploaded
+        if (imageUploadRef.current.hasTemporaryImage()) {
+          console.log('Temporary image found, uploading before form submission (from ref method)');
+
+          // Upload the image before submitting the form
+          const uploadSuccess = await imageUploadRef.current.uploadImageBeforeSubmit();
+
+          // Return the upload result
+          return uploadSuccess;
+        }
+      }
+
+      // No image to upload or not in images section
+      return true;
     }
   }));
 

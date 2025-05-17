@@ -11,16 +11,25 @@ import {
   styled,
   Skeleton,
   Alert,
-  Button
+  Button,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 
 import ShoppingCartTwoToneIcon from '@mui/icons-material/ShoppingCartTwoTone';
 import AttachMoneyTwoToneIcon from '@mui/icons-material/AttachMoneyTwoTone';
 import LocalShippingTwoToneIcon from '@mui/icons-material/LocalShippingTwoTone';
 import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
+import RefreshTwoToneIcon from '@mui/icons-material/RefreshTwoTone';
 import CreateListingModal from './CreateListingModal';
-import { getListingsSummary } from 'src/services/api/listings';
 import { ListingsContext } from './context/ListingsContext';
+import { useAppDispatch, useAppSelector } from 'src/redux/hooks';
+import {
+  fetchListingsSummary,
+  selectListingsSummary,
+  selectListingsSummaryStatus,
+  selectListingsSummaryError
+} from 'src/redux/slices/listingsSummarySlice';
 
 const SummaryCard = styled(Paper)(
   ({ theme }) => `
@@ -51,51 +60,39 @@ const ButtonAdd = styled(Button)(
   `
 );
 
-interface SummaryData {
-  activeListings: number;
-  soldCodes: number;
-  totalRevenue: number;
-}
-
 const ListingsSummary: FC = () => {
   const theme = useTheme();
-  const { addNewListing } = useContext(ListingsContext);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [summaryData, setSummaryData] = useState<SummaryData>({
-    activeListings: 0,
-    soldCodes: 0,
-    totalRevenue: 0
-  });
+  const dispatch = useAppDispatch();
+  const { addNewListing, refreshListings } = useContext(ListingsContext);
+  const summaryData = useAppSelector(selectListingsSummary);
+  const status = useAppSelector(selectListingsSummaryStatus);
+  const error = useAppSelector(selectListingsSummaryError);
+  const loading = status === 'loading';
   const [openModal, setOpenModal] = useState<boolean>(false);
 
+  // Listen for changes in the ListingsContext to update summary
   useEffect(() => {
-    const fetchSummaryData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    // Refresh summary data when component mounts
+    dispatch(fetchListingsSummary());
 
-        const response = await getListingsSummary();
-
-        if (response && response.success && response.data) {
-          setSummaryData({
-            activeListings: response.data.activeListings || 0,
-            soldCodes: response.data.soldCodes || 0,
-            totalRevenue: response.data.totalRevenue || 0
-          });
-        } else {
-          setError(response.message || 'Failed to fetch summary data');
-        }
-      } catch (error) {
-        console.error('Error fetching summary data:', error);
-        setError('An error occurred while fetching summary data');
-      } finally {
-        setLoading(false);
-      }
+    // Set up an effect to refresh summary data whenever listings are refreshed
+    const handleListingsRefresh = () => {
+      dispatch(fetchListingsSummary());
     };
 
-    fetchSummaryData();
-  }, []);
+    // Create a custom event to listen for listings refresh
+    window.addEventListener('listingsRefreshed', handleListingsRefresh);
+
+    return () => {
+      // Clean up event listener when component unmounts
+      window.removeEventListener('listingsRefreshed', handleListingsRefresh);
+    };
+  }, [dispatch]);
+
+  // Function to manually refresh summary data
+  const handleRefresh = () => {
+    dispatch(fetchListingsSummary());
+  };
 
   const items = [
     {
@@ -126,29 +123,42 @@ const ListingsSummary: FC = () => {
       <Box sx={{ p: 3 }}>
         <Grid container spacing={3} alignItems="center" justifyContent="space-between">
           <Grid item xs={12} md={8}>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              sx={{
-                mb: 0.5,
-                mt: 0,
-                letterSpacing: '-0.5px'
-              }}
-            >
-              Listings Summary
-            </Typography>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-              sx={{
-                fontWeight: 400,
-                fontSize: { xs: '1rem', sm: '1.1rem' },
-                color: (theme) => theme.palette.text.secondary,
-                mb: 0
-              }}
-            >
-              Overview of your listing activity
-            </Typography>
+            <Box display="flex" alignItems="center">
+              <Box>
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  sx={{
+                    mb: 0.5,
+                    mt: 0,
+                    letterSpacing: '-0.5px'
+                  }}
+                >
+                  Listings Summary
+                </Typography>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  sx={{
+                    fontWeight: 400,
+                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                    color: (theme) => theme.palette.text.secondary,
+                    mb: 0
+                  }}
+                >
+                  Overview of your listing activity
+                </Typography>
+              </Box>
+              <Tooltip title="Refresh summary data">
+                <IconButton
+                  sx={{ ml: 2 }}
+                  onClick={handleRefresh}
+                  disabled={loading}
+                >
+                  <RefreshTwoToneIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Grid>
           <Grid item xs={12} md={4} container justifyContent="flex-end">
             <ButtonAdd
@@ -162,6 +172,21 @@ const ListingsSummary: FC = () => {
         </Grid>
       </Box>
       <Divider />
+      {error && (
+        <Box sx={{ p: 2 }}>
+          <Alert
+            severity="error"
+            sx={{ width: '100%' }}
+            action={
+              <Button color="inherit" size="small" onClick={handleRefresh}>
+                Retry
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        </Box>
+      )}
       <Box sx={{ p: 3 }}>
         <Grid container spacing={3}>
           {loading

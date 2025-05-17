@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useCallback, ReactNode } fro
 import { getSellerListings } from 'src/services/api/listings';
 import { Listing, ListingsResponse } from '../types';
 import { useError } from 'src/contexts/ErrorContext';
+import { useAppDispatch } from 'src/redux/hooks';
 
 interface FilterParams {
   status?: string;
@@ -68,6 +69,7 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
   initialLimit = 5
 }) => {
   const { setError } = useError();
+  const dispatch = useAppDispatch();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setLocalError] = useState<string | null>(null);
@@ -182,6 +184,10 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
   const refreshListings = useCallback(async () => {
     console.log('refreshListings called');
     await fetchListings();
+
+    // Dispatch a custom event to notify components that listings were refreshed
+    // This allows the ListingsSummary component to update without direct coupling
+    window.dispatchEvent(new CustomEvent('listingsRefreshed'));
   }, [fetchListings]);
 
   const addNewListing = useCallback(async (response: any) => {
@@ -197,6 +203,9 @@ export const ListingsProvider: React.FC<ListingsProviderProps> = ({
       // Refresh the listings from the API to get the complete data
       console.log('Refreshing listings after new listing creation');
       await fetchListings(0, limit); // Reset to first page to show the new listing
+
+      // Dispatch a custom event to notify components that a listing was created
+      window.dispatchEvent(new CustomEvent('listingsRefreshed'));
 
       // Clear the highlight after 5 seconds
       setTimeout(() => {

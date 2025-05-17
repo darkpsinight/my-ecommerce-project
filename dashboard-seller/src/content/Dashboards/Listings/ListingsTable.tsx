@@ -30,6 +30,7 @@ import {
   bulkDeleteListings,
   bulkUpdateListingsStatus
 } from '../../../services/api/listings';
+import { useAppDispatch } from 'src/redux/hooks';
 
 // Import CSV export utility
 import { exportListingsToCSV } from '../../../utils/csvExport';
@@ -41,6 +42,7 @@ import ConfirmationDialog from '../../../components/ConfirmationDialog';
 import { ListingsTableProps } from './types';
 
 const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
+  const dispatch = useAppDispatch();
   // Use ListingsContext instead of the hook directly
   const {
     listings,
@@ -219,6 +221,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
 
         // Refresh the listings to update the UI
         refreshListings();
+
+        // The refreshListings function will dispatch the listingsRefreshed event
+        // which will trigger the ListingsSummary component to update
       } else {
         // Show error notification
         showErrorToast(response?.message || 'Failed to delete listing');
@@ -395,6 +400,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
       // Refresh the listings to update the UI
       refreshListings();
 
+      // The refreshListings function will dispatch the listingsRefreshed event
+      // which will trigger the ListingsSummary component to update
+
       // Clear selection
       setSelected([]);
     } catch (error: any) {
@@ -432,6 +440,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
       // Refresh the listings to update the UI
       refreshListings();
 
+      // The refreshListings function will dispatch the listingsRefreshed event
+      // which will trigger the ListingsSummary component to update
+
       // Clear selection
       setSelected([]);
     } catch (error: any) {
@@ -452,6 +463,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
     // Refresh the listings to show the updated data
     refreshListings();
 
+    // The refreshListings function will dispatch the listingsRefreshed event
+    // which will trigger the ListingsSummary component to update
+
     // Close the modal
     setEditModalOpen(false);
   };
@@ -463,6 +477,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
 
       // Refresh the listings to show the updated data
       refreshListings();
+
+      // The refreshListings function will dispatch the listingsRefreshed event
+      // which will trigger the ListingsSummary component to update
 
       // Note: We don't close the modal here, allowing the user to continue editing
     };

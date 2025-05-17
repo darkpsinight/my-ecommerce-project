@@ -262,13 +262,21 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
           }}
         >
           <Tab
-            icon={<CloudUploadIcon fontSize="small" />}
-            label="Upload"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <CloudUploadIcon fontSize="small" />
+                <span>Upload</span>
+              </Box>
+            }
             {...a11yProps(0)}
           />
           <Tab
-            icon={<LinkIcon fontSize="small" />}
-            label="URL"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <LinkIcon fontSize="small" />
+                <span>URL</span>
+              </Box>
+            }
             {...a11yProps(1)}
           />
         </Tabs>
@@ -297,11 +305,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
               ref={fileInputRef}
             />
 
-            <CloudUploadIcon sx={{ fontSize: 28, color: 'primary.main', mb: 0.5 }} />
-
-            <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-              {file ? file.name : 'Select an image to upload'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <CloudUploadIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
+                {file ? file.name : 'Select an image to upload'}
+              </Typography>
+            </Box>
 
             <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
               Max file size: 5MB

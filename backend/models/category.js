@@ -12,6 +12,10 @@ const subCategorySchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    imageUrl: {
+      type: String,
+      trim: true,
+    },
     patterns: {
       type: [{
         regex: {
@@ -52,6 +56,10 @@ const categorySchema = new mongoose.Schema(
       unique: true,
     },
     description: {
+      type: String,
+      trim: true,
+    },
+    imageUrl: {
       type: String,
       trim: true,
     },

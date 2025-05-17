@@ -1,12 +1,21 @@
 const { Category } = require("../models/category");
 const { sendSuccessResponse, sendErrorResponse } = require("../utils/responseHelpers");
+const { isValidUrl, validateUrl } = require("../utils/urlValidator");
 const mongoose = require("mongoose");
 
 // Create a new category
 const createCategory = async (request, reply) => {
   try {
     const categoryData = request.body;
-    
+
+    // Validate imageUrl if provided
+    if (categoryData.imageUrl) {
+      const urlError = validateUrl(categoryData.imageUrl, true);
+      if (urlError) {
+        return sendErrorResponse(reply, 400, urlError);
+      }
+    }
+
     // Add the creator information (admin user)
     // Check if user exists in request, otherwise use a placeholder ID for testing
     if (request.user && request.user._id) {
@@ -16,7 +25,7 @@ const createCategory = async (request, reply) => {
       categoryData.createdBy = new mongoose.Types.ObjectId();
       request.log.warn('Using placeholder user ID for category creation - this should only happen in testing');
     }
-    
+
     const category = new Category(categoryData);
     await category.save();
 
@@ -27,11 +36,11 @@ const createCategory = async (request, reply) => {
     });
   } catch (error) {
     request.log.error(`Error creating category: ${error.message}`);
-    
+
     if (error.code === 11000) {
       return sendErrorResponse(reply, 409, "Category with this name already exists");
     }
-    
+
     sendErrorResponse(reply, 500, "Error creating category");
   }
 };
@@ -41,22 +50,22 @@ const getCategories = async (request, reply) => {
   try {
     const { page = 1, limit = 10, isActive } = request.query;
     const skip = (page - 1) * limit;
-    
+
     // Build filter object
     const filter = {};
     if (typeof isActive === 'boolean') {
       filter.isActive = isActive;
     }
-    
+
     // Get total count for pagination
     const total = await Category.countDocuments(filter);
-    
+
     // Fetch categories with pagination
     const categories = await Category.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-    
+
     sendSuccessResponse(reply, {
       statusCode: 200,
       message: "Categories retrieved successfully",
@@ -78,17 +87,17 @@ const getCategories = async (request, reply) => {
 const getCategoryById = async (request, reply) => {
   try {
     const { id } = request.params;
-    
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendErrorResponse(reply, 400, "Invalid category ID format");
     }
-    
+
     const category = await Category.findById(id);
-    
+
     if (!category) {
       return sendErrorResponse(reply, 404, "Category not found");
     }
-    
+
     sendSuccessResponse(reply, {
       statusCode: 200,
       message: "Category retrieved successfully",
@@ -105,11 +114,19 @@ const updateCategory = async (request, reply) => {
   try {
     const { id } = request.params;
     const updateData = request.body;
-    
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendErrorResponse(reply, 400, "Invalid category ID format");
     }
-    
+
+    // Validate imageUrl if provided
+    if (updateData.imageUrl) {
+      const urlError = validateUrl(updateData.imageUrl, true);
+      if (urlError) {
+        return sendErrorResponse(reply, 400, urlError);
+      }
+    }
+
     // Add the updater information if user exists in request
     if (request.user && request.user._id) {
       updateData.updatedBy = request.user._id;
@@ -118,17 +135,17 @@ const updateCategory = async (request, reply) => {
       updateData.updatedBy = new mongoose.Types.ObjectId();
       request.log.warn('Using placeholder user ID for category update - this should only happen in testing');
     }
-    
+
     const category = await Category.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     );
-    
+
     if (!category) {
       return sendErrorResponse(reply, 404, "Category not found");
     }
-    
+
     sendSuccessResponse(reply, {
       statusCode: 200,
       message: "Category updated successfully",
@@ -136,11 +153,11 @@ const updateCategory = async (request, reply) => {
     });
   } catch (error) {
     request.log.error(`Error updating category: ${error.message}`);
-    
+
     if (error.code === 11000) {
       return sendErrorResponse(reply, 409, "Category with this name already exists");
     }
-    
+
     sendErrorResponse(reply, 500, "Error updating category");
   }
 };
@@ -149,20 +166,20 @@ const updateCategory = async (request, reply) => {
 const deleteCategory = async (request, reply) => {
   try {
     const { id } = request.params;
-    
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendErrorResponse(reply, 400, "Invalid category ID format");
     }
-    
+
     const result = await Category.findByIdAndDelete(id);
-    
+
     if (!result) {
       return sendErrorResponse(reply, {
         statusCode: 404,
         message: "Category not found"
       });
     }
-    
+
     sendSuccessResponse(reply, {
       statusCode: 200,
       message: "Category deleted successfully"

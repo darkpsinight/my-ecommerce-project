@@ -8,7 +8,11 @@ const patternProperties = {
 const subcategoryProperties = {
   name: { type: "string" },
   description: { type: "string" },
-  patterns: { 
+  imageUrl: {
+    type: "string",
+    description: "Optional image URL for the platform"
+  },
+  patterns: {
     type: "array",
     items: {
       type: "object",
@@ -22,7 +26,11 @@ const subcategoryProperties = {
 const categoryProperties = {
   name: { type: "string" },
   description: { type: "string" },
-  platforms: { 
+  imageUrl: {
+    type: "string",
+    description: "Optional image URL for the category"
+  },
+  platforms: {
     type: "array",
     items: {
       type: "object",

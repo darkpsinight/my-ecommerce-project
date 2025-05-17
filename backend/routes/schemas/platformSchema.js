@@ -17,6 +17,10 @@ const platformSchema = {
       properties: {
         name: { type: "string", minLength: 1 },
         description: { type: "string" },
+        imageUrl: {
+          type: "string",
+          description: "Optional image URL for the platform"
+        },
         patterns: {
           type: "array",
           items: {
@@ -45,6 +49,7 @@ const platformSchema = {
             properties: {
               name: { type: "string" },
               description: { type: "string" },
+              imageUrl: { type: "string" },
               patterns: { type: "array" },
               isActive: { type: "boolean" }
             }
@@ -79,6 +84,7 @@ const platformSchema = {
               properties: {
                 name: { type: "string" },
                 description: { type: "string" },
+                imageUrl: { type: "string" },
                 patterns: { type: "array" },
                 isActive: { type: "boolean" }
               }
@@ -113,6 +119,7 @@ const platformSchema = {
             properties: {
               name: { type: "string" },
               description: { type: "string" },
+              imageUrl: { type: "string" },
               patterns: { type: "array" },
               isActive: { type: "boolean" }
             }
@@ -140,6 +147,10 @@ const platformSchema = {
       properties: {
         name: { type: "string", minLength: 1 },
         description: { type: "string" },
+        imageUrl: {
+          type: "string",
+          description: "Optional image URL for the platform"
+        },
         patterns: {
           type: "array",
           items: {
@@ -167,6 +178,7 @@ const platformSchema = {
             properties: {
               name: { type: "string" },
               description: { type: "string" },
+              imageUrl: { type: "string" },
               patterns: { type: "array" },
               isActive: { type: "boolean" }
             }

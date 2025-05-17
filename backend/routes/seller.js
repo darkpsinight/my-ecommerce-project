@@ -173,17 +173,17 @@ const sellerRoutes = async (fastify, opts) => {
     handler: async (request, reply) => {
       try {
         const { categoryId, platformName } = request.params;
-        
+
         // Get patterns using the existing utility function
         const result = await getPatternsForPlatform(categoryId, platformName, Category);
-        
+
         if (result.error) {
           return reply.code(404).send({
             success: false,
             error: result.error
           });
         }
-        
+
         // Return only the patterns, not the full platform information
         return reply.code(200).send({
           success: true,
@@ -202,7 +202,7 @@ const sellerRoutes = async (fastify, opts) => {
       }
     }
   });
-  
+
   // Get active categories (for sellers to use in listings)
   fastify.route({
     method: "GET",
@@ -229,6 +229,7 @@ const sellerRoutes = async (fastify, opts) => {
                   _id: { type: "string" },
                   name: { type: "string" },
                   description: { type: "string" },
+                  imageUrl: { type: "string" },
                   platforms: {
                     type: "array",
                     items: {
@@ -236,6 +237,7 @@ const sellerRoutes = async (fastify, opts) => {
                       properties: {
                         name: { type: "string" },
                         description: { type: "string" },
+                        imageUrl: { type: "string" },
                         isActive: { type: "boolean" }
                       }
                     }
@@ -251,18 +253,18 @@ const sellerRoutes = async (fastify, opts) => {
     handler: async (request, reply) => {
       try {
         const { isActive = true, search } = request.query;
-        
+
         // Build the query
         const query = { isActive };
-        
+
         // Add search functionality if provided
         if (search) {
           query.name = { $regex: search, $options: 'i' };
         }
-        
+
         // Find categories matching the query and include platforms information
-        const categories = await Category.find(query).select('name description platforms isActive');
-        
+        const categories = await Category.find(query).select('name description imageUrl platforms isActive');
+
         return reply.code(200).send({
           success: true,
           data: categories

@@ -11,6 +11,9 @@ import {
   Collapse,
   Divider
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import SearchTwoToneIcon from '@mui/icons-material/SearchTwoTone';
 import FilterListTwoToneIcon from '@mui/icons-material/FilterListTwoTone';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -24,8 +27,8 @@ interface FilterPanelProps {
   status: string;
   minPrice: string;
   maxPrice: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date | null;
+  endDate: Date | null;
   categories: any[];
   platforms: any[];
   handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -34,8 +37,8 @@ interface FilterPanelProps {
   handleStatusChange: (event: any) => void;
   handleMinPriceChange: (event: any) => void;
   handleMaxPriceChange: (event: any) => void;
-  handleStartDateChange: (event: any) => void;
-  handleEndDateChange: (event: any) => void;
+  handleStartDateChange: (date: Date | null) => void;
+  handleEndDateChange: (date: Date | null) => void;
   handleApplyFilters: () => void;
   setSearchTerm: (value: string) => void;
 }
@@ -180,26 +183,36 @@ const FilterPanel: FC<FilterPanelProps> = ({
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <TextField
-            fullWidth
-            size="small"
-            type="date"
-            value={startDate}
-            onChange={handleStartDateChange}
-            InputLabelProps={{ shrink: true }}
-            label="Start Date"
-          />
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="Start Date"
+              value={startDate}
+              onChange={handleStartDateChange}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  size="small"
+                />
+              )}
+            />
+          </LocalizationProvider>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <TextField
-            fullWidth
-            size="small"
-            type="date"
-            value={endDate}
-            onChange={handleEndDateChange}
-            InputLabelProps={{ shrink: true }}
-            label="End Date"
-          />
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="End Date"
+              value={endDate}
+              onChange={handleEndDateChange}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  size="small"
+                />
+              )}
+            />
+          </LocalizationProvider>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <ButtonSearch

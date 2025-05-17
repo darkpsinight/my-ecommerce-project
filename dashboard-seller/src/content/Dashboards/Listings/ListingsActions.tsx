@@ -33,8 +33,8 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [activeFilters, setActiveFilters] = useState<ActiveFilterDisplay>({});
@@ -99,12 +99,12 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     setMaxPrice(event.target.value.replace(/[^\d.]/g, ''));
   };
 
-  const handleStartDateChange = (event) => {
-    setStartDate(event.target.value);
+  const handleStartDateChange = (date: Date | null) => {
+    setStartDate(date);
   };
 
-  const handleEndDateChange = (event) => {
-    setEndDate(event.target.value);
+  const handleEndDateChange = (date: Date | null) => {
+    setEndDate(date);
   };
 
   const handleOpenModal = () => {
@@ -116,9 +116,15 @@ const ListingsActions: FC<ListingsActionsProps> = ({
   };
 
   const handleApplyFilters = () => {
-    // Convert date to ISO string if present
-    let startDateISO = startDate ? `${startDate}T00:00:00.000Z` : undefined;
-    let endDateISO = endDate ? `${endDate}T23:59:59.999Z` : undefined;
+    // Format dates for display and API
+    let startDateISO = startDate ? startDate.toISOString() : undefined;
+    let endDateISO = endDate ? endDate.toISOString() : undefined;
+
+    // For display, format as YYYY-MM-DD
+    const formatDateForDisplay = (date: Date | null) => {
+      if (!date) return '';
+      return date.toISOString().split('T')[0];
+    };
 
     const filters = {
       category: category !== 'all' ? category : undefined,
@@ -161,11 +167,11 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     }
 
     if (startDate) {
-      newActiveFilters.startDate = startDate;
+      newActiveFilters.startDate = formatDateForDisplay(startDate);
     }
 
     if (endDate) {
-      newActiveFilters.endDate = endDate;
+      newActiveFilters.endDate = formatDateForDisplay(endDate);
     }
 
     setActiveFilters(newActiveFilters);
@@ -181,8 +187,8 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     setSearchTerm('');
     setMinPrice('');
     setMaxPrice('');
-    setStartDate('');
-    setEndDate('');
+    setStartDate(null);
+    setEndDate(null);
 
     // Clear active filters display
     setActiveFilters({});
@@ -221,10 +227,10 @@ const ListingsActions: FC<ListingsActionsProps> = ({
         setMaxPrice('');
         break;
       case 'startDate':
-        setStartDate('');
+        setStartDate(null);
         break;
       case 'endDate':
-        setEndDate('');
+        setEndDate(null);
         break;
     }
 
@@ -240,8 +246,8 @@ const ListingsActions: FC<ListingsActionsProps> = ({
     if (searchTerm && key !== 'title') updatedFilters.title = searchTerm;
     if (minPrice && key !== 'minPrice') updatedFilters.minPrice = Number(minPrice);
     if (maxPrice && key !== 'maxPrice') updatedFilters.maxPrice = Number(maxPrice);
-    if (startDate && key !== 'startDate') updatedFilters.startDate = `${startDate}T00:00:00.000Z`;
-    if (endDate && key !== 'endDate') updatedFilters.endDate = `${endDate}T23:59:59.999Z`;
+    if (startDate && key !== 'startDate') updatedFilters.startDate = startDate.toISOString();
+    if (endDate && key !== 'endDate') updatedFilters.endDate = endDate.toISOString();
 
     // Update the context filters in a single operation
     setFilters(updatedFilters);

@@ -6,8 +6,8 @@ export interface FilterValues {
   title?: string;
   minPrice?: number;
   maxPrice?: number;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string; // Kept as string for API compatibility
+  endDate?: string; // Kept as string for API compatibility
   [key: string]: any;
 }
 

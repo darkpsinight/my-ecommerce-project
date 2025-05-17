@@ -11,8 +11,8 @@ export const useErrorHandling = () => {
   // Show error toast when error state changes
   useEffect(() => {
     if (error) {
-      // Use toast.error instead of custom toast with JSX
-      toast.error(error, { duration: 10000 });
+      // Use default toast.error with standard duration
+      toast.error(error, { duration: 5000 });
       setError(null);
     }
   }, [error]);

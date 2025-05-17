@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { createListing, checkCodeExists } from 'src/services/api/listings';
 import { validateListingForm, prepareFormDataForSubmission } from '../../ValidationHelpers';
 import { getValidationPatterns, Pattern, validateCodeAgainstPattern } from 'src/services/api/validation';
@@ -243,6 +244,8 @@ export const useFormHandlers = ({
       }
 
       if (response.success) {
+        // Show success toast immediately after successful submission
+        toast.success(response.message || 'Listing created successfully!');
         onSubmit(response);
         // Explicitly close the modal after successful submission
         onClose();

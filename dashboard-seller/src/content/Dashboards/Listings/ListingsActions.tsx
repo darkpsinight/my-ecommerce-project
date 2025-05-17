@@ -253,7 +253,8 @@ const ListingsActions: FC<ListingsActionsProps> = ({
 
       if (response && response.success) {
         setOpenModal(false);
-        showSuccessToast(response.message || 'Listing created successfully!');
+        // Toast is now shown directly in the form submission handler
+        // No need to call showSuccessToast here to avoid duplicate notifications
 
         console.log('Calling addNewListing with response:', response);
         // Pass the entire response to addNewListing

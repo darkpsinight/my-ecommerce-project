@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, Zoom, useTheme, alpha, CircularProgress } from '@mui/material';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 // Import types
 import { Listing } from '../../types';
@@ -308,15 +308,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
           if (actualStatus === 'suspended') {
             toast.error('Listing cannot be activated: A listing must have at least one code to be active');
           } else {
-            // Use custom toast instead of toast.info which doesn't exist in react-hot-toast
+            // Use default toast with an icon for info messages
             toast(`Listing status is ${actualStatus === 'active' ? 'On Sale' : actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)}`, {
-              icon: '📝',
-              style: {
-                borderRadius: '10px',
-                background: '#f0f9ff',
-                color: '#0369a1',
-                border: '1px solid #bae6fd'
-              }
+              icon: '📝'
             });
           }
         } else {
@@ -804,7 +798,6 @@ const EditListingModal: FC<EditListingModalProps> = ({
             onSave={handleSubmit}
             isSubmitting={isSubmitting}
           />
-          <Toaster position="top-right" />
         </>
       )}
     </Dialog>

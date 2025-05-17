@@ -1,31 +1,12 @@
 import { FC } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import LargerDismissibleToast from 'src/components/LargerDismissibleToast';
 
 export const showSuccessToast = (message: string) => {
-  toast.custom(
-    (t) => (
-      <LargerDismissibleToast
-        t={t}
-        message={message || 'Operation completed successfully!'}
-        type="success"
-      />
-    ),
-    { duration: 10000 }
-  );
+  toast.success(message || 'Operation completed successfully!', { duration: 5000 });
 };
 
 export const showErrorToast = (message: string) => {
-  toast.custom(
-    (t) => (
-      <LargerDismissibleToast
-        t={t}
-        message={message || 'An error occurred. Please try again.'}
-        type="error"
-      />
-    ),
-    { duration: 10000 }
-  );
+  toast.error(message || 'An error occurred. Please try again.', { duration: 5000 });
 };
 
 const ToastContainer: FC = () => {

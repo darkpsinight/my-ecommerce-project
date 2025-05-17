@@ -31,6 +31,9 @@ import {
   bulkUpdateListingsStatus
 } from '../../../services/api/listings';
 
+// Import CSV export utility
+import { exportListingsToCSV } from '../../../utils/csvExport';
+
 // Import confirmation dialog
 import ConfirmationDialog from '../../../components/ConfirmationDialog';
 
@@ -247,6 +250,16 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
           // Set the selected status action and open confirmation dialog
           setSelectedStatusAction(subAction);
           setBulkStatusDialogOpen(true);
+        }
+        break;
+      case 'export-csv':
+        // Export selected listings to CSV
+        try {
+          exportListingsToCSV(listings, selected);
+          showSuccessToast(`Successfully exported ${selected.length} listings to CSV`);
+        } catch (error) {
+          console.error('Error exporting listings to CSV:', error);
+          showErrorToast('Failed to export listings to CSV');
         }
         break;
       default:

@@ -14,6 +14,7 @@ import CheckCircleTwoToneIcon from '@mui/icons-material/CheckCircleTwoTone';
 import BlockTwoToneIcon from '@mui/icons-material/BlockTwoTone';
 import DownloadTwoToneIcon from '@mui/icons-material/DownloadTwoTone';
 import ArrowRightTwoToneIcon from '@mui/icons-material/ArrowRightTwoTone';
+import FileDownloadTwoToneIcon from '@mui/icons-material/FileDownloadTwoTone';
 import { BulkActionMenuItem } from '../types';
 
 interface BulkActionsMenuProps {
@@ -59,6 +60,12 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
       label: 'Change Status',
       icon: <CheckCircleTwoToneIcon fontSize="small" />,
       color: 'primary'
+    },
+    {
+      action: 'export-csv',
+      label: 'Download as CSV',
+      icon: <FileDownloadTwoToneIcon fontSize="small" />,
+      color: 'info'
     }
   ];
 

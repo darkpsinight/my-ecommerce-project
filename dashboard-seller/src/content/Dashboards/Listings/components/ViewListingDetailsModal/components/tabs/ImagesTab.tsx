@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -6,9 +6,14 @@ import {
   Box,
   useTheme,
   alpha,
-  CardMedia
+  CardMedia,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import ImageIcon from '@mui/icons-material/Image';
+import LinkIcon from '@mui/icons-material/Link';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { toast } from 'react-hot-toast';
 
 import { Listing } from '../../../../types';
 
@@ -18,8 +23,25 @@ interface ImagesTabProps {
 
 const ImagesTab: React.FC<ImagesTabProps> = ({ listing }) => {
   const theme = useTheme();
+  const [copySuccess, setCopySuccess] = useState<boolean>(false);
 
   const hasThumbnail = listing.thumbnailUrl && listing.thumbnailUrl.trim() !== '';
+
+  const handleCopyImageUrl = () => {
+    if (listing.thumbnailUrl) {
+      navigator.clipboard
+        .writeText(listing.thumbnailUrl)
+        .then(() => {
+          setCopySuccess(true);
+          toast.success('Image link copied to clipboard');
+          setTimeout(() => setCopySuccess(false), 2000);
+        })
+        .catch((err) => {
+          console.error('Failed to copy image link:', err);
+          toast.error('Failed to copy image link');
+        });
+    }
+  };
 
   return (
     <Card
@@ -30,24 +52,58 @@ const ImagesTab: React.FC<ImagesTabProps> = ({ listing }) => {
       }}
     >
       <CardContent>
-        <Typography
-          variant="h6"
+        <Box
           sx={{
-            mb: 2,
-            fontWeight: 600,
             display: 'flex',
-            alignItems: 'center'
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2
           }}
         >
-          <ImageIcon
+          <Typography
+            variant="h6"
             sx={{
-              mr: 1,
-              color: theme.palette.warning.main,
-              fontSize: 20
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center'
             }}
-          />
-          Product Thumbnail
-        </Typography>
+          >
+            <ImageIcon
+              sx={{
+                mr: 1,
+                color: theme.palette.warning.main,
+                fontSize: 20
+              }}
+            />
+            Product Thumbnail
+          </Typography>
+
+          {hasThumbnail && (
+            <Tooltip
+              title={copySuccess ? "Copied!" : "Copy image link"}
+              arrow
+              placement="top"
+            >
+              <IconButton
+                size="small"
+                onClick={handleCopyImageUrl}
+                color={copySuccess ? "success" : "default"}
+                sx={{
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1)
+                  }
+                }}
+              >
+                {copySuccess ? (
+                  <CheckCircleOutlineIcon fontSize="small" />
+                ) : (
+                  <LinkIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
 
         {hasThumbnail ? (
           <Box

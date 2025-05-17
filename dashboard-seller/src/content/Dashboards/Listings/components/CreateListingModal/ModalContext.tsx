@@ -35,6 +35,9 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
   const [temporaryImageFile, setTemporaryImageFile] = useState<File | null>(null);
   const [imageUploadInProgress, setImageUploadInProgress] = useState<boolean>(false);
 
+  // State for URL input method
+  const [imageUrl, setImageUrl] = useState<string>('');
+
   const {
     categories,
     availablePlatforms,
@@ -88,6 +91,17 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     setTemporaryImageFile(file);
   };
 
+  // Handle image URL input
+  const handleImageUrlChange = (url: string) => {
+    setImageUrl(url);
+
+    // Update the form data with the new URL
+    setFormData(prev => ({
+      ...prev,
+      thumbnailUrl: url
+    }));
+  };
+
   // Custom submit handler that first uploads the image if needed
   const handleSubmitWithImageUpload = async () => {
     // First validate the form before attempting any upload
@@ -123,7 +137,19 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
         setImageUploadInProgress(false);
       }
     } else {
-      // No image to upload, proceed with regular submission
+      // No image file to upload, but ensure the thumbnailUrl is included in the form data
+      // This handles the case where the user entered a URL directly
+      if (imageUrl && imageUrl.trim() !== '') {
+        console.log('Using URL input for thumbnailUrl:', imageUrl);
+
+        // Make sure the form data has the latest URL
+        setFormData(prev => ({
+          ...prev,
+          thumbnailUrl: imageUrl
+        }));
+      }
+
+      // Proceed with regular submission
       try {
         await handleSubmit();
       } catch (error) {
@@ -162,6 +188,9 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     temporaryImageFile,
     handleImageFileSelect,
     imageUploadInProgress,
+    // Add URL-related properties
+    imageUrl,
+    handleImageUrlChange,
     // Expose setSubmitting for better control of loading states
     setSubmitting
   };

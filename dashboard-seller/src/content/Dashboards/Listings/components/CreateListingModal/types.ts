@@ -56,6 +56,9 @@ export interface ModalContextProps {
   temporaryImageFile: File | null;
   handleImageFileSelect: (file: File | null) => void;
   imageUploadInProgress: boolean;
+  // URL-related properties
+  imageUrl: string;
+  handleImageUrlChange: (url: string) => void;
   // Expose setSubmitting for better control of loading states
   setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
 }

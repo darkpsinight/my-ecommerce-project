@@ -300,178 +300,119 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           mb: 1
         }}
       >
-        {/* For Create Listing, don't show tabs */}
-        {isCreateListing ? (
-          <Box sx={{ p: 1.5 }}>
-            <Box
-              sx={{
-                border: '1px dashed',
-                borderColor: 'divider',
-                borderRadius: 1,
-                p: 1.5,
-                textAlign: 'center',
-                backgroundColor: alpha(theme.palette.primary.main, 0.03),
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '120px'
-              }}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
-                ref={fileInputRef}
-                disabled={uploadInProgress}
-              />
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <CloudUploadIcon sx={{ fontSize: 28, color: 'primary.main' }} />
-                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-                  {file ? file.name : 'Select an image to upload'}
-                </Typography>
+        {/* Show tabs for both Create and Edit Listing */}
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="image upload tabs"
+          variant="fullWidth"
+          sx={{
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            '& .MuiTab-root': {
+              py: 0.5,
+              minHeight: '40px'
+            }
+          }}
+        >
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <CloudUploadIcon fontSize="small" />
+                <span>Upload</span>
               </Box>
+            }
+            {...a11yProps(0)}
+          />
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <LinkIcon fontSize="small" />
+                <span>URL</span>
+              </Box>
+            }
+            {...a11yProps(1)}
+          />
+        </Tabs>
 
-              <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
-                Max file size: 5MB
+        <TabPanel value={tabValue} index={0} sx={{ p: 1.5 }}>
+          <Box
+            sx={{
+              border: '1px dashed',
+              borderColor: 'divider',
+              borderRadius: 1,
+              p: 1.5,
+              textAlign: 'center',
+              backgroundColor: alpha(theme.palette.primary.main, 0.03),
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '120px'
+            }}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+              ref={fileInputRef}
+              disabled={uploadInProgress}
+            />
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <CloudUploadIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+              <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
+                {file ? file.name : 'Select an image to upload'}
               </Typography>
-
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadInProgress}
-                sx={{ py: 0.5, px: 1, fontSize: '0.75rem' }}
-              >
-                Browse
-              </Button>
             </Box>
 
-            {uploadError && (
-              <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
-                {uploadError}
-              </Alert>
-            )}
+            <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
+              Max file size: 5MB
+            </Typography>
 
-            {error && !uploadError && (
-              <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
-                {error}
-              </Alert>
-            )}
-          </Box>
-        ) : (
-          /* For Edit Listing, show tabs */
-          <>
-            <Tabs
-              value={tabValue}
-              onChange={handleTabChange}
-              aria-label="image upload tabs"
-              variant="fullWidth"
-              sx={{
-                borderBottom: `1px solid ${theme.palette.divider}`,
-                '& .MuiTab-root': {
-                  py: 0.5,
-                  minHeight: '40px'
-                }
-              }}
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadInProgress}
+              sx={{ py: 0.5, px: 1, fontSize: '0.75rem' }}
             >
-              <Tab
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <CloudUploadIcon fontSize="small" />
-                    <span>Upload</span>
-                  </Box>
-                }
-                {...a11yProps(0)}
+              Browse
+            </Button>
+          </Box>
+
+          {uploadError && (
+            <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
+              {uploadError}
+            </Alert>
+          )}
+
+          {error && !uploadError && (
+            <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
+              {error}
+            </Alert>
+          )}
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1} sx={{ p: 1.5 }}>
+          <Grid container spacing={1} alignItems="center">
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Image URL"
+                value={urlValue}
+                onChange={handleUrlChange}
+                onBlur={handleUrlBlur}
+                placeholder="https://example.com/image.jpg"
+                error={!!error}
+                helperText={error || "Enter URL and press Tab or click outside to apply"}
+                variant="outlined"
+                InputProps={{ sx: { fontSize: '0.85rem' } }}
               />
-              <Tab
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <LinkIcon fontSize="small" />
-                    <span>URL</span>
-                  </Box>
-                }
-                {...a11yProps(1)}
-              />
-            </Tabs>
-
-            <TabPanel value={tabValue} index={0} sx={{ p: 1.5 }}>
-              <Box
-                sx={{
-                  border: '1px dashed',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  p: 1.5,
-                  textAlign: 'center',
-                  backgroundColor: alpha(theme.palette.primary.main, 0.03),
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: '120px'
-                }}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  style={{ display: 'none' }}
-                  ref={fileInputRef}
-                  disabled={uploadInProgress}
-                />
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                  <CloudUploadIcon sx={{ fontSize: 28, color: 'primary.main' }} />
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-                    {file ? file.name : 'Select an image to upload'}
-                  </Typography>
-                </Box>
-
-                <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
-                  Max file size: 5MB
-                </Typography>
-
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadInProgress}
-                  sx={{ py: 0.5, px: 1, fontSize: '0.75rem' }}
-                >
-                  Browse
-                </Button>
-              </Box>
-
-              {uploadError && (
-                <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
-                  {uploadError}
-                </Alert>
-              )}
-            </TabPanel>
-
-            <TabPanel value={tabValue} index={1} sx={{ p: 1.5 }}>
-              <Grid container spacing={1} alignItems="center">
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Image URL"
-                    value={urlValue}
-                    onChange={handleUrlChange}
-                    onBlur={handleUrlBlur}
-                    placeholder="https://example.com/image.jpg"
-                    error={!!error}
-                    helperText={error || "Enter URL and press Tab or click outside to apply"}
-                    variant="outlined"
-                    InputProps={{ sx: { fontSize: '0.85rem' } }}
-                  />
-                </Grid>
-              </Grid>
-            </TabPanel>
-          </>
-        )}
+            </Grid>
+          </Grid>
+        </TabPanel>
       </Paper>
 
       {/* Show preview from either the selected file or the existing value */}

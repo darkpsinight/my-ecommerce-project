@@ -32,7 +32,10 @@ const ModalContent: React.FC = () => {
     // New image-related properties
     temporaryImageFile,
     handleImageFileSelect,
-    imageUploadInProgress
+    imageUploadInProgress,
+    // URL-related properties
+    imageUrl,
+    handleImageUrlChange
   } = useModalContext();
 
   // Custom handleChange for ReactQuill
@@ -99,6 +102,7 @@ const ModalContent: React.FC = () => {
         onFileSelect={handleImageFileSelect}
         temporaryFile={temporaryImageFile}
         uploadInProgress={imageUploadInProgress}
+        onUrlChange={handleImageUrlChange}
       />
 
       {/* Product Details Section */}

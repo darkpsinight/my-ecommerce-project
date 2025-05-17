@@ -20,7 +20,6 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
         <TableHead>
           <TableRow>
             <TableCell>Code</TableCell>
-            <TableCell>Code ID</TableCell>
             <TableCell>Status</TableCell>
             <TableCell>Expiration</TableCell>
             <TableCell align="right">Actions</TableCell>
@@ -33,11 +32,6 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
                 <TableCell>
                   <Typography variant="body2" fontFamily="monospace">
                     {codeObj.code}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem" color="text.secondary">
-                    {codeObj.codeId || 'N/A'}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -74,7 +68,7 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={5} align="center" sx={{ py: 2 }}>
+              <TableCell colSpan={4} align="center" sx={{ py: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   No codes match your search
                 </Typography>

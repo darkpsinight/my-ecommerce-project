@@ -610,6 +610,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
               formData={formData}
               formErrors={formErrors}
               handleTextChange={handleTextChange}
+              onSubmit={handleSubmit}
             />
 
             {!hideSubmitButton && (

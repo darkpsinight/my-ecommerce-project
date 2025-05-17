@@ -52,6 +52,12 @@ export interface ModalContextProps {
   handleDeleteCode: (code: string) => void;
   handleCodeKeyDown: (e: React.KeyboardEvent) => void;
   resetForm: () => void;
+  // New image-related properties
+  temporaryImageFile: File | null;
+  handleImageFileSelect: (file: File | null) => void;
+  imageUploadInProgress: boolean;
+  // Expose setSubmitting for better control of loading states
+  setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface CodeItem {

@@ -18,6 +18,9 @@ interface BasicInformationSectionProps {
   };
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDescriptionChange: (value: string) => void;
+  onFileSelect?: (file: File | null) => void; // Callback when a file is selected
+  temporaryFile?: File | null; // Temporary file for deferred upload
+  uploadInProgress?: boolean; // Flag to indicate if upload is in progress
 }
 
 /**
@@ -27,7 +30,10 @@ const BasicInformationSection: React.FC<BasicInformationSectionProps> = ({
   formData,
   formErrors,
   handleChange,
-  handleDescriptionChange
+  handleDescriptionChange,
+  onFileSelect,
+  temporaryFile,
+  uploadInProgress
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -108,6 +114,10 @@ const BasicInformationSection: React.FC<BasicInformationSectionProps> = ({
                     handleChange(syntheticEvent);
                   }}
                   error={formErrors.thumbnailUrl}
+                  isCreateListing={true}
+                  onFileSelect={onFileSelect}
+                  temporaryFile={temporaryFile}
+                  uploadInProgress={uploadInProgress}
                 />
               </Grid>
             </Grid>

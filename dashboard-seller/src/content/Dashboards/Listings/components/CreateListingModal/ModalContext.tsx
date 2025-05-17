@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useState } from 'react';
 import { ModalContextProps } from './types';
 import {
   useErrorHandling,
@@ -6,6 +6,7 @@ import {
   useFormHandlers,
   useCategoryData
 } from './hooks';
+import { uploadImage } from 'src/services/api/imageUpload';
 
 const ModalContext = createContext<ModalContextProps | null>(null);
 
@@ -29,6 +30,10 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
   const { error, setError, bottomErrorRef } = useErrorHandling();
 
   const { formData, setFormData, formErrors, setFormErrors, resetForm } = useFormState();
+
+  // State for temporary image file and upload status
+  const [temporaryImageFile, setTemporaryImageFile] = useState<File | null>(null);
+  const [imageUploadInProgress, setImageUploadInProgress] = useState<boolean>(false);
 
   const {
     categories,
@@ -57,7 +62,8 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     handleAddCode,
     handleDeleteCode,
     handleCodeKeyDown,
-    submitting
+    submitting,
+    setSubmitting
   } = useFormHandlers({
     formData,
     setFormData,
@@ -77,6 +83,57 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     onClose
   });
 
+  // Handle image file selection
+  const handleImageFileSelect = (file: File | null) => {
+    setTemporaryImageFile(file);
+  };
+
+  // Custom submit handler that first uploads the image if needed
+  const handleSubmitWithImageUpload = async () => {
+    // First validate the form before attempting any upload
+    if (!validateForm()) {
+      return;
+    }
+
+    // If there's a temporary image file, upload it first
+    if (temporaryImageFile) {
+      try {
+        setImageUploadInProgress(true);
+        setError(null); // Clear any previous errors
+
+        // Process the image and upload it to ImageKit.io
+        const imageUrl = await uploadImage(temporaryImageFile);
+
+        // Update the form data with the new image URL
+        setFormData(prev => ({
+          ...prev,
+          thumbnailUrl: imageUrl
+        }));
+
+        // Clear the temporary file
+        setTemporaryImageFile(null);
+
+        // Now proceed with the regular form submission
+        await handleSubmit();
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setError('Failed to upload image. Please try again.');
+        setSubmitting(false); // Ensure submitting state is reset
+      } finally {
+        setImageUploadInProgress(false);
+      }
+    } else {
+      // No image to upload, proceed with regular submission
+      try {
+        await handleSubmit();
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        setError('An unexpected error occurred. Please try again.');
+        setSubmitting(false); // Ensure submitting state is reset
+      }
+    }
+  };
+
   // Create the context value with all the state and handlers
   const contextValue: ModalContextProps = {
     categories,
@@ -95,12 +152,18 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     formErrors,
     handleChange,
     handleBlur,
-    handleSubmit,
+    handleSubmit: handleSubmitWithImageUpload, // Replace with our custom handler
     handleDateChange,
     handleAddCode,
     handleDeleteCode,
     handleCodeKeyDown,
-    resetForm
+    resetForm,
+    // Add new image-related properties
+    temporaryImageFile,
+    handleImageFileSelect,
+    imageUploadInProgress,
+    // Expose setSubmitting for better control of loading states
+    setSubmitting
   };
 
   return (

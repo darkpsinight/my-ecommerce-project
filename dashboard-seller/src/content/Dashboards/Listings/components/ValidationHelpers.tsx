@@ -152,7 +152,9 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
     }
   }
 
-  // Thumbnail URL validation
+  // Thumbnail URL validation - only validate if there's a URL
+  // For the Create Listing modal with deferred image upload, we don't validate here
+  // as the URL will be empty until form submission
   if (formData.thumbnailUrl && !isValidUrl(formData.thumbnailUrl)) {
     errors.thumbnailUrl = 'Please enter a valid URL';
     isValid = false;

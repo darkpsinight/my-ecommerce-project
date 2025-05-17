@@ -28,6 +28,10 @@ const ModalContent: React.FC = () => {
     regions,
     selectedPattern,
     validationError,
+    // New image-related properties
+    temporaryImageFile,
+    handleImageFileSelect,
+    imageUploadInProgress
   } = useModalContext();
 
   // Custom handleChange for ReactQuill
@@ -80,6 +84,9 @@ const ModalContent: React.FC = () => {
         formErrors={formErrors}
         handleChange={handleChange}
         handleDescriptionChange={handleDescriptionChange}
+        onFileSelect={handleImageFileSelect}
+        temporaryFile={temporaryImageFile}
+        uploadInProgress={imageUploadInProgress}
       />
 
       {/* Product Details Section */}

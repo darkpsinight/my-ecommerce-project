@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -56,14 +56,30 @@ interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
   error?: string;
+  isCreateListing?: boolean; // Flag to indicate if this is for Create Listing modal
+  isEditListing?: boolean; // Flag to indicate if this is for Edit Listing modal
+  onFileSelect?: (file: File | null) => void; // Callback when a file is selected
+  temporaryFile?: File | null; // Temporary file for deferred upload
+  uploadInProgress?: boolean; // Flag to indicate if upload is in progress
+  onUrlChange?: (url: string) => void; // Callback when URL is entered (for Edit Listing)
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({
+  value,
+  onChange,
+  error,
+  isCreateListing = false,
+  isEditListing = false,
+  onFileSelect,
+  temporaryFile,
+  uploadInProgress = false,
+  onUrlChange
+}) => {
   const [tabValue, setTabValue] = useState(0);
   const [urlValue, setUrlValue] = useState(value || '');
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [file, setFile] = useState<File | null>(temporaryFile || null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const theme = useTheme();
 
@@ -73,6 +89,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrlValue(e.target.value);
+    if (onUrlChange) {
+      onUrlChange(e.target.value);
+    }
   };
 
   const handleUrlSubmit = () => {
@@ -86,6 +105,28 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
     }
   };
 
+  // Create a preview URL when a file is selected
+  useEffect(() => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+
+      // Clean up the URL when component unmounts or file changes
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [file]);
+
+  // Update local file state when temporaryFile prop changes
+  useEffect(() => {
+    if (temporaryFile !== undefined) {
+      setFile(temporaryFile);
+    }
+  }, [temporaryFile]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
@@ -94,6 +135,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
       if (!selectedFile.type.startsWith('image/')) {
         setUploadError('Please select an image file');
         setFile(null);
+        if (onFileSelect) onFileSelect(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -104,6 +146,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
       if (selectedFile.size > 5 * 1024 * 1024) {
         setUploadError('Image size should be less than 5MB');
         setFile(null);
+        if (onFileSelect) onFileSelect(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -112,35 +155,40 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
 
       setFile(selectedFile);
       setUploadError(null);
+
+      // If this is for Create Listing or Edit Listing, just store the file for later upload
+      if ((isCreateListing || isEditListing) && onFileSelect) {
+        onFileSelect(selectedFile);
+      } else if (!isCreateListing && !isEditListing) {
+        // For other cases, upload immediately as before
+        handleUpload(selectedFile);
+      }
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) {
+  const handleUpload = async (fileToUpload: File) => {
+    if (!fileToUpload) {
       setUploadError('Please select a file first');
       return;
     }
 
     // Check file size
-    if (file.size > 5 * 1024 * 1024) {
+    if (fileToUpload.size > 5 * 1024 * 1024) {
       setUploadError('Image size should be less than 5MB');
       toast.error('Image size should be less than 5MB');
       return;
     }
 
-    setUploading(true);
-    setUploadError(null);
-
     // Create a toast notification that can be updated
     const toastId = toast.loading('Uploading image...');
 
     try {
-      console.log('Starting image upload for file:', file.name, 'size:', Math.round(file.size / 1024), 'KB');
+      console.log('Starting image upload for file:', fileToUpload.name, 'size:', Math.round(fileToUpload.size / 1024), 'KB');
 
-      // Always process the image to ensure consistent format and size
-      let fileToUpload = file;
+      // Process the image to ensure consistent format and size
+      let processedFile = fileToUpload;
 
-      if (file.type.startsWith('image/')) {
+      if (fileToUpload.type.startsWith('image/')) {
         try {
           // Simple client-side processing by creating a canvas
           const img = new Image();
@@ -171,14 +219,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
 
               // Convert canvas to blob with appropriate quality
               // Use higher quality for smaller images, lower for larger ones
-              const quality = file.size < 100 * 1024 ? 0.95 : 0.8;
+              const quality = fileToUpload.size < 100 * 1024 ? 0.95 : 0.8;
 
               canvas.toBlob((blob) => {
                 if (blob) {
-                  fileToUpload = new File([blob], file.name, {
+                  processedFile = new File([blob], fileToUpload.name, {
                     type: 'image/jpeg' // Always convert to JPEG for consistency
                   });
-                  console.log('Processed image size:', Math.round(fileToUpload.size / 1024), 'KB');
+                  console.log('Processed image size:', Math.round(processedFile.size / 1024), 'KB');
                   resolve();
                 } else {
                   reject(new Error('Failed to process image'));
@@ -191,7 +239,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
             };
 
             // Load the image from the file
-            img.src = URL.createObjectURL(file);
+            img.src = URL.createObjectURL(fileToUpload);
           });
         } catch (processingError) {
           console.error('Image processing error:', processingError);
@@ -202,11 +250,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
       // Update toast to show progress
       toast.loading('Uploading to server...', { id: toastId });
 
-      const imageUrl = await uploadImage(fileToUpload);
+      const imageUrl = await uploadImage(processedFile);
       console.log('Upload successful, received URL:', imageUrl);
 
       onChange(imageUrl);
       setFile(null);
+      if (onFileSelect) onFileSelect(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -233,8 +282,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
 
       // Update toast to show error
       toast.error(errorMessage, { id: toastId });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -248,145 +295,192 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
           mb: 1
         }}
       >
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="image upload tabs"
-          variant="fullWidth"
-          sx={{
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            '& .MuiTab-root': {
-              py: 0.5,
-              minHeight: '40px'
-            }
-          }}
-        >
-          <Tab
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <CloudUploadIcon fontSize="small" />
-                <span>Upload</span>
-              </Box>
-            }
-            {...a11yProps(0)}
-          />
-          <Tab
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <LinkIcon fontSize="small" />
-                <span>URL</span>
-              </Box>
-            }
-            {...a11yProps(1)}
-          />
-        </Tabs>
+        {/* For Create Listing, don't show tabs */}
+        {isCreateListing ? (
+          <Box sx={{ p: 1.5 }}>
+            <Box
+              sx={{
+                border: '1px dashed',
+                borderColor: 'divider',
+                borderRadius: 1,
+                p: 1.5,
+                textAlign: 'center',
+                backgroundColor: alpha(theme.palette.primary.main, 0.03),
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '120px'
+              }}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+                ref={fileInputRef}
+                disabled={uploadInProgress}
+              />
 
-        <TabPanel value={tabValue} index={0} sx={{ p: 1.5 }}>
-          <Box
-            sx={{
-              border: '1px dashed',
-              borderColor: 'divider',
-              borderRadius: 1,
-              p: 1.5,
-              textAlign: 'center',
-              backgroundColor: alpha(theme.palette.primary.main, 0.03),
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '120px'
-            }}
-          >
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
-              ref={fileInputRef}
-            />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <CloudUploadIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
+                  {file ? file.name : 'Select an image to upload'}
+                </Typography>
+              </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <CloudUploadIcon sx={{ fontSize: 28, color: 'primary.main' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-                {file ? file.name : 'Select an image to upload'}
+              <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
+                Max file size: 5MB
               </Typography>
-            </Box>
 
-            <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
-              Max file size: 5MB
-            </Typography>
-
-            <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 variant="outlined"
                 size="small"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+                disabled={uploadInProgress}
                 sx={{ py: 0.5, px: 1, fontSize: '0.75rem' }}
               >
                 Browse
               </Button>
+            </Box>
 
-              {file && (
+            {uploadError && (
+              <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
+                {uploadError}
+              </Alert>
+            )}
+
+            {error && !uploadError && (
+              <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
+                {error}
+              </Alert>
+            )}
+          </Box>
+        ) : (
+          /* For Edit Listing, show tabs */
+          <>
+            <Tabs
+              value={tabValue}
+              onChange={handleTabChange}
+              aria-label="image upload tabs"
+              variant="fullWidth"
+              sx={{
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                '& .MuiTab-root': {
+                  py: 0.5,
+                  minHeight: '40px'
+                }
+              }}
+            >
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <CloudUploadIcon fontSize="small" />
+                    <span>Upload</span>
+                  </Box>
+                }
+                {...a11yProps(0)}
+              />
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <LinkIcon fontSize="small" />
+                    <span>URL</span>
+                  </Box>
+                }
+                {...a11yProps(1)}
+              />
+            </Tabs>
+
+            <TabPanel value={tabValue} index={0} sx={{ p: 1.5 }}>
+              <Box
+                sx={{
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  p: 1.5,
+                  textAlign: 'center',
+                  backgroundColor: alpha(theme.palette.primary.main, 0.03),
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '120px'
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                  ref={fileInputRef}
+                  disabled={uploadInProgress}
+                />
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <CloudUploadIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
+                    {file ? file.name : 'Select an image to upload'}
+                  </Typography>
+                </Box>
+
+                <Typography variant="caption" color="textSecondary" sx={{ mb: 1 }}>
+                  Max file size: 5MB
+                </Typography>
+
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   size="small"
-                  onClick={handleUpload}
-                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadInProgress}
                   sx={{ py: 0.5, px: 1, fontSize: '0.75rem' }}
                 >
-                  {uploading ? (
-                    <>
-                      <CircularProgress size={14} sx={{ mr: 0.5 }} />
-                      Uploading...
-                    </>
-                  ) : (
-                    'Upload'
-                  )}
+                  Browse
                 </Button>
+              </Box>
+
+              {uploadError && (
+                <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
+                  {uploadError}
+                </Alert>
               )}
-            </Box>
-          </Box>
+            </TabPanel>
 
-          {uploadError && (
-            <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
-              {uploadError}
-            </Alert>
-          )}
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1} sx={{ p: 1.5 }}>
-          <Grid container spacing={1} alignItems="center">
-            <Grid item xs={8}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Image URL"
-                value={urlValue}
-                onChange={handleUrlChange}
-                placeholder="https://example.com/image.jpg"
-                error={!!error}
-                helperText={error}
-                variant="outlined"
-                InputProps={{ sx: { fontSize: '0.85rem' } }}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleUrlSubmit}
-                fullWidth
-                sx={{ py: 0.75, fontSize: '0.75rem' }}
-              >
-                Use URL
-              </Button>
-            </Grid>
-          </Grid>
-        </TabPanel>
+            <TabPanel value={tabValue} index={1} sx={{ p: 1.5 }}>
+              <Grid container spacing={1} alignItems="center">
+                <Grid item xs={8}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Image URL"
+                    value={urlValue}
+                    onChange={handleUrlChange}
+                    placeholder="https://example.com/image.jpg"
+                    error={!!error}
+                    helperText={error}
+                    variant="outlined"
+                    InputProps={{ sx: { fontSize: '0.85rem' } }}
+                  />
+                </Grid>
+                <Grid item xs={4}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleUrlSubmit}
+                    fullWidth
+                    sx={{ py: 0.75, fontSize: '0.75rem' }}
+                  >
+                    Use URL
+                  </Button>
+                </Grid>
+              </Grid>
+            </TabPanel>
+          </>
+        )}
       </Paper>
 
-      {value && (
+      {/* Show preview from either the selected file or the existing value */}
+      {(previewUrl || value) && (
         <Box
           sx={{
             p: 1,
@@ -407,7 +501,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
             overflow: 'hidden'
           }}>
             <img
-              src={value}
+              src={previewUrl || value}
               alt="Thumbnail Preview"
               style={{
                 maxWidth: '100%',
@@ -432,6 +526,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => 
               }}
             />
           </Box>
+
+          {uploadInProgress && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+              <CircularProgress size={20} />
+              <Typography variant="caption" sx={{ ml: 1 }}>
+                Uploading image...
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
     </Box>

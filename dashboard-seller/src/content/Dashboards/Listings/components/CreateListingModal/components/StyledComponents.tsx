@@ -39,11 +39,26 @@ export const EditorContainer = styled('div')(({ theme }) => ({
     background: theme.palette.background.paper,
     minHeight: '150px',
     fontFamily: theme.typography.fontFamily,
+    fontSize: '0.9rem',
   },
   '& .ql-toolbar': {
     background: theme.palette.grey[100],
     borderBottom: `1px solid ${theme.palette.divider}`,
     borderRadius: `${theme.shape.borderRadius}px ${theme.shape.borderRadius}px 0 0`,
+    padding: '4px 8px',
+    '& .ql-formats': {
+      marginRight: '8px',
+    },
+    '& button': {
+      height: '24px',
+      width: '24px',
+      padding: '2px',
+    }
+  },
+  // Make the editor more compact
+  '& .ql-editor': {
+    padding: '8px 12px',
+    lineHeight: 1.4,
   },
   // Error state styling
   '&.error .ql-container': {
@@ -66,5 +81,6 @@ export const EditorContainer = styled('div')(({ theme }) => ({
     color: theme.palette.text.secondary,
     fontStyle: 'normal',
     opacity: 0.7,
+    fontSize: '0.9rem',
   }
 }));

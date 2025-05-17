@@ -31,6 +31,7 @@ const { adminRoutes } = require("./routes/admin");
 const publicRoutes = require("./routes/public");
 const { sellerRoutes } = require("./routes/seller");
 const { listingsRoutes } = require("./routes/listings");
+const { imageUploadRoutes } = require("./routes/imageUpload");
 const performanceRoutes = require("./routes/performanceRoutes");
 const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
@@ -119,6 +120,29 @@ fastify.register(sellerRoutes, { prefix: "/api/v1/seller" });
 
 // Register listings routes
 fastify.register(listingsRoutes, { prefix: "/api/v1/listings" });
+
+// Register multipart content parser for file uploads
+fastify.register(require('fastify-multipart'), {
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 1 // Only allow one file per request
+  },
+  addToBody: false, // Don't add files to the request body
+  onFile: async (part) => {
+    // This is just to handle the file stream properly
+    // The actual processing is done in the route handler
+    try {
+      for await (const chunk of part.file) {
+        // Just consume the stream
+      }
+    } catch (err) {
+      console.error('Error in multipart onFile:', err);
+    }
+  }
+});
+
+// Register image upload routes
+fastify.register(imageUploadRoutes, { prefix: "/api/v1/images" });
 
 // Register performance monitoring routes
 fastify.register(performanceRoutes, { prefix: "/api/v1" });

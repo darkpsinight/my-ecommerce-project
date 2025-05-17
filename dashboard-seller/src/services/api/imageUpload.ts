@@ -1,0 +1,155 @@
+import axios from 'axios';
+import { store } from 'src/redux/store';
+
+const API_URL = process.env.REACT_APP_API_URL;
+
+/**
+ * Upload an image to ImageKit via the backend
+ * @param file - The file to upload
+ * @returns Promise with the uploaded image URL
+ */
+export const uploadImage = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Get token directly from Redux store for immediate access
+    const token = store.getState().auth.token;
+
+    // Debug log to check token
+    console.log('Image upload - Auth token:', token ? `${token.substring(0, 10)}...` : 'No token');
+
+    if (!token) {
+      throw new Error('Authentication token is missing. Please log in again.');
+    }
+
+    // Create a cancellation token
+    const source = axios.CancelToken.source();
+
+    // Set a timeout to cancel the request after 60 seconds
+    const timeoutId = setTimeout(() => {
+      source.cancel('Upload took too long and was cancelled');
+    }, 60000);
+
+    try {
+      // Create a new FormData with just the file
+      // This ensures we're sending the simplest possible request
+      const simpleFormData = new FormData();
+      simpleFormData.append('file', file);
+
+      console.log('Sending file upload request with size:', file.size, 'bytes');
+
+      const response = await axios.post(
+        `${API_URL}/images/upload`,
+        simpleFormData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            // Don't set Content-Type explicitly for multipart/form-data
+            // Let axios set it with the boundary parameter
+          },
+          withCredentials: true, // Include cookies in the request
+          timeout: 60000, // 60 seconds timeout
+          cancelToken: source.token,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+            console.log(`Upload progress: ${percentCompleted}%`);
+          }
+        }
+      );
+
+      // Clear the timeout since the request completed
+      clearTimeout(timeoutId);
+
+      console.log('Upload API response success:', response.data);
+
+      if (response.data.success) {
+        return response.data.data.url;
+      } else {
+        console.error('Upload API response error:', response.data);
+        throw new Error(response.data.message || 'Failed to upload image');
+      }
+    } catch (error) {
+      // Clear the timeout in case of error
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  } catch (error: any) {
+    console.error('Error uploading image:', error);
+
+    // Add timeout handling
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Upload request timed out. Please try again with a smaller image.');
+    }
+
+    // Add more detailed error information
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+      throw error;
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received from server');
+      throw new Error('No response received from server. Please check your connection and try again.');
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      throw error;
+    }
+  }
+};
+
+/**
+ * Get ImageKit authentication parameters for client-side uploads
+ * @returns Promise with authentication parameters
+ */
+export const getImageKitAuthParams = async () => {
+  try {
+    // Get token directly from Redux store for immediate access
+    const token = store.getState().auth.token;
+
+    // Debug log to check token
+    console.log('Auth params - Auth token:', token ? `${token.substring(0, 10)}...` : 'No token');
+
+    if (!token) {
+      throw new Error('Authentication token is missing. Please log in again.');
+    }
+
+    const response = await axios.get(
+      `${API_URL}/images/auth-params`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        withCredentials: true, // Include cookies in the request
+        timeout: 10000 // 10 seconds timeout
+      }
+    );
+
+    if (response.data.success) {
+      return response.data.data;
+    } else {
+      console.error('Auth params API response error:', response.data);
+      throw new Error(response.data.message || 'Failed to get authentication parameters');
+    }
+  } catch (error: any) {
+    console.error('Error getting ImageKit auth params:', error);
+
+    // Add timeout handling
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Request timed out. Please try again.');
+    }
+
+    // Add more detailed error information
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    } else if (error.request) {
+      console.error('No response received from server');
+      throw new Error('No response received from server. Please check your connection.');
+    }
+
+    throw error;
+  }
+};

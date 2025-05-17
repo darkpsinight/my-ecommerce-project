@@ -79,7 +79,6 @@ const ModalContent: React.FC = () => {
         formData={formData}
         formErrors={formErrors}
         handleChange={handleChange}
-        handleBlur={handleBlur}
         handleDescriptionChange={handleDescriptionChange}
       />
 

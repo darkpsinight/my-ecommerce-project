@@ -406,7 +406,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 onBlur={handleUrlBlur}
                 placeholder="https://example.com/image.jpg"
                 error={!!error}
-                helperText={error || "Enter URL and press Tab or click outside to apply"}
+                helperText={error || "Enter the URL for your product thumbnail image"}
                 variant="outlined"
                 InputProps={{ sx: { fontSize: '0.85rem' } }}
               />

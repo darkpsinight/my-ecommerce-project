@@ -7,7 +7,9 @@ import {
   Table,
   TableBody,
   TableContainer,
-  TablePagination
+  TablePagination,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import { showSuccessToast, showErrorToast } from './components/ListingsActions/ToastNotifications';
 
@@ -43,6 +45,8 @@ import { ListingsTableProps } from './types';
 
 const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   const dispatch = useAppDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   // Use ListingsContext instead of the hook directly
   const {
     listings,
@@ -308,7 +312,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
         ...selectedListings.map(listing => {
           const codeCount = listing.codes?.length || 0;
           return {
-            label: listing.title.length > 25 ? listing.title.substring(0, 25) + '...' : listing.title,
+            label: isMobile
+              ? (listing.title.length > 15 ? listing.title.substring(0, 15) + '...' : listing.title)
+              : (listing.title.length > 25 ? listing.title.substring(0, 25) + '...' : listing.title),
             value: `${new Intl.NumberFormat('en-US', {
               style: 'currency',
               currency: 'USD'
@@ -366,7 +372,9 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
           const codeCount = listing.codes?.length || 0;
           const currentStatus = listing.status === 'active' ? 'On Sale' : listing.status.charAt(0).toUpperCase() + listing.status.slice(1);
           return {
-            label: listing.title.length > 25 ? listing.title.substring(0, 25) + '...' : listing.title,
+            label: isMobile
+              ? (listing.title.length > 15 ? listing.title.substring(0, 15) + '...' : listing.title)
+              : (listing.title.length > 25 ? listing.title.substring(0, 25) + '...' : listing.title),
             value: `${currentStatus}${codeCount > 0 ? ` (${codeCount} ${codeCount === 1 ? 'code' : 'codes'})` : ' (No codes)'}`
           };
         }),

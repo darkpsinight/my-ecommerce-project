@@ -5,6 +5,7 @@ import { useModalContext } from '../ModalContext';
 import BasicInformationSection from '../sections/BasicInformationSection';
 import ProductDetailsSection from '../sections/ProductDetailsSection';
 import PricingSection from '../sections/PricingSection';
+import TagsAndLanguagesSection from '../sections/TagsAndLanguagesSection';
 import UnifiedProductCodeSection from '../sections/UnifiedProductCodeSection';
 import AdditionalInformationSection from '../sections/AdditionalInformationSection';
 import PaginatedCodesTable from './PaginatedCodesTable';
@@ -76,6 +77,17 @@ const ModalContent: React.FC = () => {
     handleChange(syntheticEvent as React.ChangeEvent<HTMLInputElement>);
   };
 
+  // Handle languages change
+  const handleLanguagesChange = (event, newValue) => {
+    const syntheticEvent = {
+      target: {
+        name: 'supportedLanguages',
+        value: newValue
+      }
+    };
+    handleChange(syntheticEvent as React.ChangeEvent<HTMLInputElement>);
+  };
+
   return (
     <Box sx={{ py: 1 }}>
       {/* Basic Information Section */}
@@ -107,11 +119,17 @@ const ModalContent: React.FC = () => {
         handleChange={handleChange}
       />
 
-      {/* Additional Information Section */}
+      {/* Tags & Languages Section */}
+      <TagsAndLanguagesSection
+        formData={formData}
+        handleTagsChange={handleTagsChange}
+        handleLanguagesChange={handleLanguagesChange}
+      />
+
+      {/* Additional Information Section - Now without tags and languages */}
       <AdditionalInformationSection
         formData={formData}
         handleChange={handleChange}
-        handleTagsChange={handleTagsChange}
       />
 
       {/* Unified Product Code Section with Tabs */}

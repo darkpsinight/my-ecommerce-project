@@ -329,6 +329,35 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
   };
 
   /**
+   * Handle code status update
+   */
+  const handleCodeStatusUpdate = (codeId: string, newStatus: 'active' | 'draft') => {
+    // Find the code in the form data
+    const updatedCodes = formData.codes?.map(codeItem => {
+      if (codeItem.codeId === codeId) {
+        // Update the status of the matching code
+        return {
+          ...codeItem,
+          soldStatus: newStatus
+        };
+      }
+      return codeItem;
+    }) || [];
+
+    const updatedFormData = {
+      ...formData,
+      codes: updatedCodes
+    };
+
+    setFormData(updatedFormData);
+
+    // Notify parent component of form data change
+    if (onFormDataChange) {
+      onFormDataChange(updatedFormData);
+    }
+  };
+
+  /**
    * Keydown handler for code input
    */
   const handleCodeKeyDown = (e: React.KeyboardEvent) => {
@@ -571,6 +600,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
                 onCodeDeleted={() => {
                   console.log('Code deleted successfully - local state already updated');
                 }}
+                onCodeStatusUpdated={handleCodeStatusUpdate}
               />
             </Box>
 

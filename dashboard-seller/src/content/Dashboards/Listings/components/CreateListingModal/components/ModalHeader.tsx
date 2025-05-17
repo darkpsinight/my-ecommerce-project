@@ -43,7 +43,7 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({ onClose }) => {
             }}
           />
           <Typography
-            variant="h5"
+            variant="h4"
             component="span"
             sx={{
               fontWeight: 600,

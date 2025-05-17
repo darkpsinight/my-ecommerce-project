@@ -19,7 +19,9 @@ import {
   Chip,
   Tooltip,
   Badge,
-  CircularProgress
+  CircularProgress,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
@@ -28,7 +30,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import SellIcon from '@mui/icons-material/Sell';
 import { format } from 'date-fns';
 import { ListingCode } from '../utils/types';
-import { deleteListingCode } from 'src/services/api/listings';
+import { deleteListingCode, updateCodeStatus } from 'src/services/api/listings';
 import toast from 'react-hot-toast';
 
 interface PaginatedCodesTableProps {
@@ -36,13 +38,15 @@ interface PaginatedCodesTableProps {
   onDeleteCode: (code: string) => void;
   listingId: string;
   onCodeDeleted?: () => void;
+  onCodeStatusUpdated?: (codeId: string, newStatus: 'active' | 'draft') => void;
 }
 
 const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
   codes,
   onDeleteCode,
   listingId,
-  onCodeDeleted
+  onCodeDeleted,
+  onCodeStatusUpdated
 }) => {
   const theme = useTheme();
   const [page, setPage] = useState(0);
@@ -127,6 +131,75 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
       return format(new Date(date), 'yyyy-MM-dd');
     } catch (error) {
       return 'Invalid date';
+    }
+  };
+
+  // Handle status toggle
+  const handleStatusToggle = async (codeItem: ListingCode) => {
+    if (!codeItem.codeId) {
+      console.warn('Cannot toggle status for code without codeId');
+      toast.error('Cannot update status for this code');
+      return;
+    }
+
+    // Only allow toggling between active and draft
+    if (codeItem.soldStatus !== 'active' && codeItem.soldStatus !== 'draft') {
+      toast.error(`Cannot change status of ${codeItem.soldStatus} codes`);
+      return;
+    }
+
+    // Determine the new status
+    const newStatus = codeItem.soldStatus === 'active' ? 'draft' : 'active';
+
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading(`Updating code status to ${newStatus}...`);
+
+      // Optimistically update the UI first for better user experience
+      if (onCodeStatusUpdated) {
+        onCodeStatusUpdated(codeItem.codeId, newStatus);
+      }
+
+      // Call the API to update the code status
+      const response = await updateCodeStatus(listingId, codeItem.codeId, newStatus);
+
+      // Dismiss the loading toast
+      toast.dismiss(loadingToast);
+
+      if (response.success) {
+        // Show success message
+        toast.success(`Code status updated to ${newStatus === 'active' ? 'On Sale' : 'Draft'}`);
+
+        // Check if listing status was updated
+        if (response.data && response.data.status) {
+          // Dispatch a custom event to update the listing status in the parent components
+          const customEvent = new CustomEvent('listingStatusUpdated', {
+            detail: {
+              updatedListing: {
+                ...response.data,
+                status: response.data.status
+              }
+            }
+          });
+          window.dispatchEvent(customEvent);
+        }
+      } else {
+        // Show error message and revert the optimistic update
+        toast.error(response.message || 'Failed to update code status');
+
+        // Revert the optimistic update
+        if (onCodeStatusUpdated) {
+          onCodeStatusUpdated(codeItem.codeId, codeItem.soldStatus);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating code status:', error);
+      toast.error('Failed to update code status. Please try again.');
+
+      // Revert the optimistic update
+      if (onCodeStatusUpdated) {
+        onCodeStatusUpdated(codeItem.codeId, codeItem.soldStatus);
+      }
     }
   };
 
@@ -388,14 +461,37 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                             icon={<SellIcon fontSize="small" />}
                             sx={{ height: 24 }}
                           />
-                        ) : (
+                        ) : codeItem.soldStatus === 'expired' || codeItem.soldStatus === 'suspended' ? (
                           <Chip
                             size="small"
-                            label="On Sale"
-                            color={codeItem.isInvalid ? 'warning' : 'success'}
+                            label={codeItem.soldStatus === 'expired' ? 'Expired' : 'Suspended'}
+                            color={codeItem.soldStatus === 'expired' ? 'error' : 'default'}
                             variant="outlined"
                             sx={{ height: 24 }}
                           />
+                        ) : (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              size="small"
+                              label={codeItem.soldStatus === 'active' ? 'On Sale' : 'Draft'}
+                              color={codeItem.soldStatus === 'active' ? 'success' : 'warning'}
+                              variant="outlined"
+                              sx={{ height: 24 }}
+                            />
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={codeItem.soldStatus === 'active'}
+                                  onChange={() => handleStatusToggle(codeItem)}
+                                  size="small"
+                                  color={codeItem.soldStatus === 'active' ? 'success' : 'warning'}
+                                  disabled={!codeItem.codeId || codeItem.isInvalid}
+                                />
+                              }
+                              label=""
+                              sx={{ m: 0 }}
+                            />
+                          </Box>
                         )}
                       </TableCell>
                       <TableCell>

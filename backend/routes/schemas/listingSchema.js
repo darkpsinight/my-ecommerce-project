@@ -429,6 +429,35 @@ const listingSchema = {
         }
       }
     }
+  },
+
+  // Schema for updating a code's status
+  updateCodeStatus: {
+    params: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: {
+          type: "string",
+          description: "Listing external ID (UUID)"
+        }
+      }
+    },
+    body: {
+      type: "object",
+      required: ["codeId", "status"],
+      properties: {
+        codeId: {
+          type: "string",
+          description: "The ID of the code to update"
+        },
+        status: {
+          type: "string",
+          enum: ["active", "draft"],
+          description: "The new status for the code"
+        }
+      }
+    }
   }
 };
 

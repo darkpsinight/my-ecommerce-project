@@ -41,7 +41,7 @@ const ModalHeader: FC<ModalHeaderProps> = ({ onClose, title = 'Edit Listing' }) 
             }}
           />
           <Typography
-            variant="h5"
+            variant="h4"
             component="span"
             sx={{
               fontWeight: 600,

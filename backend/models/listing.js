@@ -125,6 +125,15 @@ const listingSchema = new mongoose.Schema({
 // Add compound index for status to optimize queries
 listingSchema.index({ status: 1 });
 
+// Track status changes
+listingSchema.pre("save", function(next) {
+  // Store the previous status if the status field is being modified
+  if (this.isModified('status')) {
+    this._previousStatus = this.get('status', String);
+  }
+  next();
+});
+
 // Middleware to update the updatedAt field and handle code-related logic on save
 listingSchema.pre("save", function(next) {
   // Update the updatedAt timestamp
@@ -166,8 +175,14 @@ listingSchema.pre("save", function(next) {
       });
     }
 
-    if (this.status === "draft") {
+    // Check if this is an explicit status change from draft to active
+    const isExplicitActivation = this.isModified('status') &&
+                               this._previousStatus === 'draft' &&
+                               this.status === 'active';
+
+    if (this.status === "draft" || isExplicitActivation) {
       // Preserve draft status if explicitly set
+      // Or preserve active status if explicitly changed from draft to active
       // Do nothing to change the status
     } else {
       // Apply the status rules based on the scenarios
@@ -406,9 +421,13 @@ listingSchema.statics.determineListingStatus = function(codes, currentStatus) {
     }
   });
 
-  // Preserve draft status if explicitly set
-  if (currentStatus === "draft") {
-    return "draft";
+  // Check if this is an explicit status change from draft to active
+  const isExplicitActivation = currentStatus === "active" &&
+                             this._isExplicitStatusChange === true;
+
+  // Preserve draft status if explicitly set, or active status if explicitly changed
+  if (currentStatus === "draft" || isExplicitActivation) {
+    return currentStatus;
   }
 
   // Apply the status rules based on the scenarios

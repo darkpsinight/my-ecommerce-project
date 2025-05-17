@@ -752,6 +752,41 @@ const updateListing = async (request, reply) => {
       });
     }
 
+    // Check if status is being explicitly changed
+    const isStatusChange = fieldsToUpdate.includes('status') &&
+                          updateData.status !== listing.status;
+
+    // Check for special flags in the request
+    const isExplicitStatusChange = updateData._isExplicitStatusChange === true;
+    const shouldUpdateDraftCodes = updateData._updateDraftCodes === true;
+
+    // Remove special flags from updateData to avoid saving them to the database
+    if ('_isExplicitStatusChange' in updateData) {
+      delete updateData._isExplicitStatusChange;
+      // Also remove it from fieldsToUpdate
+      const index = fieldsToUpdate.indexOf('_isExplicitStatusChange');
+      if (index !== -1) {
+        fieldsToUpdate.splice(index, 1);
+      }
+    }
+
+    if ('_updateDraftCodes' in updateData) {
+      delete updateData._updateDraftCodes;
+      // Also remove it from fieldsToUpdate
+      const index = fieldsToUpdate.indexOf('_updateDraftCodes');
+      if (index !== -1) {
+        fieldsToUpdate.splice(index, 1);
+      }
+    }
+
+    // Set a flag for explicit status changes
+    if (isStatusChange || isExplicitStatusChange) {
+      listing._isExplicitStatusChange = true;
+
+      // We no longer automatically update code statuses when listing status changes
+      // Draft codes should remain draft until manually changed by the seller
+    }
+
     // Update only valid fields
     fieldsToUpdate.forEach(key => {
       listing[key] = updateData[key];
@@ -1082,6 +1117,90 @@ const checkCodeExists = async (request, reply) => {
   }
 };
 
+// Update a specific code's status in a listing
+const updateCodeStatus = async (request, reply) => {
+  try {
+    const { id } = request.params;
+    const { codeId, status } = request.body;
+    const sellerId = request.user.uid;
+
+    // Validate input
+    if (!codeId) {
+      return reply.code(400).send({
+        success: false,
+        error: "Code ID is required"
+      });
+    }
+
+    if (!status || !['active', 'draft'].includes(status)) {
+      return reply.code(400).send({
+        success: false,
+        error: "Valid status (active or draft) is required"
+      });
+    }
+
+    // Check if user is admin (admins can update any listing)
+    const isAdmin = request.user.role === "admin";
+
+    // Query to find the listing - use externalId instead of _id
+    const query = isAdmin ? { externalId: id } : { externalId: id, sellerId };
+
+    // Find the listing - explicitly select the code and iv fields which are hidden by default
+    const listing = await Listing.findOne(query).select('+codes.code +codes.iv');
+
+    if (!listing) {
+      return reply.code(404).send({
+        success: false,
+        error: "Listing not found or you don't have permission to update it"
+      });
+    }
+
+    // Find the code in the listing
+    const codeIndex = listing.codes.findIndex(code => code.codeId === codeId);
+
+    if (codeIndex === -1) {
+      return reply.code(404).send({
+        success: false,
+        error: "Code not found in this listing"
+      });
+    }
+
+    // Check if the code is already sold or expired
+    const currentStatus = listing.codes[codeIndex].soldStatus;
+    if (currentStatus === 'sold' || currentStatus === 'expired' || currentStatus === 'suspended') {
+      return reply.code(400).send({
+        success: false,
+        error: `Cannot change status of ${currentStatus} codes`
+      });
+    }
+
+    // Update the code status
+    listing.codes[codeIndex].soldStatus = status;
+
+    // Save the updated listing - allow the pre-save middleware to recalculate status
+    await listing.save();
+
+    // Return success response
+    return reply.code(200).send({
+      success: true,
+      message: `Code status updated to ${status}`,
+      data: {
+        externalId: listing.externalId,
+        title: listing.title,
+        codesCount: listing.codes.length,
+        status: listing.status
+      }
+    });
+  } catch (error) {
+    request.log.error(`Error updating code status: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to update code status",
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createListing,
   updateListing,
@@ -1091,6 +1210,7 @@ module.exports = {
   maskCode,
   getFormatDescription,
   checkForDuplicateCodes,
-  checkCodeExists
+  checkCodeExists,
+  updateCodeStatus
 };
 

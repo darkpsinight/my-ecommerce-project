@@ -1,14 +1,27 @@
 import { FC, useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, Zoom, useTheme, alpha, CircularProgress } from '@mui/material';
+import {
+  Dialog,
+  DialogContent,
+  Zoom,
+  useTheme,
+  alpha,
+  CircularProgress
+} from '@mui/material';
 import toast from 'react-hot-toast';
 
 // Import types
 import { Listing } from '../../types';
-import { FormData as ListingFormData, ExtendedListing } from './components/ListingForm/utils/types';
+import {
+  FormData as ListingFormData,
+  ExtendedListing
+} from './components/ListingForm/utils/types';
 import { getValidationPatterns } from 'src/services/api/validation';
 
 // Import utility functions
-import { getActiveCodes, getDiscountPercentage } from '../ViewListingDetailsModal/utils/listingHelpers';
+import {
+  getActiveCodes,
+  getDiscountPercentage
+} from '../ViewListingDetailsModal/utils/listingHelpers';
 
 // Import components
 import ModalHeader from './components/ModalHeader';
@@ -19,7 +32,10 @@ import ListingForm from './components/ListingForm';
 import ModalFooter from './components/ModalFooter';
 
 // Import API services
-import { updateListing, getListingById } from '../../../../../services/api/listings';
+import {
+  updateListing,
+  getListingById
+} from '../../../../../services/api/listings';
 
 // Icons are imported and used in child components
 
@@ -49,11 +65,15 @@ const EditListingModal: FC<EditListingModalProps> = ({
   const [categories] = useState(initialCategories);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
   const [selectedPattern, setSelectedPattern] = useState(null);
-  const [validationPatternsCache, setValidationPatternsCache] = useState<Record<string, any>>({});
+  const [validationPatternsCache, setValidationPatternsCache] = useState<
+    Record<string, any>
+  >({});
   const [isPatternLoading, setIsPatternLoading] = useState(false);
 
   // Shared form state to persist data across tabs
-  const [sharedFormData, setSharedFormData] = useState<ListingFormData | null>(null);
+  const [sharedFormData, setSharedFormData] = useState<ListingFormData | null>(
+    null
+  );
 
   // Create refs to access the ListingForm components
   const generalFormRef = useRef<any>(null);
@@ -66,7 +86,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
       setIsLoading(true);
 
       // Find the listing in the listings array
-      const foundListing = listings.find(item => item.externalId === listingId);
+      const foundListing = listings.find(
+        (item) => item.externalId === listingId
+      );
 
       if (foundListing) {
         setListing(foundListing);
@@ -77,11 +99,15 @@ const EditListingModal: FC<EditListingModalProps> = ({
           title: foundListing.title || '',
           description: foundListing.description || '',
           price: foundListing.price ? foundListing.price.toString() : '',
-          originalPrice: foundListing.originalPrice ? foundListing.originalPrice.toString() : '',
+          originalPrice: foundListing.originalPrice
+            ? foundListing.originalPrice.toString()
+            : '',
           platform: foundListing.platform || '',
           region: foundListing.region || '',
           isRegionLocked: foundListing.isRegionLocked || false,
-          expirationDate: foundListing.expirationDate ? new Date(foundListing.expirationDate) : null,
+          expirationDate: foundListing.expirationDate
+            ? new Date(foundListing.expirationDate)
+            : null,
           categoryId: foundListing.categoryId || '',
           status: foundListing.status || 'active',
           autoDelivery: foundListing.autoDelivery || false,
@@ -102,9 +128,11 @@ const EditListingModal: FC<EditListingModalProps> = ({
         // Fetch validation patterns for the listing's category and platform
         if (foundListing.categoryId && foundListing.platform) {
           // Convert categoryId to string if it's an object
-          const categoryIdValue = typeof foundListing.categoryId === 'object' && foundListing.categoryId._id
-            ? foundListing.categoryId._id
-            : foundListing.categoryId;
+          const categoryIdValue =
+            typeof foundListing.categoryId === 'object' &&
+            foundListing.categoryId._id
+              ? foundListing.categoryId._id
+              : foundListing.categoryId;
 
           // Create a cache key to check if we already have this pattern
           const cacheKey = `${categoryIdValue}:${foundListing.platform}`;
@@ -112,9 +140,15 @@ const EditListingModal: FC<EditListingModalProps> = ({
           // Only fetch if not already in cache
           if (!validationPatternsCache[cacheKey]) {
             // Explicitly cast to string to satisfy TypeScript
-            fetchValidationPatterns(categoryIdValue as string, foundListing.platform);
+            fetchValidationPatterns(
+              categoryIdValue as string,
+              foundListing.platform
+            );
           } else {
-            console.log('Using cached validation patterns on modal open for', cacheKey);
+            console.log(
+              'Using cached validation patterns on modal open for',
+              cacheKey
+            );
             // Use cached patterns
             const cachedPatterns = validationPatternsCache[cacheKey];
             if (cachedPatterns.length === 1) {
@@ -156,7 +190,10 @@ const EditListingModal: FC<EditListingModalProps> = ({
   };
 
   // Fetch validation patterns for the selected category and platform
-  const fetchValidationPatterns = async (categoryId: string, platformName: string) => {
+  const fetchValidationPatterns = async (
+    categoryId: string,
+    platformName: string
+  ) => {
     if (!categoryId || !platformName) return;
 
     // Create a cache key using categoryId and platformName
@@ -186,7 +223,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
         const { patterns: responsePatterns } = response.data;
 
         // Store in cache for future use
-        setValidationPatternsCache(prevCache => ({
+        setValidationPatternsCache((prevCache) => ({
           ...prevCache,
           [cacheKey]: responsePatterns
         }));
@@ -198,7 +235,10 @@ const EditListingModal: FC<EditListingModalProps> = ({
           setSelectedPattern(null);
         }
       } else {
-        console.error('Failed to load validation patterns:', response.message || 'Unknown error');
+        console.error(
+          'Failed to load validation patterns:',
+          response.message || 'Unknown error'
+        );
         toast.error('Failed to load validation patterns');
       }
     } catch (err) {
@@ -257,7 +297,10 @@ const EditListingModal: FC<EditListingModalProps> = ({
     if (!listing) return;
 
     // Check if the listing has codes when trying to set it to active
-    if (newStatus === 'active' && (!listing.codes || listing.codes.length === 0)) {
+    if (
+      newStatus === 'active' &&
+      (!listing.codes || listing.codes.length === 0)
+    ) {
       setTimeout(() => {
         toast.error('A listing must have at least one code to be active');
       }, 100);
@@ -306,15 +349,27 @@ const EditListingModal: FC<EditListingModalProps> = ({
         if (actualStatus !== newStatus) {
           // If the status in the response is different from what we requested
           if (actualStatus === 'suspended') {
-            toast.error('Listing cannot be activated: A listing must have at least one code to be active');
+            toast.error(
+              'Listing cannot be activated: A listing must have at least one code to be active'
+            );
           } else {
             // Use default toast with an icon for info messages
-            toast(`Listing status is ${actualStatus === 'active' ? 'On Sale' : actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)}`, {
-              icon: '📝'
-            });
+            toast(
+              `Listing status is ${
+                actualStatus === 'active'
+                  ? 'On Sale'
+                  : actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)
+              }`
+            );
           }
         } else {
-          toast.success(`Listing status updated to ${actualStatus === 'active' ? 'On Sale' : actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)}`);
+          toast.success(
+            `Listing status updated to ${
+              actualStatus === 'active'
+                ? 'On Sale'
+                : actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)
+            }`
+          );
         }
       }, 100);
     } catch (error: any) {
@@ -326,7 +381,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
         status: listing.status // Revert to original status
       });
 
-      const errorMessage = error.response?.data?.message || 'Failed to update listing status. Please try again.';
+      const errorMessage =
+        error.response?.data?.message ||
+        'Failed to update listing status. Please try again.';
       setTimeout(() => {
         toast.error(errorMessage);
       }, 100);
@@ -392,7 +449,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
       formData.description = currentSharedFormData.description;
       formData.price = parseFloat(currentSharedFormData.price);
       if (currentSharedFormData.originalPrice) {
-        formData.originalPrice = parseFloat(currentSharedFormData.originalPrice);
+        formData.originalPrice = parseFloat(
+          currentSharedFormData.originalPrice
+        );
       }
       formData.region = currentSharedFormData.region;
       formData.isRegionLocked = currentSharedFormData.isRegionLocked;
@@ -414,10 +473,15 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
       // Log the tags and languages for debugging
       console.log('Tags in collectFormData:', formData.tags);
-      console.log('Supported Languages in collectFormData:', formData.supportedLanguages);
+      console.log(
+        'Supported Languages in collectFormData:',
+        formData.supportedLanguages
+      );
     } else {
       // Fallback to the old method if shared form data is not available
-      console.warn('Shared form data not available, falling back to individual form data collection');
+      console.warn(
+        'Shared form data not available, falling back to individual form data collection'
+      );
 
       // Get data from each form if available
       if (generalFormRef.current?.getFormData) {
@@ -441,7 +505,11 @@ const EditListingModal: FC<EditListingModalProps> = ({
     console.log('Collected form data from all tabs:', formData);
 
     // Log the codes specifically to help debug code-related issues
-    console.log('Codes being sent to API:', formData.codes ? formData.codes.length : 0, 'codes');
+    console.log(
+      'Codes being sent to API:',
+      formData.codes ? formData.codes.length : 0,
+      'codes'
+    );
     if (formData.codes && formData.codes.length > 0) {
       console.log('First few codes:', formData.codes.slice(0, 3));
     }
@@ -461,12 +529,15 @@ const EditListingModal: FC<EditListingModalProps> = ({
         setActiveCodes(getActiveCodes(response.data));
 
         // Update the shared form data with the fresh data
-        setSharedFormData(prevData => ({
+        setSharedFormData((prevData) => ({
           ...prevData,
           codes: response.data.codes || []
         }));
 
-        console.log('Updated listing data fetched successfully:', response.data);
+        console.log(
+          'Updated listing data fetched successfully:',
+          response.data
+        );
         return response.data;
       } else {
         console.error('Failed to fetch updated listing data:', response);
@@ -503,7 +574,11 @@ const EditListingModal: FC<EditListingModalProps> = ({
     }
 
     // Only validate the form if this is not a refresh request or CSV upload
-    if ((!isRefreshRequest || isSaveAction) && !isCsvUpload && currentFormRef.current?.validateForm) {
+    if (
+      (!isRefreshRequest || isSaveAction) &&
+      !isCsvUpload &&
+      currentFormRef.current?.validateForm
+    ) {
       // Directly call validateForm to trigger validation and display errors
       const isValid = currentFormRef.current.validateForm();
 
@@ -515,15 +590,21 @@ const EditListingModal: FC<EditListingModalProps> = ({
       }
 
       // If we're in the images tab or this is a save action from the footer, check if we need to upload an image first
-      if ((tabValue === 3 || isSaveAction) && currentFormRef.current.uploadImageIfNeeded) {
-        console.log('Checking if image upload is needed before form submission');
+      if (
+        (tabValue === 3 || isSaveAction) &&
+        currentFormRef.current.uploadImageIfNeeded
+      ) {
+        console.log(
+          'Checking if image upload is needed before form submission'
+        );
 
         // Set submitting state to show loading indicator
         setIsSubmitting(true);
 
         try {
           // Upload the image if needed
-          const uploadSuccess = await currentFormRef.current.uploadImageIfNeeded();
+          const uploadSuccess =
+            await currentFormRef.current.uploadImageIfNeeded();
 
           // If upload failed, stop the submission process
           if (!uploadSuccess) {
@@ -535,17 +616,24 @@ const EditListingModal: FC<EditListingModalProps> = ({
           // If this is just an image update from the images tab or footer save button,
           // and we're not in the middle of a CSV upload or refresh request,
           // we can optimize by only updating the thumbnailUrl
-          if ((tabValue === 3 || isSaveAction) && !isCsvUpload && !isRefreshRequest &&
-              currentFormRef.current === imagesFormRef.current) {
-
+          if (
+            (tabValue === 3 || isSaveAction) &&
+            !isCsvUpload &&
+            !isRefreshRequest &&
+            currentFormRef.current === imagesFormRef.current
+          ) {
             // Get just the image data from the form
             const imageData = currentFormRef.current.getFormData();
 
             if (imageData && imageData.thumbnailUrl) {
-              console.log('Optimized image update - only sending thumbnailUrl to API');
+              console.log(
+                'Optimized image update - only sending thumbnailUrl to API'
+              );
 
               // Make the API call with just the thumbnailUrl
-              await updateListing(listing.externalId, { thumbnailUrl: imageData.thumbnailUrl });
+              await updateListing(listing.externalId, {
+                thumbnailUrl: imageData.thumbnailUrl
+              });
 
               // Update the local listing object
               const updatedListing = {
@@ -562,12 +650,18 @@ const EditListingModal: FC<EditListingModalProps> = ({
               }, 100);
 
               setIsSubmitting(false);
-              onClose();
+
+              // Only close the modal if this is a regular image update, not a CSV upload
+              if (!isCsvUpload) {
+                onClose();
+              }
               return;
             }
           }
 
-          console.log('Image upload check completed, continuing with form submission');
+          console.log(
+            'Image upload check completed, continuing with form submission'
+          );
         } catch (error) {
           console.error('Error during image upload:', error);
           toast.error('Failed to upload image. Please try again.');
@@ -597,7 +691,9 @@ const EditListingModal: FC<EditListingModalProps> = ({
         }
       } catch (error: any) {
         console.error('Failed to refresh listing data:', error);
-        const errorMessage = error.response?.data?.message || 'Failed to refresh listing data. Please try again.';
+        const errorMessage =
+          error.response?.data?.message ||
+          'Failed to refresh listing data. Please try again.';
         setTimeout(() => {
           toast.error(errorMessage);
         }, 100);
@@ -657,7 +753,10 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
     // Log specifically about tags and languages for debugging
     console.log('Tags being sent to API:', apiData.tags);
-    console.log('Supported Languages being sent to API:', apiData.supportedLanguages);
+    console.log(
+      'Supported Languages being sent to API:',
+      apiData.supportedLanguages
+    );
 
     // Log specifically about codes for debugging
     if (apiData.codes) {
@@ -687,10 +786,16 @@ const EditListingModal: FC<EditListingModalProps> = ({
       setTimeout(() => {
         toast.success('Listing updated successfully');
       }, 100);
-      onClose();
+
+      // Only close the modal if this is a regular update, not a CSV upload
+      if (!isCsvUpload) {
+        onClose();
+      }
     } catch (error: any) {
       console.error('Failed to update listing:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to update listing. Please try again.';
+      const errorMessage =
+        error.response?.data?.message ||
+        'Failed to update listing. Please try again.';
       setTimeout(() => {
         toast.error(errorMessage);
       }, 100);
@@ -734,7 +839,13 @@ const EditListingModal: FC<EditListingModalProps> = ({
       <ModalHeader onClose={onClose} title="Edit Listing" />
 
       {isLoading || !listing ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '40px 0'
+          }}
+        >
           <CircularProgress />
         </div>
       ) : (

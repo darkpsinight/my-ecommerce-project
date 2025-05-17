@@ -7,7 +7,8 @@ const {
   deleteListing,
   getListingByExternalId,
   deleteListingCode,
-  checkCodeExists
+  checkCodeExists,
+  updateCodeStatus
 } = require("../handlers/listingHandlers");
 const {
   getListings,
@@ -221,6 +222,18 @@ const listingsRoutes = async (fastify, opts) => {
     preHandler: verifyAuth(["seller"]),
     schema: listingSchema.checkCodeExists,
     handler: checkCodeExists
+  });
+
+  // Update a specific code's status in a listing
+  fastify.route({
+    config: {
+      rateLimit: updateRateLimit
+    },
+    method: "POST",
+    url: "/:id/update-code-status",
+    preHandler: verifyAuth(["seller"]),
+    schema: listingSchema.updateCodeStatus,
+    handler: updateCodeStatus
   });
 };
 

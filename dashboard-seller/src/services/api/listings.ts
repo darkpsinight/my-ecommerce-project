@@ -403,6 +403,53 @@ export const deleteListingCode = async (listingId: string, codeId: string) => {
   }
 };
 
+// Update a single code's status
+export const updateCodeStatus = async (
+  listingId: string,
+  codeId: string,
+  newStatus: 'active' | 'draft'
+) => {
+  try {
+    const api = getAuthAxios();
+
+    // Use the dedicated endpoint for updating code status
+    const response = await api.post(`/listings/${listingId}/update-code-status`, {
+      codeId: codeId,
+      status: newStatus
+    });
+
+    if (response.data.success) {
+      return response.data;
+    }
+  } catch (error) {
+    console.error(`Error updating code status for code ${codeId} in listing ${listingId}:`, error);
+
+    // No fallback needed anymore since we have a dedicated endpoint
+
+    // Handle API errors
+    if (error.response) {
+      console.error('API error response:', error.response.data);
+      return {
+        success: false,
+        message: error.response.data.message || 'Failed to update code status',
+        error: error.response.data.error
+      };
+    } else if (error.request) {
+      return {
+        success: false,
+        message: 'No response from server. Please check your connection.',
+        error: 'Network error'
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Request failed. Please try again.',
+        error: error.message
+      };
+    }
+  }
+};
+
 // Add codes to a listing
 export const addListingCodes = async (listingId: string, codes: Array<{
   code: string;
@@ -595,9 +642,31 @@ export const bulkUpdateListingsStatus = async (ids: string[], status: string) =>
     // Process each listing status update sequentially
     for (const id of ids) {
       try {
-        const response = await api.put(`/listings/${id}`, { status });
+        // For draft to active transitions, we need to also update all draft codes to active
+        // Use a type assertion to allow additional properties
+        let updateData: Record<string, any> = { status };
+
+        // If we're changing to active status, add a special flag to indicate this is an explicit status change
+        if (status === 'active') {
+          updateData._isExplicitStatusChange = true;
+          // We no longer automatically update draft codes to active
+        }
+
+        const response = await api.put(`/listings/${id}`, updateData);
+
+        // Check if the response was successful
         if (response.data.success) {
-          results.successCount++;
+          // Check if the status in the response matches what we requested
+          // This handles the case where the backend might have overridden our status change
+          if (response.data.data && response.data.data.status === status) {
+            results.successCount++;
+          } else {
+            results.failureCount++;
+            results.errors.push({
+              id,
+              error: `Status not updated. Current status: ${response.data.data?.status || 'unknown'}`
+            });
+          }
         } else {
           results.failureCount++;
           results.errors.push({ id, error: response.data.message || 'Unknown error' });

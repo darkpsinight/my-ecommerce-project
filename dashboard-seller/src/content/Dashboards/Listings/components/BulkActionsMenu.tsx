@@ -32,7 +32,8 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
   onMenuClose,
   onBulkAction
 }) => {
-  const [statusMenuAnchorEl, setStatusMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [statusMenuAnchorEl, setStatusMenuAnchorEl] =
+    useState<null | HTMLElement>(null);
 
   const handleStatusMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setStatusMenuAnchorEl(event.currentTarget);
@@ -50,12 +51,6 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
 
   const bulkActions: BulkActionMenuItem[] = [
     {
-      action: 'delete',
-      label: 'Delete Selected',
-      icon: <DeleteTwoToneIcon fontSize="small" />,
-      color: 'error'
-    },
-    {
       action: 'status',
       label: 'Change Status',
       icon: <CheckCircleTwoToneIcon fontSize="small" />,
@@ -66,6 +61,12 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
       label: 'Download as CSV',
       icon: <FileDownloadTwoToneIcon fontSize="small" />,
       color: 'info'
+    },
+    {
+      action: 'delete',
+      label: 'Delete Selected',
+      icon: <DeleteTwoToneIcon fontSize="small" />,
+      color: 'error'
     }
   ];
 
@@ -89,8 +90,8 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
               width: 24,
               height: 24,
               borderRadius: '50%',
-              backgroundColor: theme => theme.palette.primary.main,
-              color: theme => theme.palette.primary.contrastText,
+              backgroundColor: (theme) => theme.palette.primary.main,
+              color: (theme) => theme.palette.primary.contrastText,
               fontWeight: 'bold',
               fontSize: 14
             }}
@@ -101,29 +102,35 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
       </Button>
 
       {/* Main Bulk Actions Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={onMenuClose}
-      >
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={onMenuClose}>
         {bulkActions.map((action) => (
           <MenuItem
             key={action.action}
-            onClick={action.action === 'status'
-              ? handleStatusMenuOpen
-              : () => onBulkAction(action.action)}
+            onClick={
+              action.action === 'status'
+                ? handleStatusMenuOpen
+                : () => onBulkAction(action.action)
+            }
             disabled={selected.length === 0 || action.disabled}
             sx={{
-              color: action.color ? theme => theme.palette[action.color].main : 'inherit'
+              color: action.color
+                ? (theme) => theme.palette[action.color].main
+                : 'inherit'
             }}
           >
-            <ListItemIcon sx={{
-              color: action.color ? theme => theme.palette[action.color].main : 'inherit'
-            }}>
+            <ListItemIcon
+              sx={{
+                color: action.color
+                  ? (theme) => theme.palette[action.color].main
+                  : 'inherit'
+              }}
+            >
               {action.icon}
             </ListItemIcon>
             <ListItemText>{action.label}</ListItemText>
-            {action.action === 'status' && <ArrowRightTwoToneIcon fontSize="small" />}
+            {action.action === 'status' && (
+              <ArrowRightTwoToneIcon fontSize="small" />
+            )}
           </MenuItem>
         ))}
       </Menu>
@@ -143,7 +150,7 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
         }}
       >
         <MenuItem onClick={() => handleStatusAction('active')}>
-          <ListItemIcon sx={{ color: theme => theme.palette.success.main }}>
+          <ListItemIcon sx={{ color: (theme) => theme.palette.success.main }}>
             <CheckCircleTwoToneIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Set as On Sale</ListItemText>

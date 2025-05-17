@@ -23,7 +23,7 @@ interface ImageUploadProps {
 
 // Define the ref interface
 export interface ImageUploadRef {
-  uploadImageBeforeSubmit: () => Promise<boolean>;
+  uploadImageBeforeSubmit: () => Promise<{ success: boolean; imageUrl?: string }>;
   hasTemporaryImage: () => boolean;
 }
 
@@ -43,9 +43,11 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>((props, ref) =>
     if (temporaryImageFile) {
       try {
         setImageUploadInProgress(true);
+        console.log('Starting image upload in ImageUpload component');
 
         // Upload the image to ImageKit.io
         const imageUrl = await uploadImage(temporaryImageFile);
+        console.log('Image upload completed successfully, URL:', imageUrl);
 
         // Update the form data with the new image URL
         const syntheticEvent = {
@@ -59,17 +61,17 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>((props, ref) =>
         // Clear the temporary file
         setTemporaryImageFile(null);
 
-        return true;
+        return { success: true, imageUrl };
       } catch (error) {
         console.error('Error uploading image:', error);
         toast.error('Failed to upload image. Please try again.');
-        return false;
+        return { success: false };
       } finally {
         setImageUploadInProgress(false);
       }
     }
 
-    return true; // No image to upload, proceed with form submission
+    return { success: true }; // No image to upload, proceed with form submission
   };
 
   // Handle URL change

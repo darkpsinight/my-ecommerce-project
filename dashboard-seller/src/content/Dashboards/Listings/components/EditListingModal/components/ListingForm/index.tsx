@@ -391,10 +391,10 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
         console.log('Temporary image found, uploading before form submission');
 
         // Upload the image before submitting the form
-        const uploadSuccess = await imageUploadRef.current.uploadImageBeforeSubmit();
+        const result = await imageUploadRef.current.uploadImageBeforeSubmit();
 
         // If upload failed, stop the submission process
-        if (!uploadSuccess) {
+        if (!result.success) {
           console.error('Image upload failed, stopping form submission');
           return;
         }
@@ -772,10 +772,10 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
           console.log('Temporary image found, uploading before form submission (from ref method)');
 
           // Upload the image before submitting the form
-          const uploadSuccess = await imageUploadRef.current.uploadImageBeforeSubmit();
+          const result = await imageUploadRef.current.uploadImageBeforeSubmit();
 
           // Return the upload result
-          return uploadSuccess;
+          return result.success;
         }
       }
 

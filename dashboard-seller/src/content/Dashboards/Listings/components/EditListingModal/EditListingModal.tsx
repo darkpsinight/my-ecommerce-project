@@ -532,6 +532,41 @@ const EditListingModal: FC<EditListingModalProps> = ({
             return;
           }
 
+          // If this is just an image update from the images tab or footer save button,
+          // and we're not in the middle of a CSV upload or refresh request,
+          // we can optimize by only updating the thumbnailUrl
+          if ((tabValue === 3 || isSaveAction) && !isCsvUpload && !isRefreshRequest &&
+              currentFormRef.current === imagesFormRef.current) {
+
+            // Get just the image data from the form
+            const imageData = currentFormRef.current.getFormData();
+
+            if (imageData && imageData.thumbnailUrl) {
+              console.log('Optimized image update - only sending thumbnailUrl to API');
+
+              // Make the API call with just the thumbnailUrl
+              await updateListing(listing.externalId, { thumbnailUrl: imageData.thumbnailUrl });
+
+              // Update the local listing object
+              const updatedListing = {
+                ...listing,
+                thumbnailUrl: imageData.thumbnailUrl,
+                updatedAt: new Date().toISOString()
+              };
+
+              // Call the onListingUpdated callback with the updated listing
+              onListingUpdated(updatedListing as Listing);
+
+              setTimeout(() => {
+                toast.success('Image updated successfully');
+              }, 100);
+
+              setIsSubmitting(false);
+              onClose();
+              return;
+            }
+          }
+
           console.log('Image upload check completed, continuing with form submission');
         } catch (error) {
           console.error('Error during image upload:', error);

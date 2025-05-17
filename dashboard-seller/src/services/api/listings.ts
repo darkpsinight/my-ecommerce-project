@@ -499,6 +499,143 @@ export const getCategories = async () => {
   }
 };
 
+// Bulk delete multiple listings
+export const bulkDeleteListings = async (ids: string[]) => {
+  try {
+    if (!ids || ids.length === 0) {
+      return {
+        success: false,
+        message: 'No listings selected for deletion',
+        error: 'Invalid input'
+      };
+    }
+
+    const api = getAuthAxios();
+    const results = {
+      success: true,
+      message: 'Bulk delete operation completed',
+      totalCount: ids.length,
+      successCount: 0,
+      failureCount: 0,
+      errors: [] as { id: string; error: string }[]
+    };
+
+    // Process each listing deletion sequentially
+    for (const id of ids) {
+      try {
+        const response = await api.delete(`/listings/${id}`);
+        if (response.data.success) {
+          results.successCount++;
+        } else {
+          results.failureCount++;
+          results.errors.push({ id, error: response.data.message || 'Unknown error' });
+        }
+      } catch (error) {
+        results.failureCount++;
+        results.errors.push({
+          id,
+          error: error.response?.data?.message || error.message || 'Failed to delete listing'
+        });
+      }
+    }
+
+    // Update the overall success status based on results
+    results.success = results.successCount > 0;
+
+    // Update the message based on results
+    if (results.successCount === ids.length) {
+      results.message = `Successfully deleted ${results.successCount} listings`;
+    } else if (results.successCount > 0) {
+      results.message = `Deleted ${results.successCount} listings, but failed to delete ${results.failureCount} listings`;
+    } else {
+      results.message = `Failed to delete any of the ${results.failureCount} listings`;
+      results.success = false;
+    }
+
+    return results;
+  } catch (error) {
+    console.error('Error in bulk delete operation:', error);
+    return {
+      success: false,
+      message: 'Bulk delete operation failed',
+      error: error.message || 'Unknown error'
+    };
+  }
+};
+
+// Bulk update status for multiple listings
+export const bulkUpdateListingsStatus = async (ids: string[], status: string) => {
+  try {
+    if (!ids || ids.length === 0) {
+      return {
+        success: false,
+        message: 'No listings selected for status update',
+        error: 'Invalid input'
+      };
+    }
+
+    if (!['active', 'draft'].includes(status)) {
+      return {
+        success: false,
+        message: 'Invalid status value',
+        error: 'Invalid status'
+      };
+    }
+
+    const api = getAuthAxios();
+    const results = {
+      success: true,
+      message: 'Bulk status update operation completed',
+      totalCount: ids.length,
+      successCount: 0,
+      failureCount: 0,
+      errors: [] as { id: string; error: string }[]
+    };
+
+    // Process each listing status update sequentially
+    for (const id of ids) {
+      try {
+        const response = await api.put(`/listings/${id}`, { status });
+        if (response.data.success) {
+          results.successCount++;
+        } else {
+          results.failureCount++;
+          results.errors.push({ id, error: response.data.message || 'Unknown error' });
+        }
+      } catch (error) {
+        results.failureCount++;
+        results.errors.push({
+          id,
+          error: error.response?.data?.message || error.message || 'Failed to update listing status'
+        });
+      }
+    }
+
+    // Update the overall success status based on results
+    results.success = results.successCount > 0;
+
+    // Update the message based on results
+    const statusDisplay = status === 'active' ? 'On Sale' : status.charAt(0).toUpperCase() + status.slice(1);
+    if (results.successCount === ids.length) {
+      results.message = `Successfully updated ${results.successCount} listings to ${statusDisplay}`;
+    } else if (results.successCount > 0) {
+      results.message = `Updated ${results.successCount} listings to ${statusDisplay}, but failed to update ${results.failureCount} listings`;
+    } else {
+      results.message = `Failed to update any of the ${results.failureCount} listings to ${statusDisplay}`;
+      results.success = false;
+    }
+
+    return results;
+  } catch (error) {
+    console.error('Error in bulk status update operation:', error);
+    return {
+      success: false,
+      message: 'Bulk status update operation failed',
+      error: error.message || 'Unknown error'
+    };
+  }
+};
+
 // Get listings summary statistics
 export const getListingsSummary = async () => {
   try {

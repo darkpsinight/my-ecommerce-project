@@ -24,7 +24,12 @@ import ViewListingDetailsModal from './components/ViewListingDetailsModal';
 import { EditListingModal } from './components/EditListingModal';
 
 // Import API service
-import { getCategories, deleteListing } from '../../../services/api/listings';
+import {
+  getCategories,
+  deleteListing,
+  bulkDeleteListings,
+  bulkUpdateListingsStatus
+} from '../../../services/api/listings';
 
 // Import confirmation dialog
 import ConfirmationDialog from '../../../components/ConfirmationDialog';
@@ -93,6 +98,11 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   // State for bulk delete confirmation dialog
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkDeleteInProgress, setBulkDeleteInProgress] = useState(false);
+
+  // State for bulk status change confirmation dialog
+  const [bulkStatusDialogOpen, setBulkStatusDialogOpen] = useState(false);
+  const [bulkStatusInProgress, setBulkStatusInProgress] = useState(false);
+  const [selectedStatusAction, setSelectedStatusAction] = useState<string | null>(null);
 
   // State for categories
   const [categories, setCategories] = useState<any[]>([]);
@@ -223,7 +233,7 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
     }
   };
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = (action: string, subAction?: string) => {
     handleBulkMenuClose();
     if (selected.length === 0) return;
 
@@ -232,18 +242,19 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
         // Open bulk delete confirmation dialog
         setBulkDeleteDialogOpen(true);
         break;
-      case 'draft':
-        window.alert(`Draft Selected: ${selected.join(', ')}`);
-        break;
-      case 'export':
-        window.alert(`Export Selected to CSV: ${selected.join(', ')}`);
+      case 'status':
+        if (subAction && ['active', 'draft'].includes(subAction)) {
+          // Set the selected status action and open confirmation dialog
+          setSelectedStatusAction(subAction);
+          setBulkStatusDialogOpen(true);
+        }
         break;
       default:
         break;
     }
   };
 
-  // Helper function to get selected listings details
+  // Helper function to get selected listings details for delete dialog
   const getSelectedListingsDetails = () => {
     // Get the first 3 selected listings to show in the dialog
     const selectedListings = listings
@@ -293,6 +304,60 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
     };
   };
 
+  // Helper function to get selected listings details for status change dialog
+  const getSelectedListingsStatusDetails = (status: string) => {
+    // Get the first 3 selected listings to show in the dialog
+    const selectedListings = listings
+      .filter(listing => selected.includes(listing.externalId))
+      .slice(0, 3);
+
+    // Count listings by current status
+    const statusCounts = listings
+      .filter(listing => selected.includes(listing.externalId))
+      .reduce((counts, listing) => {
+        counts[listing.status] = (counts[listing.status] || 0) + 1;
+        return counts;
+      }, {} as Record<string, number>);
+
+    // Calculate total code count
+    const totalCodeCount = listings
+      .filter(listing => selected.includes(listing.externalId))
+      .reduce((sum, listing) => sum + (listing.codes?.length || 0), 0);
+
+    // Create additional warning or info message based on the target status
+    let additionalWarning = '';
+    if (status === 'active') {
+      // Check if any listings have no codes
+      const listingsWithNoCodes = listings
+        .filter(listing => selected.includes(listing.externalId) && (!listing.codes || listing.codes.length === 0))
+        .length;
+
+      if (listingsWithNoCodes > 0) {
+        additionalWarning = `${listingsWithNoCodes} of the selected listings have no codes and cannot be set to On Sale status. Only listings with at least one code can be active.`;
+      }
+    }
+
+    // Format status display
+    const statusDisplay = status === 'active' ? 'On Sale' : status.charAt(0).toUpperCase() + status.slice(1);
+
+    return {
+      title: `Change Status for ${selected.length} Listings`,
+      subtitle: `New status: ${statusDisplay}`,
+      metadata: [
+        ...selectedListings.map(listing => {
+          const codeCount = listing.codes?.length || 0;
+          const currentStatus = listing.status === 'active' ? 'On Sale' : listing.status.charAt(0).toUpperCase() + listing.status.slice(1);
+          return {
+            label: listing.title.length > 25 ? listing.title.substring(0, 25) + '...' : listing.title,
+            value: `${currentStatus}${codeCount > 0 ? ` (${codeCount} ${codeCount === 1 ? 'code' : 'codes'})` : ' (No codes)'}`
+          };
+        }),
+        ...(selected.length > 3 ? [{ label: `And ${selected.length - 3} more...`, value: '' }] : [])
+      ],
+      additionalWarning: additionalWarning
+    };
+  };
+
   const handleBulkDeleteCancel = () => {
     // Close the dialog and reset state
     setBulkDeleteDialogOpen(false);
@@ -304,34 +369,14 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
     setBulkDeleteInProgress(true);
 
     try {
-      // Track success and failures
-      let successCount = 0;
-      let failureCount = 0;
-
-      // Process each selected listing
-      for (const id of selected) {
-        try {
-          // Call the API to delete the listing
-          const response = await deleteListing(id);
-
-          if (response && response.success) {
-            successCount++;
-          } else {
-            failureCount++;
-          }
-        } catch (error) {
-          console.error(`Error deleting listing ${id}:`, error);
-          failureCount++;
-        }
-      }
+      // Call the bulk delete API
+      const response = await bulkDeleteListings(selected);
 
       // Show appropriate notification based on results
-      if (successCount > 0 && failureCount === 0) {
-        showSuccessToast(`Successfully deleted ${successCount} listings`);
-      } else if (successCount > 0 && failureCount > 0) {
-        showErrorToast(`Deleted ${successCount} listings, but failed to delete ${failureCount} listings`);
+      if (response.success) {
+        showSuccessToast(response.message);
       } else {
-        showErrorToast(`Failed to delete ${failureCount} listings`);
+        showErrorToast(response.message || 'Failed to delete listings');
       }
 
       // Refresh the listings to update the UI
@@ -346,6 +391,44 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
       // Reset state
       setBulkDeleteInProgress(false);
       setBulkDeleteDialogOpen(false);
+    }
+  };
+
+  const handleBulkStatusCancel = () => {
+    // Close the dialog and reset state
+    setBulkStatusDialogOpen(false);
+    setSelectedStatusAction(null);
+  };
+
+  const handleBulkStatusConfirm = async () => {
+    if (selected.length === 0 || !selectedStatusAction) return;
+
+    setBulkStatusInProgress(true);
+
+    try {
+      // Call the bulk status update API
+      const response = await bulkUpdateListingsStatus(selected, selectedStatusAction);
+
+      // Show appropriate notification based on results
+      if (response.success) {
+        showSuccessToast(response.message);
+      } else {
+        showErrorToast(response.message || 'Failed to update listing status');
+      }
+
+      // Refresh the listings to update the UI
+      refreshListings();
+
+      // Clear selection
+      setSelected([]);
+    } catch (error: any) {
+      console.error('Error in bulk status update operation:', error);
+      showErrorToast('An error occurred during the status update operation');
+    } finally {
+      // Reset state
+      setBulkStatusInProgress(false);
+      setBulkStatusDialogOpen(false);
+      setSelectedStatusAction(null);
     }
   };
 
@@ -419,7 +502,7 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
             {error ? (
               <ErrorState colSpan={TABLE_COLUMNS_COUNT} error={error} />
             ) : loading ? (
-              <LoadingState colSpan={TABLE_COLUMNS_COUNT} />
+              <LoadingState colSpan={TABLE_COLUMNS_COUNT} rowsCount={limit > 5 ? 5 : limit} />
             ) : listings.length > 0 ? (
               listings.map((listing, index) => (
                 <ListingRow
@@ -498,6 +581,20 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
         isLoading={bulkDeleteInProgress}
         severity="error"
         itemDetails={selected.length > 0 ? getSelectedListingsDetails() : undefined}
+      />
+
+      {/* Bulk Status Change Confirmation Dialog */}
+      <ConfirmationDialog
+        open={bulkStatusDialogOpen}
+        title={`Change Status to ${selectedStatusAction === 'active' ? 'On Sale' : 'Draft'}`}
+        message={`Are you sure you want to change the status of ${selected.length} selected listings to ${selectedStatusAction === 'active' ? 'On Sale' : 'Draft'}?`}
+        confirmButtonText="Change Status"
+        cancelButtonText="Cancel"
+        onConfirm={handleBulkStatusConfirm}
+        onCancel={handleBulkStatusCancel}
+        isLoading={bulkStatusInProgress}
+        severity={selectedStatusAction === 'active' ? 'success' : 'warning'}
+        itemDetails={selectedStatusAction ? getSelectedListingsStatusDetails(selectedStatusAction) : undefined}
       />
     </Card>
   );

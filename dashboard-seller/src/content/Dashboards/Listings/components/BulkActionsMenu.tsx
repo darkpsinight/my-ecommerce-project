@@ -1,15 +1,19 @@
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import {
   Button,
   Box,
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Divider,
+  Typography
 } from '@mui/material';
 import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone';
+import CheckCircleTwoToneIcon from '@mui/icons-material/CheckCircleTwoTone';
 import BlockTwoToneIcon from '@mui/icons-material/BlockTwoTone';
 import DownloadTwoToneIcon from '@mui/icons-material/DownloadTwoTone';
+import ArrowRightTwoToneIcon from '@mui/icons-material/ArrowRightTwoTone';
 import { BulkActionMenuItem } from '../types';
 
 interface BulkActionsMenuProps {
@@ -17,7 +21,7 @@ interface BulkActionsMenuProps {
   anchorEl: HTMLElement | null;
   onMenuOpen: (event: React.MouseEvent<HTMLElement>) => void;
   onMenuClose: () => void;
-  onBulkAction: (action: string) => void;
+  onBulkAction: (action: string, subAction?: string) => void;
 }
 
 const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
@@ -27,21 +31,34 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
   onMenuClose,
   onBulkAction
 }) => {
+  const [statusMenuAnchorEl, setStatusMenuAnchorEl] = useState<null | HTMLElement>(null);
+
+  const handleStatusMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setStatusMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleStatusMenuClose = () => {
+    setStatusMenuAnchorEl(null);
+  };
+
+  const handleStatusAction = (status: string) => {
+    handleStatusMenuClose();
+    onMenuClose();
+    onBulkAction('status', status);
+  };
+
   const bulkActions: BulkActionMenuItem[] = [
     {
       action: 'delete',
       label: 'Delete Selected',
-      icon: <DeleteTwoToneIcon fontSize="small" />
+      icon: <DeleteTwoToneIcon fontSize="small" />,
+      color: 'error'
     },
     {
-      action: 'draft',
-      label: 'Draft Selected',
-      icon: <BlockTwoToneIcon fontSize="small" />
-    },
-    {
-      action: 'export',
-      label: 'Export Selected to CSV',
-      icon: <DownloadTwoToneIcon fontSize="small" />
+      action: 'status',
+      label: 'Change Status',
+      icon: <CheckCircleTwoToneIcon fontSize="small" />,
+      color: 'primary'
     }
   ];
 
@@ -75,6 +92,8 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
           </Box>
         )}
       </Button>
+
+      {/* Main Bulk Actions Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -83,13 +102,51 @@ const BulkActionsMenu: FC<BulkActionsMenuProps> = ({
         {bulkActions.map((action) => (
           <MenuItem
             key={action.action}
-            onClick={() => onBulkAction(action.action)}
+            onClick={action.action === 'status'
+              ? handleStatusMenuOpen
+              : () => onBulkAction(action.action)}
             disabled={selected.length === 0 || action.disabled}
+            sx={{
+              color: action.color ? theme => theme.palette[action.color].main : 'inherit'
+            }}
           >
-            <ListItemIcon>{action.icon}</ListItemIcon>
+            <ListItemIcon sx={{
+              color: action.color ? theme => theme.palette[action.color].main : 'inherit'
+            }}>
+              {action.icon}
+            </ListItemIcon>
             <ListItemText>{action.label}</ListItemText>
+            {action.action === 'status' && <ArrowRightTwoToneIcon fontSize="small" />}
           </MenuItem>
         ))}
+      </Menu>
+
+      {/* Status Submenu */}
+      <Menu
+        anchorEl={statusMenuAnchorEl}
+        open={Boolean(statusMenuAnchorEl)}
+        onClose={handleStatusMenuClose}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right'
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left'
+        }}
+      >
+        <MenuItem onClick={() => handleStatusAction('active')}>
+          <ListItemIcon sx={{ color: theme => theme.palette.success.main }}>
+            <CheckCircleTwoToneIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Set as On Sale</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleStatusAction('draft')}>
+          <ListItemIcon>
+            <BlockTwoToneIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Set as Draft</ListItemText>
+        </MenuItem>
       </Menu>
     </>
   );

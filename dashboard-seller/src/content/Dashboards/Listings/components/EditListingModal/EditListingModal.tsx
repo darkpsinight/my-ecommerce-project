@@ -44,7 +44,7 @@ interface EditListingModalProps {
   onClose: () => void;
   listingId: string | null;
   listings: Listing[];
-  onListingUpdated: (updatedListing: Listing) => void;
+  onListingUpdated: (updatedListing: Listing, options?: { keepModalOpen?: boolean }) => void;
   initialCategories?: any[];
 }
 
@@ -561,13 +561,6 @@ const EditListingModal: FC<EditListingModalProps> = ({
     // Check if this is a CSV upload request
     const isCsvUpload = _updatedData.csvUpload === true;
 
-    console.log('handleSubmit called with:', {
-      updatedDataKeys: Object.keys(_updatedData),
-      isRefreshRequest,
-      isSaveAction,
-      isCsvUpload
-    });
-
     // Remove the _saveAction flag if it exists
     if (isSaveAction) {
       delete _updatedData._saveAction;
@@ -643,7 +636,12 @@ const EditListingModal: FC<EditListingModalProps> = ({
               };
 
               // Call the onListingUpdated callback with the updated listing
-              onListingUpdated(updatedListing as Listing);
+              if (isCsvUpload) {
+                // Pass keepModalOpen: true to prevent the modal from closing
+                onListingUpdated(updatedListing as Listing, { keepModalOpen: true });
+              } else {
+                onListingUpdated(updatedListing as Listing);
+              }
 
               setTimeout(() => {
                 toast.success('Image updated successfully');
@@ -680,7 +678,8 @@ const EditListingModal: FC<EditListingModalProps> = ({
 
         if (updatedListing) {
           // Call the onListingUpdated callback with the updated listing
-          onListingUpdated(updatedListing as Listing);
+          // Pass keepModalOpen: true to prevent the modal from closing
+          onListingUpdated(updatedListing as Listing, { keepModalOpen: true });
 
           // Show a success toast for CSV uploads
           if (isCsvUpload) {
@@ -698,7 +697,11 @@ const EditListingModal: FC<EditListingModalProps> = ({
           toast.error(errorMessage);
         }, 100);
       } finally {
-        setIsSubmitting(false);
+        // Add a small delay before setting isSubmitting to false
+        // This ensures the modal doesn't close immediately after the toast appears
+        setTimeout(() => {
+          setIsSubmitting(false);
+        }, 1000); // Increased timeout to 1 second
       }
       // Don't close the modal, just return
       return;
@@ -781,7 +784,12 @@ const EditListingModal: FC<EditListingModalProps> = ({
       };
 
       // Call the onListingUpdated callback with the updated listing
-      onListingUpdated(updatedListing as Listing);
+      if (isCsvUpload) {
+        // Pass keepModalOpen: true to prevent the modal from closing
+        onListingUpdated(updatedListing as Listing, { keepModalOpen: true });
+      } else {
+        onListingUpdated(updatedListing as Listing);
+      }
 
       setTimeout(() => {
         toast.success('Listing updated successfully');
@@ -811,15 +819,28 @@ const EditListingModal: FC<EditListingModalProps> = ({
   // We don't need totalCodes here as it's not used in the UI
   const discountPercentage = listing ? getDiscountPercentage(listing) : null;
 
+  // Custom onClose handler to prevent modal from closing during CSV upload
+  const handleDialogClose = (_event: {}, _reason: string) => {
+    // If we're currently submitting (which includes CSV upload), don't close the modal
+    if (isSubmitting) {
+      return;
+    }
+
+    // Otherwise, call the regular onClose function
+    onClose();
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleDialogClose}
       fullWidth
       maxWidth="md"
       aria-labelledby="edit-listing-dialog-title"
       TransitionComponent={Zoom}
       transitionDuration={300}
+      // Disable closing on backdrop click and escape key when submitting
+      disableEscapeKeyDown={isSubmitting}
       sx={{
         margin: { xs: '8px', sm: '24px' },
         '& .MuiDialog-paper': {
@@ -836,7 +857,11 @@ const EditListingModal: FC<EditListingModalProps> = ({
         }
       }}
     >
-      <ModalHeader onClose={onClose} title="Edit Listing" />
+      <ModalHeader
+        onClose={onClose}
+        title={`Edit Listing${isPatternLoading ? ' (Loading Patterns...)' : ''}`}
+        isSubmitting={isSubmitting}
+      />
 
       {isLoading || !listing ? (
         <div

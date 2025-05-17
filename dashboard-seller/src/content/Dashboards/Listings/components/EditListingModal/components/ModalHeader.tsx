@@ -13,9 +13,14 @@ import EditTwoToneIcon from '@mui/icons-material/EditTwoTone';
 interface ModalHeaderProps {
   onClose: () => void;
   title?: string;
+  isSubmitting?: boolean;
 }
 
-const ModalHeader: FC<ModalHeaderProps> = ({ onClose, title = 'Edit Listing' }) => {
+const ModalHeader: FC<ModalHeaderProps> = ({
+  onClose,
+  title = 'Edit Listing',
+  isSubmitting = false
+}) => {
   const theme = useTheme();
 
   return (
@@ -57,6 +62,7 @@ const ModalHeader: FC<ModalHeaderProps> = ({ onClose, title = 'Edit Listing' }) 
           aria-label="close"
           onClick={onClose}
           size="small"
+          disabled={isSubmitting}
           sx={{
             color: theme.palette.text.secondary,
             backgroundColor: alpha(theme.palette.primary.light, 0.2),
@@ -67,6 +73,10 @@ const ModalHeader: FC<ModalHeaderProps> = ({ onClose, title = 'Edit Listing' }) 
               backgroundColor: alpha(theme.palette.primary.light, 0.1),
               color: theme.palette.primary.main,
               boxShadow: `0 2px 4px ${alpha(theme.palette.primary.main, 0.1)}`
+            },
+            '&.Mui-disabled': {
+              opacity: 0.5,
+              cursor: 'not-allowed'
             },
             transition: theme.transitions.create(
               ['background-color', 'color', 'box-shadow'],

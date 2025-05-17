@@ -158,17 +158,22 @@ const UnifiedProductCodeSection: React.FC<UnifiedProductCodeSectionProps> = ({
 
             // Call onRefresh to update the listing data
             if (onRefresh) {
+              // Keep loading state true until the refresh is complete
+              // This will prevent the modal from closing during the refresh
               onRefresh();
+              // Note: setLoading(false) will be called after the refresh is complete in the EditListingModal
+            } else {
+              setLoading(false);
             }
           } else {
             setError(response.message || 'Failed to upload codes');
+            setLoading(false);
           }
         } catch (error) {
           console.error('Error uploading CSV:', error);
           setError('An unexpected error occurred. Please try again.');
+          setLoading(false);
         }
-
-        setLoading(false);
       };
 
       reader.onerror = () => {

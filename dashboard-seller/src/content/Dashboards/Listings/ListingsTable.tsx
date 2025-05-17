@@ -465,17 +465,18 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   };
 
   // Handle listing update from the edit modal
-  const handleListingUpdated = (updatedListing: any) => {
-    console.log('Listing updated:', updatedListing);
-
+  const handleListingUpdated = (_updatedListing: any, options: { keepModalOpen?: boolean } = {}) => {
     // Refresh the listings to show the updated data
     refreshListings();
 
     // The refreshListings function will dispatch the listingsRefreshed event
     // which will trigger the ListingsSummary component to update
 
-    // Close the modal
-    setEditModalOpen(false);
+    // Only close the modal if keepModalOpen is not true
+    // This allows operations like CSV uploads to keep the modal open
+    if (!options.keepModalOpen) {
+      setEditModalOpen(false);
+    }
   };
 
   // Listen for status updates from the modal

@@ -582,10 +582,11 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
                 // Always refresh the listing data after a successful CSV upload
                 // This ensures the codes table is updated with the latest data from the server
                 if (onSubmit) {
-                  console.log('Refreshing listing data after CSV upload');
                   // Pass an object with csvUpload flag to trigger a refresh without validation
                   // and indicate this is a CSV upload (to prevent modal closing)
                   onSubmit({ csvUpload: true });
+                } else {
+                  console.error('onSubmit is not defined in ListingForm - cannot refresh listing data');
                 }
               }}
             />

@@ -43,7 +43,13 @@ const ModalFooter: FC<ModalFooterProps> = ({
           onClick={onClose}
           color="primary"
           variant="outlined"
-          sx={{ mr: 'auto' }}
+          disabled={isSubmitting}
+          sx={{
+            mr: 'auto',
+            '&.Mui-disabled': {
+              opacity: 0.5
+            }
+          }}
         >
           Close
         </Button>

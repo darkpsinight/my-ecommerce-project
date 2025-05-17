@@ -38,6 +38,9 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
   // State for URL input method
   const [imageUrl, setImageUrl] = useState<string>('');
 
+  // State to track if form submission has been attempted
+  const [formSubmitAttempted, setFormSubmitAttempted] = useState<boolean>(false);
+
   const {
     categories,
     availablePlatforms,
@@ -104,8 +107,18 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
 
   // Custom submit handler that first uploads the image if needed
   const handleSubmitWithImageUpload = async () => {
+    // Set form submission attempted to true
+    setFormSubmitAttempted(true);
+
     // First validate the form before attempting any upload
     if (!validateForm()) {
+      // Scroll to the codes section if there's an error with codes
+      if (formErrors.codes) {
+        const codesSection = document.getElementById('codes-section');
+        if (codesSection) {
+          codesSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
       return;
     }
 
@@ -192,7 +205,10 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     imageUrl,
     handleImageUrlChange,
     // Expose setSubmitting for better control of loading states
-    setSubmitting
+    setSubmitting,
+    // Add form submission attempt tracking
+    formSubmitAttempted,
+    setFormSubmitAttempted
   };
 
   return (

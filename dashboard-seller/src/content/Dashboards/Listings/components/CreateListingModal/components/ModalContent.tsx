@@ -35,7 +35,9 @@ const ModalContent: React.FC = () => {
     imageUploadInProgress,
     // URL-related properties
     imageUrl,
-    handleImageUrlChange
+    handleImageUrlChange,
+    // Form submission tracking
+    formSubmitAttempted
   } = useModalContext();
 
   // Custom handleChange for ReactQuill
@@ -151,11 +153,13 @@ const ModalContent: React.FC = () => {
       />
 
       {/* Codes Display Table */}
-      <Box sx={{ mt: 3 }}>
+      <Box sx={{ mt: 3 }} id="codes-section">
         <Divider sx={{ mb: 3 }} />
         <PaginatedCodesTable
           codes={formData.codes}
           onDeleteCode={(code) => handleDeleteCode && handleDeleteCode(code)}
+          formSubmitAttempted={formSubmitAttempted}
+          formErrors={formErrors}
         />
       </Box>
 

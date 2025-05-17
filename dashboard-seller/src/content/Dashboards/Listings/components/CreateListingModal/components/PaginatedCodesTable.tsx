@@ -30,9 +30,18 @@ import { CodeItem } from '../types';
 interface PaginatedCodesTableProps {
   codes: CodeItem[];
   onDeleteCode: (code: string) => void;
+  formSubmitAttempted?: boolean;
+  formErrors?: {
+    codes?: string;
+  };
 }
 
-const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDeleteCode }) => {
+const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
+  codes,
+  onDeleteCode,
+  formSubmitAttempted = false,
+  formErrors = {}
+}) => {
   const theme = useTheme();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -117,9 +126,17 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({ codes, onDele
 
   if (codes.length === 0) {
     return (
-      <Alert severity="info" sx={{ mb: 2 }}>
-        No codes added yet. Add at least one product code.
-      </Alert>
+      <>
+        {formSubmitAttempted && formErrors.codes ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {formErrors.codes || "At least one code is required to create a listing."}
+          </Alert>
+        ) : (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            No codes added yet. Add at least one product code.
+          </Alert>
+        )}
+      </>
     );
   }
 

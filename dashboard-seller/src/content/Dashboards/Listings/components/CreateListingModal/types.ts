@@ -61,6 +61,9 @@ export interface ModalContextProps {
   handleImageUrlChange: (url: string) => void;
   // Expose setSubmitting for better control of loading states
   setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
+  // Track if form submission has been attempted
+  formSubmitAttempted: boolean;
+  setFormSubmitAttempted: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface CodeItem {

@@ -26,7 +26,8 @@ const ModalActions: React.FC<ModalActionsProps> = ({ onClose }) => {
     submitting,
     loading,
     resetForm,
-    imageUploadInProgress
+    imageUploadInProgress,
+    setFormSubmitAttempted
   } = useModalContext();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -37,6 +38,8 @@ const ModalActions: React.FC<ModalActionsProps> = ({ onClose }) => {
   // Handle cancel button click - reset form and close modal
   const handleCancel = () => {
     resetForm();
+    // Reset form submission attempted state
+    setFormSubmitAttempted(false);
     onClose();
   };
 

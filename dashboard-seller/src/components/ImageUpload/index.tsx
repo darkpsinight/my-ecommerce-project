@@ -562,8 +562,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           )}
 
           {file && !uploadInProgress && (
-            <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 0.5 }}>
-              Image selected and ready to upload when you save
+            <Typography variant="subtitle2" color="primary" sx={{ display: 'block', mt: 0.5 }}>
+              Image staged for upload on save
             </Typography>
           )}
         </Box>

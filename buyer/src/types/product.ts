@@ -1,9 +1,23 @@
 export type Product = {
+  id: number;
   title: string;
-  reviews: number;
+  description: string;
   price: number;
   discountedPrice: number;
-  id: number;
+  originalPrice?: number;
+  categoryId?: string;
+  categoryName?: string;
+  platform?: string;
+  region?: string;
+  isRegionLocked?: boolean;
+  supportedLanguages?: string[];
+  thumbnailUrl?: string;
+  autoDelivery?: boolean;
+  tags?: string[];
+  status?: string;
+  reviews?: number;
+  quantityOfActiveCodes?: number;
+  quantityOfAllCodes?: number;
   imgs?: {
     thumbnails: string[];
     previews: string[];

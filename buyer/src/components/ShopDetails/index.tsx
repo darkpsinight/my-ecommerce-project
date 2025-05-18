@@ -1,61 +1,31 @@
 "use client";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
-import RecentlyViewdItems from "./RecentlyViewd";
+import RecentlyViewedItems from "./RecentlyViewed";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { useAppSelector } from "@/redux/store";
+import { getProductById } from "@/services/product";
+import { Product } from "@/types/product";
+import { useRouter, useSearchParams } from "next/navigation";
+import { addItemToCart } from "@/redux/features/cart-slice";
+import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/store";
+import PageContainer from "../Common/PageContainer";
 
 const ShopDetails = () => {
-  const [activeColor, setActiveColor] = useState("blue");
-  const { openPreviewModal } = usePreviewSlider();
+  const [loading, setLoading] = useState(true);
   const [previewImg, setPreviewImg] = useState(0);
-
-  const [storage, setStorage] = useState("gb128");
-  const [type, setType] = useState("active");
-  const [sim, setSim] = useState("dual");
   const [quantity, setQuantity] = useState(1);
-
   const [activeTab, setActiveTab] = useState("tabOne");
+  const [productData, setProductData] = useState<Product | null>(null);
 
-  const storages = [
-    {
-      id: "gb128",
-      title: "128 GB",
-    },
-    {
-      id: "gb256",
-      title: "256 GB",
-    },
-    {
-      id: "gb512",
-      title: "521 GB",
-    },
-  ];
-
-  const types = [
-    {
-      id: "active",
-      title: "Active",
-    },
-
-    {
-      id: "inactive",
-      title: "Inactive",
-    },
-  ];
-
-  const sims = [
-    {
-      id: "dual",
-      title: "Dual",
-    },
-
-    {
-      id: "e-sim",
-      title: "E Sim",
-    },
-  ];
+  const { openPreviewModal } = usePreviewSlider();
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const productId = searchParams.get('id');
 
   const tabs = [
     {
@@ -72,34 +42,121 @@ const ShopDetails = () => {
     },
   ];
 
-  const colors = ["red", "blue", "orange", "pink", "purple"];
-
-  const alreadyExist = localStorage.getItem("productDetails");
+  // Get product from Redux store or localStorage as fallback
   const productFromStorage = useAppSelector(
     (state) => state.productDetailsReducer.value
   );
+  const alreadyExist = typeof window !== 'undefined' ? localStorage.getItem("productDetails") : null;
+  const fallbackProduct = alreadyExist ? JSON.parse(alreadyExist) : productFromStorage;
 
-  const product = alreadyExist ? JSON.parse(alreadyExist) : productFromStorage;
-
+  // Fetch product data if ID is provided, otherwise use fallback
   useEffect(() => {
-    localStorage.setItem("productDetails", JSON.stringify(product));
-  }, [product]);
+    const fetchProductData = async () => {
+      setLoading(true);
+      if (productId) {
+        try {
+          const data = await getProductById(productId);
+          if (data) {
+            setProductData(data);
+            // Save to localStorage for persistence
+            localStorage.setItem("productDetails", JSON.stringify(data));
+          } else {
+            setProductData(fallbackProduct);
+          }
+        } catch (error) {
+          console.error("Error fetching product:", error);
+          setProductData(fallbackProduct);
+        }
+      } else {
+        setProductData(fallbackProduct);
+      }
+      setLoading(false);
+    };
 
-  // pass the product here when you get the real data.
+    fetchProductData();
+  }, [productId, fallbackProduct]);
+
+  // Use the fetched product data or fallback
+  const product = productData || fallbackProduct;
+
+  // Handle image preview modal
   const handlePreviewSlider = () => {
     openPreviewModal();
   };
 
-  console.log(product);
+  // Add to cart handler
+  const handleAddToCart = () => {
+    if (product) {
+      dispatch(
+        addItemToCart({
+          ...product,
+          quantity: quantity,
+        })
+      );
+    }
+  };
+
+  // Add to wishlist handler
+  const handleAddToWishlist = () => {
+    if (product) {
+      dispatch(
+        addItemToWishlist({
+          ...product,
+          status: "available",
+          quantity: 1,
+        })
+      );
+    }
+  };
+
+  // Calculate discount percentage
+  const calculateDiscountPercentage = () => {
+    if (product && product.originalPrice && product.price) {
+      const discount = ((product.originalPrice - product.price) / product.originalPrice) * 100;
+      return Math.round(discount);
+    }
+    return 0;
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[600px] bg-gray-2">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-32 h-32 bg-gray-3 rounded-full mb-4"></div>
+          <div className="h-4 bg-gray-3 rounded w-48 mb-2.5"></div>
+          <div className="h-3 bg-gray-3 rounded w-40"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // If no product data is available
+  if (!product) {
+    return (
+      <div className="flex justify-center items-center min-h-[600px] bg-gray-2">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-dark mb-4">Product Not Found</h2>
+          <p className="text-dark-4 mb-6">The product you&apos;re looking for is not available.</p>
+          <button
+            onClick={() => router.push('/shop-with-sidebar')}
+            className="inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark"
+          >
+            Browse Products
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
-      <section className="overflow-hidden py-20 bg-gray-2">
-        <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
+      <PageContainer>
+        <section className="overflow-hidden py-20 bg-gray-2">
           <div className="flex flex-col lg:flex-row gap-7.5 xl:gap-17.5">
             <div className="lg:max-w-[570px] w-full">
-              <div className="lg:min-h-[512px] rounded-lg shadow-1 bg-gray-2 p-4 sm:p-7.5 relative flex items-center justify-center">
-                <div>
+              <div className="lg:min-h-[512px] rounded-lg shadow-1 bg-white p-4 sm:p-7.5 relative flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center">
                   <button
                     onClick={handlePreviewSlider}
                     aria-label="button for zoom"
@@ -123,47 +180,74 @@ const ShopDetails = () => {
                   </button>
 
                   <Image
-                    src={product.imgs?.previews[previewImg]}
-                    alt="products-details"
-                    width={400}
-                    height={400}
+                    src={product.imgs?.previews[previewImg] || product.thumbnailUrl || '/images/products/placeholder.png'}
+                    alt={product.title || "Product details"}
+                    width={450}
+                    height={450}
+                    className="object-contain max-h-[450px] transition-all duration-300 hover:scale-105"
+                    priority
                   />
                 </div>
               </div>
 
-              {/* ?  &apos;border-blue &apos; :  &apos;border-transparent&apos; */}
-              <div className="flex flex-wrap sm:flex-nowrap gap-4.5 mt-6">
+              <div className="flex flex-wrap sm:flex-nowrap gap-4.5 mt-6 justify-center">
                 {product.imgs?.thumbnails.map((item, key) => (
                   <button
                     onClick={() => setPreviewImg(key)}
                     key={key}
-                    className={`flex items-center justify-center w-15 sm:w-25 h-15 sm:h-25 overflow-hidden rounded-lg bg-gray-2 shadow-1 ease-out duration-200 border-2 hover:border-blue ${
+                    className={`flex items-center justify-center w-20 h-20 overflow-hidden rounded-lg bg-white shadow-1 ease-out duration-200 border-2 hover:border-blue ${
                       key === previewImg
                         ? "border-blue"
                         : "border-transparent"
                     }`}
                   >
                     <Image
-                      width={50}
-                      height={50}
-                      src={item}
-                      alt="thumbnail"
+                      width={70}
+                      height={70}
+                      src={item || '/images/products/placeholder.png'}
+                      alt={`${product.title} thumbnail ${key + 1}`}
+                      className="object-contain"
                     />
                   </button>
                 ))}
+
+                {/* If there's only one image or no thumbnails, show the main image as a thumbnail */}
+                {(!product.imgs?.thumbnails || product.imgs.thumbnails.length === 0) && product.thumbnailUrl && (
+                  <button
+                    className="flex items-center justify-center w-20 h-20 overflow-hidden rounded-lg bg-white shadow-1 ease-out duration-200 border-2 border-blue"
+                  >
+                    <Image
+                      width={70}
+                      height={70}
+                      src={product.thumbnailUrl}
+                      alt={`${product.title} thumbnail`}
+                      className="object-contain"
+                    />
+                  </button>
+                )}
               </div>
             </div>
 
             {/* <!-- product content --> */}
             <div className="max-w-[539px] w-full">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-xl sm:text-2xl xl:text-custom-3 text-dark">
-                  {product.title}
-                </h2>
+              <div className="flex flex-col mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="font-semibold text-xl sm:text-2xl xl:text-custom-3 text-dark truncate max-w-[400px]">
+                    {product.title}
+                  </h2>
 
-                <div className="inline-flex font-medium text-custom-sm text-white bg-blue rounded py-0.5 px-2.5">
-                  30% OFF
+                  {product.originalPrice && product.originalPrice > product.price && (
+                    <div className="inline-flex font-medium text-custom-sm text-white bg-blue rounded py-0.5 px-2.5">
+                      {calculateDiscountPercentage()}% OFF
+                    </div>
+                  )}
                 </div>
+
+                {product.categoryName && (
+                  <div className="text-dark-4 text-sm mb-2">
+                    Category: <span className="text-blue">{product.categoryName}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-5.5 mb-4.5">
@@ -329,38 +413,41 @@ const ShopDetails = () => {
                 </div>
               </div>
 
-              <h3 className="font-medium text-custom-1 mb-4.5">
-                <span className="text-sm sm:text-base text-dark">
-                  Price: ${product.price}
-                </span>
-                <span className="line-through">
-                  {" "}
-                  ${product.discountedPrice}{" "}
-                </span>
-              </h3>
+              <div className="flex items-center gap-3 mb-4.5">
+                <h3 className="font-medium text-2xl text-dark">
+                  ${product.price.toFixed(2)}
+                </h3>
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <span className="line-through text-dark-4 text-lg">
+                    ${product.originalPrice.toFixed(2)}
+                  </span>
+                )}
+              </div>
 
               <ul className="flex flex-col gap-2">
-                <li className="flex items-center gap-2.5">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M13.3589 8.35863C13.603 8.11455 13.603 7.71882 13.3589 7.47475C13.1149 7.23067 12.7191 7.23067 12.4751 7.47475L8.75033 11.1995L7.5256 9.97474C7.28152 9.73067 6.8858 9.73067 6.64172 9.97474C6.39764 10.2188 6.39764 10.6146 6.64172 10.8586L8.30838 12.5253C8.55246 12.7694 8.94819 12.7694 9.19227 12.5253L13.3589 8.35863Z"
-                      fill="#3C50E0"
-                    />
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M10.0003 1.04169C5.05277 1.04169 1.04199 5.05247 1.04199 10C1.04199 14.9476 5.05277 18.9584 10.0003 18.9584C14.9479 18.9584 18.9587 14.9476 18.9587 10C18.9587 5.05247 14.9479 1.04169 10.0003 1.04169ZM2.29199 10C2.29199 5.74283 5.74313 2.29169 10.0003 2.29169C14.2575 2.29169 17.7087 5.74283 17.7087 10C17.7087 14.2572 14.2575 17.7084 10.0003 17.7084C5.74313 17.7084 2.29199 14.2572 2.29199 10Z"
-                      fill="#3C50E0"
-                    />
-                  </svg>
-                  Free delivery available
-                </li>
+                {product.autoDelivery && (
+                  <li className="flex items-center gap-2.5">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M13.3589 8.35863C13.603 8.11455 13.603 7.71882 13.3589 7.47475C13.1149 7.23067 12.7191 7.23067 12.4751 7.47475L8.75033 11.1995L7.5256 9.97474C7.28152 9.73067 6.8858 9.73067 6.64172 9.97474C6.39764 10.2188 6.39764 10.6146 6.64172 10.8586L8.30838 12.5253C8.55246 12.7694 8.94819 12.7694 9.19227 12.5253L13.3589 8.35863Z"
+                        fill="#3C50E0"
+                      />
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M10.0003 1.04169C5.05277 1.04169 1.04199 5.05247 1.04199 10C1.04199 14.9476 5.05277 18.9584 10.0003 18.9584C14.9479 18.9584 18.9587 14.9476 18.9587 10C18.9587 5.05247 14.9479 1.04169 10.0003 1.04169ZM2.29199 10C2.29199 5.74283 5.74313 2.29169 10.0003 2.29169C14.2575 2.29169 17.7087 5.74283 17.7087 10C17.7087 14.2572 14.2575 17.7084 10.0003 17.7084C5.74313 17.7084 2.29199 14.2572 2.29199 10Z"
+                        fill="#3C50E0"
+                      />
+                    </svg>
+                    Instant Auto Delivery
+                  </li>
+                )}
 
                 <li className="flex items-center gap-2.5">
                   <svg
@@ -381,253 +468,78 @@ const ShopDetails = () => {
                       fill="#3C50E0"
                     />
                   </svg>
-                  Sales 30% Off Use Code: PROMO30
+                  Platform: {product.platform || 'Global'}
                 </li>
+
+                {product.isRegionLocked && (
+                  <li className="flex items-center gap-2.5">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M13.3589 8.35863C13.603 8.11455 13.603 7.71882 13.3589 7.47475C13.1149 7.23067 12.7191 7.23067 12.4751 7.47475L8.75033 11.1995L7.5256 9.97474C7.28152 9.73067 6.8858 9.73067 6.64172 9.97474C6.39764 10.2188 6.39764 10.6146 6.64172 10.8586L8.30838 12.5253C8.55246 12.7694 8.94819 12.7694 9.19227 12.5253L13.3589 8.35863Z"
+                        fill="#3C50E0"
+                      />
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M10.0003 1.04169C5.05277 1.04169 1.04199 5.05247 1.04199 10C1.04199 14.9476 5.05277 18.9584 10.0003 18.9584C14.9479 18.9584 18.9587 14.9476 18.9587 10C18.9587 5.05247 14.9479 1.04169 10.0003 1.04169ZM2.29199 10C2.29199 5.74283 5.74313 2.29169 10.0003 2.29169C14.2575 2.29169 17.7087 5.74283 17.7087 10C17.7087 14.2572 14.2575 17.7084 10.0003 17.7084C5.74313 17.7084 2.29199 14.2572 2.29199 10Z"
+                        fill="#3C50E0"
+                      />
+                    </svg>
+                    Region: {product.region || 'Unknown'}
+                  </li>
+                )}
+
+                {product.supportedLanguages && product.supportedLanguages.length > 0 && (
+                  <li className="flex items-center gap-2.5">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M13.3589 8.35863C13.603 8.11455 13.603 7.71882 13.3589 7.47475C13.1149 7.23067 12.7191 7.23067 12.4751 7.47475L8.75033 11.1995L7.5256 9.97474C7.28152 9.73067 6.8858 9.73067 6.64172 9.97474C6.39764 10.2188 6.39764 10.6146 6.64172 10.8586L8.30838 12.5253C8.55246 12.7694 8.94819 12.7694 9.19227 12.5253L13.3589 8.35863Z"
+                        fill="#3C50E0"
+                      />
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M10.0003 1.04169C5.05277 1.04169 1.04199 5.05247 1.04199 10C1.04199 14.9476 5.05277 18.9584 10.0003 18.9584C14.9479 18.9584 18.9587 14.9476 18.9587 10C18.9587 5.05247 14.9479 1.04169 10.0003 1.04169ZM2.29199 10C2.29199 5.74283 5.74313 2.29169 10.0003 2.29169C14.2575 2.29169 17.7087 5.74283 17.7087 10C17.7087 14.2572 14.2575 17.7084 10.0003 17.7084C5.74313 17.7084 2.29199 14.2572 2.29199 10Z"
+                        fill="#3C50E0"
+                      />
+                    </svg>
+                    Languages: {product.supportedLanguages.join(', ')}
+                  </li>
+                )}
               </ul>
 
               <form onSubmit={(e) => e.preventDefault()}>
                 <div className="flex flex-col gap-4.5 border-y border-gray-3 mt-7.5 mb-9 py-9">
-                  {/* <!-- details item --> */}
-                  <div className="flex items-center gap-4">
-                    <div className="min-w-[65px]">
-                      <h4 className="font-medium text-dark">Color:</h4>
-                    </div>
-
-                    <div className="flex items-center gap-2.5">
-                      {colors.map((color, key) => (
-                        <label
-                          key={key}
-                          htmlFor={color}
-                          className="cursor-pointer select-none flex items-center"
-                        >
-                          <div className="relative">
-                            <input
-                              type="radio"
-                              name="color"
-                              id={color}
-                              className="sr-only"
-                              onChange={() => setActiveColor(color)}
-                            />
-                            <div
-                              className={`flex items-center justify-center w-5.5 h-5.5 rounded-full ${
-                                activeColor === color && "border"
-                              }`}
-                              style={{ borderColor: `${color}` }}
-                            >
-                              <span
-                                className="block w-3 h-3 rounded-full"
-                                style={{ backgroundColor: `${color}` }}
-                              ></span>
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* <!-- details item --> */}
-                  <div className="flex items-center gap-4">
-                    <div className="min-w-[65px]">
-                      <h4 className="font-medium text-dark">Storage:</h4>
-                    </div>
-
+                  {/* Tags display */}
+                  {product.tags && product.tags.length > 0 && (
                     <div className="flex items-center gap-4">
-                      {storages.map((item, key) => (
-                        <label
-                          key={key}
-                          htmlFor={item.id}
-                          className="flex cursor-pointer select-none items-center"
-                        >
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              name="storage"
-                              id={item.id}
-                              className="sr-only"
-                              onChange={() => setStorage(item.id)}
-                            />
-
-                            {/*  */}
-                            <div
-                              className={`mr-2 flex h-4 w-4 items-center justify-center rounded border ${
-                                storage === item.id
-                                  ? "border-blue bg-blue"
-                                  : "border-gray-4"
-                              } `}
-                            >
-                              <span
-                                className={
-                                  storage === item.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                }
-                              >
-                                <svg
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <rect
-                                    x="4"
-                                    y="4.00006"
-                                    width="16"
-                                    height="16"
-                                    rx="4"
-                                    fill="#3C50E0"
-                                  />
-                                  <path
-                                    fillRule="evenodd"
-                                    clipRule="evenodd"
-                                    d="M16.3103 9.25104C16.471 9.41178 16.5612 9.62978 16.5612 9.85707C16.5612 10.0844 16.471 10.3024 16.3103 10.4631L12.0243 14.7491C11.8635 14.9098 11.6455 15.0001 11.4182 15.0001C11.191 15.0001 10.973 14.9098 10.8122 14.7491L8.24062 12.1775C8.08448 12.0158 7.99808 11.7993 8.00003 11.5745C8.00199 11.3498 8.09214 11.1348 8.25107 10.9759C8.41 10.8169 8.62499 10.7268 8.84975 10.7248C9.0745 10.7229 9.29103 10.8093 9.4527 10.9654L11.4182 12.931L15.0982 9.25104C15.2589 9.09034 15.4769 9.00006 15.7042 9.00006C15.9315 9.00006 16.1495 9.09034 16.3103 9.25104Z"
-                                    fill="white"
-                                  />
-                                </svg>
-                              </span>
-                            </div>
-                          </div>
-                          {item.title}
-                        </label>
-                      ))}
+                      <div className="min-w-[65px]">
+                        <h4 className="font-medium text-dark">Tags:</h4>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {product.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex px-2.5 py-1 rounded-md bg-gray-1 text-dark-4 text-sm"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-
-                  {/* // <!-- details item --> */}
-                  <div className="flex items-center gap-4">
-                    <div className="min-w-[65px]">
-                      <h4 className="font-medium text-dark">Type:</h4>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      {types.map((item, key) => (
-                        <label
-                          key={key}
-                          htmlFor={item.id}
-                          className="flex cursor-pointer select-none items-center"
-                        >
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              name="storage"
-                              id={item.id}
-                              className="sr-only"
-                              onChange={() => setType(item.id)}
-                            />
-
-                            {/*  */}
-                            <div
-                              className={`mr-2 flex h-4 w-4 items-center justify-center rounded border ${
-                                type === item.id
-                                  ? "border-blue bg-blue"
-                                  : "border-gray-4"
-                              } `}
-                            >
-                              <span
-                                className={
-                                  type === item.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                }
-                              >
-                                <svg
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <rect
-                                    x="4"
-                                    y="4.00006"
-                                    width="16"
-                                    height="16"
-                                    rx="4"
-                                    fill="#3C50E0"
-                                  />
-                                  <path
-                                    fillRule="evenodd"
-                                    clipRule="evenodd"
-                                    d="M16.3103 9.25104C16.471 9.41178 16.5612 9.62978 16.5612 9.85707C16.5612 10.0844 16.471 10.3024 16.3103 10.4631L12.0243 14.7491C11.8635 14.9098 11.6455 15.0001 11.4182 15.0001C11.191 15.0001 10.973 14.9098 10.8122 14.7491L8.24062 12.1775C8.08448 12.0158 7.99808 11.7993 8.00003 11.5745C8.00199 11.3498 8.09214 11.1348 8.25107 10.9759C8.41 10.8169 8.62499 10.7268 8.84975 10.7248C9.0745 10.7229 9.29103 10.8093 9.4527 10.9654L11.4182 12.931L15.0982 9.25104C15.2589 9.09034 15.4769 9.00006 15.7042 9.00006C15.9315 9.00006 16.1495 9.09034 16.3103 9.25104Z"
-                                    fill="white"
-                                  />
-                                </svg>
-                              </span>
-                            </div>
-                          </div>
-                          {item.title}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* // <!-- details item --> */}
-                  <div className="flex items-center gap-4">
-                    <div className="min-w-[65px]">
-                      <h4 className="font-medium text-dark">Sim:</h4>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      {sims.map((item, key) => (
-                        <label
-                          key={key}
-                          htmlFor={item.id}
-                          className="flex cursor-pointer select-none items-center"
-                        >
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              name="storage"
-                              id={item.id}
-                              className="sr-only"
-                              onChange={() => setSim(item.id)}
-                            />
-
-                            {/*  */}
-                            <div
-                              className={`mr-2 flex h-4 w-4 items-center justify-center rounded border ${
-                                sim === item.id
-                                  ? "border-blue bg-blue"
-                                  : "border-gray-4"
-                              } `}
-                            >
-                              <span
-                                className={
-                                  sim === item.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                }
-                              >
-                                <svg
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <rect
-                                    x="4"
-                                    y="4.00006"
-                                    width="16"
-                                    height="16"
-                                    rx="4"
-                                    fill="#3C50E0"
-                                  />
-                                  <path
-                                    fillRule="evenodd"
-                                    clipRule="evenodd"
-                                    d="M16.3103 9.25104C16.471 9.41178 16.5612 9.62978 16.5612 9.85707C16.5612 10.0844 16.471 10.3024 16.3103 10.4631L12.0243 14.7491C11.8635 14.9098 11.6455 15.0001 11.4182 15.0001C11.191 15.0001 10.973 14.9098 10.8122 14.7491L8.24062 12.1775C8.08448 12.0158 7.99808 11.7993 8.00003 11.5745C8.00199 11.3498 8.09214 11.1348 8.25107 10.9759C8.41 10.8169 8.62499 10.7268 8.84975 10.7248C9.0745 10.7229 9.29103 10.8093 9.4527 10.9654L11.4182 12.931L15.0982 9.25104C15.2589 9.09034 15.4769 9.00006 15.7042 9.00006C15.9315 9.00006 16.1495 9.09034 16.3103 9.25104Z"
-                                    fill="white"
-                                  />
-                                </svg>
-                              </span>
-                            </div>
-                          </div>
-                          {item.title}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4.5">
@@ -638,6 +550,7 @@ const ShopDetails = () => {
                       onClick={() =>
                         quantity > 1 && setQuantity(quantity - 1)
                       }
+                      disabled={!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0}
                     >
                       <svg
                         className="fill-current"
@@ -662,6 +575,7 @@ const ShopDetails = () => {
                       onClick={() => setQuantity(quantity + 1)}
                       aria-label="button for add product"
                       className="flex items-center justify-center w-12 h-12 ease-out duration-200 hover:text-blue"
+                      disabled={!product.quantityOfActiveCodes || quantity >= product.quantityOfActiveCodes}
                     >
                       <svg
                         className="fill-current"
@@ -683,16 +597,18 @@ const ShopDetails = () => {
                     </button>
                   </div>
 
-                  <a
-                    href="#"
+                  <button
+                    onClick={handleAddToCart}
                     className="inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark"
+                    disabled={!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0}
                   >
-                    Purchase Now
-                  </a>
+                    Add to Cart
+                  </button>
 
-                  <a
-                    href="#"
+                  <button
+                    onClick={handleAddToWishlist}
                     className="flex items-center justify-center w-12 h-12 rounded-md border border-gray-3 ease-out duration-200 hover:text-white hover:bg-dark hover:border-transparent"
+                    aria-label="Add to wishlist"
                   >
                     <svg
                       className="fill-current"
@@ -709,18 +625,18 @@ const ShopDetails = () => {
                         fill=""
                       />
                     </svg>
-                  </a>
+                  </button>
                 </div>
               </form>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </PageContainer>
 
-      <section className="overflow-hidden bg-gray-2 py-20">
-        <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
+      <PageContainer>
+        <section className="overflow-hidden bg-gray-2 py-20">
           {/* <!--== tab header start ==--> */}
-          <div className="flex flex-wrap items-center bg-white rounded-[10px] shadow-1 gap-5 xl:gap-12.5 py-4.5 px-4 sm:px-6">
+          <div className="flex flex-wrap items-center bg-white rounded-[10px] shadow-1 gap-5 xl:gap-12.5 py-4.5 px-4 sm:px-6 mb-10">
             {tabs.map((item, key) => (
               <button
                 key={key}
@@ -745,47 +661,10 @@ const ShopDetails = () => {
                 activeTab === "tabOne" ? "flex" : "hidden"
               }`}
             >
-              <div className="max-w-[670px] w-full">
-                <h2 className="font-medium text-2xl text-dark mb-7">
-                  Specifications:
-                </h2>
-
-                <p className="mb-6">
-                  Lorem Ipsum is simply dummy text of the printing and
-                  typesetting industry. Lorem Ipsum has been the
-                  industry&apos;s standard dummy text ever since the 1500s,
-                  when an unknown printer took a galley of type and
-                  scrambled it to make a type specimen book.
-                </p>
-                <p className="mb-6">
-                  It has survived not only five centuries, but also the leap
-                  into electronic typesetting, remaining essentially
-                  unchanged. It was popularised in the 1960s.
-                </p>
-                <p>
-                  with the release of Letraset sheets containing Lorem Ipsum
-                  passages, and more recently with desktop publishing
-                  software like Aldus PageMaker including versions.
-                </p>
-              </div>
-
-              <div className="max-w-[447px] w-full">
-                <h2 className="font-medium text-2xl text-dark mb-7">
-                  Care & Maintenance:
-                </h2>
-
-                <p className="mb-6">
-                  Lorem Ipsum is simply dummy text of the printing and
-                  typesetting industry. Lorem Ipsum has been the
-                  industry&apos;s standard dummy text ever since the 1500s,
-                  when an unknown printer took a galley of type and
-                  scrambled it to make a type specimen book.
-                </p>
-                <p>
-                  It has survived not only five centuries, but also the leap
-                  into electronic typesetting, remaining essentially
-                  unchanged. It was popularised in the 1960s.
-                </p>
+              <div className="max-w-[1000px] w-full">
+                <div className="bg-white rounded-xl shadow-1 p-6">
+                  <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: product.description || 'No description available for this product.' }} />
+                </div>
               </div>
             </div>
           </div>
@@ -801,88 +680,51 @@ const ShopDetails = () => {
               {/* <!-- info item --> */}
               <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
                 <div className="max-w-[450px] min-w-[140px] w-full">
-                  <p className="text-sm sm:text-base text-dark">Brand</p>
+                  <p className="text-sm sm:text-base text-dark">Platform</p>
                 </div>
                 <div className="w-full">
-                  <p className="text-sm sm:text-base text-dark">Apple</p>
+                  <p className="text-sm sm:text-base text-dark">{product.platform || 'Global'}</p>
                 </div>
               </div>
 
               {/* <!-- info item --> */}
               <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
                 <div className="max-w-[450px] min-w-[140px] w-full">
-                  <p className="text-sm sm:text-base text-dark">Model</p>
+                  <p className="text-sm sm:text-base text-dark">Region</p>
                 </div>
                 <div className="w-full">
                   <p className="text-sm sm:text-base text-dark">
-                    iPhone 14 Plus
+                    {product.isRegionLocked ? product.region || 'Region Locked' : 'Global (No Region Lock)'}
                   </p>
                 </div>
               </div>
 
               {/* <!-- info item --> */}
-              <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
-                <div className="max-w-[450px] min-w-[140px] w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    Display Size
-                  </p>
+              {product.supportedLanguages && product.supportedLanguages.length > 0 && (
+                <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
+                  <div className="max-w-[450px] min-w-[140px] w-full">
+                    <p className="text-sm sm:text-base text-dark">
+                      Supported Languages
+                    </p>
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm sm:text-base text-dark">
+                      {product.supportedLanguages.join(', ')}
+                    </p>
+                  </div>
                 </div>
-                <div className="w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    6.7 inches
-                  </p>
-                </div>
-              </div>
+              )}
 
               {/* <!-- info item --> */}
               <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
                 <div className="max-w-[450px] min-w-[140px] w-full">
                   <p className="text-sm sm:text-base text-dark">
-                    Display Type
+                    Auto Delivery
                   </p>
                 </div>
                 <div className="w-full">
                   <p className="text-sm sm:text-base text-dark">
-                    Super Retina XDR OLED, HDR10, Dolby Vision, 800 nits
-                    (HBM), 1200 nits (peak)
-                  </p>
-                </div>
-              </div>
-
-              {/* <!-- info item --> */}
-              <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
-                <div className="max-w-[450px] min-w-[140px] w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    Display Resolution
-                  </p>
-                </div>
-                <div className="w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    1284 x 2778 pixels, 19.5:9 ratio
-                  </p>
-                </div>
-              </div>
-
-              {/* <!-- info item --> */}
-              <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
-                <div className="max-w-[450px] min-w-[140px] w-full">
-                  <p className="text-sm sm:text-base text-dark">Chipset</p>
-                </div>
-                <div className="w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    Apple A15 Bionic (5 nm)
-                  </p>
-                </div>
-              </div>
-
-              {/* <!-- info item --> */}
-              <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
-                <div className="max-w-[450px] min-w-[140px] w-full">
-                  <p className="text-sm sm:text-base text-dark">Memory</p>
-                </div>
-                <div className="w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    128GB 6GB RAM | 256GB 6GB RAM | 512GB 6GB RAM
+                    {product.autoDelivery ? 'Yes - Instant Delivery' : 'No - Manual Delivery'}
                   </p>
                 </div>
               </div>
@@ -891,45 +733,52 @@ const ShopDetails = () => {
               <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
                 <div className="max-w-[450px] min-w-[140px] w-full">
                   <p className="text-sm sm:text-base text-dark">
-                    Main Camera
+                    Available Codes
                   </p>
                 </div>
                 <div className="w-full">
                   <p className="text-sm sm:text-base text-dark">
-                    12MP + 12MP | 4K@24/25/30/60fps, stereo sound rec.
+                    {product.quantityOfActiveCodes || 0} active / {product.quantityOfAllCodes || 0} total
                   </p>
                 </div>
               </div>
 
               {/* <!-- info item --> */}
-              <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
-                <div className="max-w-[450px] min-w-[140px] w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    Selfie Camera
-                  </p>
+              {product.categoryName && (
+                <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
+                  <div className="max-w-[450px] min-w-[140px] w-full">
+                    <p className="text-sm sm:text-base text-dark">Category</p>
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm sm:text-base text-dark">
+                      {product.categoryName}
+                    </p>
+                  </div>
                 </div>
-                <div className="w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    12 MP | 4K@24/25/30/60fps, 1080p@25/30/60/120fps,
-                    gyro-EIS
-                  </p>
-                </div>
-              </div>
+              )}
 
               {/* <!-- info item --> */}
-              <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
-                <div className="max-w-[450px] min-w-[140px] w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    Battery Info
-                  </p>
+              {product.tags && product.tags.length > 0 && (
+                <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
+                  <div className="max-w-[450px] min-w-[140px] w-full">
+                    <p className="text-sm sm:text-base text-dark">
+                      Tags
+                    </p>
+                  </div>
+                  <div className="w-full">
+                    <div className="flex flex-wrap gap-2">
+                      {product.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex px-2.5 py-1 rounded-md bg-gray-1 text-dark-4 text-sm"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="w-full">
-                  <p className="text-sm sm:text-base text-dark">
-                    Li-Ion 4323 mAh, non-removable | 15W wireless (MagSafe),
-                    7.5W wireless (Qi)
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
           {/* <!-- tab content two end --> */}
@@ -943,7 +792,7 @@ const ShopDetails = () => {
             >
               <div className="max-w-[570px] w-full">
                 <h2 className="font-medium text-2xl text-dark mb-9">
-                  03 Review for this product
+                  {product.reviews || 0} Reviews for this product
                 </h2>
 
                 <div className="flex flex-col gap-6">
@@ -963,10 +812,10 @@ const ShopDetails = () => {
 
                         <div>
                           <h3 className="font-medium text-dark">
-                            Davis Dorwart
+                            John Smith
                           </h3>
                           <p className="text-custom-sm">
-                            Serial Entrepreneur
+                            Verified Buyer
                           </p>
                         </div>
                       </a>
@@ -1055,7 +904,7 @@ const ShopDetails = () => {
                     </div>
 
                     <p className="text-dark mt-6">
-                      Lorem ipsum dolor, sit amet consectetur adipisicing elit. Blanditiis vitae, rerum veniam iusto amet eum ullam repellendus animi aliquam possimus rem fugit consequatur mollitia minus, error a, suscipit omnis expedita.
+                      Great digital product! The code worked perfectly and was easy to redeem. The seller provided excellent support when I had questions about activation. Would definitely buy from this seller again.
                     </p>
                   </div>
 
@@ -1075,10 +924,10 @@ const ShopDetails = () => {
 
                         <div>
                           <h3 className="font-medium text-dark">
-                            Davis Dorwart
+                            Sarah Johnson
                           </h3>
                           <p className="text-custom-sm">
-                            Serial Entrepreneur
+                            Verified Buyer
                           </p>
                         </div>
                       </a>
@@ -1167,7 +1016,7 @@ const ShopDetails = () => {
                     </div>
 
                     <p className="text-dark mt-6">
-                      Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias asperiores in odio esse ipsam aliquam consequuntur cumque corporis laborum sequi, ipsum illum doloremque non quo beatae. Error a voluptas sint?
+                      Fast delivery and the code worked without any issues. The product description was accurate and I got exactly what I expected. The platform-specific instructions were very helpful. Would recommend!
                     </p>
                   </div>
 
@@ -1187,10 +1036,10 @@ const ShopDetails = () => {
 
                         <div>
                           <h3 className="font-medium text-dark">
-                            Davis Dorwart
+                            Michael Chen
                           </h3>
                           <p className="text-custom-sm">
-                            Serial Entrepreneur
+                            Verified Buyer
                           </p>
                         </div>
                       </a>
@@ -1279,20 +1128,20 @@ const ShopDetails = () => {
                     </div>
 
                     <p className="text-dark mt-6">
-                      Lorem ipsum dolor sit amet consectetur adipisicing elit. Eaque sapiente consequuntur minus delectus. Expedita, totam consectetur ipsa, laborum repudiandae alias laudantium consequatur ipsam architecto sed, sapiente blanditiis ut nulla deserunt.
+                      I was hesitant at first, but this turned out to be a great purchase. The code was delivered instantly after payment, and activation was straightforward. The seller even followed up to make sure everything was working properly. Five stars!
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="max-w-[550px] w-full">
-                <form>
+                <form className="bg-white rounded-xl shadow-1 p-6">
                   <h2 className="font-medium text-2xl text-dark mb-3.5">
-                    Add a Review
+                    Write a Review
                   </h2>
 
                   <p className="mb-6">
-                    Your email address will not be published. Required
+                    Share your experience with this digital product. Required
                     fields are marked *
                   </p>
 
@@ -1300,85 +1149,26 @@ const ShopDetails = () => {
                     <span>Your Rating*</span>
 
                     <div className="flex items-center gap-1">
-                      <span className="cursor-pointer text-[#FBB040]">
-                        <svg
-                          className="fill-current"
-                          width="15"
-                          height="16"
-                          viewBox="0 0 15 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
+                      {[...Array(5)].map((_, index) => (
+                        <span
+                          key={index}
+                          className={`cursor-pointer ${index < 3 ? 'text-[#FBB040]' : 'text-gray-5'}`}
                         >
-                          <path
-                            d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                            fill=""
-                          />
-                        </svg>
-                      </span>
-
-                      <span className="cursor-pointer text-[#FBB040]">
-                        <svg
-                          className="fill-current"
-                          width="15"
-                          height="16"
-                          viewBox="0 0 15 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                            fill=""
-                          />
-                        </svg>
-                      </span>
-
-                      <span className="cursor-pointer text-[#FBB040]">
-                        <svg
-                          className="fill-current"
-                          width="15"
-                          height="16"
-                          viewBox="0 0 15 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                            fill=""
-                          />
-                        </svg>
-                      </span>
-
-                      <span className="cursor-pointer text-gray-5">
-                        <svg
-                          className="fill-current"
-                          width="15"
-                          height="16"
-                          viewBox="0 0 15 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                            fill=""
-                          />
-                        </svg>
-                      </span>
-
-                      <span className="cursor-pointer text-gray-5">
-                        <svg
-                          className="fill-current"
-                          width="15"
-                          height="16"
-                          viewBox="0 0 15 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                            fill=""
-                          />
-                        </svg>
-                      </span>
+                          <svg
+                            className="fill-current"
+                            width="15"
+                            height="16"
+                            viewBox="0 0 15 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                              fill=""
+                            />
+                          </svg>
+                        </span>
+                      ))}
                     </div>
                   </div>
 
@@ -1449,10 +1239,10 @@ const ShopDetails = () => {
           </div>
           {/* <!-- tab content three end --> */}
           {/* <!--== tab content end ==--> */}
-        </div>
-      </section>
+        </section>
+      </PageContainer>
 
-      <RecentlyViewdItems />
+      <RecentlyViewedItems />
 
       <Newsletter />
     </>

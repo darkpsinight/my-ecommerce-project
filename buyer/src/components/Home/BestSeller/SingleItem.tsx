@@ -40,7 +40,9 @@ const SingleItem = ({ item }: { item: Product }) => {
   };
 
   return (
-    <div className="group">
+    <div className="group relative">
+      {/* Add Link component to make the entire card clickable */}
+      <Link href="/shop-details" className="block absolute inset-0 z-10"></Link>
       <div className="relative overflow-hidden rounded-lg bg-[#F6F7FB] min-h-[403px]">
         <div className="text-center px-4 py-7.5">
           <div className="flex items-center justify-center gap-2.5 mb-2">
@@ -80,11 +82,11 @@ const SingleItem = ({ item }: { item: Product }) => {
             <p className="text-custom-sm">({item.reviews})</p>
           </div>
 
-          <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5">
-            <Link href="/shop-details"> {item.title} </Link>
+          <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5 relative z-0">
+            {item.title}
           </h3>
 
-          <span className="flex items-center justify-center gap-2 font-medium text-lg">
+          <span className="flex items-center justify-center gap-2 font-medium text-lg relative z-0">
             <span className="text-dark">${item.discountedPrice}</span>
             <span className="text-dark-4 line-through">${item.price}</span>
           </span>
@@ -104,13 +106,14 @@ const SingleItem = ({ item }: { item: Product }) => {
 
         <div className="absolute right-0 bottom-0 translate-x-full u-w-full flex flex-col gap-2 p-5.5 ease-linear duration-300 group-hover:translate-x-0">
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               handleQuickViewUpdate();
               openModal();
             }}
             aria-label="button for quick view"
             id="bestOne"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue"
+            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue relative z-20"
           >
             <svg
               className="fill-current"
@@ -136,10 +139,13 @@ const SingleItem = ({ item }: { item: Product }) => {
           </button>
 
           <button
-            onClick={() => handleAddToCart()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToCart();
+            }}
             aria-label="button for add to cart"
             id="addCartOne"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue"
+            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue relative z-20"
           >
             <svg
               className="fill-current"
@@ -171,12 +177,13 @@ const SingleItem = ({ item }: { item: Product }) => {
           </button>
 
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               handleItemToWishList();
             }}
             aria-label="button for add to fav"
             id="addFavOne"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue"
+            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue relative z-20"
           >
             <svg
               className="fill-current"

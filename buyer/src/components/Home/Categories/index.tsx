@@ -1,8 +1,8 @@
 "use client";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { useCallback, useRef, useEffect } from "react";
-import data from "./categoryData";
 import Image from "next/image";
+import { useCategories } from "@/hooks/useCategories";
 
 // Import Swiper styles
 import "swiper/css/navigation";
@@ -11,6 +11,7 @@ import SingleItem from "./SingleItem";
 
 const Categories = () => {
   const sliderRef = useRef(null);
+  const { categories, loading, error } = useCategories();
 
   const handlePrev = useCallback(() => {
     if (!sliderRef.current) return;
@@ -27,6 +28,55 @@ const Categories = () => {
       sliderRef.current.swiper.init();
     }
   }, []);
+
+  // Fallback data for when API fails or returns empty
+  const getFallbackData = () => {
+    return [
+      {
+        id: 1,
+        title: "Televisions",
+        img: "/images/categories/categories-01.png",
+      },
+      {
+        id: 2,
+        title: "Laptop & PC",
+        img: "/images/categories/categories-02.png",
+      },
+      {
+        id: 3,
+        title: "Mobile & Tablets",
+        img: "/images/categories/categories-03.png",
+      },
+      {
+        id: 4,
+        title: "Games & Videos",
+        img: "/images/categories/categories-04.png",
+      },
+      {
+        id: 5,
+        title: "Home Appliances",
+        img: "/images/categories/categories-05.png",
+      },
+      {
+        id: 6,
+        title: "Health & Sports",
+        img: "/images/categories/categories-06.png",
+      },
+      {
+        id: 7,
+        title: "Watches",
+        img: "/images/categories/categories-07.png",
+      }
+    ];
+  };
+
+  // Get categories to display - either from API or fallback
+  const getCategoriesToDisplay = () => {
+    if (categories && categories.length > 0) {
+      return categories;
+    }
+    return getFallbackData();
+  };
 
   return (
     <section className="overflow-hidden pt-17.5">
@@ -116,30 +166,57 @@ const Categories = () => {
             </div>
           </div>
 
-          <Swiper
-            ref={sliderRef}
-            slidesPerView={6}
-            breakpoints={{
-              // when window width is >= 640px
-              0: {
-                slidesPerView: 2,
-              },
-              1000: {
-                slidesPerView: 4,
-                // spaceBetween: 4,
-              },
-              // when window width is >= 768px
-              1200: {
-                slidesPerView: 6,
-              },
-            }}
-          >
-            {data.map((item, key) => (
-              <SwiperSlide key={key}>
-                <SingleItem item={item} />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          {loading && (
+            <div className="flex justify-center items-center min-h-[200px]">
+              <div className="animate-pulse flex flex-col items-center">
+                <div className="w-20 h-20 bg-gray-3 rounded-full mb-4"></div>
+                <div className="h-4 bg-gray-3 rounded w-32 mb-2.5"></div>
+                <div className="h-3 bg-gray-3 rounded w-24"></div>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex justify-center items-center min-h-[200px] mb-4">
+              <div className="text-center">
+                <p className="text-red-500 mb-2">Failed to load categories from server</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-blue hover:underline"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Always render Swiper with either API data or fallback data */}
+          {(!loading || categories) && (
+            <Swiper
+              ref={sliderRef}
+              slidesPerView={6}
+              breakpoints={{
+                // when window width is >= 640px
+                0: {
+                  slidesPerView: 2,
+                },
+                1000: {
+                  slidesPerView: 4,
+                  // spaceBetween: 4,
+                },
+                // when window width is >= 768px
+                1200: {
+                  slidesPerView: 6,
+                },
+              }}
+            >
+              {getCategoriesToDisplay().map((item, key) => (
+                <SwiperSlide key={key}>
+                  <SingleItem item={item} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          )}
         </div>
       </div>
     </section>

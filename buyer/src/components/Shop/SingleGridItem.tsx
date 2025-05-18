@@ -42,10 +42,10 @@ const SingleGridItem = ({ item }: { item: Product }) => {
 
   return (
     <div className="group">
-      <div className="relative overflow-hidden flex items-center justify-center rounded-lg bg-white shadow-1 min-h-[270px] mb-4">
-        <Image src={item.imgs.previews[0]} alt="" width={250} height={250} />
+      <div className="relative overflow-hidden flex items-center justify-center rounded-lg bg-white shadow-1 min-h-[200px] mb-3">
+        <Image src={item.imgs.previews[0]} alt={item.title} width={180} height={180} className="object-contain" />
 
-        <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-2.5 pb-5 ease-linear duration-200 group-hover:translate-y-0">
+        <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-1.5 pb-3 ease-linear duration-200 group-hover:translate-y-0">
           <button
             onClick={() => {
               openModal();
@@ -53,12 +53,12 @@ const SingleGridItem = ({ item }: { item: Product }) => {
             }}
             id="newOne"
             aria-label="button for quick view"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
+            className="flex items-center justify-center w-7 h-7 rounded-[4px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
           >
             <svg
               className="fill-current"
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 16 16"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -80,7 +80,7 @@ const SingleGridItem = ({ item }: { item: Product }) => {
 
           <button
             onClick={() => handleAddToCart()}
-            className="inline-flex font-medium text-custom-sm py-[7px] px-5 rounded-[5px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark"
+            className="inline-flex font-medium text-xs py-[5px] px-3 rounded-[4px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark"
           >
             Add to cart
           </button>
@@ -89,12 +89,12 @@ const SingleGridItem = ({ item }: { item: Product }) => {
             onClick={() => handleItemToWishList()}
             aria-label="button for favorite select"
             id="favOne"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
+            className="flex items-center justify-center w-7 h-7 rounded-[4px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
           >
             <svg
               className="fill-current"
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 16 16"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -110,50 +110,50 @@ const SingleGridItem = ({ item }: { item: Product }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2.5 mb-2">
-        <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <div className="flex items-center gap-0.5">
           <Image
             src="/images/icons/icon-star.svg"
             alt="star icon"
-            width={15}
-            height={15}
+            width={12}
+            height={12}
           />
           <Image
             src="/images/icons/icon-star.svg"
             alt="star icon"
-            width={15}
-            height={15}
+            width={12}
+            height={12}
           />
           <Image
             src="/images/icons/icon-star.svg"
             alt="star icon"
-            width={15}
-            height={15}
+            width={12}
+            height={12}
           />
           <Image
             src="/images/icons/icon-star.svg"
             alt="star icon"
-            width={15}
-            height={15}
+            width={12}
+            height={12}
           />
           <Image
             src="/images/icons/icon-star.svg"
             alt="star icon"
-            width={15}
-            height={15}
+            width={12}
+            height={12}
           />
         </div>
 
-        <p className="text-custom-sm">({item.reviews})</p>
+        <p className="text-xs">({item.reviews})</p>
       </div>
 
-      <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5">
+      <h3 className="font-medium text-dark text-sm ease-out duration-200 hover:text-blue mb-1 line-clamp-2 h-10">
         <Link href="/shop-details"> {item.title} </Link>
       </h3>
 
-      <span className="flex items-center gap-2 font-medium text-lg">
+      <span className="flex items-center gap-1.5 font-medium text-base">
         <span className="text-dark">${item.discountedPrice}</span>
-        <span className="text-dark-4 line-through">${item.price}</span>
+        <span className="text-dark-4 line-through text-sm">${item.price}</span>
       </span>
     </div>
   );

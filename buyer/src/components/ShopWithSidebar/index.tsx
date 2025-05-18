@@ -99,13 +99,13 @@ const ShopWithSidebar = () => {
 
   return (
     <>
-    <PageContainer>
+    <PageContainer fullWidth>
       <section className="overflow-hidden py-20 bg-gray-2">
-        <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-          <div className="flex gap-7.5">
+        <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-8 xl:px-6">
+          <div className="flex gap-6 xl:gap-7">
             {/* <!-- Sidebar Start --> */}
             <div
-              className={`sidebar-content fixed xl:z-1 z-9999 left-0 top-0 xl:translate-x-0 xl:static max-w-[310px] xl:max-w-[270px] w-full ease-out duration-200 ${
+              className={`sidebar-content fixed xl:z-1 z-9999 left-0 top-0 xl:translate-x-0 xl:static max-w-[310px] xl:max-w-[280px] w-full ease-out duration-200 ${
                 productSidebar
                   ? "translate-x-0 bg-white p-5 h-screen overflow-y-auto"
                   : "-translate-x-full"
@@ -173,7 +173,7 @@ const ShopWithSidebar = () => {
             {/* // <!-- Sidebar End --> */}
 
             {/* // <!-- Content Start --> */}
-            <div className="xl:max-w-[870px] w-full">
+            <div className="xl:max-w-[calc(100%-310px)] w-full">
               <div className="rounded-lg bg-white shadow-1 pl-3 pr-2.5 py-2.5 mb-6">
                 <div className="flex items-center justify-between">
                   {/* <!-- top bar left --> */}
@@ -181,7 +181,7 @@ const ShopWithSidebar = () => {
                     <CustomSelect options={options} />
 
                     <p>
-                      Showing <span className="text-dark">9 of 50</span>{" "}
+                      Showing <span className="text-dark">18 of 50</span>{" "}
                       Products
                     </p>
                   </div>
@@ -271,7 +271,7 @@ const ShopWithSidebar = () => {
               <div
                 className={`${
                   productStyle === "grid"
-                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7.5 gap-y-9"
+                    ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 sm:gap-x-5 gap-y-8"
                     : "flex flex-col gap-7.5"
                 }`}
               >

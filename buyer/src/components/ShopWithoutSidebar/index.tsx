@@ -17,10 +17,10 @@ const ShopWithoutSidebar = () => {
 
   return (
     <>
-      <PageContainer>
+      <PageContainer fullWidth>
       <section className="overflow-hidden relative pb-20 pt-5 lg:pt-20 xl:pt-28 bg-[#f3f4f6]">
-        <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-          <div className="flex gap-7.5">
+        <div className="max-w-full w-full mx-auto px-4 sm:px-8 xl:px-6">
+          <div className="flex gap-5 sm:gap-7.5">
             {/* // <!-- Content Start --> */}
             <div className="w-full">
               <div className="rounded-lg bg-white shadow-1 pl-3 pr-2.5 py-2.5 mb-6">
@@ -30,7 +30,7 @@ const ShopWithoutSidebar = () => {
                     <CustomSelect options={options} />
 
                     <p>
-                      Showing <span className="text-dark">9 of 50</span>{" "}
+                      Showing <span className="text-dark">24 of 50</span>{" "}
                       Products
                     </p>
                   </div>
@@ -120,7 +120,7 @@ const ShopWithoutSidebar = () => {
               <div
                 className={`${
                   productStyle === "grid"
-                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-7.5 gap-y-9"
+                    ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-x-4 sm:gap-x-5 gap-y-8"
                     : "flex flex-col gap-7.5"
                 }`}
               >

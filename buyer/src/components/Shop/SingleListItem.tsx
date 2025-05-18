@@ -41,19 +41,28 @@ const SingleListItem = ({ item }: { item: Product }) => {
   };
 
   return (
-    <div className="group rounded-lg bg-white shadow-1">
+    <div className="group rounded-lg bg-white shadow-1 relative">
+      <Link href="/shop-details" className="block absolute inset-0 z-10"></Link>
       <div className="flex">
-        <div className="shadow-list relative overflow-hidden flex items-center justify-center max-w-[270px] w-full sm:min-h-[270px] p-4">
-          <Image src={item.imgs.previews[0]} alt="" width={250} height={250} />
-
-          <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-2.5 pb-5 ease-linear duration-200 group-hover:translate-y-0">
+        <div className="shadow-list relative overflow-hidden max-w-[270px] w-full h-[270px]">
+          <div className="relative w-full h-full">
+            <Image
+              src={item.imgs.previews[0]}
+              alt={item.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 270px"
+              className="object-contain p-4"
+            />
+          </div>
+          <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-2.5 pb-5 ease-linear duration-200 group-hover:translate-y-0 z-20">
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 openModal();
                 handleQuickViewUpdate();
               }}
               aria-label="button for quick view"
-              className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
+              className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue relative z-20"
             >
               <svg
                 className="fill-current"
@@ -79,16 +88,22 @@ const SingleListItem = ({ item }: { item: Product }) => {
             </button>
 
             <button
-              onClick={() => handleAddToCart()}
-              className="inline-flex font-medium text-custom-sm py-[7px] px-5 rounded-[5px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddToCart();
+              }}
+              className="inline-flex font-medium text-custom-sm py-[7px] px-5 rounded-[5px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark relative z-20"
             >
               Add to cart
             </button>
 
             <button
-              onClick={() => handleItemToWishList()}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleItemToWishList();
+              }}
               aria-label="button for favorite select"
-              className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
+              className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue relative z-20"
             >
               <svg
                 className="fill-current"
@@ -109,10 +124,10 @@ const SingleListItem = ({ item }: { item: Product }) => {
           </div>
         </div>
 
-        <div className="w-full flex flex-col gap-5 sm:flex-row sm:items-center justify-center sm:justify-between py-5 px-4 sm:px-7.5 lg:pl-11 lg:pr-12">
+        <div className="w-full flex flex-col gap-5 sm:flex-row sm:items-center justify-center sm:justify-between py-5 px-4 sm:px-7.5 lg:pl-11 lg:pr-12 relative z-0">
           <div>
             <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5">
-              <Link href="/shop-details"> {item.title} </Link>
+              {item.title}
             </h3>
 
             <span className="flex items-center gap-2 font-medium text-lg">

@@ -46,19 +46,28 @@ const ProductItem = ({ item }: { item: Product }) => {
   };
 
   return (
-    <div className="group">
-      <div className="relative overflow-hidden flex items-center justify-center rounded-lg bg-[#F6F7FB] min-h-[270px] mb-4">
-        <Image src={item.imgs.previews[0]} alt="" width={250} height={250} />
-
-        <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-2.5 pb-5 ease-linear duration-200 group-hover:translate-y-0">
+    <div className="group relative">
+      <Link href="/shop-details" className="block absolute inset-0 z-10" onClick={() => handleProductDetails()}></Link>
+      <div className="relative overflow-hidden rounded-lg bg-[#F6F7FB] mb-4 w-full h-[270px]">
+        <div className="relative w-full h-full">
+          <Image
+            src={item.imgs.previews[0]}
+            alt={item.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 300px"
+            className="object-contain p-4"
+          />
+        </div>
+        <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-2.5 pb-5 ease-linear duration-200 group-hover:translate-y-0 z-20">
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               openModal();
               handleQuickViewUpdate();
             }}
             id="newOne"
             aria-label="button for quick view"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
+            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue relative z-20"
           >
             <svg
               className="fill-current"
@@ -84,17 +93,23 @@ const ProductItem = ({ item }: { item: Product }) => {
           </button>
 
           <button
-            onClick={() => handleAddToCart()}
-            className="inline-flex font-medium text-custom-sm py-[7px] px-5 rounded-[5px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToCart();
+            }}
+            className="inline-flex font-medium text-custom-sm py-[7px] px-5 rounded-[5px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark relative z-20"
           >
             Add to cart
           </button>
 
           <button
-            onClick={() => handleItemToWishList()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleItemToWishList();
+            }}
             aria-label="button for favorite select"
             id="favOne"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
+            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue relative z-20"
           >
             <svg
               className="fill-current"
@@ -115,7 +130,7 @@ const ProductItem = ({ item }: { item: Product }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2.5 mb-2">
+      <div className="flex items-center gap-2.5 mb-2 relative z-0">
         <div className="flex items-center gap-1">
           <Image
             src="/images/icons/icon-star.svg"
@@ -153,13 +168,12 @@ const ProductItem = ({ item }: { item: Product }) => {
       </div>
 
       <h3
-        className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5"
-        onClick={() => handleProductDetails()}
+        className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5 relative z-0"
       >
-        <Link href="/shop-details"> {item.title} </Link>
+        {item.title}
       </h3>
 
-      <span className="flex items-center gap-2 font-medium text-lg">
+      <span className="flex items-center gap-2 font-medium text-lg relative z-0">
         <span className="text-dark">${item.discountedPrice}</span>
         <span className="text-dark-4 line-through">${item.price}</span>
       </span>

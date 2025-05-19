@@ -82,7 +82,7 @@ const SingleItem = ({ item }: { item: Product }) => {
             <p className="text-custom-sm">({item.reviews})</p>
           </div>
 
-          <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5 relative z-0">
+          <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5 relative z-0 line-clamp-2">
             {item.title}
           </h3>
 

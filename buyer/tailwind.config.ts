@@ -117,6 +117,10 @@ const config: Config = {
       ...defaultTheme.screens,
     },
     extend: {
+      lineClamp: {
+        2: '2',
+        3: '3',
+      },
       fontSize: {
         "2xs": ["10px", "17px"],
         "heading-1": ["60px", "72px"],

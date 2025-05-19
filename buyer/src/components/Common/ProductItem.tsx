@@ -168,7 +168,7 @@ const ProductItem = ({ item }: { item: Product }) => {
       </div>
 
       <h3
-        className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5 relative z-0"
+        className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5 relative z-0 line-clamp-2"
       >
         {item.title}
       </h3>

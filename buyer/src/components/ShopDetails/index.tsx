@@ -245,7 +245,7 @@ const ShopDetails = () => {
             <div className="max-w-[539px] w-full">
               <div className="flex flex-col mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="font-semibold text-xl sm:text-2xl xl:text-custom-3 text-dark truncate max-w-[400px]">
+                  <h2 className="font-semibold text-xl sm:text-2xl xl:text-custom-3 text-dark shop-details-title max-w-[400px]">
                     {product.title}
                   </h2>
 

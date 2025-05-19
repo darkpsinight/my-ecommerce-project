@@ -18,7 +18,7 @@ const SingleItem = ({ item, removeItemFromCart }) => {
         </div>
 
         <div>
-          <h3 className="font-medium text-dark mb-1 ease-out duration-200 hover:text-blue">
+          <h3 className="font-medium text-dark mb-1 ease-out duration-200 hover:text-blue line-clamp-2">
             <a href="#"> {item.title} </a>
           </h3>
           <p className="text-custom-sm">Price: ${item.discountedPrice}</p>

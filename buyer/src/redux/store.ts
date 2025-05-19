@@ -7,6 +7,7 @@ import productDetailsReducer from "./features/product-details";
 import authReducer from "./features/auth-slice";
 import userInfoReducer from "./features/user-info-slice";
 import categoriesReducer from "./features/categories-slice";
+import recentlyViewedReducer from "./features/recently-viewed-slice";
 
 import { TypedUseSelectorHook, useSelector } from "react-redux";
 
@@ -19,6 +20,7 @@ export const store = configureStore({
     authReducer,
     userInfoReducer,
     categoriesReducer,
+    recentlyViewedReducer,
   },
 });
 

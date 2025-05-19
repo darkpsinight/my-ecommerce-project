@@ -11,6 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { addItemToCart } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
 import { updateproductDetails, clearProductDetails } from "@/redux/features/product-details";
+import { addRecentlyViewedProduct } from "@/redux/features/recently-viewed-slice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import PageContainer from "../Common/PageContainer";
@@ -121,6 +122,9 @@ const ShopDetails = () => {
             if (currentProductId !== productId) {
               dispatch(updateproductDetails({ ...data }));
             }
+
+            // Add to recently viewed products
+            dispatch(addRecentlyViewedProduct({ ...data }));
           } else {
             console.log("No product data found, using fallback");
             setProductData(fallbackProduct);

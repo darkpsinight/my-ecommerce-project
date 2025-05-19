@@ -1,18 +1,33 @@
 "use client";
 import React from "react";
-import shopData from "@/components/Shop/shopData";
 import ProductItem from "@/components/Common/ProductItem";
 import Image from "next/image";
 import Link from "next/link";
 import PageContainer from "@/components/Common/PageContainer";
+import { useSearchParams } from "next/navigation";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { useCallback, useRef } from "react";
 import "swiper/css/navigation";
 import "swiper/css";
+import { useAppSelector } from "@/redux/store";
 
 const RecentlyViewedItems = () => {
   const sliderRef = useRef(null);
+
+  // Get recently viewed products from Redux store
+  const recentlyViewedProducts = useAppSelector(
+    (state) => state.recentlyViewedReducer.items
+  );
+
+  // Get current product ID from URL
+  const searchParams = useSearchParams();
+  const currentProductId = searchParams.get('id');
+
+  // Filter out the current product from the recently viewed list
+  const filteredProducts = recentlyViewedProducts.filter(
+    product => product.id?.toString() !== currentProductId
+  );
 
   const handlePrev = useCallback(() => {
     if (!sliderRef.current) return;
@@ -23,6 +38,11 @@ const RecentlyViewedItems = () => {
     if (!sliderRef.current) return;
     sliderRef.current.swiper.slideNext();
   }, []);
+
+  // Only render if there are products to show after filtering
+  if (filteredProducts.length === 0) {
+    return null;
+  }
 
   return (
     <PageContainer>
@@ -105,7 +125,7 @@ const RecentlyViewedItems = () => {
               },
             }}
           >
-            {shopData.slice(0, 8).map((item, key) => (
+            {filteredProducts.map((item, key) => (
               <SwiperSlide key={key}>
                 <ProductItem item={item} />
               </SwiperSlide>

@@ -1,89 +1,133 @@
 const { verifyAuth } = require("../plugins/authVerify");
-const { User } = require("../models/user");
 const { Category } = require("../models/category");
 const { getPatternsForPlatform } = require("../utils/patternValidator");
+const {
+  getSellerProfile,
+  updateBasicSellerInfo,
+  updateExtendedSellerProfile,
+  getSellerProfileById
+} = require("../handlers/sellerProfileHandler");
 
 const sellerRoutes = async (fastify, opts) => {
-  // Get seller profile
+  // Get seller profile (basic user info + extended profile)
   fastify.route({
     method: "GET",
     url: "/profile",
     preHandler: verifyAuth(["seller"]),
-    handler: async (request, reply) => {
-      try {
-        return reply.code(200).send({
-          success: true,
-          data: request.user,
-        });
-      } catch (error) {
-        request.log.error(`Error in seller profile: ${error.message}`);
-        return reply.code(500).send({
-          success: false,
-          error: "Internal server error",
-        });
-      }
-    },
+    handler: getSellerProfile
   });
 
-  // Update seller profile
+  // Update basic seller info
   fastify.route({
     method: "PUT",
-    url: "/profile",
+    url: "/profile/basic",
     preHandler: verifyAuth(["seller"]),
     schema: {
       body: {
         type: "object",
         properties: {
           name: { type: "string" },
-          email: { type: "string", format: "email" },
-          // Add other fields that can be updated
+          // Email updates require additional verification, so we'll skip for now
         },
       },
     },
-    handler: async (request, reply) => {
-      try {
-        // Get user ID from authenticated user
-        const uid = request.user.uid;
-        const updateData = request.body;
+    handler: updateBasicSellerInfo
+  });
 
-        // Find the user by uid
-        const user = await User.findOne({ uid });
+  // Create or update seller profile
+  fastify.route({
+    method: "PUT",
+    url: "/profile/extended",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      body: {
+        type: "object",
+        properties: {
+          nickname: { type: "string", maxLength: 50 },
+          profileImageUrl: { type: "string" },
+          bannerImageUrl: { type: "string" },
+          marketName: { type: "string", maxLength: 100 },
+          enterpriseDetails: {
+            type: "object",
+            properties: {
+              companyName: { type: "string" },
+              website: { type: "string" },
+              socialMedia: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    platform: { type: "string" },
+                    url: { type: "string" }
+                  },
+                  required: ["platform", "url"]
+                }
+              }
+            }
+          }
+        },
+        required: ["nickname"]
+      },
+    },
+    handler: updateExtendedSellerProfile
+  });
 
-        if (!user) {
-          return reply.code(404).send({
-            success: false,
-            error: "User not found",
-          });
+  // Get seller profile by ID (authenticated endpoint)
+  fastify.route({
+    method: "GET",
+    url: "/profile/:id",
+    schema: {
+      params: {
+        type: "object",
+        required: ["id"],
+        properties: {
+          id: { type: "string" }
         }
-
-        // Update allowed fields
-        if (updateData.name) {
-          user.name = updateData.name;
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                nickname: { type: "string" },
+                profileImageUrl: { type: "string" },
+                bannerImageUrl: { type: "string" },
+                marketName: { type: "string" },
+                enterpriseDetails: {
+                  type: "object",
+                  properties: {
+                    companyName: { type: "string" },
+                    website: { type: "string" },
+                    socialMedia: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          platform: { type: "string" },
+                          url: { type: "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                externalId: { type: "string" }
+              }
+            }
+          }
+        },
+        404: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            error: { type: "string" }
+          }
         }
-
-        // Email updates require additional verification, so we'll skip for now
-        // Add other fields as needed
-
-        // Save the updated user
-        await user.save();
-
-        return reply.code(200).send({
-          success: true,
-          message: "Profile updated successfully",
-          data: {
-            name: user.name,
-            email: user.email,
-            role: user.role,
-          },
-        });
-      } catch (error) {
-        request.log.error(`Error updating seller profile: ${error.message}`);
-        return reply.code(500).send({
-          success: false,
-          error: "Internal server error",
-        });
       }
     },
+    handler: getSellerProfileById
   });
 
   // Get seller's products

@@ -15,8 +15,20 @@ const api = axios.create({
 const productCache: Record<string, { product: Product; timestamp: number }> = {};
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+// Track in-flight requests to prevent duplicate API calls
+const pendingRequests: Record<string, Promise<Product | null>> = {};
+
 // Get product details by ID
 export const getProductById = async (id: string, bypassCache: boolean = false): Promise<Product | null> => {
+  // Generate a unique request key that includes the bypass cache flag
+  const requestKey = `${id}-${bypassCache}`;
+
+  // If there's already a pending request for this ID with the same cache settings, return that promise
+  if (pendingRequests[requestKey]) {
+    console.log(`Using pending request for ID: ${id}`);
+    return pendingRequests[requestKey];
+  }
+
   // Check if we have a cached version that's still valid (unless bypassCache is true)
   const cachedData = productCache[id];
   if (!bypassCache && cachedData && Date.now() - cachedData.timestamp < CACHE_EXPIRY) {
@@ -24,68 +36,79 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
     return cachedData.product;
   }
 
-  try {
-    console.log(`Fetching product details for ID: ${id}${bypassCache ? ' (bypassing cache)' : ''}`);
-    const response = await api.get(`/listings/${id}`, {
-      headers: {
-        // Add a cache-busting query parameter when bypassCache is true
-        'Cache-Control': bypassCache ? 'no-cache, no-store, must-revalidate' : undefined,
-        'Pragma': bypassCache ? 'no-cache' : undefined,
-        'Expires': bypassCache ? '0' : undefined
-      }
-    });
-
-    if (response.data && response.data.success) {
-      // Transform backend data to match our Product type
-      const listing = response.data.data;
-
-      // Create a product object from the listing data
-      const product = {
-        id: listing.externalId,
-        title: listing.title,
-        description: listing.description || '',
-        price: listing.price,
-        discountedPrice: listing.originalPrice ? listing.price : listing.price, // If no original price, use price as discounted
-        originalPrice: listing.originalPrice,
-        categoryId: listing.categoryId,
-        categoryName: listing.categoryName,
-        platform: listing.platform,
-        region: listing.region,
-        isRegionLocked: listing.isRegionLocked,
-        supportedLanguages: listing.supportedLanguages || ['English'],
-        thumbnailUrl: listing.thumbnailUrl,
-        autoDelivery: listing.autoDelivery,
-        tags: listing.tags || [],
-        status: listing.status,
-        reviews: 0, // Default value as backend doesn't have reviews yet
-        quantityOfActiveCodes: listing.quantityOfActiveCodes || 0,
-        quantityOfAllCodes: listing.quantityOfAllCodes || 0,
-        imgs: {
-          // Use thumbnailUrl for both if no separate images are provided
-          thumbnails: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png'],
-          previews: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png']
+  // Create a new request promise and store it
+  const requestPromise = (async () => {
+    try {
+      console.log(`Fetching product details for ID: ${id}${bypassCache ? ' (bypassing cache)' : ''}`);
+      const response = await api.get(`/listings/${id}`, {
+        headers: {
+          // Add a cache-busting query parameter when bypassCache is true
+          'Cache-Control': bypassCache ? 'no-cache, no-store, must-revalidate' : undefined,
+          'Pragma': bypassCache ? 'no-cache' : undefined,
+          'Expires': bypassCache ? '0' : undefined
         }
-      };
+      });
 
-      // Cache the product data (even if bypassCache is true, we still want to cache the fresh data)
-      productCache[id] = {
-        product,
-        timestamp: Date.now()
-      };
+      if (response.data && response.data.success) {
+        // Transform backend data to match our Product type
+        const listing = response.data.data;
 
-      return product;
-    } else {
-      console.error('API response unsuccessful:', response.data);
+        // Create a product object from the listing data
+        const product = {
+          id: listing.externalId,
+          title: listing.title,
+          description: listing.description || '',
+          price: listing.price,
+          discountedPrice: listing.originalPrice ? listing.price : listing.price, // If no original price, use price as discounted
+          originalPrice: listing.originalPrice,
+          categoryId: listing.categoryId,
+          categoryName: listing.categoryName,
+          platform: listing.platform,
+          region: listing.region,
+          isRegionLocked: listing.isRegionLocked,
+          supportedLanguages: listing.supportedLanguages || ['English'],
+          thumbnailUrl: listing.thumbnailUrl,
+          autoDelivery: listing.autoDelivery,
+          tags: listing.tags || [],
+          status: listing.status,
+          reviews: 0, // Default value as backend doesn't have reviews yet
+          quantityOfActiveCodes: listing.quantityOfActiveCodes || 0,
+          quantityOfAllCodes: listing.quantityOfAllCodes || 0,
+          imgs: {
+            // Use thumbnailUrl for both if no separate images are provided
+            thumbnails: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png'],
+            previews: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png']
+          }
+        };
+
+        // Cache the product data (even if bypassCache is true, we still want to cache the fresh data)
+        productCache[id] = {
+          product,
+          timestamp: Date.now()
+        };
+
+        return product;
+      } else {
+        console.error('API response unsuccessful:', response.data);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Status code:', error.response.status);
+      }
       return null;
+    } finally {
+      // Clean up the pending request after it completes
+      delete pendingRequests[requestKey];
     }
-  } catch (error) {
-    console.error('Error fetching product details:', error);
-    if (error.response) {
-      console.error('Error response:', error.response.data);
-      console.error('Status code:', error.response.status);
-    }
-    return null;
-  }
+  })();
+
+  // Store the promise so other calls can use it
+  pendingRequests[requestKey] = requestPromise;
+
+  return requestPromise;
 };
 
 // Cache for product listings to prevent redundant API calls

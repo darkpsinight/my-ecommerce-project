@@ -42,7 +42,7 @@ const SingleListItem = ({ item }: { item: Product }) => {
 
   return (
     <div className="group rounded-lg bg-white shadow-1 relative">
-      <Link href="/shop-details" className="block absolute inset-0 z-10"></Link>
+      <Link href={`/shop-details?id=${item.id}`} className="block absolute inset-0 z-10"></Link>
       <div className="flex">
         <div className="shadow-list relative overflow-hidden max-w-[270px] w-full h-[270px]">
           <div className="relative w-full h-full">

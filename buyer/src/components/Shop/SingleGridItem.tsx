@@ -42,7 +42,7 @@ const SingleGridItem = ({ item }: { item: Product }) => {
 
   return (
     <div className="group relative">
-      <Link href="/shop-details" className="block absolute inset-0 z-10"></Link>
+      <Link href={`/shop-details?id=${item.id}`} className="block absolute inset-0 z-10"></Link>
       <div className="relative overflow-hidden rounded-lg bg-white shadow-1 mb-3 w-full h-[220px]">
         <div className="relative w-full h-full">
           <Image

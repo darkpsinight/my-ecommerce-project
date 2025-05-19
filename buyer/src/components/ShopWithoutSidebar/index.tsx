@@ -1,13 +1,53 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SingleGridItem from "../Shop/SingleGridItem";
 import SingleListItem from "../Shop/SingleListItem";
 import CustomSelect from "../ShopWithSidebar/CustomSelect";
-import  shopData from "../Shop/shopData";
 import PageContainer from "../Common/PageContainer";
+import ProductCardSkeleton from "../Common/ProductCardSkeleton";
+import { getProducts } from "@/services/product";
+import { Product } from "@/types/product";
 
 const ShopWithoutSidebar = () => {
   const [productStyle, setProductStyle] = useState("grid");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProductsData = async () => {
+      setLoading(true);
+      try {
+        // Prepare filter parameters
+        const params: any = {
+          page: currentPage,
+          limit: 24, // Show more products on this page
+          status: 'active' // Only show active listings
+        };
+
+        const result = await getProducts(params);
+
+        if (result) {
+          setProducts(result.products);
+          setTotalProducts(result.total);
+          setTotalPages(result.totalPages);
+        } else {
+          console.error('Failed to fetch products');
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductsData();
+  }, [currentPage]);
 
   const options = [
     { label: "Latest Products", value: "0" },
@@ -30,7 +70,7 @@ const ShopWithoutSidebar = () => {
                     <CustomSelect options={options} />
 
                     <p>
-                      Showing <span className="text-dark">24 of 50</span>{" "}
+                      Showing <span className="text-dark">{products.length} of {totalProducts}</span>{" "}
                       Products
                     </p>
                   </div>
@@ -117,22 +157,107 @@ const ShopWithoutSidebar = () => {
               </div>
 
               {/* <!-- Products Grid Tab Content Start --> */}
-              <div
-                className={`${
-                  productStyle === "grid"
-                    ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-x-4 sm:gap-x-5 gap-y-8"
-                    : "flex flex-col gap-7.5"
-                }`}
-              >
-                {shopData.map((item, key) =>
-                  productStyle === "grid" ? (
-                    <SingleGridItem item={item} key={key} />
-                  ) : (
-                    <SingleListItem item={item} key={key} />
-                  )
-                )}
-              </div>
+              {loading ? (
+                <div
+                  className={`${
+                    productStyle === "grid"
+                      ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-x-4 sm:gap-x-5 gap-y-8"
+                      : "flex flex-col gap-7.5"
+                  }`}
+                >
+                  {/* Generate 24 skeleton cards for the without sidebar view */}
+                  {[...Array(24)].map((_, index) => (
+                    <ProductCardSkeleton key={index} gridView={productStyle === "grid"} />
+                  ))}
+                </div>
+              ) : products.length > 0 ? (
+                <div
+                  className={`${
+                    productStyle === "grid"
+                      ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-x-4 sm:gap-x-5 gap-y-8"
+                      : "flex flex-col gap-7.5"
+                  }`}
+                >
+                  {products.map((item, key) =>
+                    productStyle === "grid" ? (
+                      <SingleGridItem item={item} key={key} />
+                    ) : (
+                      <SingleListItem item={item} key={key} />
+                    )
+                  )}
+                </div>
+              ) : (
+                <div className="flex justify-center items-center min-h-[400px]">
+                  <div className="text-center">
+                    <h3 className="text-xl font-medium text-dark mb-2">No Products Found</h3>
+                    <p className="text-dark-4">Try adjusting your filters or check back later for new listings.</p>
+                  </div>
+                </div>
+              )}
               {/* <!-- Products Grid Tab Content End --> */}
+
+              {/* Pagination */}
+              {!loading && products.length > 0 && totalPages > 1 && (
+                <div className="flex justify-center mt-10">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className={`w-10 h-10 flex items-center justify-center rounded-md border ${
+                        currentPage === 1
+                          ? "border-gray-3 text-dark-4 cursor-not-allowed"
+                          : "border-gray-3 text-dark hover:bg-blue hover:text-white hover:border-blue"
+                      }`}
+                    >
+                      <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 1L1 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+
+                    {[...Array(Math.min(totalPages, 5))].map((_, index) => {
+                      // Show first page, last page, current page, and pages around current page
+                      let pageToShow;
+                      if (totalPages <= 5) {
+                        pageToShow = index + 1;
+                      } else if (currentPage <= 3) {
+                        pageToShow = index + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageToShow = totalPages - 4 + index;
+                      } else {
+                        pageToShow = currentPage - 2 + index;
+                      }
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(pageToShow)}
+                          className={`w-10 h-10 flex items-center justify-center rounded-md border ${
+                            currentPage === pageToShow
+                              ? "bg-blue text-white border-blue"
+                              : "border-gray-3 text-dark hover:bg-blue hover:text-white hover:border-blue"
+                          }`}
+                        >
+                          {pageToShow}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className={`w-10 h-10 flex items-center justify-center rounded-md border ${
+                        currentPage === totalPages
+                          ? "border-gray-3 text-dark-4 cursor-not-allowed"
+                          : "border-gray-3 text-dark hover:bg-blue hover:text-white hover:border-blue"
+                      }`}
+                    >
+                      <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L7 7L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* <!-- Products Pagination Start --> */}
               <div className="flex justify-center mt-15">

@@ -42,7 +42,7 @@ const SingleItem = ({ item }: { item: Product }) => {
   return (
     <div className="group relative">
       {/* Add Link component to make the entire card clickable */}
-      <Link href="/shop-details" className="block absolute inset-0 z-10"></Link>
+      <Link href={`/shop-details?id=${item.id}`} className="block absolute inset-0 z-10"></Link>
       <div className="relative overflow-hidden rounded-lg bg-[#F6F7FB] min-h-[403px]">
         <div className="text-center px-4 py-7.5">
           <div className="flex items-center justify-center gap-2.5 mb-2">

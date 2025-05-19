@@ -8,12 +8,12 @@ const shopData: Product[] = [
     id: 1,
     imgs: {
       thumbnails: [
-        "/images/products/amazon.jpg",
-        "/images/products/amazon.jpg",
+        "/images/products/product-1-sm-1.png",
+        "/images/products/product-1-sm-2.png",
       ],
       previews: [
-        "/images/products/amazon.jpg",
-        "/images/products/amazon.jpg",
+        "/images/products/product-1-bg-1.png",
+        "/images/products/product-1-bg-2.png",
       ],
     },
   },
@@ -25,12 +25,12 @@ const shopData: Product[] = [
     id: 2,
     imgs: {
       thumbnails: [
-        "/images/products/amazon.webp",
-        "/images/products/amazon.webp",
+        "/images/products/product-2-sm-1.png",
+        "/images/products/product-2-sm-2.png",
       ],
       previews: [
-        "/images/products/amazon.webp",
-        "/images/products/amazon.webp",
+        "/images/products/product-2-bg-1.png",
+        "/images/products/product-2-bg-2.png",
       ],
     },
   },

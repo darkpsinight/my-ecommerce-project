@@ -47,7 +47,7 @@ const ProductItem = ({ item }: { item: Product }) => {
 
   return (
     <div className="group relative">
-      <Link href="/shop-details" className="block absolute inset-0 z-10" onClick={() => handleProductDetails()}></Link>
+      <Link href={`/shop-details?id=${item.id}`} className="block absolute inset-0 z-10" onClick={() => handleProductDetails()}></Link>
       <div className="relative overflow-hidden rounded-lg bg-[#F6F7FB] mb-4 w-full h-[270px]">
         <div className="relative w-full h-full">
           <Image

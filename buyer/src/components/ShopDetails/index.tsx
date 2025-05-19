@@ -10,6 +10,7 @@ import { Product } from "@/types/product";
 import { useRouter, useSearchParams } from "next/navigation";
 import { addItemToCart } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import { updateproductDetails, clearProductDetails } from "@/redux/features/product-details";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import PageContainer from "../Common/PageContainer";
@@ -42,39 +43,108 @@ const ShopDetails = () => {
     },
   ];
 
-  // Get product from Redux store or localStorage as fallback
+  // Get product from Redux store
   const productFromStorage = useAppSelector(
     (state) => state.productDetailsReducer.value
   );
-  const alreadyExist = typeof window !== 'undefined' ? localStorage.getItem("productDetails") : null;
-  const fallbackProduct = alreadyExist ? JSON.parse(alreadyExist) : productFromStorage;
+
+  // Initialize fallback product
+  const [fallbackProduct, setFallbackProduct] = useState<Product | null>(null);
+
+  // Set fallback product when component mounts or productId changes
+  useEffect(() => {
+    // Only use localStorage as fallback if no product ID is provided
+    if (!productId && typeof window !== 'undefined') {
+      const storedProduct = localStorage.getItem("productDetails");
+      if (storedProduct) {
+        try {
+          const parsedProduct = JSON.parse(storedProduct);
+          setFallbackProduct(parsedProduct);
+        } catch (error) {
+          console.error("Error parsing stored product:", error);
+          setFallbackProduct(productFromStorage);
+        }
+      } else {
+        setFallbackProduct(productFromStorage);
+      }
+    } else {
+      // If we have a productId, don't use fallback
+      setFallbackProduct(null);
+    }
+  }, [productId, productFromStorage]);
+
+  // Clear product details when component unmounts
+  useEffect(() => {
+    return () => {
+      console.log("ShopDetails component unmounting, clearing product details");
+      dispatch(clearProductDetails());
+
+      // Also clear localStorage to prevent stale data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem("productDetails");
+      }
+    };
+  }, [dispatch]);
 
   // Fetch product data if ID is provided, otherwise use fallback
   useEffect(() => {
+    // Create a flag to track if the component is still mounted
+    let isMounted = true;
+
     const fetchProductData = async () => {
+      if (!isMounted) return;
       setLoading(true);
+
       if (productId) {
         try {
-          const data = await getProductById(productId);
+          console.log("Fetching product with ID:", productId);
+
+          // Force a fresh fetch from the API by bypassing the cache
+          const data = await getProductById(productId, true);
+
+          // Only update state if component is still mounted
+          if (!isMounted) return;
+
           if (data) {
+            console.log("Product data fetched successfully:", data.title);
             setProductData(data);
+
             // Save to localStorage for persistence
             localStorage.setItem("productDetails", JSON.stringify(data));
+
+            // Always update Redux store when productId changes
+            dispatch(updateproductDetails({ ...data }));
           } else {
+            console.log("No product data found, using fallback");
             setProductData(fallbackProduct);
           }
         } catch (error) {
+          // Only update state if component is still mounted
+          if (!isMounted) return;
+
           console.error("Error fetching product:", error);
           setProductData(fallbackProduct);
         }
       } else {
+        console.log("No product ID provided, using fallback product");
         setProductData(fallbackProduct);
       }
-      setLoading(false);
+
+      if (isMounted) {
+        setLoading(false);
+      }
     };
 
+    // Reset product data when productId changes
+    setProductData(null);
+
     fetchProductData();
-  }, [productId, fallbackProduct]);
+
+    // Cleanup function to set the flag to false when component unmounts
+    return () => {
+      isMounted = false;
+    };
+  }, [productId, dispatch]); // Include dispatch in dependencies
 
   // Use the fetched product data or fallback
   const product = productData || fallbackProduct;

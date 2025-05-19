@@ -78,7 +78,13 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
             // Use thumbnailUrl for both if no separate images are provided
             thumbnails: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png'],
             previews: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png']
-          }
+          },
+          // Add seller information
+          sellerId: listing.sellerId || '',
+          // For now, hardcode the seller name as "Michael" as requested
+          sellerName: "Michael",
+          // Set seller as verified
+          isSellerVerified: true
         };
 
         // Cache the product data (even if bypassCache is true, we still want to cache the fresh data)
@@ -165,7 +171,11 @@ export const getProducts = async (params?: {
         imgs: {
           thumbnails: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png'],
           previews: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png']
-        }
+        },
+        // Add seller information
+        sellerId: listing.sellerId || '',
+        sellerName: "Michael", // Hardcoded as requested
+        isSellerVerified: true // All sellers are verified for now
       }));
 
       // Also cache individual products while we're at it

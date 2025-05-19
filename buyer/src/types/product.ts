@@ -22,4 +22,8 @@ export type Product = {
     thumbnails: string[];
     previews: string[];
   };
+  // Seller information
+  sellerId?: string;
+  sellerName?: string;
+  isSellerVerified?: boolean;
 };

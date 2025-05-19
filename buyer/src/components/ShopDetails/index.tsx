@@ -261,6 +261,34 @@ const ShopDetails = () => {
                     Category: <span className="text-blue">{product.categoryName}</span>
                   </div>
                 )}
+
+                {/* Seller information */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="text-dark-4 text-sm">
+                    Seller:
+                    <span className="text-dark font-medium ml-1">
+                      {product.sellerName || "Michael"}
+                    </span>
+                    {(product.isSellerVerified) && (
+                      <span className="inline-flex items-center ml-1.5">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="text-green"
+                        >
+                          <path
+                            d="M12 2L4 5.4V11.8C4 16.4 7.4 20.5 12 21.5C16.6 20.5 20 16.4 20 11.8V5.4L12 2ZM10.5 16.5L6.5 12.5L7.9 11.1L10.5 13.7L16.1 8.1L17.5 9.5L10.5 16.5Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                        <span className="ml-0.5 text-xs text-green">Verified Seller</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-5.5 mb-4.5">
@@ -738,6 +766,38 @@ const ShopDetails = () => {
                 <div className="w-full">
                   <p className="text-sm sm:text-base text-dark">
                     {product.autoDelivery ? 'Yes - Instant Delivery' : 'No - Manual Delivery'}
+                  </p>
+                </div>
+              </div>
+
+              {/* <!-- info item --> */}
+              <div className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
+                <div className="max-w-[450px] min-w-[140px] w-full">
+                  <p className="text-sm sm:text-base text-dark">
+                    Seller
+                  </p>
+                </div>
+                <div className="w-full">
+                  <p className="text-sm sm:text-base text-dark flex items-center">
+                    {product.sellerName || "Michael"}
+                    {(product.isSellerVerified) && (
+                      <span className="inline-flex items-center ml-2">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="text-green"
+                        >
+                          <path
+                            d="M12 2L4 5.4V11.8C4 16.4 7.4 20.5 12 21.5C16.6 20.5 20 16.4 20 11.8V5.4L12 2ZM10.5 16.5L6.5 12.5L7.9 11.1L10.5 13.7L16.1 8.1L17.5 9.5L10.5 16.5Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                        <span className="ml-0.5 text-xs text-green">Verified Seller</span>
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

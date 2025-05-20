@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import configReducer from './slices/configSlice';
 import authReducer from './slices/authSlice';
 import listingsSummaryReducer from './slices/listingsSummarySlice';
+import sellerProfileReducer from './slices/sellerProfile';
 
 export const store = configureStore({
   reducer: {
     config: configReducer,
     auth: authReducer,
-    listingsSummary: listingsSummaryReducer
+    listingsSummary: listingsSummaryReducer,
+    sellerProfile: sellerProfileReducer
   },
   devTools: true,
   middleware: (getDefaultMiddleware) =>

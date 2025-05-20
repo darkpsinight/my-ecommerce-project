@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Footer from 'src/components/Footer';
 
-import { Grid, Container } from '@mui/material';
+import { Grid, Container, Alert, CircularProgress, Box, Button, Fade } from '@mui/material';
+import { useAppDispatch, useAppSelector } from 'src/redux/hooks';
+import { fetchSellerProfile } from 'src/redux/slices/sellerProfile';
 
 import ProfileCover from './ProfileCover';
 import RecentActivity from './RecentActivity';
@@ -9,26 +12,67 @@ import Feed from './Feed';
 import PopularTags from './PopularTags';
 import MyCards from './MyCards';
 import Addresses from './Addresses';
+import { ProfileContentSkeleton } from './components/ProfileSkeletons';
 
 function ManagementUserProfile() {
-  const user = {
-    savedCards: 7,
-    name: 'Catherine Pike',
-    coverImg: '/static/images/placeholders/covers/5.jpg',
-    avatar: '/static/images/avatars/4.jpg',
-    description:
-      "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage",
-    jobtitle: 'Web Developer',
-    location: 'Barcelona, Spain',
-    followers: '465'
+  const dispatch = useAppDispatch();
+  const { userData, profileData, loading, error } = useAppSelector((state) => state.sellerProfile);
+
+  // Default user data in case API data is not available yet
+  const defaultUser = {
+    savedCards: 0,
+    name: 'Seller',
+    coverImg: '', // No default cover image
+    avatar: '', // No default avatar
+    description: 'Loading profile information...',
+    jobtitle: 'Seller',
+    location: '',
+    followers: '0'
   };
+
+  // Fetch seller profile data when component mounts
+  useEffect(() => {
+    dispatch(fetchSellerProfile());
+  }, [dispatch]);
+
+  // Log profile data for debugging
+  useEffect(() => {
+    console.log('Current profile data:', profileData);
+    console.log('Current user data:', userData);
+  }, [profileData, userData]);
+
+  // Combine API data with default data
+  const user = userData ? {
+    ...defaultUser,
+    name: userData.name,
+    email: userData.email,
+    role: userData.role
+  } : defaultUser;
 
   return (
     <>
       <Helmet>
-        <title>User Details - Management</title>
+        <title>Seller Profile - Management</title>
       </Helmet>
       <Container sx={{ mt: 3 }} maxWidth="lg">
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Debug button to manually refresh profile data */}
+        <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => dispatch(fetchSellerProfile())}
+            disabled={loading}
+          >
+            Refresh Profile Data
+          </Button>
+        </Box>
+
         <Grid
           container
           direction="row"
@@ -37,22 +81,66 @@ function ManagementUserProfile() {
           spacing={3}
         >
           <Grid item xs={12} md={8}>
-            <ProfileCover user={user} />
+            <ProfileCover
+              user={user}
+              profileData={profileData}
+              isLoading={loading}
+            />
           </Grid>
           <Grid item xs={12} md={4}>
-            <RecentActivity />
+            {loading && !userData ? (
+              <Fade in={true} timeout={800}>
+                <Box>
+                  <ProfileContentSkeleton />
+                </Box>
+              </Fade>
+            ) : (
+              <RecentActivity />
+            )}
           </Grid>
           <Grid item xs={12} md={8}>
-            <Feed />
+            {loading && !userData ? (
+              <Fade in={true} timeout={1000}>
+                <Box>
+                  <ProfileContentSkeleton />
+                </Box>
+              </Fade>
+            ) : (
+              <Feed />
+            )}
           </Grid>
           <Grid item xs={12} md={4}>
-            <PopularTags />
+            {loading && !userData ? (
+              <Fade in={true} timeout={1200}>
+                <Box>
+                  <ProfileContentSkeleton />
+                </Box>
+              </Fade>
+            ) : (
+              <PopularTags />
+            )}
           </Grid>
           <Grid item xs={12} md={7}>
-            <MyCards />
+            {loading && !userData ? (
+              <Fade in={true} timeout={1400}>
+                <Box>
+                  <ProfileContentSkeleton />
+                </Box>
+              </Fade>
+            ) : (
+              <MyCards />
+            )}
           </Grid>
           <Grid item xs={12} md={5}>
-            <Addresses />
+            {loading && !userData ? (
+              <Fade in={true} timeout={1600}>
+                <Box>
+                  <ProfileContentSkeleton />
+                </Box>
+              </Fade>
+            ) : (
+              <Addresses />
+            )}
           </Grid>
         </Grid>
       </Container>

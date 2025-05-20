@@ -2,6 +2,9 @@
 const { verifyAuth } = require("../plugins/authVerify");
 const { uploadImage, getAuthParams } = require("../handlers/imageUploadHandler");
 
+// Import ALLOWED_FOLDERS from imageUploadHandler
+const { ALLOWED_FOLDERS } = require("../handlers/imageUploadHandler");
+
 /**
  * Routes for image upload functionality
  * @param {Object} fastify - Fastify instance
@@ -40,6 +43,18 @@ const imageUploadRoutes = async (fastify, options) => {
     },
     method: "POST",
     url: "/upload",
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          folder: {
+            type: 'string',
+            description: 'Target folder in ImageKit.io'
+            // Removed enum validation to allow for more flexible folder paths
+          }
+        }
+      }
+    },
     preHandler: [
       verifyAuth(["seller", "admin"]),
       // Use the multipart content parser

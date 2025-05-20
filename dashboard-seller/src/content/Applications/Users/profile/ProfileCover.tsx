@@ -13,7 +13,7 @@ import { styled } from '@mui/material/styles';
 import { useAppDispatch } from 'src/redux/hooks';
 import { updateProfile, fetchSellerProfile } from 'src/redux/slices/sellerProfile';
 import { SellerProfileData } from 'src/services/api/sellerProfile';
-import { uploadImage } from 'src/services/api/imageUpload';
+import { uploadImage, IMAGE_FOLDERS } from 'src/services/api/imageUpload';
 import { toast } from 'react-hot-toast';
 import UploadTwoToneIcon from '@mui/icons-material/UploadTwoTone';
 import MoreHorizTwoToneIcon from '@mui/icons-material/MoreHorizTwoTone';
@@ -207,8 +207,8 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
       setUploadingCover(true);
       console.log('Starting cover image upload...');
 
-      // Upload the image to ImageKit.io
-      const imageUrl = await uploadImage(file);
+      // Upload the image to ImageKit.io with the correct folder
+      const imageUrl = await uploadImage(file, IMAGE_FOLDERS.SELLER_BANNER_IMAGES);
       console.log('Cover image uploaded successfully to ImageKit:', imageUrl);
 
       // Always include the nickname field when updating the profile
@@ -251,8 +251,8 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
       setUploadingAvatar(true);
       console.log('Starting profile image upload...');
 
-      // Upload the image to ImageKit.io
-      const imageUrl = await uploadImage(file);
+      // Upload the image to ImageKit.io with the correct folder
+      const imageUrl = await uploadImage(file, IMAGE_FOLDERS.SELLER_PROFILE_IMAGES);
       console.log('Image uploaded successfully to ImageKit:', imageUrl);
 
       // Always include the nickname field when updating the profile

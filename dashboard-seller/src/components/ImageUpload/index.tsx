@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LinkIcon from '@mui/icons-material/Link';
-import { uploadImage } from 'src/services/api/imageUpload';
+import { uploadImage, IMAGE_FOLDERS } from 'src/services/api/imageUpload';
 import { toast } from 'react-hot-toast';
 
 interface TabPanelProps {
@@ -62,6 +62,7 @@ interface ImageUploadProps {
   temporaryFile?: File | null; // Temporary file for deferred upload
   uploadInProgress?: boolean; // Flag to indicate if upload is in progress
   onUrlChange?: (url: string) => void; // Callback when URL is entered (for Edit Listing)
+  folder?: string; // ImageKit.io folder path for the image
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -73,7 +74,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   onFileSelect,
   temporaryFile,
   uploadInProgress = false,
-  onUrlChange
+  onUrlChange,
+  folder = IMAGE_FOLDERS.PRODUCT_THUMBNAILS
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [urlValue, setUrlValue] = useState(value || '');
@@ -255,7 +257,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       // Update toast to show progress
       toast.loading('Uploading to server...', { id: toastId });
 
-      const imageUrl = await uploadImage(processedFile);
+      console.log('Uploading image to folder:', folder);
+      const imageUrl = await uploadImage(processedFile, folder);
       console.log('Upload successful, received URL:', imageUrl);
 
       onChange(imageUrl);

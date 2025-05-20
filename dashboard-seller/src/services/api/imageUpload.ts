@@ -3,12 +3,21 @@ import { store } from 'src/redux/store';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
+// Define folder paths for different image types
+export const IMAGE_FOLDERS = {
+  PRODUCT_THUMBNAILS: '/listing-thumbnails',
+  CATEGORY_IMAGES: '/categories-placeholder-pictures',
+  SELLER_PROFILE_IMAGES: '/seller-profile-pictures',
+  SELLER_BANNER_IMAGES: '/seller-profile-banners'
+};
+
 /**
  * Upload an image to ImageKit via the backend
  * @param file - The file to upload
+ * @param folder - The folder path in ImageKit.io where the image should be stored
  * @returns Promise with the uploaded image URL
  */
-export const uploadImage = async (file: File): Promise<string> => {
+export const uploadImage = async (file: File, folder: string = IMAGE_FOLDERS.PRODUCT_THUMBNAILS): Promise<string> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
@@ -18,6 +27,10 @@ export const uploadImage = async (file: File): Promise<string> => {
 
     // Debug log to check token
     console.log('Image upload - Auth token:', token ? `${token.substring(0, 10)}...` : 'No token');
+
+    // Ensure folder path is properly formatted (no spaces)
+    folder = folder.trim().replace(/\s+/g, '-').toLowerCase();
+    console.log('Uploading to folder:', folder);
 
     if (!token) {
       throw new Error('Authentication token is missing. Please log in again.');
@@ -39,8 +52,12 @@ export const uploadImage = async (file: File): Promise<string> => {
 
       console.log('Sending file upload request with size:', file.size, 'bytes');
 
+      // Construct URL with properly encoded folder parameter
+      const uploadUrl = new URL(`${API_URL}/images/upload`);
+      uploadUrl.searchParams.append('folder', folder);
+
       const response = await axios.post(
-        `${API_URL}/images/upload`,
+        uploadUrl.toString(),
         simpleFormData,
         {
           headers: {

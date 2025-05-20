@@ -11,7 +11,7 @@ import { FormData, FormErrors } from '../utils/types';
 import SectionHeader from '../components/SectionHeader';
 import { SectionContainer } from '../components/StyledComponents';
 import ImageUploadComponent from 'src/components/ImageUpload';
-import { uploadImage } from 'src/services/api/imageUpload';
+import { uploadImage, IMAGE_FOLDERS } from 'src/services/api/imageUpload';
 import { toast } from 'react-hot-toast';
 
 interface ImageUploadProps {
@@ -45,8 +45,8 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>((props, ref) =>
         setImageUploadInProgress(true);
         console.log('Starting image upload in ImageUpload component');
 
-        // Upload the image to ImageKit.io
-        const imageUrl = await uploadImage(temporaryImageFile);
+        // Upload the image to ImageKit.io using the product thumbnails folder
+        const imageUrl = await uploadImage(temporaryImageFile, IMAGE_FOLDERS.PRODUCT_THUMBNAILS);
         console.log('Image upload completed successfully, URL:', imageUrl);
 
         // Update the form data with the new image URL

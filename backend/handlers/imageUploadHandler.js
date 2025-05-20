@@ -2,6 +2,16 @@ const ImageKit = require('imagekit');
 const { v4: uuidv4 } = require('uuid');
 
 /**
+ * Define allowed folders for image uploads
+ */
+const ALLOWED_FOLDERS = {
+  PRODUCT_THUMBNAILS: '/listing-thumbnails',
+  CATEGORY_IMAGES: '/categories-placeholder-pictures',
+  SELLER_PROFILE_IMAGES: '/seller-profile-pictures',
+  SELLER_BANNER_IMAGES: '/seller-profile-banners'
+};
+
+/**
  * Initialize ImageKit with credentials from environment variables
  */
 let imagekit;
@@ -33,9 +43,21 @@ try {
 const uploadImage = async (request, reply) => {
   try {
     const { file } = request;
+    // Get folder from query parameters or body, default to product-thumbnails
+    let folder = request.query.folder || request.body?.folder || ALLOWED_FOLDERS.PRODUCT_THUMBNAILS;
 
     // Log for debugging
-    request.log.info(`Upload request received from user: ${request.user.email}`);
+    request.log.info(`Upload request received from user: ${request.user.email}, folder: ${folder}`);
+
+    // Validate folder - ensure it's one of the allowed folders
+    const allowedFolderValues = Object.values(ALLOWED_FOLDERS);
+    if (!allowedFolderValues.includes(folder)) {
+      request.log.warn(`Invalid folder specified: ${folder}, using default: ${ALLOWED_FOLDERS.PRODUCT_THUMBNAILS}`);
+      folder = ALLOWED_FOLDERS.PRODUCT_THUMBNAILS;
+    }
+
+    // Ensure folder path doesn't have spaces or special characters
+    folder = folder.trim().replace(/\s+/g, '-').toLowerCase();
 
     if (!file) {
       request.log.error('No file found in request');
@@ -47,8 +69,21 @@ const uploadImage = async (request, reply) => {
 
     request.log.info(`File received: ${file.filename}, size: ${file.buffer ? file.buffer.length : 'unknown'} bytes`);
 
-    // Generate a unique file name
-    const fileName = `${uuidv4()}-${file.filename}`;
+    // Extract file extension from original filename
+    let fileExtension = file.filename.split('.').pop() || 'jpg';
+
+    // Validate and sanitize file extension
+    // Only allow common image extensions
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+    fileExtension = fileExtension.toLowerCase();
+
+    if (!allowedExtensions.includes(fileExtension)) {
+      request.log.warn(`Invalid file extension: ${fileExtension}, defaulting to jpg`);
+      fileExtension = 'jpg';
+    }
+
+    // Generate a unique file name using only UUID and the sanitized extension
+    const fileName = `${uuidv4()}.${fileExtension}`;
 
     // Check if ImageKit is properly initialized
     if (!imagekit) {
@@ -61,18 +96,19 @@ const uploadImage = async (request, reply) => {
     }
 
     // Use direct buffer upload which is more efficient
-    request.log.info(`Uploading to ImageKit: ${fileName}, size: ${file.buffer.length} bytes`);
+    request.log.info(`Uploading to ImageKit: ${fileName}, size: ${file.buffer.length} bytes, folder: ${folder}`);
 
     try {
       // Use the promise-based API directly
       const uploadResponse = await imagekit.upload({
         file: file.buffer,
         fileName: fileName,
-        folder: '/product-thumbnails',
-        useUniqueFileName: true
+        folder: folder,
+        useUniqueFileName: false // Set to false since we're already using UUID for the filename
       });
 
       request.log.info(`ImageKit upload successful: ${uploadResponse.url}`);
+      request.log.info(`Uploaded with filename: ${uploadResponse.name}, fileId: ${uploadResponse.fileId}`);
 
       return reply.code(200).send({
         success: true,
@@ -131,5 +167,6 @@ const getAuthParams = async (request, reply) => {
 
 module.exports = {
   uploadImage,
-  getAuthParams
+  getAuthParams,
+  ALLOWED_FOLDERS
 };

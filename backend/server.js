@@ -40,6 +40,7 @@ const fastifyCookie = require("fastify-cookie");
 const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
 const { setupListingExpirationCron } = require("./jobs/listingExpirationCron");
 const { configCache } = require("./services/configCache");
+const { registerWithFastify: registerImageKitWithFastify } = require("./handlers/imageUploadHandler");
 
 // fastify-helmet adds various HTTP headers for security
 if (configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV) {
@@ -193,6 +194,9 @@ const start = async () => {
 
       // Initialize config cache and load configurations
       await loadConfigsFromDB(fastify);
+
+      // Register ImageKit with Fastify to initialize after configs are loaded
+      registerImageKitWithFastify(fastify);
 
       await fastify.listen(configs.PORT, configs.HOST);
 

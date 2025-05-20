@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -18,6 +18,7 @@ import { toast } from 'react-hot-toast';
 import UploadTwoToneIcon from '@mui/icons-material/UploadTwoTone';
 import MoreHorizTwoToneIcon from '@mui/icons-material/MoreHorizTwoTone';
 import { ProfileCoverSkeleton } from './components/ProfileSkeletons';
+import SimpleBannerCropper from './components/SimpleBannerCropper';
 
 // Define interface for component props
 interface ProfileCoverProps {
@@ -42,17 +43,17 @@ const AvatarWrapper = styled(Card)(
     position: relative;
     overflow: visible;
     display: inline-block;
-    margin-top: -${theme.spacing(5)}; /* Moved down to 20% of banner height */
+    margin-top: -${theme.spacing(7)}; /* Adjusted for new banner height */
     margin-left: ${theme.spacing(2)};
     z-index: 9;
 
     .MuiAvatar-root {
-      width: ${theme.spacing(16)};
-      height: ${theme.spacing(16)};
+      width: ${theme.spacing(14)};
+      height: ${theme.spacing(14)};
     }
 
     @media (max-width: ${theme.breakpoints.values.sm}px) {
-      margin-top: -${theme.spacing(4)};
+      margin-top: -${theme.spacing(6)}; /* Adjusted for smaller banner height on small screens */
       margin-left: ${theme.spacing(2)};
 
       .MuiAvatar-root {
@@ -62,7 +63,7 @@ const AvatarWrapper = styled(Card)(
     }
 
     @media (max-width: ${theme.breakpoints.values.xs}px) {
-      margin-top: -${theme.spacing(3)};
+      margin-top: -${theme.spacing(5)}; /* Adjusted for even smaller banner height on extra small screens */
       margin-left: ${theme.spacing(1.5)};
 
       .MuiAvatar-root {
@@ -133,17 +134,20 @@ const CardCover = styled(Card)(
     position: relative;
     overflow: hidden;
     width: 100%;
+    /* Use a fixed aspect ratio of 3:1 (width:height) to match the cropper */
+    aspect-ratio: 3 / 1;
+    /* Fallback for browsers that don't support aspect-ratio */
+    height: calc(100% / 3);
+    border-radius: ${theme.shape.borderRadius}px;
+    box-shadow: ${theme.shadows[3]};
 
-    .MuiCardMedia-root {
-      height: ${theme.spacing(30)}; /* Increased height to accommodate profile picture position */
+    /* Ensure the aspect ratio is maintained on all screen sizes */
+    @media (max-width: ${theme.breakpoints.values.sm}px) {
+      aspect-ratio: 3 / 1;
+    }
 
-      @media (max-width: ${theme.breakpoints.values.sm}px) {
-        height: ${theme.spacing(24)};
-      }
-
-      @media (max-width: ${theme.breakpoints.values.xs}px) {
-        height: ${theme.spacing(20)};
-      }
+    @media (max-width: ${theme.breakpoints.values.xs}px) {
+      aspect-ratio: 3 / 1;
     }
 `
 );
@@ -197,18 +201,43 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
   const dispatch = useAppDispatch();
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
+  const [showCropperModal, setShowCropperModal] = useState(false);
 
-  // Handle cover image upload
-  const handleCoverImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  // Create refs for file inputs to reset them after upload
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Calculate the aspect ratio based on the banner dimensions
+  // This should match the fixed height we've set for the banner
+  const bannerAspectRatio = 3; // Width:Height ratio (e.g., 3:1 means width is 3x the height)
+
+  // Handle cover image selection
+  const handleCoverImageSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Store the selected file and show the cropper modal
+    setSelectedCoverFile(file);
+    setShowCropperModal(true);
+  };
+
+  // Handle cropped image upload
+  const handleCroppedImageUpload = async (croppedBlob: Blob) => {
+    if (!croppedBlob) return;
+
     try {
       setUploadingCover(true);
-      console.log('Starting cover image upload...');
+      setShowCropperModal(false);
+      console.log('Starting cropped cover image upload...');
 
-      // Upload the image to ImageKit.io with the correct folder
-      const imageUrl = await uploadImage(file, IMAGE_FOLDERS.SELLER_BANNER_IMAGES);
+      // Create a File object from the Blob
+      const croppedFile = new File([croppedBlob], selectedCoverFile?.name || 'banner.jpg', {
+        type: 'image/jpeg'
+      });
+
+      // Upload the cropped image to ImageKit.io with the correct folder
+      const imageUrl = await uploadImage(croppedFile, IMAGE_FOLDERS.SELLER_BANNER_IMAGES);
       console.log('Cover image uploaded successfully to ImageKit:', imageUrl);
 
       // Always include the nickname field when updating the profile
@@ -238,9 +267,26 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
       console.error('Error uploading cover image:', error);
       toast.error('Failed to upload cover image. Please try again.');
     } finally {
+      // Reset the file input value so the same file can be selected again
+      if (coverFileInputRef.current) {
+        coverFileInputRef.current.value = '';
+      }
+
       setUploadingCover(false);
+      setSelectedCoverFile(null);
     }
   };
+
+  // Handle closing the cropper modal without saving
+  const handleCloseCropper = useCallback(() => {
+    setShowCropperModal(false);
+    setSelectedCoverFile(null);
+
+    // Reset the file input value so the same file can be selected again
+    if (coverFileInputRef.current) {
+      coverFileInputRef.current.value = '';
+    }
+  }, []);
 
   // Handle profile image upload
   const handleProfileImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -282,6 +328,11 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
       console.error('Error uploading profile image:', error);
       toast.error('Failed to upload profile image. Please try again.');
     } finally {
+      // Reset the file input value so the same file can be selected again
+      if (avatarFileInputRef.current) {
+        avatarFileInputRef.current.value = '';
+      }
+
       setUploadingAvatar(false);
     }
   };
@@ -299,13 +350,23 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
 
   return (
     <>
+      {/* Banner Image Cropper Modal */}
+      <SimpleBannerCropper
+        open={showCropperModal}
+        onClose={handleCloseCropper}
+        imageFile={selectedCoverFile}
+        onCropComplete={handleCroppedImageUpload}
+        aspectRatio={bannerAspectRatio}
+        isProcessing={uploadingCover}
+      />
+
       <Box display="flex" mb={3}>
         <Box>
           <Typography variant="h3" component="h3" gutterBottom>
             Profile for {user.name}
           </Typography>
           <Typography variant="subtitle2">
-            Manage your seller profile information and appearance
+            Manage your profile information and appearance
           </Typography>
         </Box>
       </Box>
@@ -319,21 +380,23 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
                 width: '100%',
                 height: '100%',
                 overflow: 'hidden',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
                 backgroundColor: 'background.default'
               }}
             >
-              <img
+              <Box
+                component="img"
                 src={coverImageUrl}
                 alt="Profile Cover"
-                style={{
+                sx={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover',
-                  objectPosition: 'center center',
-                  display: 'block'
+                  objectFit: 'cover', /* Fill container while maintaining aspect ratio */
+                  objectPosition: 'center', /* Center the image */
+                  display: 'block',
+                  /* Ensure the image is displayed at the exact dimensions of the container */
+                  /* This is critical to match what the user sees in the cropper */
+                  maxWidth: '100%',
+                  maxHeight: '100%'
                 }}
               />
             </Box>
@@ -358,8 +421,9 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
               accept="image/*"
               id="change-cover"
               type="file"
-              onChange={handleCoverImageUpload}
+              onChange={handleCoverImageSelect}
               disabled={uploadingCover || isLoading}
+              ref={coverFileInputRef}
             />
             <label htmlFor="change-cover">
               {/* Button for larger screens */}
@@ -389,7 +453,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
                     })
                   }}
                 >
-                  {uploadingCover ? 'Uploading...' : 'Change cover'}
+                  {uploadingCover ? 'Uploading...' : 'Change banner'}
                 </Button>
               </Box>
 
@@ -474,6 +538,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
             type="file"
             onChange={handleProfileImageUpload}
             disabled={uploadingAvatar || isLoading}
+            ref={avatarFileInputRef}
           />
           <label htmlFor="icon-button-file">
             {uploadingAvatar ? (

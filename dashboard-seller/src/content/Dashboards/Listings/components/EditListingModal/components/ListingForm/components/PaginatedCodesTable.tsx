@@ -37,6 +37,7 @@ interface PaginatedCodesTableProps {
   codes: ListingCode[];
   onDeleteCode: (code: string) => void;
   listingId: string;
+  listingStatus?: string;
   onCodeDeleted?: () => void;
   onCodeStatusUpdated?: (codeId: string, newStatus: 'active' | 'draft') => void;
 }
@@ -45,6 +46,7 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
   codes,
   onDeleteCode,
   listingId,
+  listingStatus = 'draft',
   onCodeDeleted,
   onCodeStatusUpdated
 }) => {
@@ -170,8 +172,10 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
         // Show success message
         toast.success(`Code status updated to ${newStatus === 'active' ? 'On Sale' : 'Draft'}`);
 
-        // Check if listing status was updated
-        if (response.data && response.data.status) {
+        // Check if listing status was updated and is different from the current status
+        // This prevents unnecessary API calls when the listing status doesn't change
+        if (response.data && response.data.status && response.data.status !== listingStatus) {
+          console.log('Listing status changed, dispatching update event');
           // Dispatch a custom event to update the listing status in the parent components
           const customEvent = new CustomEvent('listingStatusUpdated', {
             detail: {
@@ -556,7 +560,8 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                                   }
 
                                   // Check if status was updated (e.g., to suspended when all codes are deleted)
-                                  if (response.data && response.data.status) {
+                                  if (response.data && response.data.status && response.data.status !== listingStatus) {
+                                    console.log('Listing status changed after code deletion, dispatching update event');
                                     // Dispatch a custom event to update the listing status in the parent components
                                     const customEvent = new CustomEvent(
                                       'listingStatusUpdated',

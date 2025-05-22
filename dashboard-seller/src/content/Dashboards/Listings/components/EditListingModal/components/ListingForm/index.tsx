@@ -81,8 +81,10 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
 
   // Update parent component when codes change
   useEffect(() => {
-    if (onCodesChange) {
-      onCodesChange(formData.codes?.length || 0);
+    if (onCodesChange && formData.codes) {
+      // Count only active codes
+      const activeCodesCount = formData.codes.filter(code => code.soldStatus === 'active').length;
+      onCodesChange(activeCodesCount);
     }
   }, [formData.codes, onCodesChange]);
 
@@ -598,6 +600,7 @@ const ListingForm = forwardRef<FormRef, ListingFormProps>(
                 codes={formData.codes || []}
                 onDeleteCode={handleDeleteCode}
                 listingId={listing.externalId || ''}
+                listingStatus={listing.status}
                 onCodeDeleted={() => {
                   console.log('Code deleted successfully - local state already updated');
                 }}

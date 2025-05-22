@@ -27,13 +27,15 @@ interface ListingHeaderProps {
   discountPercentage: number | null;
   lastUpdated: string | Date | null;
   onStatusChange?: (newStatus: 'active' | 'draft') => void;
+  isSubmitting?: boolean;
 }
 
 const ListingHeader: React.FC<ListingHeaderProps> = ({
   listing,
   discountPercentage,
   lastUpdated,
-  onStatusChange
+  onStatusChange,
+  isSubmitting = false
 }) => {
   const theme = useTheme();
   const isVerySmallScreen = useMediaQuery('(max-width:380px)');
@@ -163,6 +165,7 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({
                     name="status"
                     color={listing.status === 'active' ? 'success' : 'warning'}
                     size="small"
+                    disabled={isSubmitting}
                   />
                 }
                 label={

@@ -65,10 +65,10 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           label={
             <Typography
               component="span"
-              sx={{ 
-                ml: { xs: 0.25, sm: 0.5, md: 1 }, 
-                display: { xs: 'none', sm: 'inline-block' }, 
-                fontWeight: 'bold' 
+              sx={{
+                ml: { xs: 0.25, sm: 0.5, md: 1 },
+                display: { xs: 'none', sm: 'inline-block' },
+                fontWeight: 'bold'
               }}
             >
               Overview
@@ -82,26 +82,24 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           iconPosition="start"
           label={
             <Box sx={{ display: 'flex', alignItems: 'center', ml: { xs: 0, sm: 0.5, md: 1 } }}>
-              <Typography 
-                component="span" 
-                sx={{ 
-                  fontWeight: 'bold', 
+              <Typography
+                component="span"
+                sx={{
+                  fontWeight: 'bold',
                   fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.8rem' },
                   display: { xs: 'none', sm: 'inline-block' }
                 }}
               >
                 Codes
               </Typography>
-              {activeCodes > 0 && (
-                <Badge
-                  badgeContent={activeCodes}
-                  color="success"
-                  sx={{ ml: { xs: 0.25, sm: 0.5, md: 1 } }}
-                  max={999}
-                >
-                  <Box sx={{ width: 8 }} />
-                </Badge>
-              )}
+              <Badge
+                badgeContent={activeCodes}
+                color={activeCodes > 0 ? "success" : "default"}
+                sx={{ ml: { xs: 0.25, sm: 0.5, md: 1 } }}
+                max={999}
+              >
+                <Box sx={{ width: 8 }} />
+              </Badge>
             </Box>
           }
           id="listing-tab-1"
@@ -113,10 +111,10 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           label={
             <Typography
               component="span"
-              sx={{ 
-                ml: { xs: 0.25, sm: 0.5, md: 1 }, 
-                display: { xs: 'none', sm: 'inline-block' }, 
-                fontWeight: 'bold' 
+              sx={{
+                ml: { xs: 0.25, sm: 0.5, md: 1 },
+                display: { xs: 'none', sm: 'inline-block' },
+                fontWeight: 'bold'
               }}
             >
               Tags
@@ -131,10 +129,10 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           label={
             <Typography
               component="span"
-              sx={{ 
-                ml: { xs: 0.25, sm: 0.5, md: 1 }, 
-                display: { xs: 'none', sm: 'inline-block' }, 
-                fontWeight: 'bold' 
+              sx={{
+                ml: { xs: 0.25, sm: 0.5, md: 1 },
+                display: { xs: 'none', sm: 'inline-block' },
+                fontWeight: 'bold'
               }}
             >
               Thumbnail

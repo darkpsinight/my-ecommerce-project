@@ -120,6 +120,7 @@ const ProductCodes: React.FC<ProductCodesProps> = ({
             codes={formData.codes || []}
             onDeleteCode={handleDeleteCode}
             listingId={listingId || ''}
+            listingStatus={formData.status}
             onCodeDeleted={onRefresh}
           />
 

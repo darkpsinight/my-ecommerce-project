@@ -287,9 +287,36 @@ const EditListingModal: FC<EditListingModalProps> = ({
     setTabValue(newValue);
   };
 
+  // This function is no longer needed as we're handling active code count in handleFormDataChange
   const handleCodesChange = (codesCount: number) => {
-    // For simplicity, we're assuming all new codes are active
-    setActiveCodes(codesCount);
+    // We don't use this parameter anymore as we calculate active codes directly from the codes array
+    // This function is kept for backward compatibility
+    console.log('handleCodesChange called with count:', codesCount);
+  };
+
+  // Custom handler for form data changes
+  const handleFormDataChange = (updatedFormData: any) => {
+    // Update the shared form data
+    setSharedFormData(updatedFormData);
+
+    // Update the listing state with the updated form data
+    // This is important for code status updates to be reflected in the listing object
+    if (listing && updatedFormData.codes) {
+      // Update the listing state
+      setListing({
+        ...listing,
+        codes: updatedFormData.codes
+      });
+
+      // Update the activeCodes count
+      // Count codes with soldStatus === 'active'
+      const activeCodesCount = updatedFormData.codes.filter(
+        (code: any) => code.soldStatus === 'active'
+      ).length;
+
+      // Update the activeCodes state
+      setActiveCodes(activeCodesCount);
+    }
   };
 
   // Handle status change from the header
@@ -307,18 +334,27 @@ const EditListingModal: FC<EditListingModalProps> = ({
       return;
     }
 
-    // Update the local state first for immediate UI feedback
-    setListing({
-      ...listing,
-      status: newStatus
-    });
+    // Check if any codes are active when trying to set listing to active
+    if (
+      newStatus === 'active' &&
+      listing.codes &&
+      listing.codes.length > 0 &&
+      !listing.codes.some(code => code.soldStatus === 'active')
+    ) {
+      setTimeout(() => {
+        toast.error('At least one code must be On Sale to change listing status to On Sale');
+      }, 100);
+      return;
+    }
+
+    // Set submitting state to show loading indicator
+    setIsSubmitting(true);
 
     // Prepare the data for API call
     const apiData = {
       status: newStatus
     };
 
-    setIsSubmitting(true);
     try {
       // Make the API call to update the listing status
       const response = await updateListing(listing.externalId, apiData);
@@ -333,7 +369,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
         updatedAt: new Date().toISOString()
       };
 
-      // Update the local state with the actual status from the API
+      // Only update the UI after successful API call
       setListing(updatedListing);
 
       // Update the listings array in the parent component without closing the modal
@@ -351,6 +387,11 @@ const EditListingModal: FC<EditListingModalProps> = ({
           if (actualStatus === 'suspended') {
             toast.error(
               'Listing cannot be activated: A listing must have at least one code to be active'
+            );
+          } else if (actualStatus === 'draft' && newStatus === 'active') {
+            // More informative message when trying to change from Draft to On Sale
+            toast.error(
+              'At least one code must be On Sale to change listing status to On Sale'
             );
           } else {
             // Use default toast with an icon for info messages
@@ -880,6 +921,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
             discountPercentage={discountPercentage}
             lastUpdated={listing.updatedAt}
             onStatusChange={handleStatusChange}
+            isSubmitting={isSubmitting}
           />
 
           <TabNavigation
@@ -908,7 +950,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 categories={categories}
                 availablePlatforms={availablePlatforms}
                 sharedFormData={sharedFormData}
-                onFormDataChange={setSharedFormData}
+                onFormDataChange={handleFormDataChange}
                 fetchValidationPatterns={fetchValidationPatterns}
               />
             </TabPanel>
@@ -924,7 +966,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 hideSubmitButton={true}
                 onCodesChange={handleCodesChange}
                 sharedFormData={sharedFormData}
-                onFormDataChange={setSharedFormData}
+                onFormDataChange={handleFormDataChange}
                 selectedPattern={selectedPattern}
                 fetchValidationPatterns={fetchValidationPatterns}
               />
@@ -941,7 +983,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 hideSubmitButton={true}
                 onCodesChange={handleCodesChange}
                 sharedFormData={sharedFormData}
-                onFormDataChange={setSharedFormData}
+                onFormDataChange={handleFormDataChange}
                 fetchValidationPatterns={fetchValidationPatterns}
               />
             </TabPanel>
@@ -957,7 +999,7 @@ const EditListingModal: FC<EditListingModalProps> = ({
                 hideSubmitButton={true}
                 onCodesChange={handleCodesChange}
                 sharedFormData={sharedFormData}
-                onFormDataChange={setSharedFormData}
+                onFormDataChange={handleFormDataChange}
                 fetchValidationPatterns={fetchValidationPatterns}
               />
             </TabPanel>

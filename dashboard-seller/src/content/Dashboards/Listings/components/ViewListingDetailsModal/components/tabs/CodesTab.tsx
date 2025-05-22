@@ -187,6 +187,17 @@ const CodesTab: React.FC<CodesTabProps> = ({
                       )
                     }}
                   >
+                    Expiration Date
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: alpha(
+                        theme.palette.primary.main,
+                        0.05
+                      )
+                    }}
+                  >
                     Sold Date
                   </TableCell>
                   <TableCell
@@ -252,6 +263,13 @@ const CodesTab: React.FC<CodesTabProps> = ({
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
+                          {codeItem.expirationDate
+                            ? formatDate(codeItem.expirationDate)
+                            : '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
                           {codeItem.soldAt
                             ? formatDate(codeItem.soldAt)
                             : '—'}
@@ -282,7 +300,7 @@ const CodesTab: React.FC<CodesTabProps> = ({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       <Typography variant="body2" sx={{ py: 2 }}>
                         No matching codes found
                       </Typography>

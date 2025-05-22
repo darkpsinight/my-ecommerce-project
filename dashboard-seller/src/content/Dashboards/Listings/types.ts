@@ -16,6 +16,7 @@ export interface ListingCode {
   code: string;
   soldStatus: string;
   soldAt?: string | Date;
+  expirationDate?: string | Date | null;
 }
 
 // Main Listing interface

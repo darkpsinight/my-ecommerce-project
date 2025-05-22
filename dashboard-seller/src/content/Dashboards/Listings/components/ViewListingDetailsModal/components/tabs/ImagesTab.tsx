@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { toast } from 'react-hot-toast';
 
 import { Listing } from '../../../../types';
+import ThumbnailSkeleton from './ThumbnailSkeleton';
 
 interface ImagesTabProps {
   listing: Listing;
@@ -24,8 +25,38 @@ interface ImagesTabProps {
 const ImagesTab: React.FC<ImagesTabProps> = ({ listing }) => {
   const theme = useTheme();
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [imageError, setImageError] = useState<boolean>(false);
 
   const hasThumbnail = listing.thumbnailUrl && listing.thumbnailUrl.trim() !== '';
+
+  // Show skeleton loader when the component first mounts
+  useEffect(() => {
+    // Set initial loading state
+    setIsLoading(true);
+    setImageError(false);
+
+    // If there's no thumbnail, we don't need to load anything
+    if (!hasThumbnail) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Preload the image to handle the loading state properly
+    if (listing.thumbnailUrl) {
+      const img = new Image();
+      img.src = listing.thumbnailUrl;
+
+      img.onload = () => {
+        setIsLoading(false);
+      };
+
+      img.onerror = () => {
+        setIsLoading(false);
+        setImageError(true);
+      };
+    }
+  }, [listing.thumbnailUrl, hasThumbnail]);
 
   const handleCopyImageUrl = () => {
     if (listing.thumbnailUrl) {
@@ -105,7 +136,11 @@ const ImagesTab: React.FC<ImagesTabProps> = ({ listing }) => {
           )}
         </Box>
 
-        {hasThumbnail ? (
+        {isLoading ? (
+          // Show skeleton loader while image is loading
+          <ThumbnailSkeleton hasThumbnail={hasThumbnail} />
+        ) : hasThumbnail ? (
+          // Show actual image when loaded
           <Box
             sx={{
               display: 'flex',
@@ -119,19 +154,39 @@ const ImagesTab: React.FC<ImagesTabProps> = ({ listing }) => {
               border: `1px solid ${theme.palette.divider}`
             }}
           >
-            <CardMedia
-              component="img"
-              src={listing.thumbnailUrl}
-              alt={listing.title}
-              sx={{
-                maxWidth: '100%',
-                maxHeight: 300,
-                objectFit: 'contain',
-                borderRadius: 1
-              }}
-            />
+            {imageError ? (
+              // Show error message if image fails to load
+              <Box sx={{ textAlign: 'center', py: 2 }}>
+                <Typography
+                  variant="body1"
+                  color="error"
+                  sx={{ mb: 1 }}
+                >
+                  Failed to load thumbnail image.
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                >
+                  The image URL may be invalid or inaccessible.
+                </Typography>
+              </Box>
+            ) : (
+              <CardMedia
+                component="img"
+                src={listing.thumbnailUrl}
+                alt={listing.title}
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: 300,
+                  objectFit: 'contain',
+                  borderRadius: 1
+                }}
+              />
+            )}
           </Box>
         ) : (
+          // Show message when no thumbnail is available
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography
               variant="body1"

@@ -316,6 +316,21 @@ export const PureDarkTheme = createTheme({
       xl: 1840
     }
   },
+  components: {
+    MuiBackdrop: {
+      styleOverrides: {
+        root: {
+          backgroundColor: alpha(darken(themeColors.primaryAlt, 0.6), 0.4),
+          backdropFilter: 'blur(2px)',
+
+          '&.MuiBackdrop-invisible': {
+            backgroundColor: 'transparent',
+            backdropFilter: 'blur(2px)'
+          }
+        }
+      }
+    },
+  },
   typography: {
     fontFamily:
       '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',

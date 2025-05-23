@@ -9,7 +9,8 @@ import {
   Menu,
   MenuItem,
   alpha,
-  useTheme
+  useTheme,
+  Chip
 } from '@mui/material';
 import { format } from 'date-fns';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -155,14 +156,18 @@ const ListingRow: FC<ListingRowProps> = ({
           arrow
           placement="top"
         >
-          <Typography
-            variant="body1"
-            fontWeight="bold"
-            color={activeCodes > 0 ? 'success.main' : 'error.main'}
-            sx={{ cursor: 'help' }}
-          >
-            {activeCodes}
-          </Typography>
+          <Chip
+            label={activeCodes}
+            size="small"
+            color={activeCodes > 0 ? 'success' : 'error'}
+            variant="outlined"
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              minWidth: '30px',
+              cursor: 'help'
+            }}
+          />
         </Tooltip>
       </TableCell>
       <TableCell align="center">
@@ -171,13 +176,18 @@ const ListingRow: FC<ListingRowProps> = ({
           arrow
           placement="top"
         >
-          <Typography
-            variant="body1"
-            fontWeight="bold"
-            sx={{ cursor: 'help' }}
-          >
-            {totalCodes}
-          </Typography>
+          <Chip
+            label={totalCodes}
+            size="small"
+            color="primary"
+            variant="outlined"
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              minWidth: '30px',
+              cursor: 'help'
+            }}
+          />
         </Tooltip>
       </TableCell>
       <TableCell>
@@ -186,7 +196,7 @@ const ListingRow: FC<ListingRowProps> = ({
         </Typography>
       </TableCell>
       <TableCell>
-        <ListingStatusBadge status={listing.status} />
+        <ListingStatusBadge status={listing.status} variant="chip" size="small" />
       </TableCell>
       <TableCell>
         <Typography variant="body1" noWrap>

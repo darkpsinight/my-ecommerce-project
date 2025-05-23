@@ -7,11 +7,13 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Chip
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { format } from 'date-fns';
 import { CodeTableProps } from './types';
+import StatusBadge from '../StatusBadge';
 
 export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handleCopyCode }) => {
   return (
@@ -35,17 +37,16 @@ export const CodeTable: FC<CodeTableProps> = ({ currentCodes, copySuccess, handl
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography
-                    variant="body2"
-                    color={codeObj.soldStatus === 'active' ? 'success.main' :
-                          codeObj.soldStatus === 'expired' ? 'error.main' :
-                          codeObj.soldStatus === 'draft' ? 'warning.main' : 'text.secondary'}
-                  >
-                    {codeObj.soldStatus === 'active' ? 'On Sale' :
-                      codeObj.soldStatus === 'sold' ? `Sold${codeObj.soldAt ? ` on ${format(new Date(codeObj.soldAt), 'MM/dd/yyyy')}` : ''}` :
-                      codeObj.soldStatus === 'expired' ? 'Expired' :
-                      codeObj.soldStatus === 'draft' ? 'Draft' : codeObj.soldStatus}
-                  </Typography>
+                  <StatusBadge
+                    status={codeObj.soldStatus}
+                    type="code"
+                    size="small"
+                  />
+                  {codeObj.soldStatus === 'sold' && codeObj.soldAt && (
+                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {format(new Date(codeObj.soldAt), 'MM/dd/yyyy')}
+                    </Typography>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">

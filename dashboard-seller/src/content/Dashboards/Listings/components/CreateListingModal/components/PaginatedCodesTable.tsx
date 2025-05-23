@@ -26,6 +26,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { format } from 'date-fns';
 import { CodeItem } from '../types';
+import ListingStatusBadge from '../../../components/ListingStatusBadge';
 
 interface PaginatedCodesTableProps {
   codes: CodeItem[];
@@ -212,6 +213,7 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Code</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Expiration Date</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Actions</TableCell>
               </TableRow>
@@ -288,6 +290,13 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                         </Tooltip>
                       </Box>
                     </TableCell>
+                    <TableCell>
+                      <ListingStatusBadge
+                        status="active"
+                        variant="chip"
+                        size="small"
+                      />
+                    </TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>
                       {codeItem.expirationDate ? (
                         <Chip
@@ -331,7 +340,7 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} align="center">
+                  <TableCell colSpan={4} align="center">
                     <Typography variant="body2" sx={{ py: 2 }}>
                       No matching codes found
                     </Typography>

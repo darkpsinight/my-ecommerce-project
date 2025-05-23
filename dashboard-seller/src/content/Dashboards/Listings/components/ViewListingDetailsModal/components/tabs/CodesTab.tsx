@@ -27,6 +27,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 import { Listing } from '../../../../types';
 import { formatDate } from '../../utils/formatters';
+import StatusBadge from '../../../../components/StatusBadge';
 
 interface CodesTabProps {
   listing: Listing;
@@ -125,7 +126,8 @@ const CodesTab: React.FC<CodesTabProps> = ({
               label={`${activeCodes} On Sale / ${totalCodes} Total`}
               color={activeCodes > 0 ? 'success' : 'default'}
               size="small"
-              sx={{ fontWeight: 500, ml: 1 }}
+              variant="outlined"
+              sx={{ fontWeight: 600, ml: 1, fontSize: '0.7rem' }}
             />
           </Box>
 
@@ -244,21 +246,10 @@ const CodesTab: React.FC<CodesTabProps> = ({
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          label={codeItem.soldStatus === 'active' ? 'On Sale' : codeItem.soldStatus}
+                        <StatusBadge
+                          status={codeItem.soldStatus}
+                          type="code"
                           size="small"
-                          color={
-                            codeItem.soldStatus === 'active'
-                              ? 'success'
-                              : codeItem.soldStatus === 'sold'
-                              ? 'primary'
-                              : 'default'
-                          }
-                          sx={{
-                            fontWeight: 600,
-                            fontSize: '0.7rem',
-                            textTransform: 'capitalize'
-                          }}
                         />
                       </TableCell>
                       <TableCell>

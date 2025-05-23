@@ -32,6 +32,7 @@ import { format } from 'date-fns';
 import { ListingCode } from '../utils/types';
 import { deleteListingCode, updateCodeStatus } from 'src/services/api/listings';
 import toast from 'react-hot-toast';
+import StatusBadge from '../../../../../components/StatusBadge';
 
 interface PaginatedCodesTableProps {
   codes: ListingCode[];
@@ -453,34 +454,30 @@ const PaginatedCodesTable: React.FC<PaginatedCodesTableProps> = ({
                       </TableCell>
                       <TableCell>
                         {isSold ? (
-                          <Chip
-                            size="small"
-                            label={
-                              codeItem.soldAt
-                                ? `Sold: ${formatDate(codeItem.soldAt)}`
-                                : 'Sold'
-                            }
-                            color="primary"
-                            variant="outlined"
-                            icon={<SellIcon fontSize="small" />}
-                            sx={{ height: 24 }}
-                          />
+                          <>
+                            <StatusBadge
+                              status="sold"
+                              type="code"
+                              size="small"
+                            />
+                            {codeItem.soldAt && (
+                              <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                                {formatDate(codeItem.soldAt)}
+                              </Typography>
+                            )}
+                          </>
                         ) : codeItem.soldStatus === 'expired' || codeItem.soldStatus === 'suspended' ? (
-                          <Chip
+                          <StatusBadge
+                            status={codeItem.soldStatus}
+                            type="code"
                             size="small"
-                            label={codeItem.soldStatus === 'expired' ? 'Expired' : 'Suspended'}
-                            color={codeItem.soldStatus === 'expired' ? 'error' : 'default'}
-                            variant="outlined"
-                            sx={{ height: 24 }}
                           />
                         ) : (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Chip
+                            <StatusBadge
+                              status={codeItem.soldStatus}
+                              type="code"
                               size="small"
-                              label={codeItem.soldStatus === 'active' ? 'On Sale' : 'Draft'}
-                              color={codeItem.soldStatus === 'active' ? 'success' : 'warning'}
-                              variant="outlined"
-                              sx={{ height: 24 }}
                             />
                             <FormControlLabel
                               control={

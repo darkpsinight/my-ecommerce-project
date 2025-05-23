@@ -1,0 +1,32 @@
+/* Listings Dashboard Specific Styles */
+
+/* Fix for card headers in dark mode */
+.MuiCardHeader-root .MuiCardHeader-content .MuiTypography-root {
+  text-transform: none !important;
+  font-size: inherit !important;
+}
+
+/* Fix for Listings Summary card */
+.MuiCard-root[data-testid="listings-summary-card"] .MuiCardHeader-root .MuiTypography-root,
+.MuiCard-root[data-testid="product-listings-card"] .MuiCardHeader-root .MuiTypography-root {
+  text-transform: none !important;
+}
+
+/* Ensure consistent sizing between themes */
+.MuiCard-root .MuiCardContent-root {
+  zoom: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Fix for avatar sizes in summary cards */
+.MuiCard-root .MuiAvatar-root {
+  width: 54px !important;
+  height: 54px !important;
+}
+
+/* Fix for text in summary cards */
+.MuiCard-root .MuiTypography-h5,
+.MuiCard-root .MuiTypography-h3 {
+  text-transform: none !important;
+  font-size: inherit !important;
+}

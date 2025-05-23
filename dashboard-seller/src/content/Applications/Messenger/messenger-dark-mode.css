@@ -1,0 +1,125 @@
+/* Dark mode styles for Messenger component */
+
+/* Fix for sidebar in dark mode */
+.MuiPaper-root.MuiDrawer-paper,
+[data-theme="dark"] .Mui-FixedWrapper .MuiBox-root > div:first-child {
+  background-color: #1e1e2d !important;
+  border-color: #292929 !important;
+}
+
+/* Fix for chat window in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .ChatWindow {
+  background-color: #1C1C1C !important;
+}
+
+/* Fix for chat top bar in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .ChatTopBar {
+  background-color: #1e1e2d !important;
+  border-color: #292929 !important;
+}
+
+/* Fix for bottom bar in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiBox-root > div:last-child {
+  background-color: #1e1e2d !important;
+  border-color: #292929 !important;
+}
+
+/* Fix for message input in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiInputBase-root {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Fix for primary chat bubbles (sent by user) in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiCard-root[style*="background: rgb(85, 105, 255)"] {
+  background-color: #3a3f7a !important;
+  color: #ffffff !important;
+}
+
+/* Fix for secondary chat bubbles (received) in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiCard-root[style*="background: rgba(34, 51, 84, 0.1)"] {
+  background-color: #2a2a40 !important;
+  color: #ffffff !important;
+}
+
+/* Fix for dividers in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiDivider-root {
+  background-color: #292929 !important;
+}
+
+[data-theme="dark"] .Mui-FixedWrapper .MuiDivider-wrapper {
+  background-color: #1e1e2d !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Fix for icons in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiSvgIcon-root {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Fix for timestamps in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiTypography-subtitle1 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Fix for emoji button in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiIconButton-root[color="primary"] {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Fix for send button in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiButton-containedPrimary {
+  background-color: #3a3f7a !important;
+  color: #ffffff !important;
+}
+
+/* Fix for search input in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiOutlinedInput-root {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Fix for tabs in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiTab-root {
+  color: rgba(255, 255, 255, 0.7) !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  font-size: 14px !important;
+  text-transform: none !important;
+}
+
+[data-theme="dark"] .Mui-FixedWrapper .MuiTab-root.Mui-selected {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .Mui-FixedWrapper .MuiTabs-root {
+  min-height: 38px !important;
+  height: 38px !important;
+}
+
+/* Fix for chat list items in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiListItem-root {
+  border-color: #292929 !important;
+}
+
+[data-theme="dark"] .Mui-FixedWrapper .MuiListItem-root:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Fix for active chat in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiListItem-root.Mui-selected {
+  background-color: rgba(85, 105, 255, 0.15) !important;
+}
+
+/* Fix for message input area in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiBox-root > div:last-child {
+  background-color: #1e1e2d !important;
+}
+
+/* Fix for message input placeholder in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiInputBase-root::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Fix for message input text in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiInputBase-input {
+  color: rgba(255, 255, 255, 0.9) !important;
+}

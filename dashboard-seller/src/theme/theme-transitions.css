@@ -1,0 +1,48 @@
+/* Theme transition styles */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Preserve layout properties - don't transition these */
+*, *::before, *::after {
+  transition-property: background-color, color, border-color, box-shadow, filter;
+  transition-timing-function: ease;
+  transition-duration: 0.2s;
+}
+
+/* Exclude specific elements from transitions */
+.MuiSkeleton-root,
+.MuiCircularProgress-root,
+.MuiLinearProgress-root,
+svg,
+img {
+  transition: none !important;
+}
+
+/* Ensure text casing is preserved */
+h1, h2, h3, h4, h5, h6, p, span, div, button, a, li, td, th {
+  text-transform: inherit !important;
+}
+
+/* Specifically target card headers to prevent uppercase transformation */
+.MuiCardHeader-title, .MuiCardHeader-subheader {
+  text-transform: none !important;
+}
+
+/* Fix for Listings Summary and Product Listings headers */
+.MuiCardHeader-root .MuiTypography-root {
+  text-transform: none !important;
+  font-size: inherit !important;
+}
+
+/* Ensure consistent sizing between themes */
+.MuiCard-root, .MuiPaper-root, .MuiTypography-root {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+/* Fix for zoom effect in dark mode */
+.MuiCardContent-root {
+  zoom: 1 !important;
+  transform: scale(1) !important;
+}

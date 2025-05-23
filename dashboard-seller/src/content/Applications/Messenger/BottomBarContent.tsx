@@ -8,6 +8,7 @@ import {
   InputBase,
   useTheme
 } from '@mui/material';
+import { useThemeContext } from 'src/contexts/ThemeContext';
 import AttachFileTwoToneIcon from '@mui/icons-material/AttachFileTwoTone';
 import SendTwoToneIcon from '@mui/icons-material/SendTwoTone';
 
@@ -16,6 +17,9 @@ const MessageInputWrapper = styled(InputBase)(
     font-size: ${theme.typography.pxToRem(18)};
     padding: ${theme.spacing(1)};
     width: 100%;
+    color: ${theme.palette.mode === 'dark'
+      ? theme.colors.alpha.white[100]
+      : theme.colors.alpha.black[100]};
 `
 );
 
@@ -25,6 +29,7 @@ const Input = styled('input')({
 
 function BottomBarContent() {
   const theme = useTheme();
+  const { isDarkMode } = useThemeContext();
 
   const user = {
     name: 'Catherine Pike',
@@ -34,7 +39,9 @@ function BottomBarContent() {
   return (
     <Box
       sx={{
-        background: theme.colors.alpha.white[50],
+        background: isDarkMode
+          ? theme.colors.alpha.black[10]
+          : theme.colors.alpha.white[50],
         display: 'flex',
         alignItems: 'center',
         p: 2

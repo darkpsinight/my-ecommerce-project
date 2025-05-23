@@ -1,4 +1,5 @@
-import { Box, Avatar, Typography, Card, styled, Divider } from '@mui/material';
+import { Box, Avatar, Typography, Card, styled, Divider, useTheme } from '@mui/material';
+import { useThemeContext } from 'src/contexts/ThemeContext';
 
 import {
   formatDistance,
@@ -16,14 +17,18 @@ const DividerWrapper = styled(Divider)(
         text-transform: none;
         background: ${theme.palette.background.default};
         font-size: ${theme.typography.pxToRem(13)};
-        color: ${theme.colors.alpha.black[50]};
+        color: ${theme.palette.mode === 'dark'
+          ? theme.colors.alpha.white[50]
+          : theme.colors.alpha.black[50]};
       }
 `
 );
 
 const CardWrapperPrimary = styled(Card)(
   ({ theme }) => `
-      background: ${theme.colors.primary.main};
+      background: ${theme.palette.mode === 'dark'
+        ? theme.colors.primary.dark
+        : theme.colors.primary.main};
       color: ${theme.palette.primary.contrastText};
       padding: ${theme.spacing(2)};
       border-radius: ${theme.general.borderRadiusXl};
@@ -35,8 +40,12 @@ const CardWrapperPrimary = styled(Card)(
 
 const CardWrapperSecondary = styled(Card)(
   ({ theme }) => `
-      background: ${theme.colors.alpha.black[10]};
-      color: ${theme.colors.alpha.black[100]};
+      background: ${theme.palette.mode === 'dark'
+        ? theme.colors.alpha.white[10]
+        : theme.colors.alpha.black[10]};
+      color: ${theme.palette.mode === 'dark'
+        ? theme.colors.alpha.white[100]
+        : theme.colors.alpha.black[100]};
       padding: ${theme.spacing(2)};
       border-radius: ${theme.general.borderRadiusXl};
       border-top-left-radius: ${theme.general.borderRadius};

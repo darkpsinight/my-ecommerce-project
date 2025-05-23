@@ -11,6 +11,9 @@ import { ListingsProvider } from './context/ListingsContext';
 
 import { useState } from 'react';
 
+// Import Listings specific styles
+import './styles.css';
+
 function DashboardListings() {
   const [selected, setSelected] = useState<string[]>([]);
   return (

@@ -119,7 +119,7 @@ const ListingsSummary: FC = () => {
   ];
 
   return (
-    <Card>
+    <Card data-testid="listings-summary-card">
       <Box sx={{ p: 3 }}>
         <Grid container spacing={3} alignItems="center" justifyContent="space-between">
           <Grid item xs={12} md={8}>

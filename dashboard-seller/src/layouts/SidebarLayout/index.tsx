@@ -23,7 +23,7 @@ const SidebarLayout: FC<SidebarLayoutProps> = () => {
           '.MuiPageTitle-wrapper': {
             background:
               theme.palette.mode === 'dark'
-                ? theme.colors.alpha.trueWhite[5]
+                ? alpha(theme.colors.alpha.black[100], 0.5)
                 : theme.colors.alpha.white[50],
             marginBottom: `${theme.spacing(4)}`,
             boxShadow:

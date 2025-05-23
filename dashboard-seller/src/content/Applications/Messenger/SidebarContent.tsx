@@ -19,8 +19,11 @@ import {
   ListItemAvatar,
   ListItemText,
   lighten,
-  styled
+  alpha,
+  styled,
+  useTheme
 } from '@mui/material';
+import { useThemeContext } from 'src/contexts/ThemeContext';
 import { formatDistance, subMinutes, subHours } from 'date-fns';
 import SettingsTwoToneIcon from '@mui/icons-material/SettingsTwoTone';
 import SearchTwoToneIcon from '@mui/icons-material/SearchTwoTone';
@@ -42,7 +45,9 @@ const AvatarSuccess = styled(Avatar)(
 
 const MeetingBox = styled(Box)(
   ({ theme }) => `
-          background-color: ${lighten(theme.colors.alpha.black[10], 0.5)};
+          background-color: ${theme.palette.mode === 'dark'
+            ? alpha(theme.colors.alpha.white[100], 0.06)
+            : lighten(theme.colors.alpha.black[10], 0.5)};
           margin: ${theme.spacing(2)} 0;
           border-radius: ${theme.general.borderRadius};
           padding: ${theme.spacing(2)};
@@ -72,12 +77,22 @@ const TabsContainerWrapper = styled(Box)(
             border: 0;
         }
 
+        .MuiTabs-root {
+            min-height: 38px;
+            height: 38px;
+        }
+
         .MuiTab-root {
             &.MuiButtonBase-root {
+                height: 38px;
+                min-height: 38px;
                 padding: 0;
                 margin-right: ${theme.spacing(3)};
-                font-size: ${theme.typography.pxToRem(16)};
-                color: ${theme.colors.alpha.black[50]};
+                font-size: ${theme.typography.pxToRem(14)};
+                color: ${theme.palette.mode === 'dark'
+                  ? theme.colors.alpha.white[50]
+                  : theme.colors.alpha.black[50]};
+                text-transform: none;
 
                 .MuiTouchRipple-root {
                     display: none;
@@ -86,13 +101,17 @@ const TabsContainerWrapper = styled(Box)(
 
             &.Mui-selected:hover,
             &.Mui-selected {
-                color: ${theme.colors.alpha.black[100]};
+                color: ${theme.palette.mode === 'dark'
+                  ? theme.colors.alpha.white[100]
+                  : theme.colors.alpha.black[100]};
             }
         }
   `
 );
 
 function SidebarContent() {
+  const theme = useTheme();
+  const { isDarkMode } = useThemeContext();
   const user = {
     name: 'Catherine Pike',
     avatar: '/static/images/avatars/1.jpg',
@@ -205,9 +224,23 @@ function SidebarContent() {
           scrollButtons="auto"
           textColor="primary"
           indicatorColor="primary"
+          sx={{
+            minHeight: '38px',
+            height: '38px'
+          }}
         >
           {tabs.map((tab) => (
-            <Tab key={tab.value} label={tab.label} value={tab.value} />
+            <Tab
+              key={tab.value}
+              label={tab.label}
+              value={tab.value}
+              sx={{
+                minHeight: '38px',
+                height: '38px',
+                fontSize: '14px',
+                textTransform: 'none'
+              }}
+            />
           ))}
         </Tabs>
       </TabsContainerWrapper>

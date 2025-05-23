@@ -17,6 +17,7 @@ import {
   styled,
   useTheme
 } from '@mui/material';
+import { useThemeContext } from 'src/contexts/ThemeContext';
 import { formatDistance, subMinutes } from 'date-fns';
 import CallTwoToneIcon from '@mui/icons-material/CallTwoTone';
 import VideoCameraFrontTwoToneIcon from '@mui/icons-material/VideoCameraFrontTwoTone';
@@ -38,13 +39,19 @@ const RootWrapper = styled(Box)(
           align-items: center;
           justify-content: space-between;
       }
+
+      color: ${theme.palette.mode === 'dark'
+        ? theme.colors.alpha.white[100]
+        : theme.colors.alpha.black[100]};
 `
 );
 
 const ListItemIconWrapper = styled(ListItemIcon)(
   ({ theme }) => `
         min-width: 36px;
-        color: ${theme.colors.primary.light};
+        color: ${theme.palette.mode === 'dark'
+          ? theme.colors.primary.light
+          : theme.colors.primary.main};
 `
 );
 
@@ -72,7 +79,9 @@ const AccordionSummaryWrapper = styled(AccordionSummary)(
 
           &.Mui-expanded,
           &:hover {
-            background: ${theme.colors.alpha.black[10]};
+            background: ${theme.palette.mode === 'dark'
+              ? theme.colors.alpha.white[10]
+              : theme.colors.alpha.black[10]};
 
             .MuiSvgIcon-root {
               color: ${theme.colors.primary.main};
@@ -84,6 +93,7 @@ const AccordionSummaryWrapper = styled(AccordionSummary)(
 
 function TopBarContent() {
   const theme = useTheme();
+  const { isDarkMode } = useThemeContext();
 
   const [mobileOpen, setMobileOpen] = useState(false);
 

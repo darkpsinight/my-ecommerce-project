@@ -19,6 +19,9 @@ import { useSelector } from 'react-redux';
 import { RootState } from './redux/store';
 import GlobalAuthLoader from 'src/components/GlobalAuthLoader';
 
+// Import theme transition styles
+import './theme/theme-transitions.css';
+
 function AppContent() {
   const content = useRoutes(router);
   const token = useSelector((state: RootState) => state.auth.token);

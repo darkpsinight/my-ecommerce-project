@@ -506,7 +506,7 @@ const ListingsTable: FC<ListingsTableProps> = ({ selected, setSelected }) => {
   const TABLE_COLUMNS_COUNT = 10; // Including checkbox column and the new Total column
 
   return (
-    <Card>
+    <Card data-testid="product-listings-card">
       <CardHeader
         title={
           <Box

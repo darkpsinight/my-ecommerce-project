@@ -18,9 +18,9 @@ const OverviewWrapper = styled(Box)(
 
 function Overview() {
   const { APP_NAME } = useAppSelector((state) => state.config.data);
-  
+
   return (
-    <OverviewWrapper>
+    <OverviewWrapper className="OverviewWrapper">
       <Helmet>
         <title>{APP_NAME} - Seller Dashboard</title>
       </Helmet>
@@ -28,12 +28,14 @@ function Overview() {
         <Box display="flex" justifyContent="center" py={5} alignItems="center">
           <Logo />
         </Box>
-        <Card 
-          sx={{ 
-            p: { xs: 2, sm: 4, md: 6 }, 
-            mb: 10, 
+        <Card
+          sx={{
+            p: { xs: 2, sm: 4, md: 6 },
+            mb: 10,
             borderRadius: 2,
-            background: 'rgba(255, 255, 255, 0.95)',
+            background: theme => theme.palette.mode === 'dark'
+              ? 'rgba(30, 30, 45, 0.95)'
+              : 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
           }}

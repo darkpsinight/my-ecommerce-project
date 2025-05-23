@@ -21,7 +21,7 @@ export const TypographyH1 = styled(Typography)(
     margin-bottom: ${theme.spacing(2)};
     letter-spacing: -0.5px;
     position: relative;
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -33,6 +33,14 @@ export const TypographyH1 = styled(Typography)(
       transform: translateX(-50%);
       border-radius: 4px;
     }
+
+    @media (max-width: 960px) {
+      font-size: ${theme.typography.pxToRem(44)};
+    }
+
+    @media (max-width: 600px) {
+      font-size: ${theme.typography.pxToRem(36)};
+    }
 `
 );
 
@@ -42,7 +50,15 @@ export const TypographyH2 = styled(Typography)(
     max-width: 800px;
     margin: 0 auto;
     line-height: 1.6;
-    color: ${theme.colors.alpha.black[70]};
+    color: ${theme.palette.mode === 'dark' ? theme.colors.alpha.white[70] : theme.colors.alpha.black[70]};
+
+    @media (max-width: 960px) {
+      font-size: ${theme.typography.pxToRem(18)};
+    }
+
+    @media (max-width: 600px) {
+      font-size: ${theme.typography.pxToRem(16)};
+    }
 `
 );
 
@@ -85,7 +101,7 @@ export const FeatureCard = styled(Paper)(
       transform: translateY(-8px);
       box-shadow: 0 16px 32px rgba(0,0,0,0.12);
       border-color: ${theme.colors.primary.lighter};
-      
+
       &::before {
         height: 6px;
       }
@@ -107,7 +123,7 @@ export const FeatureIcon = styled(Box)(
     transition: all 0.4s ease;
     box-shadow: 0 10px 20px rgba(33, 150, 243, 0.3);
     position: relative;
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -131,7 +147,7 @@ export const FeatureIcon = styled(Box)(
       transform: scale(1.05) rotate(2deg);
       box-shadow: 0 12px 24px rgba(33, 150, 243, 0.4);
       border-radius: 16px;
-      
+
       &::after {
         opacity: 0.6;
         transform: scale(1.1);
@@ -144,24 +160,34 @@ export const TestimonialCard = styled(Paper)(
   ({ theme }) => `
     padding: ${theme.spacing(4)};
     border-radius: ${theme.general.borderRadius};
-    background: ${theme.colors.alpha.white[100]};
-    border: 1px solid ${theme.colors.alpha.black[10]};
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    background: ${theme.palette.mode === 'dark'
+      ? theme.colors.alpha.black[10]
+      : theme.colors.alpha.white[100]};
+    border: 1px solid ${theme.palette.mode === 'dark'
+      ? theme.colors.alpha.white[10]
+      : theme.colors.alpha.black[10]};
+    box-shadow: ${theme.palette.mode === 'dark'
+      ? '0 4px 16px rgba(0,0,0,0.2)'
+      : '0 4px 16px rgba(0,0,0,0.08)'};
     position: relative;
     transition: all 0.2s;
-    
+
     &:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      box-shadow: ${theme.palette.mode === 'dark'
+        ? '0 8px 24px rgba(0,0,0,0.3)'
+        : '0 8px 24px rgba(0,0,0,0.12)'};
     }
-    
+
     &::before {
       content: '"';
       position: absolute;
       top: 8px;
       left: 16px;
       font-size: 60px;
-      color: ${theme.colors.primary.lighter};
+      color: ${theme.palette.mode === 'dark'
+        ? theme.colors.primary.main
+        : theme.colors.primary.lighter};
       font-family: Georgia, serif;
       opacity: 0.3;
     }
@@ -180,7 +206,7 @@ export const BackgroundDecoration = styled(Box)(
     opacity: 0.08;
     z-index: 0;
     animation: pulse 20s infinite ease-in-out;
-    
+
     @keyframes pulse {
       0% { transform: scale(1) rotate(0deg); }
       50% { transform: scale(1.1) rotate(5deg); }
@@ -201,7 +227,7 @@ export const BackgroundDecorationLeft = styled(Box)(
     opacity: 0.07;
     z-index: 0;
     animation: pulse2 25s infinite ease-in-out;
-    
+
     @keyframes pulse2 {
       0% { transform: scale(1) rotate(0deg); }
       50% { transform: scale(1.15) rotate(-5deg); }
@@ -233,7 +259,7 @@ export const StatBox = styled(Box)(
     flex-direction: column;
     align-items: center;
     padding: ${theme.spacing(2, 0)};
-    
+
     .stat-value {
       font-size: ${theme.typography.pxToRem(36)};
       font-weight: 800;
@@ -243,7 +269,7 @@ export const StatBox = styled(Box)(
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    
+
     .stat-label {
       font-size: ${theme.typography.pxToRem(14)};
       color: ${theme.colors.alpha.black[70]};
@@ -273,4 +299,4 @@ export const SecondaryButton = styled(StyledButton)<ButtonProps>(({ theme }) => 
   '&:hover': {
     background: theme.colors.alpha.white[90],
   },
-})); 
+}));

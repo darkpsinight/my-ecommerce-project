@@ -45,16 +45,28 @@ export const ThemeContextProvider: React.FC<ThemeProviderProps> = ({ children })
   const [theme, setTheme] = useState<string>(getInitialTheme);
   const isDarkMode = theme === 'PureDarkTheme';
 
-  // Update localStorage when theme changes
+  // Set initial data-theme attribute
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    }
+  }, []);
+
+  // Update localStorage and data-theme attribute when theme changes
   useEffect(() => {
     localStorage.setItem('dashboard-seller-theme-preference', theme);
-  }, [theme]);
+
+    // Update data-theme attribute on body
+    if (typeof document !== 'undefined') {
+      document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    }
+  }, [theme, isDarkMode]);
 
   // Listen for system preference changes
   useEffect(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      
+
       const handleChange = (e: MediaQueryListEvent) => {
         // Only update if user hasn't explicitly set a preference
         if (!localStorage.getItem('dashboard-seller-theme-preference')) {

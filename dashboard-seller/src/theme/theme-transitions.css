@@ -32,17 +32,82 @@ h1, h2, h3, h4, h5, h6, p, span, div, button, a, li, td, th {
 /* Fix for Listings Summary and Product Listings headers */
 .MuiCardHeader-root .MuiTypography-root {
   text-transform: none !important;
-  font-size: inherit !important;
 }
 
-/* Ensure consistent sizing between themes */
-.MuiCard-root, .MuiPaper-root, .MuiTypography-root {
+/* Fix for specific card headers in dark mode */
+.MuiCard-root[data-testid="listings-summary-card"] .MuiCardHeader-root .MuiTypography-root,
+.MuiCard-root[data-testid="product-listings-card"] .MuiCardHeader-root .MuiTypography-root {
   font-size: inherit !important;
-  line-height: inherit !important;
 }
 
 /* Fix for zoom effect in dark mode */
 .MuiCardContent-root {
   zoom: 1 !important;
   transform: scale(1) !important;
+}
+
+/* Fix for home page typography in both light and dark themes */
+.OverviewWrapper .MuiTypography-h1 {
+  font-size: 4.5rem !important;
+}
+
+.OverviewWrapper .MuiTypography-h4 {
+  font-size: 1.5rem !important;
+}
+
+/* Ensure proper text color in dark mode */
+body[data-theme="dark"] .OverviewWrapper .MuiTypography-h2,
+body[data-theme="dark"] .OverviewWrapper .MuiTypography-h4,
+body[data-theme="dark"] .OverviewWrapper .MuiTypography-body1,
+body[data-theme="dark"] .OverviewWrapper .MuiTypography-body2,
+body[data-theme="dark"] .OverviewWrapper .MuiTypography-subtitle1 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body[data-theme="dark"] .OverviewWrapper .MuiCard-root {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Fix for stats section in dark mode */
+body[data-theme="dark"] .OverviewWrapper .MuiBox-root .MuiTypography-h2 {
+  color: #90CAF9 !important;
+}
+
+/* Fix for testimonial cards in dark mode */
+body[data-theme="dark"] .OverviewWrapper .MuiPaper-root {
+  background-color: rgba(30, 30, 45, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body[data-theme="dark"] .OverviewWrapper .MuiPaper-root .MuiTypography-subtitle1 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body[data-theme="dark"] .OverviewWrapper .MuiPaper-root .MuiTypography-body1 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body[data-theme="dark"] .OverviewWrapper .MuiPaper-root .MuiTypography-caption {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Responsive font sizes for home page */
+@media (max-width: 960px) {
+  .OverviewWrapper .MuiTypography-h1 {
+    font-size: 3.5rem !important;
+  }
+
+  .OverviewWrapper .MuiTypography-h4 {
+    font-size: 1.25rem !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .OverviewWrapper .MuiTypography-h1 {
+    font-size: 2.5rem !important;
+  }
+
+  .OverviewWrapper .MuiTypography-h4 {
+    font-size: 1.1rem !important;
+  }
 }

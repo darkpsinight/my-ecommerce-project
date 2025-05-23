@@ -14,62 +14,88 @@ export const TestimonialSection: React.FC<TestimonialSectionProps> = ({ testimon
   return (
     <Box sx={{ mt: 8, mb: 4, textAlign: 'center' }}>
       <motion.div variants={itemVariants}>
-        <Typography 
-          variant="h3" 
-          sx={{ 
-            mb: 1, 
+        <Typography
+          variant="h3"
+          sx={{
+            mb: 1,
             fontWeight: 700,
-            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' }
+            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
+            color: theme => theme.palette.mode === 'dark'
+              ? theme.colors.alpha.white[100]
+              : theme.colors.alpha.black[100]
           }}
         >
           What Our Sellers Say
         </Typography>
-        <Typography 
-          variant="subtitle1" 
-          color="textSecondary"
-          sx={{ 
-            mb: 4, 
-            mx: 'auto', 
-            maxWidth: 700
+        <Typography
+          variant="subtitle1"
+          sx={{
+            mb: 4,
+            mx: 'auto',
+            maxWidth: 700,
+            color: theme => theme.palette.mode === 'dark'
+              ? theme.colors.alpha.white[70]
+              : theme.colors.alpha.black[70]
           }}
         >
           Join thousands of satisfied sellers who have transformed their digital business
         </Typography>
       </motion.div>
-      
+
       <Grid container spacing={4} sx={{ mt: 2 }}>
         {testimonials.map((testimonial) => (
           <Grid item xs={12} md={6} key={testimonial.id}>
             <motion.div variants={itemVariants}>
               <TestimonialCard>
-                <Typography 
-                  variant="body1" 
-                  color="textSecondary"
-                  sx={{ 
-                    mb: 3, 
+                <Typography
+                  variant="body1"
+                  sx={{
+                    mb: 3,
                     fontStyle: 'italic',
-                    pl: 3
+                    pl: 3,
+                    color: theme => theme.palette.mode === 'dark'
+                      ? theme.colors.alpha.white[70]
+                      : theme.colors.alpha.black[70]
                   }}
                 >
                   "{testimonial.content}"
                 </Typography>
                 <Stack direction="row" spacing={2} alignItems="center">
-                  <Avatar 
-                    src={testimonial.avatar} 
+                  <Avatar
+                    src={testimonial.avatar}
                     alt={testimonial.name}
-                    sx={{ 
-                      width: 48, 
+                    sx={{
+                      width: 48,
                       height: 48,
-                      border: theme => `2px solid ${theme.colors.primary.lighter}`
+                      border: theme => `2px solid ${
+                        theme.palette.mode === 'dark'
+                          ? theme.colors.primary.main
+                          : theme.colors.primary.lighter
+                      }`
                     }}
                   >
                     <PersonIcon />
                   </Avatar>
                   <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight="bold"
+                      sx={{
+                        color: theme => theme.palette.mode === 'dark'
+                          ? theme.colors.alpha.white[100]
+                          : theme.colors.alpha.black[100]
+                      }}
+                    >
                       {testimonial.name}
                     </Typography>
-                    <Typography variant="caption" color="textSecondary">
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: theme => theme.palette.mode === 'dark'
+                          ? theme.colors.alpha.white[50]
+                          : theme.colors.alpha.black[50]
+                      }}
+                    >
                       {testimonial.title}
                     </Typography>
                   </Box>
@@ -81,4 +107,4 @@ export const TestimonialSection: React.FC<TestimonialSectionProps> = ({ testimon
       </Grid>
     </Box>
   );
-}; 
+};

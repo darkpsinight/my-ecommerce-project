@@ -226,7 +226,15 @@ const ListingsSummary: FC = () => {
                       <Typography variant="h5" noWrap>
                         {item.name}
                       </Typography>
-                      <Typography variant="h3">{item.value}</Typography>
+                      <Typography 
+                        variant="h2" 
+                        sx={{ 
+                          fontWeight: 700,
+                          fontSize: { xs: '1.75rem', sm: '2rem' }
+                        }}
+                      >
+                        {item.value}
+                      </Typography>
                     </Box>
                   </SummaryCard>
                 </Grid>

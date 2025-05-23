@@ -1,0 +1,137 @@
+/* Dark mode styles for Login page */
+
+/* Fix for text fields in dark mode */
+[data-theme="dark"] .MuiTextField-root .MuiOutlinedInput-root {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .MuiTextField-root .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .MuiTextField-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .MuiTextField-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #5569ff;
+}
+
+/* Fix for input labels in dark mode */
+[data-theme="dark"] .MuiInputLabel-root {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .MuiInputLabel-root.Mui-focused {
+  color: #5569ff;
+}
+
+/* Fix for helper text in dark mode */
+[data-theme="dark"] .MuiFormHelperText-root {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Fix for links in dark mode */
+[data-theme="dark"] .MuiLink-root {
+  color: #90CAF9;
+}
+
+[data-theme="dark"] .MuiLink-root:hover {
+  color: #BBDEFB;
+}
+
+/* Fix for typography in dark mode */
+[data-theme="dark"] .MuiTypography-root {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .MuiTypography-colorTextSecondary {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Fix for buttons in dark mode */
+[data-theme="dark"] .MuiButton-containedPrimary {
+  background-color: #3a3f7a;
+}
+
+[data-theme="dark"] .MuiButton-containedPrimary:hover {
+  background-color: #4a4f8a;
+}
+
+/* Fix for icons in dark mode */
+[data-theme="dark"] .MuiIconButton-root {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .MuiIconButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Fix for alerts in dark mode */
+[data-theme="dark"] .MuiAlert-standardError {
+  background-color: rgba(255, 25, 67, 0.15);
+  color: #ff6b81;
+}
+
+[data-theme="dark"] .MuiAlert-standardError .MuiAlert-icon {
+  color: #ff6b81;
+}
+
+/* Fix for back button in dark mode */
+[data-theme="dark"] .MuiIconButton-root.BackButton {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .MuiIconButton-root.BackButton:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Fix for gradient text in dark mode */
+[data-theme="dark"] [style*="background: linear-gradient"] {
+  background: linear-gradient(45deg, #90CAF9 30%, #64B5F6 90%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+/* Fix for input adornment in dark mode */
+[data-theme="dark"] .MuiInputAdornment-root .MuiIconButton-root {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Fix for circular progress in dark mode */
+[data-theme="dark"] .MuiCircularProgress-root {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Fix for form background in dark mode */
+[data-theme="dark"] form {
+  background-color: transparent;
+}
+
+/* Fix for password visibility toggle in dark mode */
+[data-theme="dark"] .MuiInputAdornment-root .MuiIconButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Fix for error text in dark mode */
+[data-theme="dark"] .MuiFormHelperText-root.Mui-error {
+  color: #ff6b81;
+}
+
+/* Fix for disabled inputs in dark mode */
+[data-theme="dark"] .Mui-disabled {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-theme="dark"] .Mui-disabled .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix for main content background in dark mode */
+[data-theme="dark"] .MainContent {
+  background: linear-gradient(135deg, #2c2c54 0%, #1e1e2d 100%) !important;
+}

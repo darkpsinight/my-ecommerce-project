@@ -20,6 +20,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useLogin } from './useLogin';
 import { MainContent, LoginCard, LogoBox, GoogleButton } from './styles';
+import './login-dark-mode.css';
 
 function Login() {
   const navigate = useNavigate();
@@ -62,6 +63,7 @@ function Login() {
     <MainContent>
       <IconButton
         onClick={() => navigate('/')}
+        className="BackButton"
         sx={{
           position: 'fixed',
           top: { xs: 12, sm: 24, md: 32 },

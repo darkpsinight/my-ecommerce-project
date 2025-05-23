@@ -76,13 +76,19 @@ const IconButtonToggle = styled(IconButton)(
 );
 
 const DrawerWrapperMobile = styled(Drawer)(
-  () => `
+  ({ theme }) => `
     width: 340px;
     flex-shrink: 0;
 
   & > .MuiPaper-root {
         width: 340px;
         z-index: 3;
+        background: ${theme.palette.mode === 'dark'
+          ? theme.palette.background.paper
+          : theme.colors.alpha.white[100]};
+        border-right: ${theme.palette.mode === 'dark'
+          ? theme.colors.alpha.white[10]
+          : theme.colors.alpha.black[10]} solid 1px;
   }
 `
 );
@@ -110,15 +116,19 @@ function ApplicationsMessenger() {
           anchor={theme.direction === 'rtl' ? 'right' : 'left'}
           open={mobileOpen}
           onClose={handleDrawerToggle}
+          className={isDarkMode ? 'dark-mode-drawer' : 'light-mode-drawer'}
         >
           <Scrollbar>
-            <SidebarContent />
+            <Box data-theme={isDarkMode ? 'dark' : 'light'}>
+              <SidebarContent />
+            </Box>
           </Scrollbar>
         </DrawerWrapperMobile>
         <Sidebar
           sx={{
             display: { xs: 'none', lg: 'inline-block' }
           }}
+          data-theme={isDarkMode ? 'dark' : 'light'}
         >
           <Scrollbar>
             <SidebarContent />

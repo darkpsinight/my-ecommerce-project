@@ -1,7 +1,7 @@
 /* Dark mode styles for Messenger component */
 
 /* Fix for sidebar in dark mode */
-.MuiPaper-root.MuiDrawer-paper,
+[data-theme="dark"] .MuiPaper-root.MuiDrawer-paper,
 [data-theme="dark"] .Mui-FixedWrapper .MuiBox-root > div:first-child {
   background-color: #1e1e2d !important;
   border-color: #292929 !important;
@@ -84,6 +84,40 @@
   height: 38px !important;
   font-size: 14px !important;
   text-transform: none !important;
+  padding: 0 !important;
+  margin-right: 24px !important; /* Match the spacing from light mode (theme.spacing(3)) */
+}
+
+/* Fix for tab buttons in dark mode to match light mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiTab-root.MuiButtonBase-root {
+  min-width: auto !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  margin-right: 4px !important;
+}
+
+/* Fix for tab container to ensure consistent spacing */
+[data-theme="dark"] .Mui-FixedWrapper .TabsContainerWrapper .MuiTabs-scroller,
+.dark-mode-tabs .MuiTabs-scroller {
+  overflow: hidden !important;
+  margin-bottom: 0 !important;
+}
+
+/* Additional styles for dark mode tabs */
+.dark-mode-tabs .MuiTabs-flexContainer {
+  display: flex !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+}
+
+/* Fix for tab spacing in dark mode */
+.dark-mode-tabs .MuiTab-root {
+  margin-right: 4px !important;
+}
+
+/* Ensure consistent tab width in dark mode */
+.dark-mode-tabs .MuiButtonBase-root {
+  min-width: auto !important;
 }
 
 [data-theme="dark"] .Mui-FixedWrapper .MuiTab-root.Mui-selected {
@@ -93,6 +127,15 @@
 [data-theme="dark"] .Mui-FixedWrapper .MuiTabs-root {
   min-height: 38px !important;
   height: 38px !important;
+  overflow: visible !important;
+}
+
+/* Fix for tab indicator in dark mode */
+[data-theme="dark"] .Mui-FixedWrapper .MuiTabs-indicator {
+  min-height: 4px !important;
+  height: 4px !important;
+  box-shadow: none !important;
+  border: 0 !important;
 }
 
 /* Fix for chat list items in dark mode */
@@ -122,4 +165,27 @@
 /* Fix for message input text in dark mode */
 [data-theme="dark"] .Mui-FixedWrapper .MuiInputBase-input {
   color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Fix for light mode mobile drawer */
+[data-theme="light"] .MuiPaper-root.MuiDrawer-paper,
+.light-mode-drawer .MuiPaper-root {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Fix for dark mode mobile drawer */
+[data-theme="dark"] .MuiPaper-root.MuiDrawer-paper,
+.dark-mode-drawer .MuiPaper-root {
+  background-color: #1e1e2d !important;
+  border-color: #292929 !important;
+}
+
+/* Fix for text colors in light mode drawer */
+.light-mode-drawer .MuiTypography-root {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.light-mode-drawer .MuiTypography-subtitle1 {
+  color: rgba(0, 0, 0, 0.6) !important;
 }

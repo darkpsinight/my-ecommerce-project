@@ -216,7 +216,7 @@ function SidebarContent() {
         Chats
       </Typography>
 
-      <TabsContainerWrapper>
+      <TabsContainerWrapper className={isDarkMode ? 'dark-mode-tabs' : ''}>
         <Tabs
           onChange={handleTabsChange}
           value={currentTab}
@@ -238,7 +238,12 @@ function SidebarContent() {
                 minHeight: '38px',
                 height: '38px',
                 fontSize: '14px',
-                textTransform: 'none'
+                textTransform: 'none',
+                ...(isDarkMode && {
+                  marginRight: '4px',
+                  paddingLeft: '20px',
+                  paddingRight: '20px'
+                })
               }}
             />
           ))}

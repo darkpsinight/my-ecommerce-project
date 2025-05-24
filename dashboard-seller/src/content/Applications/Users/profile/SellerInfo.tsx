@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -8,13 +9,23 @@ import {
   Chip,
   useTheme,
   styled,
-  Grid
+  Grid,
+  IconButton,
+  TextField,
+  Button,
+  Collapse
 } from '@mui/material';
 
 import PersonTwoToneIcon from '@mui/icons-material/PersonTwoTone';
 import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
 import BusinessTwoToneIcon from '@mui/icons-material/BusinessTwoTone';
+import EditTwoToneIcon from '@mui/icons-material/EditTwoTone';
+import SaveTwoToneIcon from '@mui/icons-material/SaveTwoTone';
+import CancelTwoToneIcon from '@mui/icons-material/CancelTwoTone';
 import { SellerProfileData } from 'src/services/api/sellerProfile';
+import { useAppDispatch } from 'src/redux/hooks';
+import { updateProfile } from 'src/redux/slices/sellerProfile';
+import { toast } from 'react-hot-toast';
 
 const AvatarPrimary = styled(Avatar)(
   ({ theme }) => `
@@ -45,12 +56,79 @@ interface SellerInfoProps {
 
 function SellerInfo({ profileData, userData }: SellerInfoProps) {
   const theme = useTheme();
+  const dispatch = useAppDispatch();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    nickname: profileData?.nickname || '',
+    marketName: profileData?.marketName || ''
+  });
+
+  const handleEdit = () => {
+    setFormData({
+      nickname: profileData?.nickname || '',
+      marketName: profileData?.marketName || ''
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      nickname: profileData?.nickname || '',
+      marketName: profileData?.marketName || ''
+    });
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (!profileData) return;
+
+    setIsLoading(true);
+    try {
+      await dispatch(updateProfile({
+        ...profileData,
+        nickname: formData.nickname.trim(),
+        marketName: formData.marketName.trim()
+      })).unwrap();
+
+      setIsEditing(false);
+      toast.success('Seller information updated successfully');
+    } catch (error) {
+      toast.error('Failed to update seller information');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   return (
     <Card>
-      <CardHeader title="Seller Information" />
+      <CardHeader
+        title="Seller Information"
+        action={
+          !isEditing && (
+            <IconButton
+              size="small"
+              onClick={handleEdit}
+              sx={{
+                '&:hover': {
+                  background: theme.colors.primary.lighter
+                }
+              }}
+            >
+              <EditTwoToneIcon fontSize="small" />
+            </IconButton>
+          )
+        }
+      />
       <Divider />
-      
+
       {/* Nickname Section */}
       <Box px={2} py={3} display="flex" alignItems="flex-start">
         <AvatarPrimary>
@@ -58,23 +136,44 @@ function SellerInfo({ profileData, userData }: SellerInfoProps) {
         </AvatarPrimary>
         <Box pl={2} flex={1}>
           <Typography variant="h4" gutterBottom>
-            Nickname
+            Display Name
           </Typography>
-          <Typography 
-            variant="h3" 
-            color="text.primary"
-            sx={{ 
-              fontSize: { xs: '1.1rem', sm: '1.25rem' },
-              fontWeight: 600 
-            }}
-          >
-            {profileData?.nickname || 'Not set'}
-          </Typography>
-          {!profileData?.nickname && (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Set your nickname in profile settings
-            </Typography>
-          )}
+
+          <Collapse in={!isEditing}>
+            <Box>
+              <Typography
+                variant="h3"
+                color="text.primary"
+                sx={{
+                  fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                  fontWeight: 600
+                }}
+              >
+                {profileData?.nickname || 'Not set'}
+              </Typography>
+              {!profileData?.nickname && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Set your display name in profile settings
+                </Typography>
+              )}
+            </Box>
+          </Collapse>
+
+          <Collapse in={isEditing}>
+            <Box>
+              <TextField
+                fullWidth
+                value={formData.nickname}
+                onChange={(e) => handleInputChange('nickname', e.target.value)}
+                placeholder="Enter your display name"
+                variant="outlined"
+                size="small"
+                inputProps={{ maxLength: 50 }}
+                helperText={`${formData.nickname.length}/50 characters`}
+                required
+              />
+            </Box>
+          </Collapse>
         </Box>
       </Box>
 
@@ -89,21 +188,41 @@ function SellerInfo({ profileData, userData }: SellerInfoProps) {
           <Typography variant="h4" gutterBottom>
             Market Name
           </Typography>
-          <Typography 
-            variant="h3" 
-            color="text.primary"
-            sx={{ 
-              fontSize: { xs: '1.1rem', sm: '1.25rem' },
-              fontWeight: 600 
-            }}
-          >
-            {profileData?.marketName || 'Not set'}
-          </Typography>
-          {!profileData?.marketName && (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Set your market name to help customers identify your store
-            </Typography>
-          )}
+
+          <Collapse in={!isEditing}>
+            <Box>
+              <Typography
+                variant="h3"
+                color="text.primary"
+                sx={{
+                  fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                  fontWeight: 600
+                }}
+              >
+                {profileData?.marketName || 'Not set'}
+              </Typography>
+              {!profileData?.marketName && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Set your market name to help customers identify your store
+                </Typography>
+              )}
+            </Box>
+          </Collapse>
+
+          <Collapse in={isEditing}>
+            <Box>
+              <TextField
+                fullWidth
+                value={formData.marketName}
+                onChange={(e) => handleInputChange('marketName', e.target.value)}
+                placeholder="Enter your market/store name"
+                variant="outlined"
+                size="small"
+                inputProps={{ maxLength: 100 }}
+                helperText={`${formData.marketName.length}/100 characters`}
+              />
+            </Box>
+          </Collapse>
         </Box>
       </Box>
 
@@ -140,9 +259,9 @@ function SellerInfo({ profileData, userData }: SellerInfoProps) {
                 Role
               </Typography>
               <Box sx={{ mt: 0.5 }}>
-                <Chip 
-                  label={userData?.role || 'Unknown'} 
-                  color="primary" 
+                <Chip
+                  label={userData?.role || 'Unknown'}
+                  color="primary"
                   size="small"
                   variant="outlined"
                 />
@@ -151,6 +270,32 @@ function SellerInfo({ profileData, userData }: SellerInfoProps) {
           </Grid>
         </Box>
       </Box>
+
+      {/* Edit Actions */}
+      <Collapse in={isEditing}>
+        <Box px={2} pb={3}>
+          <Box display="flex" gap={1} justifyContent="flex-end">
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<SaveTwoToneIcon />}
+              onClick={handleSave}
+              disabled={isLoading || !formData.nickname.trim()}
+            >
+              Save
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<CancelTwoToneIcon />}
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+          </Box>
+        </Box>
+      </Collapse>
     </Card>
   );
 }

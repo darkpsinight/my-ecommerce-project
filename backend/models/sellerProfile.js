@@ -15,6 +15,29 @@ const socialMediaLinkSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+// Badge schema
+const badgeSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, "Badge name is required"],
+    trim: true
+  },
+  description: {
+    type: String,
+    required: [true, "Badge description is required"],
+    trim: true
+  },
+  icon: {
+    type: String,
+    required: [true, "Badge icon is required"],
+    trim: true
+  },
+  earnedAt: {
+    type: Date,
+    default: Date.now
+  }
+}, { _id: false });
+
 // Enterprise details schema
 const enterpriseDetailsSchema = new mongoose.Schema({
   companyName: {
@@ -57,6 +80,15 @@ const sellerProfileSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: [100, "Market name cannot be more than 100 characters"]
+  },
+  about: {
+    type: String,
+    trim: true,
+    maxlength: [500, "About section cannot be more than 500 characters"]
+  },
+  badges: {
+    type: [badgeSchema],
+    default: []
   },
   enterpriseDetails: {
     type: enterpriseDetailsSchema,

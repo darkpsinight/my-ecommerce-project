@@ -47,6 +47,20 @@ const sellerRoutes = async (fastify, opts) => {
           profileImageUrl: { type: "string" },
           bannerImageUrl: { type: "string" },
           marketName: { type: "string", maxLength: 100 },
+          about: { type: "string", maxLength: 500 },
+          badges: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                description: { type: "string" },
+                icon: { type: "string" },
+                earnedAt: { type: "string", format: "date-time" }
+              },
+              required: ["name", "description", "icon"]
+            }
+          },
           enterpriseDetails: {
             type: "object",
             properties: {
@@ -96,6 +110,19 @@ const sellerRoutes = async (fastify, opts) => {
                 profileImageUrl: { type: "string" },
                 bannerImageUrl: { type: "string" },
                 marketName: { type: "string" },
+                about: { type: "string" },
+                badges: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      description: { type: "string" },
+                      icon: { type: "string" },
+                      earnedAt: { type: "string", format: "date-time" }
+                    }
+                  }
+                },
                 enterpriseDetails: {
                   type: "object",
                   properties: {

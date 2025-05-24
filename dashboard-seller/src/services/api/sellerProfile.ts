@@ -4,6 +4,16 @@ import { store } from 'src/redux/store';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api/v1';
 
 /**
+ * Interface for badge data
+ */
+export interface BadgeData {
+  name: string;
+  description: string;
+  icon: string;
+  earnedAt?: string;
+}
+
+/**
  * Interface for seller profile data
  */
 export interface SellerProfileData {
@@ -11,6 +21,8 @@ export interface SellerProfileData {
   profileImageUrl?: string;
   bannerImageUrl?: string;
   marketName?: string;
+  about?: string;
+  badges?: BadgeData[];
   enterpriseDetails?: {
     companyName?: string;
     website?: string;

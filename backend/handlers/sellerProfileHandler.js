@@ -8,20 +8,20 @@ const mongoose = require("mongoose");
 const getSellerProfile = async (request, reply) => {
   try {
     const uid = request.user.uid;
-    
+
     // Find the user by uid
     const user = await User.findOne({ uid });
-    
+
     if (!user) {
       return reply.code(404).send({
         success: false,
         error: "User not found",
       });
     }
-    
+
     // Find or create seller profile
     let sellerProfile = await SellerProfile.findOne({ userId: user._id });
-    
+
     // If no profile exists yet, return just the basic user info
     if (!sellerProfile) {
       return reply.code(200).send({
@@ -37,7 +37,7 @@ const getSellerProfile = async (request, reply) => {
         },
       });
     }
-    
+
     // Return combined user and profile data
     return reply.code(200).send({
       success: true,
@@ -126,33 +126,52 @@ const updateExtendedSellerProfile = async (request, reply) => {
 
     // Find existing profile or create new one
     let sellerProfile = await SellerProfile.findOne({ userId: user._id });
-    
+
     if (!sellerProfile) {
-      // Create new profile
+      // Create new profile with default badges
+      const defaultBadges = [
+        {
+          name: 'New Seller',
+          description: 'Welcome to our marketplace! Start your selling journey.',
+          icon: 'verified',
+          earnedAt: new Date()
+        }
+      ];
+
       sellerProfile = new SellerProfile({
         userId: user._id,
         nickname: profileData.nickname,
         profileImageUrl: profileData.profileImageUrl || "",
         bannerImageUrl: profileData.bannerImageUrl || "",
         marketName: profileData.marketName || "",
+        about: profileData.about || "",
+        badges: profileData.badges || defaultBadges,
         enterpriseDetails: profileData.enterpriseDetails || {}
       });
     } else {
       // Update existing profile
       sellerProfile.nickname = profileData.nickname;
-      
+
       if (profileData.profileImageUrl !== undefined) {
         sellerProfile.profileImageUrl = profileData.profileImageUrl;
       }
-      
+
       if (profileData.bannerImageUrl !== undefined) {
         sellerProfile.bannerImageUrl = profileData.bannerImageUrl;
       }
-      
+
       if (profileData.marketName !== undefined) {
         sellerProfile.marketName = profileData.marketName;
       }
-      
+
+      if (profileData.about !== undefined) {
+        sellerProfile.about = profileData.about;
+      }
+
+      if (profileData.badges !== undefined) {
+        sellerProfile.badges = profileData.badges;
+      }
+
       if (profileData.enterpriseDetails !== undefined) {
         sellerProfile.enterpriseDetails = profileData.enterpriseDetails;
       }
@@ -168,7 +187,7 @@ const updateExtendedSellerProfile = async (request, reply) => {
     });
   } catch (error) {
     request.log.error(`Error updating seller profile: ${error.message}`);
-    
+
     // Handle validation errors
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message);
@@ -178,7 +197,7 @@ const updateExtendedSellerProfile = async (request, reply) => {
         details: validationErrors
       });
     }
-    
+
     return reply.code(500).send({
       success: false,
       error: "Internal server error",
@@ -192,35 +211,35 @@ const updateExtendedSellerProfile = async (request, reply) => {
 const getSellerProfileById = async (request, reply) => {
   try {
     const { id } = request.params;
-    
+
     // Check if ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
       // Try to find by externalId
       const sellerProfile = await SellerProfile.findOne({ externalId: id });
-      
+
       if (!sellerProfile) {
         return reply.code(404).send({
           success: false,
           error: "Seller profile not found"
         });
       }
-      
+
       return reply.code(200).send({
         success: true,
         data: sellerProfile
       });
     }
-    
+
     // Find by MongoDB ObjectId
     const sellerProfile = await SellerProfile.findById(id);
-    
+
     if (!sellerProfile) {
       return reply.code(404).send({
         success: false,
         error: "Seller profile not found"
       });
     }
-    
+
     return reply.code(200).send({
       success: true,
       data: sellerProfile

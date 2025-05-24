@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -11,7 +12,9 @@ import {
   styled,
   IconButton,
   Grid,
-  Tooltip
+  Tooltip,
+  TextField,
+  Collapse
 } from '@mui/material';
 
 import BusinessTwoToneIcon from '@mui/icons-material/BusinessTwoTone';
@@ -28,7 +31,15 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import RedditIcon from '@mui/icons-material/Reddit';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import EditTwoToneIcon from '@mui/icons-material/EditTwoTone';
+import SaveTwoToneIcon from '@mui/icons-material/SaveTwoTone';
+import CancelTwoToneIcon from '@mui/icons-material/CancelTwoTone';
+import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
+import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone';
 import { SellerProfileData } from 'src/services/api/sellerProfile';
+import { useAppDispatch } from 'src/redux/hooks';
+import { updateProfile } from 'src/redux/slices/sellerProfile';
+import { toast } from 'react-hot-toast';
 
 const AvatarPrimary = styled(Avatar)(
   ({ theme }) => `
@@ -54,6 +65,87 @@ interface EnterpriseDetailsProps {
 
 function EnterpriseDetails({ profileData }: EnterpriseDetailsProps) {
   const theme = useTheme();
+  const dispatch = useAppDispatch();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    companyName: profileData?.enterpriseDetails?.companyName || '',
+    website: profileData?.enterpriseDetails?.website || '',
+    socialMedia: profileData?.enterpriseDetails?.socialMedia || []
+  });
+
+  const handleEdit = () => {
+    setFormData({
+      companyName: profileData?.enterpriseDetails?.companyName || '',
+      website: profileData?.enterpriseDetails?.website || '',
+      socialMedia: profileData?.enterpriseDetails?.socialMedia || []
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      companyName: profileData?.enterpriseDetails?.companyName || '',
+      website: profileData?.enterpriseDetails?.website || '',
+      socialMedia: profileData?.enterpriseDetails?.socialMedia || []
+    });
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (!profileData) return;
+
+    setIsLoading(true);
+    try {
+      await dispatch(updateProfile({
+        ...profileData,
+        enterpriseDetails: {
+          companyName: formData.companyName.trim(),
+          website: formData.website.trim(),
+          socialMedia: formData.socialMedia.filter(social =>
+            social.platform.trim() && social.url.trim()
+          )
+        }
+      })).unwrap();
+
+      setIsEditing(false);
+      toast.success('Enterprise details updated successfully');
+    } catch (error) {
+      toast.error('Failed to update enterprise details');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSocialMediaChange = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      socialMedia: prev.socialMedia.map((social, i) =>
+        i === index ? { ...social, [field]: value } : social
+      )
+    }));
+  };
+
+  const addSocialMedia = () => {
+    setFormData(prev => ({
+      ...prev,
+      socialMedia: [...prev.socialMedia, { platform: '', url: '' }]
+    }));
+  };
+
+  const removeSocialMedia = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      socialMedia: prev.socialMedia.filter((_, i) => i !== index)
+    }));
+  };
 
   const getSocialMediaIcon = (platform: string) => {
     const platformLower = platform.toLowerCase();
@@ -103,7 +195,24 @@ function EnterpriseDetails({ profileData }: EnterpriseDetailsProps) {
 
   return (
     <Card>
-      <CardHeader title="Enterprise Details" />
+      <CardHeader
+        title="Enterprise Details"
+        action={
+          !isEditing && (
+            <IconButton
+              size="small"
+              onClick={handleEdit}
+              sx={{
+                '&:hover': {
+                  background: theme.colors.primary.lighter
+                }
+              }}
+            >
+              <EditTwoToneIcon fontSize="small" />
+            </IconButton>
+          )
+        }
+      />
       <Divider />
 
       {!hasEnterpriseDetails ? (

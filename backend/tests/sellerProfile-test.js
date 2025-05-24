@@ -23,7 +23,7 @@ const createTestUser = async () => {
   try {
     // First, delete any existing test users
     await User.deleteMany({ email: 'test-seller@example.com' });
-    
+
     // Create a new test user
     const user = new User({
       name: 'Test Seller',
@@ -33,7 +33,7 @@ const createTestUser = async () => {
       provider: 'email',
       isEmailConfirmed: true
     });
-    
+
     await user.save();
     console.log('Test user created:', user._id);
     return user;
@@ -48,7 +48,7 @@ const createTestSellerProfile = async (userId) => {
   try {
     // First, delete any existing test profiles
     await SellerProfile.deleteMany({ userId });
-    
+
     // Create a new test profile
     const profile = new SellerProfile({
       userId,
@@ -56,6 +56,21 @@ const createTestSellerProfile = async (userId) => {
       profileImageUrl: 'https://example.com/profile.jpg',
       bannerImageUrl: 'https://example.com/banner.jpg',
       marketName: 'CoolSeller\'s Market',
+      about: 'We are a premium seller offering high-quality digital products and excellent customer service.',
+      badges: [
+        {
+          name: 'Verified Seller',
+          description: 'Account has been verified and is trusted',
+          icon: 'verified',
+          earnedAt: new Date()
+        },
+        {
+          name: 'Top Seller',
+          description: 'Achieved top seller status with excellent sales performance',
+          icon: 'star',
+          earnedAt: new Date()
+        }
+      ],
       enterpriseDetails: {
         companyName: 'CoolSeller Inc.',
         website: 'https://coolseller.com',
@@ -65,7 +80,7 @@ const createTestSellerProfile = async (userId) => {
         ]
       }
     });
-    
+
     await profile.save();
     console.log('Test seller profile created:', profile._id);
     console.log('External ID:', profile.externalId);
@@ -81,7 +96,7 @@ const testGetSellerProfile = async (profileId) => {
   try {
     const profile = await SellerProfile.findById(profileId);
     console.log('Retrieved profile by ID:', profile ? 'Success' : 'Failed');
-    
+
     if (profile) {
       console.log('Profile data:', {
         nickname: profile.nickname,
@@ -99,16 +114,16 @@ const main = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
-    
+
     // Create test user
     const user = await createTestUser();
-    
+
     // Create test seller profile
     const profile = await createTestSellerProfile(user._id);
-    
+
     // Test retrieving the profile
     await testGetSellerProfile(profile._id);
-    
+
     console.log('Test completed successfully!');
   } catch (error) {
     console.error('Error during test:', error);

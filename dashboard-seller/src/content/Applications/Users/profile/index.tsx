@@ -14,6 +14,8 @@ import MyCards from './MyCards';
 import Addresses from './Addresses';
 import SellerInfo from './SellerInfo';
 import EnterpriseDetails from './EnterpriseDetails';
+import AboutSection from './AboutSection';
+import BadgesSection from './BadgesSection';
 import { ProfileContentSkeleton } from './components/ProfileSkeletons';
 
 function ManagementUserProfile() {
@@ -56,7 +58,13 @@ function ManagementUserProfile() {
       <Helmet>
         <title>Seller Profile - Management</title>
       </Helmet>
-      <Container sx={{ mt: 3 }} maxWidth="lg">
+      <Container
+        sx={{
+          mt: { xs: 1, sm: 2, md: 3 },
+          px: { xs: 1, sm: 2, md: 3 }
+        }}
+        maxWidth="lg"
+      >
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
@@ -64,14 +72,27 @@ function ManagementUserProfile() {
         )}
 
         {/* Debug button to manually refresh profile data */}
-        <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
+        <Box
+          display="flex"
+          justifyContent={{ xs: 'center', sm: 'flex-end' }}
+          sx={{ mb: { xs: 1, sm: 2 } }}
+        >
           <Button
             variant="outlined"
             size="small"
             onClick={() => dispatch(fetchSellerProfile())}
             disabled={loading}
+            sx={{
+              fontSize: { xs: '0.75rem', sm: '0.8rem' },
+              px: { xs: 1.5, sm: 2 }
+            }}
           >
-            Refresh Profile Data
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Refresh Profile Data
+            </Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+              Refresh
+            </Box>
           </Button>
         </Box>
 
@@ -80,16 +101,43 @@ function ManagementUserProfile() {
           direction="row"
           justifyContent="center"
           alignItems="stretch"
-          spacing={3}
+          spacing={{ xs: 1, sm: 2, md: 3 }}
         >
-          <Grid item xs={12} md={8}>
+          {/* Profile Cover and Badges Section */}
+          <Grid item xs={12} lg={8}>
             <ProfileCover
               user={user}
               profileData={profileData}
               isLoading={loading}
             />
+            {/* Badges Section - positioned right below the profile cover */}
+            <Box mt={{ xs: 1, sm: 2 }}>
+              {loading && !userData ? (
+                <Fade in={true} timeout={850}>
+                  <Box>
+                    <ProfileContentSkeleton />
+                  </Box>
+                </Fade>
+              ) : (
+                <BadgesSection profileData={profileData} />
+              )}
+            </Box>
+            {/* About Section - moved here to fill space */}
+            <Box mt={{ xs: 1, sm: 2 }}>
+              {loading && !userData ? (
+                <Fade in={true} timeout={800}>
+                  <Box>
+                    <ProfileContentSkeleton />
+                  </Box>
+                </Fade>
+              ) : (
+                <AboutSection profileData={profileData} />
+              )}
+            </Box>
           </Grid>
-          <Grid item xs={12} md={4}>
+
+          {/* Right Column - Recent Activity and Enterprise Details */}
+          <Grid item xs={12} lg={4}>
             {loading && !userData ? (
               <Fade in={true} timeout={800}>
                 <Box>
@@ -99,26 +147,14 @@ function ManagementUserProfile() {
             ) : (
               <RecentActivity />
             )}
-          </Grid>
-          {/* Only show SellerInfo and EnterpriseDetails if seller has enterprise details */}
-          {(profileData?.enterpriseDetails && (
-            profileData.enterpriseDetails.companyName ||
-            profileData.enterpriseDetails.website ||
-            (profileData.enterpriseDetails.socialMedia && profileData.enterpriseDetails.socialMedia.length > 0)
-          )) && (
-            <>
-              <Grid item xs={12} md={8}>
-                {loading && !userData ? (
-                  <Fade in={true} timeout={900}>
-                    <Box>
-                      <ProfileContentSkeleton />
-                    </Box>
-                  </Fade>
-                ) : (
-                  <SellerInfo profileData={profileData} userData={userData} />
-                )}
-              </Grid>
-              <Grid item xs={12} md={4}>
+
+            {/* Enterprise Details - moved here if available */}
+            {(profileData?.enterpriseDetails && (
+              profileData.enterpriseDetails.companyName ||
+              profileData.enterpriseDetails.website ||
+              (profileData.enterpriseDetails.socialMedia && profileData.enterpriseDetails.socialMedia.length > 0)
+            )) && (
+              <Box mt={{ xs: 1, sm: 2 }}>
                 {loading && !userData ? (
                   <Fade in={true} timeout={950}>
                     <Box>
@@ -128,10 +164,31 @@ function ManagementUserProfile() {
                 ) : (
                   <EnterpriseDetails profileData={profileData} />
                 )}
-              </Grid>
-            </>
+              </Box>
+            )}
+          </Grid>
+
+          {/* Seller Information - Full Width */}
+          {(profileData?.enterpriseDetails && (
+            profileData.enterpriseDetails.companyName ||
+            profileData.enterpriseDetails.website ||
+            (profileData.enterpriseDetails.socialMedia && profileData.enterpriseDetails.socialMedia.length > 0)
+          )) && (
+            <Grid item xs={12}>
+              {loading && !userData ? (
+                <Fade in={true} timeout={900}>
+                  <Box>
+                    <ProfileContentSkeleton />
+                  </Box>
+                  </Fade>
+              ) : (
+                <SellerInfo profileData={profileData} userData={userData} />
+              )}
+            </Grid>
           )}
-          <Grid item xs={12} md={8}>
+
+          {/* Feed and Popular Tags */}
+          <Grid item xs={12} lg={8}>
             {loading && !userData ? (
               <Fade in={true} timeout={1000}>
                 <Box>
@@ -142,7 +199,7 @@ function ManagementUserProfile() {
               <Feed />
             )}
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} lg={4}>
             {loading && !userData ? (
               <Fade in={true} timeout={1200}>
                 <Box>
@@ -154,7 +211,8 @@ function ManagementUserProfile() {
             )}
           </Grid>
 
-          <Grid item xs={12} md={7}>
+          {/* Cards and Addresses */}
+          <Grid item xs={12} md={6} lg={7}>
             {loading && !userData ? (
               <Fade in={true} timeout={1400}>
                 <Box>
@@ -165,7 +223,7 @@ function ManagementUserProfile() {
               <MyCards />
             )}
           </Grid>
-          <Grid item xs={12} md={5}>
+          <Grid item xs={12} md={6} lg={5}>
             {loading && !userData ? (
               <Fade in={true} timeout={1600}>
                 <Box>

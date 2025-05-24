@@ -36,8 +36,8 @@ function RecentActivity() {
         <Box pl={2} flex={1}>
           <Typography variant="h3">Orders</Typography>
 
-          <Box pt={2} display="flex">
-            <Box pr={8}>
+          <Box pt={2} display="flex" flexWrap="wrap" gap={2}>
+            <Box pr={{ xs: 2, sm: 4, md: 8 }} minWidth="80px">
               <Typography
                 gutterBottom
                 variant="caption"
@@ -45,9 +45,9 @@ function RecentActivity() {
               >
                 Total
               </Typography>
-              <Typography variant="h2">485</Typography>
+              <Typography variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>485</Typography>
             </Box>
-            <Box>
+            <Box minWidth="80px">
               <Typography
                 gutterBottom
                 variant="caption"
@@ -55,7 +55,7 @@ function RecentActivity() {
               >
                 Failed
               </Typography>
-              <Typography variant="h2">8</Typography>
+              <Typography variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>8</Typography>
             </Box>
           </Box>
         </Box>
@@ -68,8 +68,8 @@ function RecentActivity() {
         <Box pl={2} flex={1}>
           <Typography variant="h3">Favourites</Typography>
 
-          <Box pt={2} display="flex">
-            <Box pr={8}>
+          <Box pt={2} display="flex" flexWrap="wrap" gap={2}>
+            <Box pr={{ xs: 2, sm: 4, md: 8 }} minWidth="80px">
               <Typography
                 gutterBottom
                 variant="caption"
@@ -77,9 +77,9 @@ function RecentActivity() {
               >
                 Products
               </Typography>
-              <Typography variant="h2">64</Typography>
+              <Typography variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>64</Typography>
             </Box>
-            <Box>
+            <Box minWidth="80px">
               <Typography
                 gutterBottom
                 variant="caption"
@@ -87,7 +87,7 @@ function RecentActivity() {
               >
                 Lists
               </Typography>
-              <Typography variant="h2">15</Typography>
+              <Typography variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>15</Typography>
             </Box>
           </Box>
         </Box>
@@ -100,8 +100,8 @@ function RecentActivity() {
         <Box pl={2} flex={1}>
           <Typography variant="h3">Reviews</Typography>
 
-          <Box pt={2} display="flex">
-            <Box pr={8}>
+          <Box pt={2} display="flex" flexWrap="wrap" gap={2}>
+            <Box pr={{ xs: 2, sm: 4, md: 8 }} minWidth="80px">
               <Typography
                 gutterBottom
                 variant="caption"
@@ -109,9 +109,9 @@ function RecentActivity() {
               >
                 Total
               </Typography>
-              <Typography variant="h2">654</Typography>
+              <Typography variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>654</Typography>
             </Box>
-            <Box>
+            <Box minWidth="80px">
               <Typography
                 gutterBottom
                 variant="caption"
@@ -119,7 +119,7 @@ function RecentActivity() {
               >
                 Useful
               </Typography>
-              <Typography variant="h2">21</Typography>
+              <Typography variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>21</Typography>
             </Box>
           </Box>
         </Box>

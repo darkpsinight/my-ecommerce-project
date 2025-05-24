@@ -47,29 +47,14 @@ const AvatarWrapper = styled(Card)(
     margin-left: ${theme.spacing(2)};
     z-index: 9;
 
-    .MuiAvatar-root {
-      width: ${theme.spacing(14)};
-      height: ${theme.spacing(14)};
-    }
-
     @media (max-width: ${theme.breakpoints.values.sm}px) {
       margin-top: -${theme.spacing(6)}; /* Adjusted for smaller banner height on small screens */
       margin-left: ${theme.spacing(2)};
-
-      .MuiAvatar-root {
-        width: ${theme.spacing(12)};
-        height: ${theme.spacing(12)};
-      }
     }
 
     @media (max-width: ${theme.breakpoints.values.xs}px) {
       margin-top: -${theme.spacing(5)}; /* Adjusted for even smaller banner height on extra small screens */
       margin-left: ${theme.spacing(1.5)};
-
-      .MuiAvatar-root {
-        width: ${theme.spacing(10)};
-        height: ${theme.spacing(10)};
-      }
     }
 `
 );
@@ -512,12 +497,66 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
       <AvatarWrapper>
         {/* Only show the avatar when we have a valid URL (not the default placeholder) */}
         {(profileData?.profileImageUrl || uploadingAvatar) ? (
-          <Avatar variant="rounded" alt={user.name} src={profileImageUrl} />
+          <Avatar
+            variant="rounded"
+            alt={user.name}
+            src={profileImageUrl}
+            imgProps={{
+              style: {
+                objectFit: 'cover',
+                width: '100%',
+                height: '100%'
+              },
+              onLoad: (e) => {
+                // Ensure the image is displayed at full size when loaded
+                const img = e.target as HTMLImageElement;
+                img.style.width = '100%';
+                img.style.height = '100%';
+              }
+            }}
+            sx={{
+              width: (theme) => ({
+                xs: theme.spacing(10),
+                sm: theme.spacing(12),
+                md: theme.spacing(14)
+              }),
+              height: (theme) => ({
+                xs: theme.spacing(10),
+                sm: theme.spacing(12),
+                md: theme.spacing(14)
+              }),
+              // Ensure consistent sizing during all states
+              minWidth: (theme) => ({
+                xs: theme.spacing(10),
+                sm: theme.spacing(12),
+                md: theme.spacing(14)
+              }),
+              minHeight: (theme) => ({
+                xs: theme.spacing(10),
+                sm: theme.spacing(12),
+                md: theme.spacing(14)
+              }),
+              // Ensure the image maintains aspect ratio and fills the avatar
+              '& img': {
+                objectFit: 'cover',
+                width: '100%',
+                height: '100%'
+              }
+            }}
+          />
         ) : (
           <Box
             sx={{
-              height: '100%',
-              width: '100%',
+              width: (theme) => ({
+                xs: theme.spacing(10),
+                sm: theme.spacing(12),
+                md: theme.spacing(14)
+              }),
+              height: (theme) => ({
+                xs: theme.spacing(10),
+                sm: theme.spacing(12),
+                md: theme.spacing(14)
+              }),
               bgcolor: 'background.neutral',
               display: 'flex',
               alignItems: 'center',

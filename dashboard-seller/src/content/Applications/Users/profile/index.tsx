@@ -12,6 +12,8 @@ import Feed from './Feed';
 import PopularTags from './PopularTags';
 import MyCards from './MyCards';
 import Addresses from './Addresses';
+import SellerInfo from './SellerInfo';
+import EnterpriseDetails from './EnterpriseDetails';
 import { ProfileContentSkeleton } from './components/ProfileSkeletons';
 
 function ManagementUserProfile() {
@@ -98,6 +100,37 @@ function ManagementUserProfile() {
               <RecentActivity />
             )}
           </Grid>
+          {/* Only show SellerInfo and EnterpriseDetails if seller has enterprise details */}
+          {(profileData?.enterpriseDetails && (
+            profileData.enterpriseDetails.companyName ||
+            profileData.enterpriseDetails.website ||
+            (profileData.enterpriseDetails.socialMedia && profileData.enterpriseDetails.socialMedia.length > 0)
+          )) && (
+            <>
+              <Grid item xs={12} md={8}>
+                {loading && !userData ? (
+                  <Fade in={true} timeout={900}>
+                    <Box>
+                      <ProfileContentSkeleton />
+                    </Box>
+                  </Fade>
+                ) : (
+                  <SellerInfo profileData={profileData} userData={userData} />
+                )}
+              </Grid>
+              <Grid item xs={12} md={4}>
+                {loading && !userData ? (
+                  <Fade in={true} timeout={950}>
+                    <Box>
+                      <ProfileContentSkeleton />
+                    </Box>
+                  </Fade>
+                ) : (
+                  <EnterpriseDetails profileData={profileData} />
+                )}
+              </Grid>
+            </>
+          )}
           <Grid item xs={12} md={8}>
             {loading && !userData ? (
               <Fade in={true} timeout={1000}>
@@ -120,6 +153,7 @@ function ManagementUserProfile() {
               <PopularTags />
             )}
           </Grid>
+
           <Grid item xs={12} md={7}>
             {loading && !userData ? (
               <Fade in={true} timeout={1400}>

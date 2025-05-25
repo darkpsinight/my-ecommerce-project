@@ -2,6 +2,18 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api/v1';
 
+// Function to get token without importing store directly
+const getAuthToken = (): string | null => {
+  // Use dynamic import to avoid circular dependency
+  try {
+    const { store } = require('src/redux/store');
+    return store.getState().auth.token;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};
+
 export interface LoginResponse {
   statusCode: number;
   message: string;
@@ -63,10 +75,10 @@ class AuthService {
       const response = await axios.get(`${API_BASE_URL}/auth/oauth/google`, {
         withCredentials: true
       });
-      
+
       // Step 2: Redirect to Google OAuth login page
       window.location.href = response.data.loginUrl;
-      
+
       // Since we're redirecting, we'll never reach this point
       // But we need to return a Promise to satisfy TypeScript
       return {} as LoginResponse;
@@ -83,11 +95,22 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    // Send request to backend to clear the HTTP-only cookie
+    // Get token using the helper function to avoid circular dependency
+    const token = getAuthToken();
+
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    // Send request to backend to clear the HTTP-only cookie and blacklist token
     await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
       withCredentials: true
     });
   }
 }
 
-export const authService = AuthService.getInstance(); 
+export const authService = AuthService.getInstance();

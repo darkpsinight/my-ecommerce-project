@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { getListingsSummary } from 'src/services/api/listings';
-import { RootState } from '../store';
 
 // Define the type for the summary data
 export interface SummaryData {
@@ -35,7 +34,7 @@ export const fetchListingsSummary = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await getListingsSummary();
-      
+
       if (response && response.success && response.data) {
         return {
           activeListings: response.data.activeListings || 0,
@@ -89,16 +88,16 @@ const listingsSummarySlice = createSlice({
 });
 
 // Export actions
-export const { 
-  updateActiveListingsCount, 
-  incrementActiveListings, 
+export const {
+  updateActiveListingsCount,
+  incrementActiveListings,
   decrementActiveListings,
   resetSummaryState
 } = listingsSummarySlice.actions;
 
-// Export selectors
-export const selectListingsSummary = (state: RootState) => state.listingsSummary.data;
-export const selectListingsSummaryStatus = (state: RootState) => state.listingsSummary.status;
-export const selectListingsSummaryError = (state: RootState) => state.listingsSummary.error;
+// Export selectors (without RootState type to avoid circular dependency)
+export const selectListingsSummary = (state: any) => state.listingsSummary.data;
+export const selectListingsSummaryStatus = (state: any) => state.listingsSummary.status;
+export const selectListingsSummaryError = (state: any) => state.listingsSummary.error;
 
 export default listingsSummarySlice.reducer;

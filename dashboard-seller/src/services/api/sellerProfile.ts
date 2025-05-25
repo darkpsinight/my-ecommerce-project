@@ -1,7 +1,18 @@
 import axios from 'axios';
-import { store } from 'src/redux/store';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api/v1';
+
+// Function to get token without importing store directly
+const getAuthToken = (): string | null => {
+  // Use dynamic import to avoid circular dependency
+  try {
+    const { store } = require('src/redux/store');
+    return store.getState().auth.token;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};
 
 /**
  * Interface for badge data
@@ -53,8 +64,8 @@ export interface SellerProfileResponse {
  */
 export const getSellerProfile = async (): Promise<SellerProfileResponse> => {
   try {
-    // Get token directly from Redux store
-    const token = store.getState().auth.token;
+    // Get token using the helper function to avoid circular dependency
+    const token = getAuthToken();
 
     if (!token) {
       throw new Error('Authentication token is missing. Please log in again.');
@@ -98,8 +109,8 @@ export const updateSellerProfile = async (profileData: Partial<SellerProfileData
   try {
     console.log('updateSellerProfile called with data:', profileData);
 
-    // Get token directly from Redux store
-    const token = store.getState().auth.token;
+    // Get token using the helper function to avoid circular dependency
+    const token = getAuthToken();
 
     if (!token) {
       throw new Error('Authentication token is missing. Please log in again.');

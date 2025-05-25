@@ -9,6 +9,7 @@ import {
   useTheme
 } from '@mui/material';
 import { useThemeContext } from 'src/contexts/ThemeContext';
+import { useAppSelector } from 'src/redux/hooks';
 import AttachFileTwoToneIcon from '@mui/icons-material/AttachFileTwoTone';
 import SendTwoToneIcon from '@mui/icons-material/SendTwoTone';
 
@@ -36,6 +37,11 @@ function BottomBarContent() {
     avatar: '/static/images/avatars/1.jpg'
   };
 
+  // Get seller profile data from Redux store
+  const { profileData } = useAppSelector((state) => state.sellerProfile);
+  const displayName = profileData?.nickname || user.name;
+  const profileImageUrl = profileData?.profileImageUrl || user.avatar;
+
   return (
     <Box
       sx={{
@@ -50,8 +56,8 @@ function BottomBarContent() {
       <Box flexGrow={1} display="flex" alignItems="center">
         <Avatar
           sx={{ display: { xs: 'none', sm: 'flex' }, mr: 1 }}
-          alt={user.name}
-          src={user.avatar}
+          alt={displayName}
+          src={profileImageUrl}
         />
         <MessageInputWrapper
           autoFocus

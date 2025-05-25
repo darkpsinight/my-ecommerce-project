@@ -31,6 +31,7 @@ import Label from 'src/components/Label';
 import CheckTwoToneIcon from '@mui/icons-material/CheckTwoTone';
 import AlarmTwoToneIcon from '@mui/icons-material/AlarmTwoTone';
 import { Link as RouterLink } from 'react-router-dom';
+import { useAppSelector } from 'src/redux/hooks';
 
 const AvatarSuccess = styled(Avatar)(
   ({ theme }) => `
@@ -118,6 +119,9 @@ function SidebarContent() {
     jobtitle: 'Software Developer'
   };
 
+  // Get seller profile data from Redux store
+  const { profileData } = useAppSelector((state) => state.sellerProfile);
+
   const [state, setState] = useState({
     invisible: true
   });
@@ -141,10 +145,14 @@ function SidebarContent() {
     setCurrentTab(value);
   };
 
+  // Use seller profile nickname or fallback to user name
+  const displayName = profileData?.nickname || user.name;
+  const profileImageUrl = profileData?.profileImageUrl || user.avatar;
+
   return (
     <RootWrapper>
       <Box display="flex" alignItems="flex-start">
-        <Avatar alt={user.name} src={user.avatar} />
+        <Avatar alt={displayName} src={profileImageUrl} />
         <Box
           sx={{
             ml: 1.5,
@@ -158,7 +166,7 @@ function SidebarContent() {
           >
             <Box>
               <Typography variant="h5" noWrap>
-                {user.name}
+                {displayName}
               </Typography>
               <Typography variant="subtitle1" noWrap>
                 {user.jobtitle}

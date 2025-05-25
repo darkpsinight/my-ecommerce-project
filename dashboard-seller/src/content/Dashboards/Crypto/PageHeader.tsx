@@ -1,5 +1,6 @@
 import { Typography, Avatar, Grid } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useAppSelector } from 'src/redux/hooks';
 
 function PageHeader() {
   const user = {
@@ -7,6 +8,11 @@ function PageHeader() {
     avatar: '/static/images/avatars/1.jpg'
   };
   const theme = useTheme();
+
+  // Get seller profile data from Redux store
+  const { profileData } = useAppSelector((state) => state.sellerProfile);
+  const displayName = profileData?.nickname || user.name;
+  const profileImageUrl = profileData?.profileImageUrl || user.avatar;
 
   return (
     <Grid container alignItems="center">
@@ -18,13 +24,13 @@ function PageHeader() {
             height: theme.spacing(8)
           }}
           variant="rounded"
-          alt={user.name}
-          src={user.avatar}
+          alt={displayName}
+          src={profileImageUrl}
         />
       </Grid>
       <Grid item>
         <Typography variant="h3" component="h3" gutterBottom>
-          Welcome, {user.name}!
+          Welcome, {displayName}!
         </Typography>
         <Typography variant="subtitle2">
           Today is a good day to start trading crypto assets!

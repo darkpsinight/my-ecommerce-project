@@ -1,7 +1,18 @@
 import axios from 'axios';
-import { store } from 'src/redux/store';
 
 const API_URL = process.env.REACT_APP_API_URL;
+
+// Function to get token without importing store directly
+const getAuthToken = (): string | null => {
+  // Use dynamic import to avoid circular dependency
+  try {
+    const { store } = require('src/redux/store');
+    return store.getState().auth.token;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};
 
 // Define folder paths for different image types
 export const IMAGE_FOLDERS = {
@@ -22,8 +33,8 @@ export const uploadImage = async (file: File, folder: string = IMAGE_FOLDERS.PRO
     const formData = new FormData();
     formData.append('file', file);
 
-    // Get token directly from Redux store for immediate access
-    const token = store.getState().auth.token;
+    // Get token using the helper function to avoid circular dependency
+    const token = getAuthToken();
 
     // Debug log to check token
     console.log('Image upload - Auth token:', token ? `${token.substring(0, 10)}...` : 'No token');
@@ -123,8 +134,8 @@ export const uploadImage = async (file: File, folder: string = IMAGE_FOLDERS.PRO
  */
 export const getImageKitAuthParams = async () => {
   try {
-    // Get token directly from Redux store for immediate access
-    const token = store.getState().auth.token;
+    // Get token using the helper function to avoid circular dependency
+    const token = getAuthToken();
 
     // Debug log to check token
     console.log('Auth params - Auth token:', token ? `${token.substring(0, 10)}...` : 'No token');

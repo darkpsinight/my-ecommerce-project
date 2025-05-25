@@ -1,11 +1,22 @@
 import axios from 'axios';
-import { store } from 'src/redux/store';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api/v1';
 
+// Function to get token without importing store directly
+const getAuthToken = (): string | null => {
+  // Use dynamic import to avoid circular dependency
+  try {
+    const { store } = require('src/redux/store');
+    return store.getState().auth.token;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};
+
 // Axios instance with auth header
 const getAuthAxios = () => {
-  const token = store.getState().auth.token;
+  const token = getAuthToken();
 
   return axios.create({
     baseURL: API_BASE_URL,

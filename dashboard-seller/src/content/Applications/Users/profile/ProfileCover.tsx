@@ -16,7 +16,6 @@ import { SellerProfileData } from 'src/services/api/sellerProfile';
 import { uploadImage, IMAGE_FOLDERS } from 'src/services/api/imageUpload';
 import { toast } from 'react-hot-toast';
 import UploadTwoToneIcon from '@mui/icons-material/UploadTwoTone';
-import MoreHorizTwoToneIcon from '@mui/icons-material/MoreHorizTwoTone';
 import { ProfileCoverSkeleton } from './components/ProfileSkeletons';
 import SimpleBannerCropper from './components/SimpleBannerCropper';
 
@@ -348,7 +347,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
       <Box display="flex" mb={3}>
         <Box>
           <Typography variant="h3" component="h3" gutterBottom>
-            Profile for {user.name}
+            Profile for {profileData?.nickname || user.name}
           </Typography>
           <Typography variant="subtitle2">
             Manage your profile information and appearance
@@ -499,7 +498,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
         {(profileData?.profileImageUrl || uploadingAvatar) ? (
           <Avatar
             variant="rounded"
-            alt={user.name}
+            alt={profileData?.nickname || user.name}
             src={profileImageUrl}
             imgProps={{
               style: {
@@ -565,7 +564,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
             }}
           >
             <Typography variant="h3" color="text.secondary">
-              {user.name.charAt(0).toUpperCase()}
+              {(profileData?.nickname || user.name).charAt(0).toUpperCase()}
             </Typography>
           </Box>
         )}

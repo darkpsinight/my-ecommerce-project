@@ -22,6 +22,18 @@ const AvatarPrimary = styled(Avatar)(
 `
 );
 
+// Styled heading that doesn't rely on MUI theme resolution during initial render
+const StableHeading = styled('h3')(
+  ({ theme }) => `
+      font-weight: 700;
+      font-size: 25px;
+      line-height: 1.4;
+      margin: 0;
+      color: ${theme.palette.mode === 'dark' ? '#ffffff' : '#223354'};
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+`
+);
+
 function RecentActivity() {
   const theme = useTheme();
 
@@ -34,7 +46,7 @@ function RecentActivity() {
           <ShoppingBagTwoToneIcon />
         </AvatarPrimary>
         <Box pl={2} flex={1}>
-          <Typography variant="h3">Orders</Typography>
+          <StableHeading>Orders</StableHeading>
 
           <Box pt={2} display="flex" flexWrap="wrap" gap={2}>
             <Box pr={{ xs: 2, sm: 4, md: 8 }} minWidth="80px">
@@ -66,7 +78,7 @@ function RecentActivity() {
           <FavoriteTwoToneIcon />
         </AvatarPrimary>
         <Box pl={2} flex={1}>
-          <Typography variant="h3">Favourites</Typography>
+          <StableHeading>Favourites</StableHeading>
 
           <Box pt={2} display="flex" flexWrap="wrap" gap={2}>
             <Box pr={{ xs: 2, sm: 4, md: 8 }} minWidth="80px">
@@ -98,7 +110,7 @@ function RecentActivity() {
           <StarTwoToneIcon />
         </AvatarPrimary>
         <Box pl={2} flex={1}>
-          <Typography variant="h3">Reviews</Typography>
+          <StableHeading>Reviews</StableHeading>
 
           <Box pt={2} display="flex" flexWrap="wrap" gap={2}>
             <Box pr={{ xs: 2, sm: 4, md: 8 }} minWidth="80px">

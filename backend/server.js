@@ -32,6 +32,7 @@ const publicRoutes = require("./routes/public");
 const { sellerRoutes } = require("./routes/seller");
 const { listingsRoutes } = require("./routes/listings");
 const { imageUploadRoutes } = require("./routes/imageUpload");
+const { walletRoutes } = require("./routes/wallet");
 const performanceRoutes = require("./routes/performanceRoutes");
 const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
@@ -121,6 +122,9 @@ fastify.register(sellerRoutes, { prefix: "/api/v1/seller" });
 
 // Register listings routes
 fastify.register(listingsRoutes, { prefix: "/api/v1/listings" });
+
+// Register wallet routes
+fastify.register(walletRoutes, { prefix: "/api/v1/wallet" });
 
 // Register multipart content parser for file uploads
 fastify.register(require('fastify-multipart'), {

@@ -39,6 +39,16 @@ const configs = {
 	ACCOUNT_DELETION_CRON: process.env.ACCOUNT_DELETION_CRON || "0 0 * * *",
 	CODE_ENCRYPTION_KEY: process.env.CODE_ENCRYPTION_KEY || "AdV7ya6ehyDaO48VYCyndi2LWkFiupZf",
 
+	// Stripe Configuration
+	STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+	STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+	STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+
+	// Wallet Configuration
+	WALLET_DEFAULT_CURRENCY: process.env.WALLET_DEFAULT_CURRENCY || "USD",
+	WALLET_MIN_FUNDING_AMOUNT: Number(process.env.WALLET_MIN_FUNDING_AMOUNT) || 5,
+	WALLET_MAX_FUNDING_AMOUNT: Number(process.env.WALLET_MAX_FUNDING_AMOUNT) || 1000,
+
 	get ACCOUNT_DELETION_DELAY() {
 		// If minutes are specified, use that for testing
 		if (this.ACCOUNT_DELETION_DELAY_ONE_MINUTE > 0) {
@@ -135,10 +145,10 @@ const loadConfigsFromDB = async (fastify) => {
 	try {
 		// Initialize the config cache
 		await configCache.initialize(fastify);
-		
+
 		// Get all configs from cache
 		const cachedConfigs = configCache.getAll();
-		
+
 		// Override environment configs with cached configs
 		Object.entries(cachedConfigs).forEach(([key, config]) => {
 			const originalValue = configs[key];

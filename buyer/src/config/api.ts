@@ -16,6 +16,13 @@ export const AUTH_API = {
     GENERATE_SELLER_TOKEN: `${API_URL}/auth/generate-seller-token`,
 };
 
+export const WALLET_API = {
+    GET_WALLET: `${API_URL}/wallet`,
+    CREATE_PAYMENT_INTENT: `${API_URL}/wallet/payment-intent`,
+    CONFIRM_PAYMENT: `${API_URL}/wallet/confirm-payment`,
+    GET_TRANSACTIONS: `${API_URL}/wallet/transactions`,
+};
+
 export const ADMIN_API = {
     CONFIGS: `${API_URL}/public/configs`,
     DELETE_CONFIG: (key: string) => `${API_URL}/public/configs/${key}`,

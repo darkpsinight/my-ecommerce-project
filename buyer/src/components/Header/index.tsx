@@ -11,7 +11,7 @@ import { decodeToken } from "@/utils/jwt";
 // Import subcomponents
 import Logo from "./components/Logo";
 import SearchBar from "./components/SearchBar";
-import SupportContact from "./components/SupportContact";
+import WalletButton from "./components/SupportContact";
 import CartButton from "./components/CartButton";
 import AccountDropdown from "./components/AccountDropdown";
 import SellerDashboardButton from "./components/SellerDashboardButton";
@@ -28,7 +28,7 @@ const Header = () => {
   const [stickyMenu, setStickyMenu] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const accountDropdownRef = useRef(null);
-  
+
   // Redux state
   const dispatch = useDispatch();
   const { token } = useAppSelector((state) => state.authReducer);
@@ -63,7 +63,7 @@ const Header = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      
+
       if (response.ok) {
         // Clear tokens from Redux store
         dispatch(clearTokens());
@@ -95,11 +95,11 @@ const Header = () => {
       if (response.data.token) {
         // Get verifyToken from sessionStorage
         const verifyToken = sessionStorage.getItem('verifyToken');
-        
+
         // Include both tokens in the redirect URL
         const sellerDashboardUrl = `${process.env.NEXT_PUBLIC_SELLER_DASHBOARD_URL}/auth-redirect?token=${response.data.token}${verifyToken ? `&verifyToken=${encodeURIComponent(verifyToken)}` : ''}`;
         window.location.href = sellerDashboardUrl;
-        
+
         // Clear URL token after redirect
         window.history.replaceState({}, document.title, window.location.pathname);
       } else {
@@ -130,9 +130,9 @@ const Header = () => {
         setAccountDropdownOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
-    
+
     return () => {
       window.removeEventListener("scroll", handleStickyMenu);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -160,21 +160,21 @@ const Header = () => {
 
           {/* Header right section */}
           <div className="flex w-full lg:w-auto items-center gap-2 sm:gap-5">
-            <SupportContact />
-            
+            <WalletButton />
+
             {/* Divider */}
             <span className="hidden xl:block w-px h-7.5 bg-gray-4"></span>
 
             <div className="flex w-full lg:w-auto justify-between items-center gap-2 sm:gap-5">
               <div className="flex items-center gap-2 sm:gap-5">
                 <SellerDashboardButton handleDashboardClick={handleDashboardClick} />
-                
+
                 {/* Divider - only show for sellers */}
                 {isSeller && (
                   <span className="hidden xl:block w-px h-7.5 bg-gray-4"></span>
                 )}
-                
-                <AccountDropdown 
+
+                <AccountDropdown
                   isAuthenticated={isAuthenticated}
                   handleDashboardClick={handleDashboardClick}
                   handleLogout={handleLogout}
@@ -182,11 +182,11 @@ const Header = () => {
                 />
                 <CartButton />
               </div>
-              
+
               {/* Mobile menu hamburger button */}
-              <HamburgerButton 
-                navigationOpen={navigationOpen} 
-                setNavigationOpen={setNavigationOpen} 
+              <HamburgerButton
+                navigationOpen={navigationOpen}
+                setNavigationOpen={setNavigationOpen}
               />
             </div>
           </div>
@@ -200,7 +200,7 @@ const Header = () => {
           <div className="flex items-center justify-between">
             {/* Main navigation */}
             <MainNav navigationOpen={navigationOpen} stickyMenu={stickyMenu} />
-            
+
             {/* Additional navigation links */}
             <NavLinks />
           </div>

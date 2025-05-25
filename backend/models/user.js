@@ -67,6 +67,15 @@ const userSchema = new mongoose.Schema({
 		type: Boolean,
 		default: false,
 	},
+	// Wallet reference
+	walletId: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: "Wallet"
+	},
+	// Stripe customer ID for payment processing
+	stripeCustomerId: {
+		type: String
+	},
 	createdAt: {
 		type: Date,
 		default: Date.now,

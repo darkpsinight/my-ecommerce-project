@@ -580,7 +580,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ user, profileData, isLoadin
           />
           <label htmlFor="icon-button-file">
             {uploadingAvatar ? (
-              <CircularProgress size={24} sx={{ color: 'white' }} />
+              <CircularProgress size={24} color="primary" />
             ) : (
               <IconButton
                 component="span"

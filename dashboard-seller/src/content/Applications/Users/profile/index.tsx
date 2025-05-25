@@ -82,17 +82,31 @@ function ManagementUserProfile() {
             size="small"
             onClick={() => dispatch(fetchSellerProfile())}
             disabled={loading}
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
             sx={{
               fontSize: { xs: '0.75rem', sm: '0.8rem' },
               px: { xs: 1.5, sm: 2 }
             }}
           >
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-              Refresh Profile Data
-            </Box>
-            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-              Refresh
-            </Box>
+            {loading ? (
+              <>
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  Refreshing...
+                </Box>
+                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                  Loading...
+                </Box>
+              </>
+            ) : (
+              <>
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  Refresh Profile Data
+                </Box>
+                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                  Refresh
+                </Box>
+              </>
+            )}
           </Button>
         </Box>
 

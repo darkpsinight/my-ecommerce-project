@@ -32,7 +32,7 @@ const walletRoutes = async (fastify, opts) => {
     },
     method: "GET",
     url: "/",
-    preHandler: verifyAuth(["buyer"]),
+    preHandler: verifyAuth(["buyer", "seller", "admin"]), // Allow buyer, seller, and admin access
     schema: walletSchema.getWallet,
     handler: getWallet
   });
@@ -44,7 +44,7 @@ const walletRoutes = async (fastify, opts) => {
     },
     method: "POST",
     url: "/payment-intent",
-    preHandler: verifyAuth(["buyer"]),
+    preHandler: verifyAuth(["buyer", "seller", "admin"]), // Allow buyer, seller, and admin access
     schema: walletSchema.createPaymentIntent,
     handler: createPaymentIntent
   });
@@ -56,7 +56,7 @@ const walletRoutes = async (fastify, opts) => {
     },
     method: "POST",
     url: "/confirm-payment",
-    preHandler: verifyAuth(["buyer"]),
+    preHandler: verifyAuth(["buyer", "seller", "admin"]), // Allow buyer, seller, and admin access
     schema: walletSchema.confirmPayment,
     handler: confirmPayment
   });
@@ -68,7 +68,7 @@ const walletRoutes = async (fastify, opts) => {
     },
     method: "GET",
     url: "/transactions",
-    preHandler: verifyAuth(["buyer"]),
+    preHandler: verifyAuth(["buyer", "seller", "admin"]), // Allow buyer, seller, and admin access
     schema: walletSchema.getTransactions,
     handler: getTransactions
   });

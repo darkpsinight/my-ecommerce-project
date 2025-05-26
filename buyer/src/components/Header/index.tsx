@@ -6,7 +6,7 @@ import { clearTokens } from "@/redux/features/auth-slice";
 import { AUTH_API } from "@/config/api";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { decodeToken } from "@/utils/jwt";
+import { decodeToken, hasRole } from "@/utils/jwt";
 
 // Import subcomponents
 import Logo from "./components/Logo";
@@ -34,7 +34,7 @@ const Header = () => {
   const { token } = useAppSelector((state) => state.authReducer);
   const isAuthenticated = !!token;
   const decodedToken = token ? decodeToken(token) : null;
-  const isSeller = decodedToken?.role === "seller";
+  const isSeller = hasRole(decodedToken, "seller");
 
   // Header category options for the search component
   const searchOptions = [

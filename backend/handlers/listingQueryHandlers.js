@@ -27,7 +27,8 @@ const getListings = async (request, reply) => {
     }
 
     // If user is not authenticated or not an admin, only show active listings
-    if (!request.user || request.user.role !== "admin") {
+    const userRoles = request.user ? request.user.roles : [];
+    if (!request.user || !userRoles.includes("admin")) {
       filter.status = "active";
     }
 
@@ -109,7 +110,8 @@ const getListingById = async (request, reply) => {
 
     // Check if user is the seller or an admin to show more details
     const isSeller = request.user && request.user.uid === listing.sellerId;
-    const isAdmin = request.user && request.user.role === "admin";
+    const userRoles = request.user ? request.user.roles : [];
+    const isAdmin = request.user && userRoles.includes("admin");
 
     // If not active and not the seller or admin, don't show
     if (listing.status !== "active" && !isSeller && !isAdmin) {

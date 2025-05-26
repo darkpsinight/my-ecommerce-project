@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { useAppSelector } from "@/redux/store";
 import { useUserInfo } from "@/hooks/useUserInfo";
-import { decodeToken } from "@/utils/jwt";
+import { decodeToken, hasRole } from "@/utils/jwt";
 import Dropdown from "../Dropdown";
 
 interface AccountDropdownProps {
@@ -33,7 +33,7 @@ const AccountDropdown: React.FC<AccountDropdownProps> = ({
   // Create account menu item with submenu for the Dropdown component
   const accountMenuItem = {
     title: isAuthenticated
-        ? isLoading 
+        ? isLoading
           ? "Loading..."
           : (userInfo?.name || decodedToken?.name || "").length > 8
             ? `${(userInfo?.name || decodedToken?.name || "").slice(0, 8)}...`
@@ -65,11 +65,11 @@ const AccountDropdown: React.FC<AccountDropdownProps> = ({
         />
       </svg>
     ),
-    submenu: isAuthenticated 
+    submenu: isAuthenticated
       ? [
-          // Show Dashboard only for sellers - using decoded token role
-          ...(decodedToken?.role === 'seller' ? [
-            { 
+          // Show Dashboard only for sellers - using roles array
+          ...(hasRole(decodedToken, 'seller') ? [
+            {
               title: "Access Your Dashboard",
               path: "#",
               onClick: handleDashboardClick

@@ -16,7 +16,7 @@ export const useUserInfo = () => {
         dispatch(setUserInfo({
           email: decodedToken.email,
           name: decodedToken.name,
-          role: decodedToken.role,
+          roles: decodedToken.roles,
           isEmailConfirmed: decodedToken.isEmailConfirmed
         }));
       }
@@ -27,4 +27,4 @@ export const useUserInfo = () => {
   }, [token]);
 
   return { userInfo };
-}; 
+};

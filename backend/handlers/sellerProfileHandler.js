@@ -30,7 +30,7 @@ const getSellerProfile = async (request, reply) => {
           user: {
             name: user.name,
             email: user.email,
-            role: user.role,
+            roles: user.roles,
           },
           profile: null,
           hasProfile: false
@@ -45,7 +45,7 @@ const getSellerProfile = async (request, reply) => {
         user: {
           name: user.name,
           email: user.email,
-          role: user.role,
+          roles: user.roles,
         },
         profile: sellerProfile,
         hasProfile: true
@@ -93,7 +93,7 @@ const updateBasicSellerInfo = async (request, reply) => {
       data: {
         name: user.name,
         email: user.email,
-        role: user.role,
+        roles: user.roles,
       },
     });
   } catch (error) {

@@ -17,6 +17,7 @@ const {
   getRefreshTokenOptns,
 } = require("../models/refreshToken");
 const { User, hashPasswd } = require("../models/user");
+const { Wallet } = require("../models/wallet");
 const {
   sendErrorResponse,
   sendSuccessResponse,
@@ -38,7 +39,7 @@ const registerUser = async (request, reply) => {
   request.log.info("handlers/registerUser");
 
   let { name, email, password } = request.body;
-  let role = "buyer";
+  let roles = ["buyer"];
   let provider = "email";
 
   // Validate password strength
@@ -83,7 +84,7 @@ const registerUser = async (request, reply) => {
   if (configs.CHECK_ADMIN) {
     const count = await User.countDocuments();
     if (!count) {
-      role = "admin";
+      roles = ["admin", "buyer", "seller", "support"]; // first user should have access to all roles and all resources
     }
   }
 
@@ -92,7 +93,7 @@ const registerUser = async (request, reply) => {
     uid: crypto.randomBytes(15).toString("hex"),
     email,
     password,
-    role,
+    roles,
     provider,
   });
 
@@ -237,7 +238,7 @@ const sellerSignin = async (request, reply) => {
   if (!user) return; // Error response already sent by handleSignIn
 
   // Check if user has seller or admin role
-  if (user.role !== "seller") {
+  if (!user.hasRole("seller") && !user.hasRole("admin")) {
     return sendErrorResponse(reply, 403, "Access denied", {
       metadata: {
         hint: "Only sellers can access this login",
@@ -272,7 +273,7 @@ const requestLoginWithEmail = async (request, reply) => {
   request.log.info("handlers/requestLoginWithEmail");
 
   const { name, email } = request.body;
-  let role = "buyer";
+  let roles = ["buyer"];
   let provider = "email-passwordless";
 
   let user = await User.findOne({
@@ -290,7 +291,7 @@ const requestLoginWithEmail = async (request, reply) => {
     if (configs.CHECK_ADMIN) {
       const count = await User.countDocuments();
       if (!count) {
-        role = "admin";
+        roles = ["admin", "buyer"];
       }
     }
 
@@ -298,7 +299,7 @@ const requestLoginWithEmail = async (request, reply) => {
       name,
       uid: crypto.randomBytes(15).toString("hex"),
       email,
-      role,
+      roles,
       provider,
     });
   }
@@ -338,12 +339,57 @@ const requestLoginWithEmail = async (request, reply) => {
 const loginWithEmail = async (request, reply) => {
   request.log.info("handlers/loginWithEmail");
   const user = request.userModel;
+
+  // Check if this is the first time email is being confirmed
+  const wasEmailUnconfirmed = !user.isEmailConfirmed;
+
   const newRefreshToken = await getRefreshToken(user, request.ipAddress);
   const verifyToken = await reply.generateCsrf();
   user.loginWithEmailToken = undefined;
   user.loginWithEmailTokenExpire = undefined;
   user.isEmailConfirmed = true;
-  user.save({ validateBeforeSave: false });
+  await user.save({ validateBeforeSave: false });
+
+  // Automatically create wallet if email was just confirmed for the first time
+  if (wasEmailUnconfirmed) {
+    try {
+      // Check if user already has a wallet to prevent duplicates
+      if (!user.walletId) {
+        request.log.info(
+          `Creating wallet for newly confirmed user via email login: ${user.email}`
+        );
+
+        // Create wallet using the existing wallet system
+        const wallet = await Wallet.createWalletForUser(
+          user._id,
+          configs.WALLET_DEFAULT_CURRENCY || "USD"
+        );
+
+        // Link wallet to user
+        user.walletId = wallet._id;
+        await user.save({ validateBeforeSave: false });
+
+        request.log.info(
+          `Wallet created successfully for user via email login: ${user.email}, walletId: ${wallet._id}`
+        );
+      } else {
+        request.log.info(
+          `User ${user.email} already has a wallet: ${user.walletId}`
+        );
+      }
+    } catch (walletError) {
+      // Log error but don't prevent email confirmation
+      request.log.error({
+        msg: "Failed to create wallet during email login confirmation",
+        error: walletError.message,
+        stack: walletError.stack,
+        userId: user._id,
+        email: user.email,
+      });
+      // Continue with email confirmation even if wallet creation fails
+    }
+  }
+
   reply.setCookie("refreshToken", newRefreshToken, getRefreshTokenOptns());
   return redirectWithoutToken(reply, verifyToken, {
     redirectURL: configs.APP_LOGIN_WTH_EMAIL_REDIRECT,
@@ -356,10 +402,54 @@ const loginWithEmail = async (request, reply) => {
 const confirmEmail = async (request, reply) => {
   request.log.info("handlers/confirmEmail");
   const user = request.userModel;
+
+  // Check if this is the first time email is being confirmed
+  const wasEmailUnconfirmed = !user.isEmailConfirmed;
+
   user.confirmEmailToken = undefined;
   user.confirmEmailTokenExpire = undefined;
   user.isEmailConfirmed = true;
   await user.save({ validateBeforeSave: false });
+
+  // Automatically create wallet if email was just confirmed for the first time
+  if (wasEmailUnconfirmed) {
+    try {
+      // Check if user already has a wallet to prevent duplicates
+      if (!user.walletId) {
+        request.log.info(
+          `Creating wallet for newly confirmed user: ${user.email}`
+        );
+
+        // Create wallet using the existing wallet system
+        const wallet = await Wallet.createWalletForUser(
+          user._id,
+          configs.WALLET_DEFAULT_CURRENCY || "USD"
+        );
+
+        // Link wallet to user
+        user.walletId = wallet._id;
+        await user.save({ validateBeforeSave: false });
+
+        request.log.info(
+          `Wallet created successfully for user: ${user.email}, walletId: ${wallet._id}`
+        );
+      } else {
+        request.log.info(
+          `User ${user.email} already has a wallet: ${user.walletId}`
+        );
+      }
+    } catch (walletError) {
+      // Log error but don't prevent email confirmation
+      request.log.error({
+        msg: "Failed to create wallet during email confirmation",
+        error: walletError.message,
+        stack: walletError.stack,
+        userId: user._id,
+        email: user.email,
+      });
+      // Continue with email confirmation even if wallet creation fails
+    }
+  }
 
   return redirectWithoutToken(reply, request.query.token, {
     redirectURL: configs.APP_CONFIRM_EMAIL_REDIRECT,
@@ -614,7 +704,7 @@ const getAccount = async (request, reply) => {
     message: "User Found",
     name: user.name,
     email: request.userModel.email,
-    role: user.role,
+    roles: user.roles,
     isEmailConfirmed: user.isEmailConfirmed,
     isDeactivated: user.isDeactivated,
   });
@@ -1071,18 +1161,34 @@ const logout = async (request, reply) => {
 };
 
 // @route   PUT /api/v1/auth/role/:uid
-// @desc    Update user role (admin/support only)
+// @desc    Update user roles (admin/support only)
 // @access  Private (requires JWT token with admin/support role)
 const updateUserRole = async (request, reply) => {
   request.log.info("handlers/updateUserRole");
 
-  const { role } = request.body;
+  const { roles } = request.body;
   const { uid } = request.params;
 
-  // Validate role
+  // Ensure roles is an array
+  let newRoles = roles;
+  if (!Array.isArray(newRoles)) {
+    newRoles = [newRoles];
+  }
+
+  // Validate roles
   const validRoles = ["buyer", "admin", "support", "seller"];
-  if (!validRoles.includes(role)) {
-    return sendErrorResponse(reply, 400, "Invalid role specified");
+  const invalidRoles = newRoles.filter((r) => !validRoles.includes(r));
+  if (invalidRoles.length > 0) {
+    return sendErrorResponse(
+      reply,
+      400,
+      `Invalid roles specified: ${invalidRoles.join(", ")}`
+    );
+  }
+
+  // Ensure at least one role is provided
+  if (newRoles.length === 0) {
+    return sendErrorResponse(reply, 400, "At least one role must be specified");
   }
 
   // Find user by uid
@@ -1096,14 +1202,14 @@ const updateUserRole = async (request, reply) => {
     return sendErrorResponse(reply, 403, "Cannot modify your own role");
   }
 
-  // Update role
-  targetUser.role = role;
+  // Update roles
+  targetUser.roles = newRoles;
   await targetUser.save();
 
   return sendSuccessResponse(reply, {
     statusCode: 200,
-    message: "User role updated successfully",
-    updatedRole: role,
+    message: "User roles updated successfully",
+    updatedRoles: targetUser.roles,
     user: {
       uid: targetUser.uid,
       email: targetUser.email,

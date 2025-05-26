@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface UserInfo {
   email: string;
   name: string;
-  role: string;
+  roles: string[];
   isEmailConfirmed: boolean;
 }
 
@@ -29,4 +29,4 @@ export const userInfoSlice = createSlice({
 });
 
 export const { setUserInfo, clearUserInfo } = userInfoSlice.actions;
-export default userInfoSlice.reducer; 
+export default userInfoSlice.reducer;

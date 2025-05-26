@@ -14,7 +14,7 @@ const verifyAuth = (roles = []) => {
 		try {
 			request.log.info(`Verifying user auth roles: ${roles}`);
 			request.JWT_TYPE = "auth";
-			
+
 			// Get the authorization header
 			const authorizationHeader = request.headers["authorization"];
 
@@ -25,8 +25,8 @@ const verifyAuth = (roles = []) => {
 					401,
 					"Unauthorized: Token in the authorization header missing"
 				);
-			} 
-			
+			}
+
 			if (!authorizationHeader.startsWith("Bearer ")) {
 				return sendErrorResponse(
 					reply,
@@ -44,7 +44,7 @@ const verifyAuth = (roles = []) => {
 			// Check if token is blacklisted
 			const isBlacklisted = await BlacklistedToken.findOne({ token });
 			request.log.info(`Checking if token is blacklisted for user: ${decoded.email}`);
-			
+
 			if (isBlacklisted) {
 				request.log.warn(`Attempt to use blacklisted token by user: ${decoded.email}`);
 				return sendErrorResponse(
@@ -54,8 +54,12 @@ const verifyAuth = (roles = []) => {
 				);
 			}
 
-			if (!roles.includes(decoded.role)) {
-				request.log.warn(`Unauthorized role access attempt by user: ${decoded.email}`);
+			// Check if user has any of the required roles
+			const userRoles = decoded.roles || [];
+			const hasRequiredRole = roles.some(requiredRole => userRoles.includes(requiredRole));
+
+			if (!hasRequiredRole) {
+				request.log.warn(`Unauthorized role access attempt by user: ${decoded.email}, user roles: ${userRoles.join(',')}, required roles: ${roles.join(',')}`);
 				return sendErrorResponse(
 					reply,
 					403,

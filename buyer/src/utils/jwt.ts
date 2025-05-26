@@ -2,7 +2,7 @@ interface DecodedToken {
   uid: string;
   name: string;
   email: string;
-  role: string;
+  roles: string[];
   isEmailConfirmed: boolean;
   iat: number;
   exp: number;
@@ -24,4 +24,9 @@ export const decodeToken = (token: string): DecodedToken | null => {
     console.error('Error decoding token:', error);
     return null;
   }
-}; 
+};
+
+// Helper function to check if user has a specific role
+export const hasRole = (decodedToken: DecodedToken | null, role: string): boolean => {
+  return decodedToken?.roles?.includes(role) || false;
+};

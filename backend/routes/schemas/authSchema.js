@@ -422,7 +422,7 @@ const authenticationSchema = {
 		},
 	},
 	updateUserRole: {
-		description: "Update a user's role (admin/support only)",
+		description: "Update a user's roles (admin/support only)",
 		tags: ["User Management"],
 		params: {
 			type: "object",
@@ -434,17 +434,25 @@ const authenticationSchema = {
 		body: {
 			type: "object",
 			properties: {
-				role: { 
-					type: "string",
-					enum: ["buyer", "admin", "support", "seller"]
+				roles: {
+					type: "array",
+					items: {
+						type: "string",
+						enum: ["buyer", "admin", "support", "seller"]
+					},
+					minItems: 1,
+					uniqueItems: true
 				}
 			},
-			required: ["role"]
+			required: ["roles"]
 		},
 		security: jwtSecurity,
 		response: {
-			200: getSuccessObject(200, true, "User role updated successfully", {
-				updatedRole: { type: "string" },
+			200: getSuccessObject(200, true, "User roles updated successfully", {
+				updatedRoles: {
+					type: "array",
+					items: { type: "string" }
+				},
 				user: {
 					type: "object",
 					properties: {

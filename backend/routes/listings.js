@@ -95,7 +95,7 @@ const listingsRoutes = async (fastify, opts) => {
     },
     method: "POST",
     url: "/",
-    preHandler: verifyAuth(["seller"]),
+    preHandler: verifyAuth(["seller", "admin"]),
     schema: listingSchema.createListing,
     handler: createListing
   });
@@ -107,7 +107,7 @@ const listingsRoutes = async (fastify, opts) => {
     },
     method: "PUT",
     url: "/:id",
-    preHandler: verifyAuth(["seller"]),
+    preHandler: verifyAuth(["seller", "admin"]),
     schema: listingSchema.updateListing,
     handler: updateListing
   });
@@ -153,7 +153,7 @@ const listingsRoutes = async (fastify, opts) => {
     },
     method: "GET",
     url: "/seller",
-    preHandler: verifyAuth(["seller"]),
+    preHandler: verifyAuth(["seller", "admin"]),
     schema: listingSchema.getListings,
     handler: getSellerListings
   });

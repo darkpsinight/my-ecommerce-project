@@ -13,7 +13,7 @@ const sellerRoutes = async (fastify, opts) => {
   fastify.route({
     method: "GET",
     url: "/profile",
-    preHandler: verifyAuth(["seller"]),
+    preHandler: verifyAuth(["seller", "admin"]),
     handler: getSellerProfile
   });
 
@@ -21,7 +21,7 @@ const sellerRoutes = async (fastify, opts) => {
   fastify.route({
     method: "PUT",
     url: "/profile/basic",
-    preHandler: verifyAuth(["seller"]),
+    preHandler: verifyAuth(["seller", "admin"]),
     schema: {
       body: {
         type: "object",
@@ -38,7 +38,7 @@ const sellerRoutes = async (fastify, opts) => {
   fastify.route({
     method: "PUT",
     url: "/profile/extended",
-    preHandler: verifyAuth(["seller"]),
+    preHandler: verifyAuth(["seller", "admin"]),
     schema: {
       body: {
         type: "object",
@@ -161,7 +161,7 @@ const sellerRoutes = async (fastify, opts) => {
   fastify.route({
     method: "GET",
     url: "/products",
-    preHandler: verifyAuth(["seller"]),
+    preHandler: verifyAuth(["seller", "admin"]),
     handler: async (request, reply) => {
       try {
         // Add logic to fetch seller's products

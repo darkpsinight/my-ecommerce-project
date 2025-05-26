@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useAppSelector } from "@/redux/store";
-import { decodeToken } from "@/utils/jwt";
+import { decodeToken, hasRole } from "@/utils/jwt";
 import Popover from "@mui/material/Popover";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -23,7 +23,7 @@ const SellerDashboardButton: React.FC<SellerDashboardButtonProps> = ({
   const { token } = useAppSelector((state) => state.authReducer);
   const decodedToken = token ? decodeToken(token) : null;
   const isAuthenticated = !!token;
-  const isSeller = decodedToken?.role === "seller";
+  const isSeller = hasRole(decodedToken, "seller");
   const [isFlashing, setIsFlashing] = useState(false);
   const [isFading, setIsFading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -112,7 +112,7 @@ const SellerDashboardButton: React.FC<SellerDashboardButtonProps> = ({
         onClick={handleButtonClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`flex items-center gap-1.5 mr-1.5 relative rounded-md p-1 
+        className={`flex items-center gap-1.5 mr-1.5 relative rounded-md p-1
           border border-solid transition-colors duration-300
           ${
             isHovered
@@ -159,7 +159,7 @@ const SellerDashboardButton: React.FC<SellerDashboardButtonProps> = ({
           vertical: "top",
           horizontal: "center",
         }}
-        sx={{ 
+        sx={{
           mt: 2,
           zIndex: 9999
         }}
@@ -205,7 +205,7 @@ const SellerDashboardButton: React.FC<SellerDashboardButtonProps> = ({
               }
             }}
           />
-          
+
           {/* Popover Content */}
           <Paper
             sx={{
@@ -219,9 +219,9 @@ const SellerDashboardButton: React.FC<SellerDashboardButtonProps> = ({
           >
             <PopoverHeader />
             <CloseButton onClick={handlePopoverDismiss} />
-            <PopoverContent 
-              onDismiss={handlePopoverDismiss} 
-              onNavigate={handleDashboardNavigation} 
+            <PopoverContent
+              onDismiss={handlePopoverDismiss}
+              onNavigate={handleDashboardNavigation}
             />
           </Paper>
         </Box>

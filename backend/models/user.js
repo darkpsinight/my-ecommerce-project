@@ -33,10 +33,17 @@ const userSchema = new mongoose.Schema({
 		minlength: 8,
 		select: false, // this will not be selected in query
 	},
-	role: {
-		type: String,
+	roles: {
+		type: [String],
 		enum: ["buyer", "admin", "support", "seller"],
-		default: "buyer",
+		default: ["buyer"],
+		validate: {
+			validator: function(roles) {
+				// Ensure at least one role is present
+				return roles && roles.length > 0;
+			},
+			message: "User must have at least one role"
+		}
 	},
 	isEmailConfirmed: {
 		type: Boolean,
@@ -83,6 +90,37 @@ const userSchema = new mongoose.Schema({
 	deactivatedAt: Date,
 });
 
+// Pre-save middleware for validation
+userSchema.pre('save', function(next) {
+	// Ensure roles array is not empty
+	if (!this.roles || this.roles.length === 0) {
+		this.roles = ["buyer"]; // Default to buyer role
+	}
+	next();
+});
+
+// Instance method to check if user has a specific role
+userSchema.methods.hasRole = function(roleToCheck) {
+	return this.roles && this.roles.includes(roleToCheck);
+};
+
+// Instance method to add a role
+userSchema.methods.addRole = function(newRole) {
+	if (!this.roles) {
+		this.roles = [];
+	}
+	if (!this.roles.includes(newRole)) {
+		this.roles.push(newRole);
+	}
+};
+
+// Instance method to remove a role
+userSchema.methods.removeRole = function(roleToRemove) {
+	if (this.roles && this.roles.length > 1) { // Ensure at least one role remains
+		this.roles = this.roles.filter(role => role !== roleToRemove);
+	}
+};
+
 // Function attached to userSchema to get the JWT token
 userSchema.methods.getJWT = function () {
 	return jwt.sign(
@@ -91,7 +129,7 @@ userSchema.methods.getJWT = function () {
 			uid: this.uid,
 			name: this.name,
 			email: this.email,
-			role: this.role,
+			roles: this.roles,
 			isEmailConfirmed: this.isEmailConfirmed,
 			// isDeactivated: this.isDeactivated,
 		},

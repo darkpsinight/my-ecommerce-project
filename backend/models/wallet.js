@@ -61,11 +61,11 @@ walletSchema.methods.addFunds = function(amount) {
   if (amount <= 0) {
     throw new Error("Amount must be positive");
   }
-  
+
   this.balance += amount;
   this.totalFunded += amount;
   this.lastFundedAt = new Date();
-  
+
   return this.save();
 };
 
@@ -73,15 +73,15 @@ walletSchema.methods.deductFunds = function(amount) {
   if (amount <= 0) {
     throw new Error("Amount must be positive");
   }
-  
+
   if (this.balance < amount) {
     throw new Error("Insufficient funds");
   }
-  
+
   this.balance -= amount;
   this.totalSpent += amount;
   this.lastSpentAt = new Date();
-  
+
   return this.save();
 };
 
@@ -92,17 +92,29 @@ walletSchema.methods.hasEnoughFunds = function(amount) {
 // Static methods
 walletSchema.statics.createWalletForUser = async function(userId, currency = "USD") {
   try {
+    // First check if wallet already exists
+    const existingWallet = await this.findOne({ userId });
+    if (existingWallet) {
+      return existingWallet;
+    }
+
     const wallet = new this({
       userId,
       currency,
       externalId: uuidv4()
     });
-    
-    return await wallet.save();
+
+    const savedWallet = await wallet.save();
+    return savedWallet;
   } catch (error) {
     if (error.code === 11000) {
-      // Wallet already exists for this user
-      return await this.findOne({ userId });
+      // Wallet already exists for this user, try to find it
+      const existingWallet = await this.findOne({ userId });
+      if (existingWallet) {
+        return existingWallet;
+      }
+      // If we still can't find it, there might be a database issue
+      throw new Error(`Wallet creation failed due to duplicate key error, but existing wallet not found for user ${userId}`);
     }
     throw error;
   }

@@ -1,7 +1,17 @@
 import React from "react";
 import Link from "next/link";
+import { useAppSelector } from "@/redux/store";
 
 const WalletButton: React.FC = () => {
+  // Get authentication state from Redux
+  const { token } = useAppSelector((state) => state.authReducer);
+  const isAuthenticated = !!token;
+
+  // Only render the wallet button if user is authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <Link href="/wallet" className="hidden xl:flex items-center gap-3.5 hover:opacity-80 transition-opacity">
       <svg

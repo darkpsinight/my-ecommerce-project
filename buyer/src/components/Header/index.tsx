@@ -162,8 +162,10 @@ const Header = () => {
           <div className="flex w-full lg:w-auto items-center gap-2 sm:gap-5">
             <WalletButton />
 
-            {/* Divider */}
-            <span className="hidden xl:block w-px h-7.5 bg-gray-4"></span>
+            {/* Divider - only show when user is authenticated */}
+            {isAuthenticated && (
+              <span className="hidden xl:block w-px h-7.5 bg-gray-4"></span>
+            )}
 
             <div className="flex w-full lg:w-auto justify-between items-center gap-2 sm:gap-5">
               <div className="flex items-center gap-2 sm:gap-5">

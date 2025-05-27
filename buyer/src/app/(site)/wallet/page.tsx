@@ -290,7 +290,8 @@ const WalletContent: React.FC = () => {
                     max="1000"
                     value={fundingAmount}
                     onChange={(e) => setFundingAmount(Number(e.target.value))}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onWheel={(event) => event.currentTarget.blur()}
+                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="50"
                   />
                 </div>

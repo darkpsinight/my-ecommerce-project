@@ -10,7 +10,34 @@ import PageContainer from "../Common/PageContainer";
 const Checkout = () => {
   const cartItems = useAppSelector((state) => state.cartReducer.items);
   const totalPrice = useSelector(selectTotalPrice);
+  const token = useAppSelector((state) => state.authReducer.token);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Redirect if not authenticated
+  if (!token) {
+    return (
+      <PageContainer>
+        <section className="overflow-hidden py-20 bg-gray-2">
+          <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
+            <div className="text-center">
+              <h1 className="text-3xl font-semibold text-gray-900 mb-4">
+                Please Sign In
+              </h1>
+              <p className="text-gray-600 mb-8">
+                You need to be signed in to complete your purchase.
+              </p>
+              <a
+                href="/signin"
+                className="inline-flex justify-center font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark"
+              >
+                Sign In
+              </a>
+            </div>
+          </div>
+        </section>
+      </PageContainer>
+    );
+  }
 
   // Redirect if cart is empty
   if (cartItems.length === 0) {

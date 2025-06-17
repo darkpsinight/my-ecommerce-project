@@ -15,12 +15,6 @@ const orderSchema = new mongoose.Schema({
     required: [true, "Seller ID is required"],
     index: true
   },
-  listingId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Listing",
-    required: [true, "Listing ID is required"],
-    index: true
-  },
   // Order details
   orderItems: [{
     listingId: {

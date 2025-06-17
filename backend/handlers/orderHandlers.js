@@ -23,18 +23,20 @@ const { sendSuccessResponse, sendErrorResponse } = require("../utils/responseHel
 // @desc    Create a new order for digital codes
 // @access  Private (buyer role required)
 const createOrder = async (request, reply) => {
-  request.log.info("handlers/createOrder");
-
+  request.log.info("handlers/createOrder - START");
   try {
+    request.log.info("handlers/createOrder - Inside try block");
     const { cartItems, paymentMethod } = request.body;
 
     // Get user by uid from JWT token
     const user = await User.findOne({ uid: request.user.uid });
     if (!user) {
+      request.log.error("handlers/createOrder - User not found");
       return sendErrorResponse(reply, 404, "User not found");
     }
 
     if (!user.roles.includes("buyer")) {
+      request.log.error("handlers/createOrder - Buyer role required");
       return sendErrorResponse(reply, 403, "Buyer role required");
     }
 
@@ -42,6 +44,7 @@ const createOrder = async (request, reply) => {
 
     // Validate cart items
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      request.log.error("handlers/createOrder - Cart items are required");
       return sendErrorResponse(reply, 400, "Cart items are required");
     }
 
@@ -56,12 +59,14 @@ const createOrder = async (request, reply) => {
       // Get listing with codes using externalId
       const listing = await Listing.findOne({ externalId: listingId }).select("+codes.code +codes.iv");
       if (!listing) {
+        request.log.error(`handlers/createOrder - Listing ${listingId} not found`);
         return sendErrorResponse(reply, 404, `Listing ${listingId} not found`);
       }
 
       // Check if listing has enough active codes
       const activeCodes = listing.codes.filter(code => code.soldStatus === "active");
       if (activeCodes.length < quantity) {
+        request.log.error(`handlers/createOrder - Not enough codes available for ${listing.title}`);
         return sendErrorResponse(reply, 400, `Not enough codes available for ${listing.title}. Available: ${activeCodes.length}, Requested: ${quantity}`);
       }
 
@@ -87,6 +92,14 @@ const createOrder = async (request, reply) => {
         }))
       };
 
+      console.log("Listing found:", {
+        id: listing._id,
+        externalId: listing.externalId,
+        sellerId: listing.sellerId,
+        title: listing.title,
+        activeCodes: activeCodes.length
+      });
+
       orderItems.push(orderItem);
 
       // Prepare listing updates (mark codes as sold)
@@ -97,15 +110,18 @@ const createOrder = async (request, reply) => {
     }
 
     // Get seller ID from the first listing (for now, assume single seller)
-    const firstListing = await Listing.findOne({ externalId: orderItems[0].listingId });
-    if (!firstListing) {
-      return sendErrorResponse(reply, 404, "Listing not found");
+    // We already have the listing from the loop above, so we can get the seller ID from there
+    const firstListingFromLoop = listingUpdates[0].listing;
+    const seller = await User.findOne({ uid: firstListingFromLoop.sellerId });
+    if (!seller) {
+      request.log.error(`handlers/createOrder - Seller not found for uid: ${firstListingFromLoop.sellerId}`);
+      return sendErrorResponse(reply, 404, "Seller not found");
     }
 
     // Create order
     const order = await Order.createOrder({
       buyerId,
-      sellerId: firstListing.sellerId, // Use actual seller ID from listing
+      sellerId: seller._id, // Use seller's ObjectId
       orderItems,
       totalAmount,
       currency: "USD",
@@ -119,10 +135,12 @@ const createOrder = async (request, reply) => {
     } else if (paymentMethod === "wallet") {
       paymentResult = await processWalletPayment(user, order, totalAmount);
     } else {
+      request.log.error("handlers/createOrder - Invalid payment method");
       return sendErrorResponse(reply, 400, "Invalid payment method");
     }
 
     if (!paymentResult.success) {
+      request.log.error(`handlers/createOrder - Payment failed: ${paymentResult.error}`);
       await order.markAsFailed(paymentResult.error);
       return sendErrorResponse(reply, 400, paymentResult.error);
     }
@@ -163,7 +181,7 @@ const createOrder = async (request, reply) => {
     });
 
   } catch (error) {
-    request.log.error(`Error creating order: ${error.message}`);
+    request.log.error(`handlers/createOrder - CATCH BLOCK: ${error.message}`);
     return sendErrorResponse(reply, 500, "Failed to create order", {
       metadata: { hint: "Please try again later" }
     });

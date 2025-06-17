@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { removeAllItemsFromCart } from "@/redux/features/cart-slice";
 import { ordersApi } from "@/services/orders";
+import { walletApi } from "@/services/wallet";
 import toast from "react-hot-toast";
 
 interface CartItem {
@@ -33,6 +34,22 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
   const [paymentMethod, setPaymentMethod] = useState("stripe");
   const router = useRouter();
   const dispatch = useDispatch();
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      try {
+        const response = await walletApi.getWallet();
+        if (response.success) {
+          setWalletBalance(response.data.wallet.balance);
+        }
+      } catch (error) {
+        console.error("Failed to fetch wallet balance", error);
+      }
+    };
+
+    fetchWalletBalance();
+  }, []);
 
   const handlePayment = async () => {
     if (isProcessing) return;
@@ -46,6 +63,12 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
         listingId: item.id.toString(), // Use externalId (UUID)
         quantity: item.quantity
       }));
+
+      console.log("=== FRONTEND DEBUG ===");
+      console.log("Cart items:", cartItems);
+      console.log("Order cart items:", orderCartItems);
+      console.log("Payment method:", paymentMethod);
+      console.log("Total price:", totalPrice);
 
       // Create order
       const orderResponse = await ordersApi.createOrder({
@@ -74,6 +97,10 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
       }
     } catch (error: any) {
       console.error("Payment error:", error);
+      console.error("Error response:", error.response);
+      console.error("Error status:", error.response?.status);
+      console.error("Error data:", error.response?.data);
+
       const errorMessage = error.response?.data?.error || error.message || "Payment failed. Please try again.";
       toast.error(errorMessage);
     } finally {
@@ -189,7 +216,7 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
                     <span className="font-medium text-dark">Wallet Balance</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-600">Available: $0.00</p>
+                    <p className="text-sm text-gray-600">Available: ${walletBalance.toFixed(2)}</p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">

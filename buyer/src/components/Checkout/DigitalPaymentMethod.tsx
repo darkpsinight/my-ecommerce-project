@@ -56,7 +56,11 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
 
     // Check if wallet has sufficient balance
     if (walletBalance < totalPrice) {
-      toast.error(`Insufficient wallet balance. You need $${(totalPrice - walletBalance).toFixed(2)} more.`);
+      toast.error(
+        `Insufficient wallet balance. You need $${(
+          totalPrice - walletBalance
+        ).toFixed(2)} more.`
+      );
       return;
     }
 
@@ -65,9 +69,9 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
     try {
       // Convert cart items to the format expected by the API
       // Note: item.id is actually the externalId (UUID) from the listing
-      const orderCartItems = cartItems.map(item => ({
+      const orderCartItems = cartItems.map((item) => ({
         listingId: item.id.toString(), // Use externalId (UUID)
-        quantity: item.quantity
+        quantity: item.quantity,
       }));
 
       console.log("=== FRONTEND DEBUG ===");
@@ -79,7 +83,7 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
       // Create order
       const orderResponse = await ordersApi.createOrder({
         cartItems: orderCartItems,
-        paymentMethod: paymentMethod as 'stripe' | 'wallet'
+        paymentMethod: paymentMethod as "stripe" | "wallet",
       });
 
       if (orderResponse.success) {
@@ -103,7 +107,10 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
       console.error("Error status:", error.response?.status);
       console.error("Error data:", error.response?.data);
 
-      const errorMessage = error.response?.data?.error || error.message || "Payment failed. Please try again.";
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Payment failed. Please try again.";
       toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
@@ -124,16 +131,29 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
             <div className="rounded-md border-[0.5px] py-4 px-5 border-transparent bg-gray-2 flex-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                    />
                   </svg>
                   <span className="font-medium text-dark">Wallet Balance</span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Only Payment Method
-                  </span>
                 </div>
                 <div className="text-right">
-                  <p className={`text-sm ${walletBalance >= totalPrice ? 'text-gray-600' : 'text-red-600 font-medium'}`}>
+                  <p
+                    className={`text-sm ${
+                      walletBalance >= totalPrice
+                        ? "text-gray-600"
+                        : "text-red-600 font-medium"
+                    }`}
+                  >
                     Available: ${walletBalance.toFixed(2)}
                   </p>
                   {walletBalance < totalPrice && (
@@ -144,8 +164,12 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
                 </div>
               </div>
               <p className="text-sm text-gray-600 mt-2">
-                All payments are processed through your wallet balance for security.
-                <a href="/wallet" className="text-blue-600 hover:underline ml-1">
+                All payments are processed through your wallet balance for
+                security.
+                <a
+                  href="/wallet"
+                  className="text-blue-600 hover:underline ml-1"
+                >
                   Add funds
                 </a>
               </p>
@@ -158,8 +182,18 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg
+              className="w-5 h-5 text-gray-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
             </svg>
           </div>
           <div>
@@ -167,7 +201,8 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
               Secure & Protected
             </h4>
             <p className="text-gray-700 text-xs">
-              Your payment information is encrypted and secure. We never store your card details.
+              Your payment information is encrypted and secure. We never store
+              your card details.
             </p>
           </div>
         </div>
@@ -185,20 +220,31 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
       >
         {isProcessing ? (
           <>
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg
+              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
             Processing...
           </>
         ) : walletBalance < totalPrice ? (
-          <>
-            Insufficient Funds - ${totalPrice.toFixed(2)}
-          </>
+          <>Insufficient Funds - ${totalPrice.toFixed(2)}</>
         ) : (
-          <>
-            Complete Purchase - ${totalPrice.toFixed(2)}
-          </>
+          <>Complete Purchase - ${totalPrice.toFixed(2)}</>
         )}
       </button>
 

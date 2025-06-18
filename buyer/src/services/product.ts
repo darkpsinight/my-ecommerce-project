@@ -3,6 +3,47 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
+// API Response types
+interface ListingData {
+  externalId: string;
+  title: string;
+  description?: string;
+  price: number;
+  originalPrice?: number;
+  categoryId?: string;
+  categoryName?: string;
+  platform?: string;
+  region?: string;
+  isRegionLocked?: boolean;
+  supportedLanguages?: string[];
+  thumbnailUrl?: string;
+  autoDelivery?: boolean;
+  tags?: string[];
+  status?: string;
+  quantityOfActiveCodes?: number;
+  quantityOfAllCodes?: number;
+  sellerId?: string;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+interface ListingResponse {
+  listing?: ListingData;
+}
+
+interface ListingsResponse {
+  listings: ListingData[];
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+  };
+}
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
@@ -49,9 +90,9 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
         }
       });
 
-      if (response.data && response.data.success) {
+      if (response.data && (response.data as ApiResponse<ListingData>).success) {
         // Transform backend data to match our Product type
-        const listing = response.data.data;
+        const listing = (response.data as ApiResponse<ListingData>).data;
 
         // Create a product object from the listing data
         const product = {
@@ -98,7 +139,7 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
         console.error('API response unsuccessful:', response.data);
         return null;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching product details:', error);
       if (error.response) {
         console.error('Error response:', error.response.data);
@@ -145,8 +186,8 @@ export const getProducts = async (params?: {
     console.log('Fetching products with params:', params);
     const response = await api.get('/listings', { params });
 
-    if (response.data && response.data.success) {
-      const listings = response.data.data.listings;
+    if (response.data && (response.data as ApiResponse<ListingsResponse>).success) {
+      const listings = (response.data as ApiResponse<ListingsResponse>).data.listings;
 
       const products = listings.map(listing => ({
         id: listing.externalId,
@@ -188,9 +229,9 @@ export const getProducts = async (params?: {
 
       const result = {
         products,
-        total: response.data.data.pagination?.total || products.length,
-        page: response.data.data.pagination?.page || 1,
-        totalPages: response.data.data.pagination?.pages || 1
+        total: (response.data as ApiResponse<ListingsResponse>).data.pagination?.total || products.length,
+        page: (response.data as ApiResponse<ListingsResponse>).data.pagination?.page || 1,
+        totalPages: (response.data as ApiResponse<ListingsResponse>).data.pagination?.pages || 1
       };
 
       // Cache the result
@@ -204,7 +245,7 @@ export const getProducts = async (params?: {
       console.error('API response unsuccessful:', response.data);
       return null;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching products:', error);
     if (error.response) {
       console.error('Error response:', error.response.data);

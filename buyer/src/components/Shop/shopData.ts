@@ -5,7 +5,7 @@ const shopData: Product[] = [
     reviews: 15,
     price: 59.0,
     discountedPrice: 29.0,
-    id: 1,
+    id: "1",
     imgs: {
       thumbnails: [
         "/images/products/product-1-sm-1.png",
@@ -22,7 +22,7 @@ const shopData: Product[] = [
     reviews: 5,
     price: 899.0,
     discountedPrice: 99.0,
-    id: 2,
+    id: "2",
     imgs: {
       thumbnails: [
         "/images/products/product-2-sm-1.png",
@@ -39,7 +39,7 @@ const shopData: Product[] = [
     reviews: 5,
     price: 59.0,
     discountedPrice: 29.0,
-    id: 3,
+    id: "3",
     imgs: {
       thumbnails: [
         "/images/products/product-3-sm-1.png",
@@ -56,7 +56,7 @@ const shopData: Product[] = [
     reviews: 6,
     price: 59.0,
     discountedPrice: 29.0,
-    id: 4,
+    id: "4",
     imgs: {
       thumbnails: [
         "/images/products/product-4-sm-1.png",
@@ -73,7 +73,7 @@ const shopData: Product[] = [
     reviews: 3,
     price: 99.0,
     discountedPrice: 29.0,
-    id: 5,
+    id: "5",
     imgs: {
       thumbnails: [
         "/images/products/product-5-sm-1.png",
@@ -90,7 +90,7 @@ const shopData: Product[] = [
     reviews: 15,
     price: 59.0,
     discountedPrice: 29.0,
-    id: 6,
+    id: "6",
     imgs: {
       thumbnails: [
         "/images/products/product-6-sm-1.png",
@@ -107,7 +107,7 @@ const shopData: Product[] = [
     reviews: 15,
     price: 59.0,
     discountedPrice: 29.0,
-    id: 7,
+    id: "7",
     imgs: {
       thumbnails: [
         "/images/products/product-7-sm-1.png",
@@ -124,7 +124,7 @@ const shopData: Product[] = [
     reviews: 15,
     price: 59.0,
     discountedPrice: 29.0,
-    id: 8,
+    id: "8",
     imgs: {
       thumbnails: [
         "/images/products/product-8-sm-1.png",

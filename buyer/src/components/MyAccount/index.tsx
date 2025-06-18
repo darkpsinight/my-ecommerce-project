@@ -1,13 +1,24 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import AddressModal from "./AddressModal";
 import Orders from "../Orders";
+import MyCodes from "./MyCodes";
 import PageContainer from "../Common/PageContainer";
 
 const MyAccount = () => {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [addressModal, setAddressModal] = useState(false);
+
+  // Check for tab parameter in URL
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["dashboard", "orders", "downloads", "my-codes", "addresses", "account-details"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const openAddressModal = () => {
     setAddressModal(true);
@@ -156,6 +167,49 @@ const MyAccount = () => {
                       </button>
 
                       <button
+                        onClick={() => setActiveTab("my-codes")}
+                        className={`flex items-center rounded-md gap-2.5 py-3 px-4.5 ease-out duration-200 hover:bg-blue hover:text-white ${
+                          activeTab === "my-codes"
+                            ? "text-white bg-blue"
+                            : "text-dark-2 bg-gray-1"
+                        }`}
+                      >
+                        <svg
+                          className="fill-current"
+                          width="22"
+                          height="22"
+                          viewBox="0 0 22 22"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M3.4375 6.1875C3.4375 3.83274 5.33274 1.9375 7.6875 1.9375H14.3125C16.6673 1.9375 18.5625 3.83274 18.5625 6.1875V15.8125C18.5625 18.1673 16.6673 20.0625 14.3125 20.0625H7.6875C5.33274 20.0625 3.4375 18.1673 3.4375 15.8125V6.1875Z"
+                            stroke=""
+                            strokeWidth="1.375"
+                          />
+                          <path
+                            d="M7.5625 6.1875H14.4375"
+                            stroke=""
+                            strokeWidth="1.375"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M7.5625 9.625H14.4375"
+                            stroke=""
+                            strokeWidth="1.375"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M7.5625 13.0625H11"
+                            stroke=""
+                            strokeWidth="1.375"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        My Codes
+                      </button>
+
+                      <button
                         onClick={() => setActiveTab("addresses")}
                         className={`flex items-center rounded-md gap-2.5 py-3 px-4.5 ease-out duration-200 hover:bg-blue hover:text-white ${
                           activeTab === "addresses"
@@ -297,6 +351,16 @@ const MyAccount = () => {
                 <p>You don&apos;t have any download</p>
               </div>
               {/* <!-- downloads tab content end -->
+
+          <!-- my codes tab content start --> */}
+              <div
+                className={`xl:max-w-[770px] w-full ${
+                  activeTab === "my-codes" ? "block" : "hidden"
+                }`}
+              >
+                <MyCodes />
+              </div>
+              {/* <!-- my codes tab content end -->
 
           <!-- addresses tab content start --> */}
               <div

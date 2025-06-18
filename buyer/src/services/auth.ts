@@ -1,4 +1,5 @@
 import axios from "axios";
+import { AUTH_API } from '@/config/api';
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
@@ -11,6 +12,114 @@ const axiosInstance = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Function to get token from Redux store
+const getAuthToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      // Get token from Redux store
+      const { store } = require('@/redux/store');
+      return store.getState().authReducer.token;
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
+// Function to get verify token from session storage
+const getVerifyToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return sessionStorage.getItem('verifyToken');
+  }
+  return null;
+};
+
+// Function to refresh token
+const refreshAuthToken = async (): Promise<boolean> => {
+  try {
+    const verifyToken = getVerifyToken();
+    if (!verifyToken) {
+      console.log('No verifyToken available for refresh');
+      return false;
+    }
+
+    console.log('Attempting to refresh token...');
+    const response = await fetch(AUTH_API.REFRESH_TOKEN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': verifyToken,
+      },
+      body: JSON.stringify({}),
+      credentials: 'include',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.token && data.verifyToken) {
+        // Update Redux store
+        const { store } = require('@/redux/store');
+        const { setTokens } = require('@/redux/features/auth-slice');
+        store.dispatch(setTokens({
+          token: data.token,
+          verifyToken: data.verifyToken
+        }));
+        console.log('Token refreshed successfully in auth service');
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error('Token refresh failed in auth service:', error);
+    return false;
+  }
+};
+
+// Add request interceptor to include auth token
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle 401 errors and retry with token refresh
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Check if error is 401 and we haven't already tried to refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      console.log('401 error detected in auth service, attempting token refresh...');
+      const refreshSuccess = await refreshAuthToken();
+
+      if (refreshSuccess) {
+        // Update the original request with the new token
+        const newToken = getAuthToken();
+        if (newToken) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          console.log('Retrying original request with new token');
+          return axiosInstance(originalRequest);
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export interface SignupData {
   name: string;

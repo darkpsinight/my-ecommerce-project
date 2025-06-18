@@ -3,7 +3,10 @@ const { orderSchema } = require("./schemas/orderSchema");
 const {
   createOrder,
   getBuyerOrders,
-  getSellerOrders
+  getSellerOrders,
+  getBuyerPurchasedCodes,
+  getOrderById,
+  decryptCode
 } = require("../handlers/orderHandlers");
 
 // Rate limiting configurations
@@ -53,6 +56,42 @@ const orderRoutes = async (fastify, opts) => {
     preHandler: verifyAuth(["seller"]),
     schema: orderSchema.getSellerOrders,
     handler: getSellerOrders
+  });
+
+  // Get buyer purchased codes
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.read
+    },
+    method: "GET",
+    url: "/buyer/codes",
+    preHandler: verifyAuth(["buyer"]),
+    schema: orderSchema.getBuyerPurchasedCodes,
+    handler: getBuyerPurchasedCodes
+  });
+
+  // Get specific order by ID
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.read
+    },
+    method: "GET",
+    url: "/:orderId",
+    preHandler: verifyAuth(["buyer"]),
+    schema: orderSchema.getOrderById,
+    handler: getOrderById
+  });
+
+  // Decrypt a specific code
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.read
+    },
+    method: "POST",
+    url: "/decrypt-code",
+    preHandler: verifyAuth(["buyer"]),
+    schema: orderSchema.decryptCode,
+    handler: decryptCode
   });
 };
 

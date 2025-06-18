@@ -75,7 +75,7 @@ const AccountDropdown: React.FC<AccountDropdownProps> = ({
               onClick: handleDashboardClick
             }
           ] : []),
-          { title: "Profile", path: "/account" },
+          { title: "Profile", path: "/my-account" },
           { title: "Logout", path: "#", onClick: handleLogout },
         ]
       : []

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { AUTH_API } from '@/config/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
@@ -26,6 +27,55 @@ const getAuthToken = (): string | null => {
   return null;
 };
 
+// Function to get verify token from session storage
+const getVerifyToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return sessionStorage.getItem('verifyToken');
+  }
+  return null;
+};
+
+// Function to refresh token
+const refreshAuthToken = async (): Promise<boolean> => {
+  try {
+    const verifyToken = getVerifyToken();
+    if (!verifyToken) {
+      console.log('No verifyToken available for refresh');
+      return false;
+    }
+
+    console.log('Attempting to refresh token...');
+    const response = await fetch(AUTH_API.REFRESH_TOKEN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': verifyToken,
+      },
+      body: JSON.stringify({}),
+      credentials: 'include',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.token && data.verifyToken) {
+        // Update Redux store
+        const { store } = require('@/redux/store');
+        const { setTokens } = require('@/redux/features/auth-slice');
+        store.dispatch(setTokens({
+          token: data.token,
+          verifyToken: data.verifyToken
+        }));
+        console.log('Token refreshed successfully in orders service');
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error('Token refresh failed in orders service:', error);
+    return false;
+  }
+};
+
 // Add request interceptor to include auth token
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -36,6 +86,36 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle 401 errors and retry with token refresh
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Check if error is 401 and we haven't already tried to refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      console.log('401 error detected, attempting token refresh...');
+      const refreshSuccess = await refreshAuthToken();
+
+      if (refreshSuccess) {
+        // Update the original request with the new token
+        const newToken = getAuthToken();
+        if (newToken) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          console.log('Retrying original request with new token');
+          return axiosInstance(originalRequest);
+        }
+      }
+    }
+
     return Promise.reject(error);
   }
 );
@@ -112,6 +192,67 @@ export interface GetOrdersParams {
   status?: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'cancelled';
 }
 
+export interface PurchasedCode {
+  _id: string;
+  orderId: string;
+  externalOrderId: string;
+  productName: string;
+  platform: string;
+  region: string;
+  codeId: string;
+  code: string;
+  iv?: string;
+  expirationDate?: string;
+  purchaseDate: string;
+  deliveredAt: string;
+}
+
+export interface GetPurchasedCodesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: 'createdAt' | 'productName' | 'platform';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface GetPurchasedCodesResponse {
+  success: boolean;
+  message: string;
+  data: {
+    codes: PurchasedCode[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+      totalOrders: number;
+    };
+  };
+}
+
+export interface GetOrderByIdResponse {
+  success: boolean;
+  message: string;
+  data: {
+    order: Order;
+  };
+}
+
+export interface DecryptCodeRequest {
+  codeId: string;
+  orderId: string;
+}
+
+export interface DecryptCodeResponse {
+  success: boolean;
+  message: string;
+  data: {
+    codeId: string;
+    decryptedCode: string;
+    expirationDate?: string;
+  };
+}
+
 class OrdersService {
   private baseUrl = '/orders';
 
@@ -127,6 +268,21 @@ class OrdersService {
 
   async getSellerOrders(params?: GetOrdersParams): Promise<GetOrdersResponse> {
     const response = await axiosInstance.get(`${this.baseUrl}/seller`, { params });
+    return response.data;
+  }
+
+  async getBuyerPurchasedCodes(params?: GetPurchasedCodesParams): Promise<GetPurchasedCodesResponse> {
+    const response = await axiosInstance.get(`${this.baseUrl}/buyer/codes`, { params });
+    return response.data;
+  }
+
+  async getOrderById(orderId: string): Promise<GetOrderByIdResponse> {
+    const response = await axiosInstance.get(`${this.baseUrl}/${orderId}`);
+    return response.data;
+  }
+
+  async decryptCode(data: DecryptCodeRequest): Promise<DecryptCodeResponse> {
+    const response = await axiosInstance.post(`${this.baseUrl}/decrypt-code`, data);
     return response.data;
   }
 }

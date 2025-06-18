@@ -18,6 +18,7 @@ const { Wallet } = require("../models/wallet");
 const { Transaction } = require("../models/transaction");
 const { configs } = require("../configs");
 const { sendSuccessResponse, sendErrorResponse } = require("../utils/responseHelpers");
+const { decryptData, simpleDecrypt } = require("../utils/encryption");
 
 // @route   POST /api/v1/orders/create
 // @desc    Create a new order for digital codes
@@ -359,8 +360,270 @@ const getSellerOrders = async (request, reply) => {
   }
 };
 
+// @route   GET /api/v1/orders/buyer/codes
+// @desc    Get all purchased codes for a buyer
+// @access  Private (buyer role required)
+const getBuyerPurchasedCodes = async (request, reply) => {
+  request.log.info("handlers/getBuyerPurchasedCodes - START");
+  try {
+    // Get user by uid from JWT token
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      request.log.error("handlers/getBuyerPurchasedCodes - User not found");
+      return sendErrorResponse(reply, 404, "User not found");
+    }
+
+    if (!user.roles.includes("buyer")) {
+      request.log.error("handlers/getBuyerPurchasedCodes - Buyer role required");
+      return sendErrorResponse(reply, 403, "Buyer role required");
+    }
+
+    const { 
+      page = 1, 
+      limit = 20, 
+      search = "", 
+      sortBy = "createdAt", 
+      sortOrder = "desc" 
+    } = request.query;
+
+    // Build query for completed orders
+    const query = { 
+      buyerId: user._id, 
+      status: "completed",
+      deliveryStatus: "delivered"
+    };
+
+    const sortObj = {};
+    sortObj[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+    const skip = (page - 1) * limit;
+
+    // Get all completed orders with codes
+    let orders = await Order.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .select("+orderItems.purchasedCodes.code +orderItems.purchasedCodes.iv")
+      .populate("orderItems.listingId", "title platform region");
+
+    // Transform orders into flattened codes array
+    let codes = [];
+    orders.forEach(order => {
+      order.orderItems.forEach(item => {
+        if (item.purchasedCodes && item.purchasedCodes.length > 0) {
+          item.purchasedCodes.forEach(purchasedCode => {
+            // Decrypt the code before returning it
+            let decryptedCode;
+            try {
+              if (purchasedCode.code && purchasedCode.iv) {
+                decryptedCode = decryptData(purchasedCode.code, purchasedCode.iv);
+                request.log.info(`Successfully decrypted code ${purchasedCode.codeId}`);
+              } else {
+                request.log.warn(`Missing code or IV for code ${purchasedCode.codeId}`);
+                decryptedCode = "Error: Unable to decrypt code";
+              }
+            } catch (error) {
+              request.log.error(`Failed to decrypt code ${purchasedCode.codeId}: ${error.message}`);
+              decryptedCode = "Error: Failed to decrypt code";
+            }
+
+            codes.push({
+              _id: purchasedCode._id,
+              orderId: order._id,
+              externalOrderId: order.externalId,
+              productName: item.title,
+              platform: item.platform,
+              region: item.region,
+              codeId: purchasedCode.codeId,
+              code: decryptedCode, // Return the decrypted code
+              expirationDate: purchasedCode.expirationDate,
+              purchaseDate: order.createdAt,
+              deliveredAt: purchasedCode.deliveredAt || order.deliveredAt
+            });
+          });
+        }
+      });
+    });
+
+    // Apply search filter if provided
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      codes = codes.filter(code => 
+        code.productName.toLowerCase().includes(searchLower) ||
+        code.platform.toLowerCase().includes(searchLower) ||
+        code.region.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Get total count for pagination
+    const totalOrders = await Order.countDocuments(query);
+    
+    // Estimate total codes (this is approximate)
+    const totalCodes = codes.length;
+
+    const result = {
+      codes,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: totalCodes,
+        pages: Math.ceil(totalCodes / limit),
+        totalOrders
+      }
+    };
+
+    request.log.info("handlers/getBuyerPurchasedCodes - SUCCESS");
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "Purchased codes retrieved successfully",
+      data: result
+    });
+
+  } catch (error) {
+    request.log.error(`Error getting buyer purchased codes: ${error.message}`);
+    return sendErrorResponse(reply, 500, "Failed to get purchased codes");
+  }
+};
+
+// @route   GET /api/v1/orders/:orderId
+// @desc    Get a specific order with codes
+// @access  Private (buyer role required, must be order owner)
+const getOrderById = async (request, reply) => {
+  request.log.info("handlers/getOrderById - START");
+  try {
+    const { orderId } = request.params;
+
+    // Get user by uid from JWT token
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      request.log.error("handlers/getOrderById - User not found");
+      return sendErrorResponse(reply, 404, "User not found");
+    }
+
+    if (!user.roles.includes("buyer")) {
+      request.log.error("handlers/getOrderById - Buyer role required");
+      return sendErrorResponse(reply, 403, "Buyer role required");
+    }
+
+    // Find order by external ID or MongoDB ID
+    let order;
+    if (orderId.length === 24) {
+      // MongoDB ObjectId
+      order = await Order.findOne({ _id: orderId, buyerId: user._id });
+    } else {
+      // External UUID
+      order = await Order.findOne({ externalId: orderId, buyerId: user._id });
+    }
+
+    if (!order) {
+      request.log.error("handlers/getOrderById - Order not found");
+      return sendErrorResponse(reply, 404, "Order not found");
+    }
+
+    // Include codes in response for completed orders
+    if (order.status === "completed" && order.deliveryStatus === "delivered") {
+      order = await Order.findById(order._id)
+        .select("+orderItems.purchasedCodes.code +orderItems.purchasedCodes.iv")
+        .populate("orderItems.listingId", "title platform region");
+    }
+
+    const result = {
+      order: order.getBuyerOrderData()
+    };
+
+    request.log.info("handlers/getOrderById - SUCCESS");
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "Order retrieved successfully",
+      data: result
+    });
+
+  } catch (error) {
+    request.log.error(`Error getting order by ID: ${error.message}`);
+    return sendErrorResponse(reply, 500, "Failed to get order");
+  }
+};
+
+// @route   POST /api/v1/orders/decrypt-code
+// @desc    Decrypt a specific activation code
+// @access  Private (buyer role required)
+const decryptCode = async (request, reply) => {
+  request.log.info("handlers/decryptCode - START");
+  try {
+    const { codeId, orderId } = request.body;
+    const userId = request.user.userId;
+    const userRole = request.user.role;
+
+    // Find the order to verify ownership
+    let order;
+    if (orderId.match(/^[0-9a-fA-F]{24}$/)) {
+      // MongoDB ObjectId
+      order = await Order.findById(orderId);
+    } else {
+      // External UUID
+      order = await Order.findOne({ externalId: orderId });
+    }
+
+    if (!order) {
+      request.log.error("handlers/decryptCode - Order not found");
+      return sendErrorResponse(reply, 404, "Order not found");
+    }
+
+    // Authorization check - only buyers can decrypt their own codes
+    if (userRole !== 'buyer' || order.buyerId.toString() !== userId) {
+      request.log.error("handlers/decryptCode - Access denied");
+      return sendErrorResponse(reply, 403, "Access denied");
+    }
+
+    // Find the specific code in the order
+    let foundCode = null;
+    for (const item of order.orderItems) {
+      if (item.purchasedCodes) {
+        foundCode = item.purchasedCodes.find(code => code.codeId === codeId);
+        if (foundCode) break;
+      }
+    }
+
+    if (!foundCode) {
+      request.log.error("handlers/decryptCode - Code not found in order");
+      return sendErrorResponse(reply, 404, "Code not found in this order");
+    }
+
+    // Decrypt the code
+    let decryptedCode;
+    try {
+      if (foundCode.code && foundCode.iv) {
+        // Code is encrypted with IV
+        decryptedCode = decryptData(foundCode.code, foundCode.iv);
+      } else {
+        // Code might not be encrypted (legacy or plain text)
+        decryptedCode = foundCode.code;
+      }
+    } catch (decryptError) {
+      request.log.error('Decryption error:', decryptError);
+      return sendErrorResponse(reply, 500, "Failed to decrypt code");
+    }
+
+    // Log the decryption access for security/audit purposes
+    request.log.info(`Code decrypted - User: ${userId}, Order: ${order.externalId}, Code ID: ${codeId}`);
+
+    return sendSuccessResponse(reply, 200, "Code decrypted successfully", {
+      codeId,
+      decryptedCode,
+      expirationDate: foundCode.expirationDate
+    });
+
+  } catch (error) {
+    request.log.error('Error in decryptCode handler:', error);
+    return sendErrorResponse(reply, 500, "Internal server error");
+  }
+};
+
 module.exports = {
   createOrder,
   getBuyerOrders,
-  getSellerOrders
+  getSellerOrders,
+  getBuyerPurchasedCodes,
+  getOrderById,
+  decryptCode
 };

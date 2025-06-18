@@ -58,8 +58,8 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
           id: listing.externalId,
           title: listing.title,
           description: listing.description || '',
-          price: listing.price,
-          discountedPrice: listing.originalPrice ? listing.price : listing.price, // If no original price, use price as discounted
+          price: listing.originalPrice || listing.price, // Original price for strikethrough
+          discountedPrice: listing.price, // Current discounted price
           originalPrice: listing.originalPrice,
           categoryId: listing.categoryId,
           categoryName: listing.categoryName,
@@ -152,8 +152,8 @@ export const getProducts = async (params?: {
         id: listing.externalId,
         title: listing.title,
         description: listing.description || '',
-        price: listing.price,
-        discountedPrice: listing.originalPrice ? listing.price : listing.price,
+        price: listing.originalPrice || listing.price, // Original price for strikethrough
+        discountedPrice: listing.price, // Current discounted price
         originalPrice: listing.originalPrice,
         categoryId: listing.categoryId,
         categoryName: listing.categoryName,

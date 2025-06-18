@@ -429,7 +429,6 @@ const getBuyerPurchasedCodes = async (request, reply) => {
 
             codes.push({
               _id: purchasedCode._id,
-              orderId: order._id,
               externalOrderId: order.externalId,
               productName: item.title,
               platform: item.platform,

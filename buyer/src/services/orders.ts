@@ -147,7 +147,6 @@ export interface OrderItem {
 }
 
 export interface Order {
-  _id: string;
   externalId: string;
   orderItems: OrderItem[];
   totalAmount: number;
@@ -194,7 +193,6 @@ export interface GetOrdersParams {
 
 export interface PurchasedCode {
   _id: string;
-  orderId: string;
   externalOrderId: string;
   productName: string;
   platform: string;
@@ -240,7 +238,7 @@ export interface GetOrderByIdResponse {
 
 export interface DecryptCodeRequest {
   codeId: string;
-  orderId: string;
+  orderId: string; // This should be the externalOrderId (UUID)
 }
 
 export interface DecryptCodeResponse {

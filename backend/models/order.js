@@ -201,8 +201,10 @@ orderSchema.methods.markAsFailed = async function(errorMessage) {
 orderSchema.methods.getBuyerOrderData = function() {
   const orderData = this.toObject();
   
-  // Remove sensitive seller information
+  // Remove sensitive seller information and internal MongoDB ID
   delete orderData.sellerId;
+  delete orderData._id;
+  delete orderData.__v;
   
   return orderData;
 };
@@ -211,8 +213,10 @@ orderSchema.methods.getBuyerOrderData = function() {
 orderSchema.methods.getSellerOrderData = function() {
   const orderData = this.toObject();
   
-  // Remove buyer information and codes
+  // Remove buyer information, codes, and internal MongoDB ID
   delete orderData.buyerId;
+  delete orderData._id;
+  delete orderData.__v;
   
   // Remove actual codes from order items
   if (orderData.orderItems) {
@@ -261,7 +265,7 @@ orderSchema.statics.getOrdersByBuyer = async function(buyerId, options = {}) {
   const total = await this.countDocuments(query);
 
   return {
-    orders,
+    orders: orders.map(order => order.getBuyerOrderData()),
     pagination: {
       page,
       limit,

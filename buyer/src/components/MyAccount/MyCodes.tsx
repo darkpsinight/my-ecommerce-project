@@ -11,12 +11,14 @@ import {
   formatDate,
   formatCurrency 
 } from "@/utils/codeUtils";
+import CopyableOrderId from "@/components/Common/CopyableOrderId";
 
 interface MyCodesProps {
   className?: string;
+  isActive?: boolean;
 }
 
-const MyCodes: React.FC<MyCodesProps> = ({ className = "" }) => {
+const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) => {
   const { token } = useSelector((state: any) => state.authReducer);
   const [codes, setCodes] = useState<PurchasedCode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,7 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "" }) => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
   const [authReady, setAuthReady] = useState(false);
+  const [hasEverBeenActive, setHasEverBeenActive] = useState(false);
 
   // Get verify token to check if user has valid session
   const getVerifyToken = (): string | null => {
@@ -165,24 +168,46 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "" }) => {
     }
   };
 
-  // Initial load - wait for auth to be ready
+  // Track when tab becomes active for the first time
   useEffect(() => {
-    if (authReady) {
+    if (isActive && !hasEverBeenActive) {
+      setHasEverBeenActive(true);
+    }
+  }, [isActive, hasEverBeenActive]);
+
+  // Initial load - wait for auth to be ready and tab to be active
+  useEffect(() => {
+    if (authReady && hasEverBeenActive) {
       fetchCodes();
     }
-  }, [authReady]);
+  }, [authReady, hasEverBeenActive]);
+
+  // Show loading state only when actually loading (not when tab hasn't been activated)
+  if (!hasEverBeenActive && codes.length === 0) {
+    return (
+      <div className={`${className} p-6`}>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center text-center">
+            <div className="text-gray-400 text-4xl mb-4">🔑</div>
+            <h3 className="text-lg font-medium text-gray-600 mb-2">Your Digital Codes</h3>
+            <p className="text-gray-500">
+              View and manage your purchased digital codes here
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if ((!authReady || loading) && codes.length === 0) {
     return (
-      <div className={`${className}`}>
-        <div className="bg-white rounded-xl shadow-1 p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue"></div>
-              <p className="mt-4 text-gray-600">
-                {!authReady ? "Authenticating..." : "Loading your codes..."}
-              </p>
-            </div>
+      <div className={`${className} p-6`}>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue"></div>
+            <p className="mt-4 text-gray-600">
+              {!authReady ? "Authenticating..." : "Loading your codes..."}
+            </p>
           </div>
         </div>
       </div>
@@ -191,19 +216,17 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "" }) => {
 
   if (error && codes.length === 0) {
     return (
-      <div className={`${className}`}>
-        <div className="bg-white rounded-xl shadow-1 p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="text-red-500 text-xl mb-2">⚠️</div>
-              <p className="text-red-600 font-medium">{error}</p>
-              <button
-                onClick={() => fetchCodes()}
-                className="mt-4 px-4 py-2 bg-blue text-white rounded-md hover:bg-blue-600 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
+      <div className={`${className} p-6`}>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-red-500 text-xl mb-2">⚠️</div>
+            <p className="text-red-600 font-medium">{error}</p>
+            <button
+              onClick={() => fetchCodes()}
+              className="mt-4 px-4 py-2 bg-blue text-white rounded-md hover:bg-blue-600 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </div>
@@ -212,7 +235,6 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "" }) => {
 
   return (
     <div className={`${className}`}>
-      <div className="bg-white rounded-xl shadow-1">
         {/* Header */}
         <div className="p-6 border-b border-gray-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -298,12 +320,17 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "" }) => {
                             </div>
                           </td>
                           <td className="py-4 px-2">
-                            <span className="text-sm font-mono text-gray-600">
-                              {code.externalOrderId.slice(0, 8)}...
-                            </span>
+                            <CopyableOrderId orderId={code.externalOrderId} />
                           </td>
                           <td className="py-4 px-2">
                             <span className="text-sm text-gray-600">{formatDate(code.purchaseDate)}</span>
+                          </td>
+                          <td className="py-4 px-2">
+                            {code.expirationDate ? (
+                              <span className="text-sm text-gray-600">{formatDate(code.expirationDate)}</span>
+                            ) : (
+                              <span className="text-sm text-green-600 font-medium">Never expires</span>
+                            )}
                           </td>
                           <td className="py-4 px-2">
                             <div className="flex items-center space-x-2">
@@ -349,9 +376,16 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "" }) => {
 
                     <div className="mb-3">
                       <div className="text-xs text-gray-500 mb-1">Order ID</div>
-                      <span className="text-sm font-mono text-gray-600">
-                        {code.externalOrderId.slice(0, 8)}...
-                      </span>
+                      <CopyableOrderId orderId={code.externalOrderId} />
+                    </div>
+
+                    <div className="mb-3">
+                      <div className="text-xs text-gray-500 mb-1">Expiration</div>
+                      {code.expirationDate ? (
+                        <span className="text-sm text-gray-600">{formatDate(code.expirationDate)}</span>
+                      ) : (
+                        <span className="text-sm text-green-600 font-medium">Never expires</span>
+                      )}
                     </div>
 
                     <div className="mb-4">
@@ -441,7 +475,6 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "" }) => {
             </>
           )}
         </div>
-      </div>
 
       {loading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

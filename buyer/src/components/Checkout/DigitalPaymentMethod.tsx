@@ -129,10 +129,19 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
           <div className="space-y-4">
             {/* Wallet Payment - Only Payment Method */}
             <div className="rounded-md border-[0.5px] py-4 px-5 border-transparent bg-gray-2 flex-1">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    id="wallet"
+                    name="paymentMethod"
+                    value="wallet"
+                    checked={paymentMethod === "wallet"}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-4 h-4 text-blue bg-gray-100 border-gray-300 focus:ring-blue focus:ring-2"
+                  />
                   <svg
-                    className="w-6 h-6 text-green-600"
+                    className="w-6 h-6 text-blue flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -144,34 +153,83 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
                       d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
                     />
                   </svg>
-                  <span className="font-medium text-dark">Wallet Balance</span>
+                  <label htmlFor="wallet" className="font-medium text-dark text-sm sm:text-base cursor-pointer">
+                    Wallet Balance
+                  </label>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <p
-                    className={`text-sm ${
+                    className={`font-bold text-lg sm:text-xl lg:text-2xl ${
                       walletBalance >= totalPrice
-                        ? "text-gray-600"
+                        ? "text-blue"
                         : "text-red-600 font-medium"
                     }`}
                   >
-                    Available: ${walletBalance.toFixed(2)}
+                    <span className="text-sm sm:text-base lg:text-lg font-medium">Available: </span>
+                    ${walletBalance.toFixed(2)}
                   </p>
                   {walletBalance < totalPrice && (
-                    <p className="text-xs text-red-500 mt-1">
+                    <p className="text-xs sm:text-sm text-red-500 mt-1">
                       Need ${(totalPrice - walletBalance).toFixed(2)} more
                     </p>
                   )}
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-xs sm:text-sm text-gray-600 mt-3">
                 All payments are processed through your wallet balance for
                 security.
                 <a
                   href="/wallet"
-                  className="text-blue-600 hover:underline ml-1"
+                  className="text-blue-600 hover:underline ml-1 font-medium"
                 >
                   Add funds
                 </a>
+              </p>
+            </div>
+
+            {/* Cryptocurrency Payment - Coming Soon */}
+            <div className="rounded-md border-[0.5px] py-4 px-5 border-gray-300 bg-gray-50 flex-1 opacity-60">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                  <input
+                    type="radio"
+                    id="crypto"
+                    name="paymentMethod"
+                    value="crypto"
+                    checked={false}
+                    disabled={true}
+                    className="w-4 h-4 text-gray-400 bg-gray-200 border-gray-300 cursor-not-allowed opacity-50"
+                  />
+                  <svg
+                    className="w-6 h-6 text-amber-500 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <label htmlFor="crypto" className="font-medium text-dark text-sm sm:text-base cursor-not-allowed">
+                    Cryptocurrency
+                  </label>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    Coming Soon
+                  </span>
+                </div>
+                <div className="text-left sm:text-right">
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    Bitcoin, Ethereum & more
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-gray-500 mt-3 leading-relaxed">
+                Pay with your favorite cryptocurrency including Bitcoin,
+                Ethereum, and other popular digital assets. Zero additional
+                fees, instant confirmation, and enhanced privacy protection.
               </p>
             </div>
           </div>

@@ -175,7 +175,7 @@ const ProductItem = ({ item }: { item: Product }) => {
 
       <span className="flex items-center gap-2 font-medium text-lg relative z-0">
         <span className="text-dark">${item.discountedPrice}</span>
-        {item.originalPrice && item.originalPrice > item.discountedPrice && (
+        {item.price && item.price > item.discountedPrice && (
           <span className="text-dark-4 line-through">${item.price}</span>
         )}
       </span>

@@ -129,15 +129,13 @@ const createOrder = async (request, reply) => {
       paymentMethod
     });
 
-    // Process payment based on method
+    // Process payment based on method - Only wallet payments allowed
     let paymentResult;
-    if (paymentMethod === "stripe") {
-      paymentResult = await processStripePayment(user, order, totalAmount);
-    } else if (paymentMethod === "wallet") {
+    if (paymentMethod === "wallet") {
       paymentResult = await processWalletPayment(user, order, totalAmount);
     } else {
-      request.log.error("handlers/createOrder - Invalid payment method");
-      return sendErrorResponse(reply, 400, "Invalid payment method");
+      request.log.error(`handlers/createOrder - Invalid payment method: ${paymentMethod}. Only wallet payments are allowed.`);
+      return sendErrorResponse(reply, 400, "Only wallet payments are allowed for security reasons");
     }
 
     if (!paymentResult.success) {

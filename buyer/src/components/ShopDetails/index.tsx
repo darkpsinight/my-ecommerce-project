@@ -189,8 +189,8 @@ const ShopDetails = () => {
 
   // Calculate discount percentage
   const calculateDiscountPercentage = () => {
-    if (product && product.originalPrice && product.price) {
-      const discount = ((product.originalPrice - product.price) / product.originalPrice) * 100;
+    if (product && product.price && product.discountedPrice && product.price > product.discountedPrice) {
+      const discount = ((product.price - product.discountedPrice) / product.price) * 100;
       return Math.round(discount);
     }
     return 0;
@@ -249,7 +249,7 @@ const ShopDetails = () => {
                     {product.title}
                   </h2>
 
-                  {product.originalPrice && product.originalPrice > product.price && (
+                  {product.price && product.price > product.discountedPrice && (
                     <div className="inline-flex font-medium text-custom-sm text-white bg-blue rounded py-0.5 px-2.5">
                       {calculateDiscountPercentage()}% OFF
                     </div>
@@ -456,11 +456,11 @@ const ShopDetails = () => {
 
               <div className="flex items-center gap-3 mb-4.5">
                 <h3 className="font-medium text-2xl text-dark">
-                  ${product.price.toFixed(2)}
+                  ${product.discountedPrice.toFixed(2)}
                 </h3>
-                {product.originalPrice && product.originalPrice > product.price && (
+                {product.price && product.price > product.discountedPrice && (
                   <span className="line-through text-dark-4 text-lg">
-                    ${product.originalPrice.toFixed(2)}
+                    ${product.price.toFixed(2)}
                   </span>
                 )}
               </div>

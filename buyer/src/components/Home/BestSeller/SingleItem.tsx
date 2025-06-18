@@ -88,7 +88,9 @@ const SingleItem = ({ item }: { item: Product }) => {
 
           <span className="flex items-center justify-center gap-2 font-medium text-lg relative z-0">
             <span className="text-dark">${item.discountedPrice}</span>
-            <span className="text-dark-4 line-through">${item.price}</span>
+            {item.price && item.price > item.discountedPrice && (
+              <span className="text-dark-4 line-through">${item.price}</span>
+            )}
           </span>
         </div>
 

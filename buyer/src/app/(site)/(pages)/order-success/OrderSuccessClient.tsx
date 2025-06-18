@@ -54,24 +54,24 @@ const OrderSuccessClient = () => {
             <div className="space-y-4">
               <a
                 href="/orders"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue hover:bg-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue transition-colors duration-200"
               >
                 View My Orders
               </a>
               <a
                 href="/shop-with-sidebar"
-                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="w-full flex justify-center py-3 px-4 border border-gray-3 rounded-md shadow-sm text-sm font-medium text-gray-7 bg-white hover:bg-gray-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue transition-colors duration-200"
               >
                 Continue Shopping
               </a>
             </div>
 
             {/* Additional Info */}
-            <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+            <div className="mt-8 p-4 bg-blue-light-5 rounded-lg">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   <svg
-                    className="h-5 w-5 text-blue-400"
+                    className="h-5 w-5 text-blue-light-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -85,14 +85,13 @@ const OrderSuccessClient = () => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">
+                  <h3 className="text-sm font-medium text-blue-dark">
                     Important Information
                   </h3>
-                  <div className="mt-2 text-sm text-blue-700">
+                  <div className="mt-2 text-sm text-blue">
                     <ul className="list-disc list-inside space-y-1">
                       <li>Your codes are delivered instantly</li>
                       <li>Check expiration dates for each code</li>
-                      <li>Codes are one-time use only</li>
                       <li>Contact support if you have any issues</li>
                     </ul>
                   </div>

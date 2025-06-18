@@ -168,7 +168,7 @@ const SingleGridItem = ({ item }: { item: Product }) => {
 
       <span className="flex items-center gap-1.5 font-medium text-base relative z-0">
         <span className="text-dark">${item.discountedPrice}</span>
-        {item.originalPrice && item.originalPrice > item.discountedPrice && (
+        {item.price && item.price > item.discountedPrice && (
           <span className="text-dark-4 line-through text-sm">${item.price}</span>
         )}
       </span>

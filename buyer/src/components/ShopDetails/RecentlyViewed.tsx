@@ -46,7 +46,7 @@ const RecentlyViewedItems = () => {
 
   return (
     <PageContainer>
-      <section className="overflow-hidden pt-17.5">
+      <section className="overflow-hidden pt-17.5 -mt-30">
         <div className="pb-15 border-b border-gray-3">
         <div className="swiper categories-carousel common-carousel">
           {/* <!-- section title --> */}

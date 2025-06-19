@@ -259,7 +259,7 @@ orderSchema.statics.getOrdersByBuyer = async function(buyerId, options = {}) {
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate("listingId", "title platform region")
+    .populate("orderItems.listingId", "title platform region")
     .select("+orderItems.purchasedCodes.code +orderItems.purchasedCodes.iv");
 
   const total = await this.countDocuments(query);
@@ -299,7 +299,7 @@ orderSchema.statics.getOrdersBySeller = async function(sellerId, options = {}) {
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate("listingId", "title platform region")
+    .populate("orderItems.listingId", "title platform region")
     .populate("buyerId", "email"); // Only email for seller
 
   const total = await this.countDocuments(query);

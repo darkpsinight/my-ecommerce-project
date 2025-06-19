@@ -7,3 +7,5 @@ import React from "react";
 export function ReduxProvider({ children }: { children: React.ReactNode }) {
   return <Provider store={store}>{children}</Provider>;
 }
+
+export default ReduxProvider;

@@ -27,7 +27,7 @@ const StatusBadge: FC<StatusBadgeProps> = ({
     if (status === 'active') {
       return 'On Sale';
     } else if (status === 'sold') {
-      return type === 'listing' ? 'Sold Out' : 'Used';
+      return type === 'listing' ? 'Sold Out' : 'Sold';
     } else {
       return status.charAt(0).toUpperCase() + status.slice(1);
     }

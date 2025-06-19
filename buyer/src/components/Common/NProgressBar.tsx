@@ -33,4 +33,6 @@ export function NProgressBar() {
   }, [pathname, searchParams]);
 
   return null;
-} 
+}
+
+export default NProgressBar;

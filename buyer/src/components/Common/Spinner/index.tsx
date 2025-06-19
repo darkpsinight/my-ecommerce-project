@@ -27,4 +27,6 @@ export const Spinner: React.FC<SpinnerProps> = ({ className = 'w-5 h-5' }) => {
       ></path>
     </svg>
   );
-}; 
+};
+
+export default Spinner;

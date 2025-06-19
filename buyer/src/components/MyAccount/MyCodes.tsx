@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { ordersApi, PurchasedCode, GetPurchasedCodesParams } from "@/services/orders";
 import { toast } from "react-hot-toast";
@@ -46,9 +46,9 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
   };
 
   // Check if user is authenticated (has either token or verifyToken for refresh)
-  const isAuthenticated = (): boolean => {
+  const isAuthenticated = useCallback((): boolean => {
     return !!(token || getVerifyToken());
-  };
+  }, [token]);
 
   // Wait for auth state to be ready
   useEffect(() => {
@@ -100,7 +100,7 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
   };
 
   // Fetch codes
-  const fetchCodes = async (params?: Partial<GetPurchasedCodesParams>) => {
+  const fetchCodes = useCallback(async (params?: Partial<GetPurchasedCodesParams>) => {
     // Don't fetch if not authenticated
     if (!isAuthenticated()) {
       setError("Please sign in to view your purchased codes");
@@ -145,7 +145,7 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, searchTerm, sortBy, sortOrder, isAuthenticated]);
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
@@ -180,7 +180,7 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
     if (authReady && hasEverBeenActive) {
       fetchCodes();
     }
-  }, [authReady, hasEverBeenActive]);
+  }, [authReady, hasEverBeenActive, fetchCodes]);
 
   // Show loading state only when actually loading (not when tab hasn't been activated)
   if (!hasEverBeenActive && codes.length === 0) {

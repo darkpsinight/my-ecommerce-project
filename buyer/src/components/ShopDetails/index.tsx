@@ -155,7 +155,7 @@ const ShopDetails = () => {
     return () => {
       isMounted = false;
     };
-  }, [productId, dispatch, productFromStorage.id]); // Include productFromStorage.id in dependencies
+  }, [productId, dispatch, productFromStorage.id, fallbackProduct]); // Include productFromStorage.id and fallbackProduct in dependencies
 
   // Use the fetched product data or fallback
   const product = productData || fallbackProduct;
@@ -167,8 +167,18 @@ const ShopDetails = () => {
     if (product) {
       dispatch(
         addItemToCart({
-          ...product,
+          listingId: product.id,
+          title: product.title,
+          price: product.price,
+          discountedPrice: product.discountedPrice,
           quantity: quantity,
+          imgs: product.imgs,
+          sellerId: product.sellerId || '',
+          listingSnapshot: {
+            category: product.categoryName,
+            platform: product.platform,
+            region: product.region,
+          },
         })
       );
     }

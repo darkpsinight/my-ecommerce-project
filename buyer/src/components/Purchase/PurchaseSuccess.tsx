@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ordersApi, Order } from "@/services/orders";
@@ -125,7 +125,7 @@ const PurchaseSuccess: React.FC<PurchaseSuccessProps> = ({ purchaseId }) => {
   };
 
   // Fetch order details
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -162,14 +162,14 @@ const PurchaseSuccess: React.FC<PurchaseSuccessProps> = ({ purchaseId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [purchaseId, router]);
 
   // Initial load
   useEffect(() => {
     if (purchaseId) {
       fetchOrder();
     }
-  }, [purchaseId]);
+  }, [purchaseId, fetchOrder]);
 
   if (loading) {
     return (

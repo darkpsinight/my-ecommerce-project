@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAppSelector } from "@/redux/store";
 import { ordersApi, Order } from "@/services/orders";
 import PageContainer from "@/components/Common/PageContainer";
+import ProtectedRoute from "@/components/Common/ProtectedRoute";
 import toast from "react-hot-toast";
 
 const OrdersClient = () => {
@@ -14,17 +15,7 @@ const OrdersClient = () => {
   
   const token = useAppSelector((state) => state.authReducer.token);
 
-  useEffect(() => {
-    if (!token) {
-      setError("Please log in to view your orders");
-      setLoading(false);
-      return;
-    }
-
-    fetchOrders();
-  }, [token, currentPage]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const response = await ordersApi.getBuyerOrders({
@@ -45,7 +36,13 @@ const OrdersClient = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage]);
+
+  useEffect(() => {
+    if (token) {
+      fetchOrders();
+    }
+  }, [token, currentPage, fetchOrders]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -62,32 +59,13 @@ const OrdersClient = () => {
     });
   };
 
-  if (!token) {
-    return (
-      <PageContainer>
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-4">
-              Please Log In
-            </h1>
-            <p className="text-gray-600 mb-8">
-              You need to be logged in to view your orders.
-            </p>
-            <a
-              href="/signin"
-              className="inline-flex justify-center font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark"
-            >
-              Sign In
-            </a>
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
-
-  if (loading) {
-    return (
-      <PageContainer>
+  return (
+    <ProtectedRoute
+      redirectMessage="Please sign in to view your order history and digital codes."
+      redirectButtonText="Sign In to View Orders"
+    >
+      {loading ? (
+        <PageContainer>
         <div className="py-12">
           <h1 className="text-3xl font-semibold text-gray-900 mb-8">My Orders</h1>
           <div className="space-y-4">
@@ -100,13 +78,9 @@ const OrdersClient = () => {
             ))}
           </div>
         </div>
-      </PageContainer>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageContainer>
+        </PageContainer>
+      ) : error ? (
+        <PageContainer>
         <div className="py-12">
           <h1 className="text-3xl font-semibold text-gray-900 mb-8">My Orders</h1>
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
@@ -118,13 +92,9 @@ const OrdersClient = () => {
             </div>
           </div>
         </div>
-      </PageContainer>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
-      <PageContainer>
+        </PageContainer>
+      ) : orders.length === 0 ? (
+        <PageContainer>
         <div className="py-12">
           <h1 className="text-3xl font-semibold text-gray-900 mb-8">My Orders</h1>
           <div className="text-center py-12">
@@ -133,7 +103,7 @@ const OrdersClient = () => {
             </svg>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
             <p className="text-gray-600 mb-6">
-              You haven't made any purchases yet. Start shopping for digital codes!
+              You haven&apos;t made any purchases yet. Start shopping for digital codes!
             </p>
             <a
               href="/shop-with-sidebar"
@@ -143,18 +113,15 @@ const OrdersClient = () => {
             </a>
           </div>
         </div>
-      </PageContainer>
-    );
-  }
-
-  return (
-    <PageContainer>
+        </PageContainer>
+      ) : (
+        <PageContainer>
       <div className="py-12">
         <h1 className="text-3xl font-semibold text-gray-900 mb-8">My Orders</h1>
         
         <div className="space-y-6">
           {orders.map((order) => (
-            <div key={order._id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+            <div key={order.externalId} className="bg-white rounded-lg shadow-sm border overflow-hidden">
               {/* Order Header */}
               <div className="bg-gray-50 px-6 py-4 border-b">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -264,7 +231,9 @@ const OrdersClient = () => {
           </div>
         )}
       </div>
-    </PageContainer>
+        </PageContainer>
+      )}
+    </ProtectedRoute>
   );
 };
 

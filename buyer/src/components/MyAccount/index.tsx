@@ -2,10 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { useAppSelector } from "@/redux/store";
+import { selectAuthToken } from "@/redux/features/auth-slice";
 import AddressModal from "./AddressModal";
 import Orders from "../Orders";
 import MyCodes from "./MyCodes";
 import PageContainer from "../Common/PageContainer";
+import ProtectedRoute from "../Common/ProtectedRoute";
 
 const MyAccount = () => {
   const searchParams = useSearchParams();
@@ -39,7 +42,10 @@ const MyAccount = () => {
   };
 
   return (
-    <>
+    <ProtectedRoute
+      redirectMessage="Please sign in to access your account dashboard and manage your digital codes."
+      redirectButtonText="Sign In to My Account"
+    >
       <PageContainer fullWidth={true}>
         <section className="overflow-hidden pt-[95px] py-20 bg-gray-2">
           <div className="max-w-[1400px] w-full mx-auto px-3 sm:px-6">
@@ -794,7 +800,7 @@ const MyAccount = () => {
         </section>
       </PageContainer>
       <AddressModal isOpen={addressModal} closeModal={closeAddressModal} />
-    </>
+    </ProtectedRoute>
   );
 };
 

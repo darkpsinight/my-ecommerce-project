@@ -12,6 +12,7 @@ import {
   formatCurrency 
 } from "@/utils/codeUtils";
 import CopyableOrderId from "@/components/Common/CopyableOrderId";
+import CodeModal from "./CodeModal";
 
 interface MyCodesProps {
   className?: string;
@@ -33,9 +34,10 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"createdAt" | "productName" | "platform">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
   const [authReady, setAuthReady] = useState(false);
   const [hasEverBeenActive, setHasEverBeenActive] = useState(false);
+  const [selectedCode, setSelectedCode] = useState<PurchasedCode | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Get verify token to check if user has valid session
   const getVerifyToken = (): string | null => {
@@ -73,15 +75,16 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
 
 
 
-  // Toggle code visibility
-  const toggleCodeVisibility = (codeId: string, code: PurchasedCode) => {
-    const newVisibleCodes = new Set(visibleCodes);
-    if (newVisibleCodes.has(codeId)) {
-      newVisibleCodes.delete(codeId);
-    } else {
-      newVisibleCodes.add(codeId);
-    }
-    setVisibleCodes(newVisibleCodes);
+  // Open code modal
+  const openCodeModal = (code: PurchasedCode) => {
+    setSelectedCode(code);
+    setIsModalOpen(true);
+  };
+
+  // Close code modal
+  const closeCodeModal = () => {
+    setIsModalOpen(false);
+    setSelectedCode(null);
   };
 
   // Copy code to clipboard
@@ -335,21 +338,21 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
                           <td className="py-4 px-2">
                             <div className="flex items-center space-x-2">
                               <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded border">
-                                {visibleCodes.has(code._id) ? code.code : maskCode(code.code)}
+                                {maskCode(code.code)}
                               </span>
                             </div>
                           </td>
                           <td className="py-4 px-2">
                             <div className="flex space-x-2">
                               <button
-                                onClick={() => toggleCodeVisibility(code._id, code)}
-                                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                                onClick={() => openCodeModal(code)}
+                                className="px-3 py-1 text-sm bg-blue text-white rounded hover:bg-blue-600 transition-colors"
                               >
-                                {visibleCodes.has(code._id) ? "Hide" : "Show"}
+                                Show
                               </button>
                               <button
                                 onClick={() => copyToClipboard(code._id, code)}
-                                className="px-3 py-1 text-sm bg-blue text-white rounded hover:bg-blue-600 transition-colors"
+                                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
                               >
                                 Copy
                               </button>
@@ -392,21 +395,21 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
                       <div className="text-xs text-gray-500 mb-2">Activation Code</div>
                       <div className="flex items-center space-x-2">
                         <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded border flex-1">
-                          {visibleCodes.has(code._id) ? code.code : maskCode(code.code)}
+                          {maskCode(code.code)}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => toggleCodeVisibility(code._id, code)}
-                        className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                        onClick={() => openCodeModal(code)}
+                        className="flex-1 px-3 py-2 text-sm bg-blue text-white rounded hover:bg-blue-600 transition-colors"
                       >
-                        {visibleCodes.has(code._id) ? "Hide Code" : "Show Code"}
+                        Show Code
                       </button>
                       <button
                         onClick={() => copyToClipboard(code._id, code)}
-                        className="flex-1 px-3 py-2 text-sm bg-blue text-white rounded hover:bg-blue-600 transition-colors"
+                        className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
                       >
                         Copy Code
                       </button>
@@ -484,6 +487,13 @@ const MyCodes: React.FC<MyCodesProps> = ({ className = "", isActive = false }) =
           </div>
         </div>
       )}
+
+      {/* Code Modal */}
+      <CodeModal 
+        isOpen={isModalOpen} 
+        closeModal={closeCodeModal} 
+        code={selectedCode} 
+      />
     </div>
   );
 };

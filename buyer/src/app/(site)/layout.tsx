@@ -64,7 +64,17 @@ export default function RootLayout({
                 </CartModalProvider>
               </AuthProvider>
             </ReduxProvider>
-            <Toaster position="top-right" />
+            <Toaster 
+              position="top-right" 
+              toastOptions={{
+                style: {
+                  zIndex: 999999,
+                },
+              }}
+              containerStyle={{
+                zIndex: 999999,
+              }}
+            />
             <ScrollToTop />
             <Footer />
           </>

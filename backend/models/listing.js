@@ -364,6 +364,20 @@ listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate 
   return this.codes.length;
 };
 
+// Method to get count of available codes
+listingSchema.methods.getAvailableCodesCount = function() {
+  if (!this.codes || this.codes.length === 0) {
+    return 0;
+  }
+  return this.codes.filter(code => code.soldStatus === "active").length;
+};
+
+// Method to check if listing has available codes for purchase
+listingSchema.methods.hasAvailableCodes = function(requestedQuantity = 1) {
+  const availableCount = this.getAvailableCodesCount();
+  return availableCount >= requestedQuantity;
+};
+
 // Method to purchase a code - marks one active code as sold and returns the decrypted code
 listingSchema.methods.purchaseCode = function() {
   // Find the first active code

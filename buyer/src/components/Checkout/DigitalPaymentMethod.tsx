@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { removeAllItemsFromCart } from "@/redux/features/cart-slice";
+import { resetCartState } from "@/redux/features/cart-slice";
 import { ordersApi } from "@/services/orders";
 import { walletApi } from "@/services/wallet";
 import toast from "react-hot-toast";
 
 interface CartItem {
-  id: number;
+  id: string;
+  listingId: string;
   title: string;
   price: number;
   discountedPrice: number;
@@ -15,6 +16,13 @@ interface CartItem {
   imgs?: {
     thumbnails: string[];
     previews: string[];
+  };
+  sellerId: string;
+  listingSnapshot?: {
+    category?: string;
+    subcategory?: string;
+    platform?: string;
+    region?: string;
   };
 }
 
@@ -68,17 +76,14 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
 
     try {
       // Convert cart items to the format expected by the API
-      // Note: item.id is actually the externalId (UUID) from the listing
+      // Use the listingId field which is the UUID from the listing
       const orderCartItems = cartItems.map((item) => ({
-        listingId: item.id.toString(), // Use externalId (UUID)
+        listingId: item.listingId || item.id, // Use listingId (UUID) or fallback to id
         quantity: item.quantity,
       }));
 
-      console.log("=== FRONTEND DEBUG ===");
-      console.log("Cart items:", cartItems);
-      console.log("Order cart items:", orderCartItems);
-      console.log("Payment method:", paymentMethod);
-      console.log("Total price:", totalPrice);
+      // Debug logging (can be removed in production)
+      console.log("Processing payment with cart items:", orderCartItems);
 
       // Create order
       const orderResponse = await ordersApi.createOrder({
@@ -87,8 +92,8 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
       });
 
       if (orderResponse.success) {
-        // Clear cart
-        dispatch(removeAllItemsFromCart());
+        // Clear cart silently (no toast message)
+        dispatch(resetCartState());
 
         if (paymentMethod === "wallet") {
           // Wallet payment is processed immediately

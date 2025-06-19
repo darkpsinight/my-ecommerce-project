@@ -21,6 +21,7 @@ import PreviewSliderModal from "@/components/Common/PreviewSlider";
 
 import ScrollToTop from "@/components/Common/ScrollToTop";
 import PreLoader from "@/components/Common/PreLoader";
+import CartInitializer from "@/components/Common/CartInitializer";
 import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({
@@ -48,6 +49,7 @@ export default function RootLayout({
           <>
             <ReduxProvider>
               <AuthProvider>
+                <CartInitializer />
                 <CartModalProvider>
                   <ModalProvider>
                     <PreviewSliderProvider>

@@ -1,20 +1,16 @@
 "use client";
 import React from "react";
-import { useAppSelector } from "@/redux/store";
-import { useDispatch } from "react-redux";
-import { removeAllItemsFromCart } from "@/redux/features/cart-slice";
+import { useAppSelector, useAppDispatch } from "@/redux/store";
+import { removeAllItemsFromCart, selectCartItems, selectCartTotalAmount, selectCartClearingCart } from "@/redux/features/cart-slice";
 import SingleItem from "./SingleItem";
 import Link from "next/link";
 import PageContainer from "../Common/PageContainer";
 
 const Cart = () => {
-  const cartItems = useAppSelector((state) => state.cartReducer.items);
-  const dispatch = useDispatch();
-
-  const totalAmount = cartItems.reduce(
-    (total, item) => total + item.discountedPrice * item.quantity,
-    0
-  );
+  const cartItems = useAppSelector(selectCartItems);
+  const totalAmount = useAppSelector(selectCartTotalAmount);
+  const isClearing = useAppSelector(selectCartClearingCart);
+  const dispatch = useAppDispatch();
 
   const handleClearCart = () => {
     if (window.confirm("Are you sure you want to clear your cart?")) {
@@ -86,9 +82,10 @@ const Cart = () => {
           </h1>
           <button
             onClick={handleClearCart}
-            className="text-sm text-gray-600 hover:text-red-600 transition-colors duration-200"
+            disabled={isClearing}
+            className="text-sm text-gray-600 hover:text-red-600 transition-colors duration-200 disabled:opacity-50"
           >
-            Clear Cart
+            {isClearing ? 'Clearing...' : 'Clear Cart'}
           </button>
         </div>
 

@@ -3,17 +3,16 @@ import React from "react";
 import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addItemToCartAsync, selectCartAddingItem } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
+import { useAppDispatch, useAppSelector } from "@/redux/store";
 import Link from "next/link";
 import Image from "next/image";
 
 const SingleGridItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
-
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
+  const isAddingToCart = useAppSelector(selectCartAddingItem);
 
   // update the QuickView state
   const handleQuickViewUpdate = () => {
@@ -22,10 +21,25 @@ const SingleGridItem = ({ item }: { item: Product }) => {
 
   // add to cart
   const handleAddToCart = () => {
+    if (!item.sellerId) {
+      console.error('Seller ID is required to add item to cart');
+      return;
+    }
+
     dispatch(
-      addItemToCart({
-        ...item,
+      addItemToCartAsync({
+        listingId: item.id,
+        title: item.title,
+        price: item.price,
+        discountedPrice: item.discountedPrice,
         quantity: 1,
+        imgs: item.imgs || { thumbnails: [], previews: [] },
+        sellerId: item.sellerId,
+        listingSnapshot: {
+          category: item.categoryName,
+          platform: item.platform,
+          region: item.region,
+        },
       })
     );
   };
@@ -92,9 +106,10 @@ const SingleGridItem = ({ item }: { item: Product }) => {
               e.stopPropagation();
               handleAddToCart();
             }}
-            className="inline-flex font-medium text-xs py-[5px] px-3 rounded-[4px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark relative z-20"
+            disabled={isAddingToCart}
+            className="inline-flex font-medium text-xs py-[5px] px-3 rounded-[4px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark relative z-20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Add to cart
+            {isAddingToCart ? 'Adding...' : 'Add to cart'}
           </button>
 
           <button

@@ -9,7 +9,7 @@ import userInfoReducer from "./features/user-info-slice";
 import categoriesReducer from "./features/categories-slice";
 import recentlyViewedReducer from "./features/recently-viewed-slice";
 
-import { TypedUseSelectorHook, useSelector } from "react-redux";
+import { TypedUseSelectorHook, useSelector, useDispatch } from "react-redux";
 
 export const store = configureStore({
   reducer: {
@@ -28,3 +28,4 @@ export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+export const useAppDispatch = () => useDispatch<AppDispatch>();

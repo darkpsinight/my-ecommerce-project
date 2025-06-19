@@ -2,7 +2,8 @@ import React from "react";
 import Image from "next/image";
 
 interface CartItem {
-  id: number;
+  id: string;
+  listingId: string;
   title: string;
   price: number;
   discountedPrice: number;
@@ -10,6 +11,13 @@ interface CartItem {
   imgs?: {
     thumbnails: string[];
     previews: string[];
+  };
+  sellerId: string;
+  listingSnapshot?: {
+    category?: string;
+    subcategory?: string;
+    platform?: string;
+    region?: string;
   };
 }
 
@@ -22,6 +30,9 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
   cartItems,
   totalPrice,
 }) => {
+  // Debug logging (can be removed in production)
+  console.log('DigitalOrderSummary - Cart Items:', cartItems);
+
   return (
     <div className="bg-white shadow-1 rounded-[10px]">
       <div className="border-b border-gray-3 py-5 px-4 sm:px-8.5">
@@ -48,13 +59,19 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
             <div className="flex items-center gap-3 flex-1">
               {/* Product Image */}
               <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
-                {item.imgs?.thumbnails?.[0] ? (
+                {item.imgs?.thumbnails?.[0] || item.imgs?.previews?.[0] ? (
                   <Image
-                    src={item.imgs.thumbnails[0]}
+                    src={item.imgs.thumbnails?.[0] || item.imgs.previews?.[0] || 'https://via.placeholder.com/48x48/f3f4f6/6b7280?text=IMG'}
                     alt={item.title}
                     width={48}
                     height={48}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.log('Image failed to load:', e.currentTarget.src);
+                      console.log('Item images:', item.imgs);
+                      // Fallback to placeholder
+                      e.currentTarget.src = 'https://via.placeholder.com/48x48/f3f4f6/6b7280?text=IMG';
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">

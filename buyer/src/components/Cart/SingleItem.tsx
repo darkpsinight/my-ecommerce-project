@@ -10,7 +10,8 @@ import QuantityControl from "./QuantityControl";
 import Link from "next/link";
 
 interface CartItem {
-  id: number;
+  id: string;
+  listingId: string;
   title: string;
   price: number;
   discountedPrice: number;
@@ -18,6 +19,13 @@ interface CartItem {
   imgs?: {
     thumbnails: string[];
     previews: string[];
+  };
+  sellerId: string;
+  listingSnapshot?: {
+    category?: string;
+    subcategory?: string;
+    platform?: string;
+    region?: string;
   };
 }
 
@@ -34,7 +42,7 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
   const handleRemoveFromCart = async () => {
     setIsUpdating(true);
     try {
-      await dispatch(removeItemFromCart(item.id));
+      await dispatch(removeItemFromCart({ listingId: item.listingId || item.id }));
     } finally {
       setIsUpdating(false);
     }
@@ -47,7 +55,7 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
     setQuantity(newQuantity); // Optimistic update
     
     try {
-      await dispatch(updateCartItemQuantity({ id: item.id, quantity: newQuantity }));
+      await dispatch(updateCartItemQuantity({ listingId: item.listingId || item.id, quantity: newQuantity }));
     } catch (error) {
       setQuantity(quantity); // Revert on error
     } finally {
@@ -62,7 +70,7 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
         <Link href={`/product/${item.id}`} className="shrink-0">
           <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gray-2 rounded-lg overflow-hidden">
             <Image 
-              src={item.imgs?.thumbnails[0] || '/images/placeholder.jpg'} 
+              src={item.imgs?.thumbnails?.[0] || item.imgs?.previews?.[0] || '/images/placeholder.jpg'} 
               alt={item.title}
               fill
               className="object-cover"

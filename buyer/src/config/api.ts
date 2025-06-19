@@ -32,6 +32,15 @@ export const OAUTH_API = {
     PROVIDER: (provider: string) => `${API_URL}/${provider}`,
 };
 
+export const CART_API = {
+    GET_CART: `${API_URL}/cart`,
+    GET_CART_SUMMARY: `${API_URL}/cart/summary`,
+    ADD_TO_CART: `${API_URL}/cart/add`,
+    UPDATE_CART_ITEM: `${API_URL}/cart/update`,
+    REMOVE_FROM_CART: `${API_URL}/cart/remove`,
+    CLEAR_CART: `${API_URL}/cart/clear`,
+};
+
 // Type definitions for API responses
 export interface ApiResponse<T = any> {
     success: boolean;
@@ -44,6 +53,7 @@ const api = {
     AUTH_API,
     ADMIN_API,
     OAUTH_API,
+    CART_API,
 };
 
 export default api;

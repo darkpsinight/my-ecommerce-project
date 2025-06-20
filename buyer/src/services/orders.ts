@@ -131,7 +131,14 @@ export interface CreateOrderData {
 }
 
 export interface OrderItem {
-  listingId: string;
+  listing?: {
+    _id: string;
+    title: string;
+    platform: string;
+    region: string;
+    description: string;
+    thumbnailUrl?: string;
+  };
   title: string;
   platform: string;
   region: string;
@@ -146,6 +153,11 @@ export interface OrderItem {
   }[];
 }
 
+export interface Seller {
+  name: string;
+  email: string;
+}
+
 export interface Order {
   externalId: string;
   orderItems: OrderItem[];
@@ -156,6 +168,7 @@ export interface Order {
   deliveryStatus: 'pending' | 'delivered' | 'failed';
   createdAt: string;
   deliveredAt?: string;
+  seller?: Seller;
 }
 
 export interface CreateOrderResponse {
@@ -255,32 +268,32 @@ class OrdersService {
   private baseUrl = '/orders';
 
   async createOrder(data: CreateOrderData): Promise<CreateOrderResponse> {
-    const response = await axiosInstance.post(`${this.baseUrl}/create`, data);
+    const response = await axiosInstance.post<CreateOrderResponse>(`${this.baseUrl}/create`, data);
     return response.data;
   }
 
   async getBuyerOrders(params?: GetOrdersParams): Promise<GetOrdersResponse> {
-    const response = await axiosInstance.get(`${this.baseUrl}/buyer`, { params });
+    const response = await axiosInstance.get<GetOrdersResponse>(`${this.baseUrl}/buyer`, { params });
     return response.data;
   }
 
   async getSellerOrders(params?: GetOrdersParams): Promise<GetOrdersResponse> {
-    const response = await axiosInstance.get(`${this.baseUrl}/seller`, { params });
+    const response = await axiosInstance.get<GetOrdersResponse>(`${this.baseUrl}/seller`, { params });
     return response.data;
   }
 
   async getBuyerPurchasedCodes(params?: GetPurchasedCodesParams): Promise<GetPurchasedCodesResponse> {
-    const response = await axiosInstance.get(`${this.baseUrl}/buyer/codes`, { params });
+    const response = await axiosInstance.get<GetPurchasedCodesResponse>(`${this.baseUrl}/buyer/codes`, { params });
     return response.data;
   }
 
   async getOrderById(orderId: string): Promise<GetOrderByIdResponse> {
-    const response = await axiosInstance.get(`${this.baseUrl}/${orderId}`);
+    const response = await axiosInstance.get<GetOrderByIdResponse>(`${this.baseUrl}/${orderId}`);
     return response.data;
   }
 
   async decryptCode(data: DecryptCodeRequest): Promise<DecryptCodeResponse> {
-    const response = await axiosInstance.post(`${this.baseUrl}/decrypt-code`, data);
+    const response = await axiosInstance.post<DecryptCodeResponse>(`${this.baseUrl}/decrypt-code`, data);
     return response.data;
   }
 }

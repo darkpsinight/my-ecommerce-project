@@ -197,14 +197,45 @@ orderSchema.methods.markAsFailed = async function(errorMessage) {
   return await this.save();
 };
 
-// Instance method to get buyer-safe order data (with decrypted codes)
+// Instance method to get buyer-safe order data (without codes for orders page)
 orderSchema.methods.getBuyerOrderData = function() {
   const orderData = this.toObject();
   
-  // Remove sensitive seller information and internal MongoDB ID
-  delete orderData.sellerId;
+  // Remove internal MongoDB ID
   delete orderData._id;
   delete orderData.__v;
+  
+  // Process order items to include listing details
+  if (orderData.orderItems) {
+    orderData.orderItems.forEach((item, index) => {
+      // Remove purchased codes from order items for security
+      if (item.purchasedCodes) {
+        delete item.purchasedCodes;
+      }
+      
+      // Keep listing information for buyer to see (safe fields only)
+      if (item.listingId && typeof item.listingId === 'object') {
+        item.listing = {
+          _id: item.listingId._id,
+          title: item.listingId.title,
+          platform: item.listingId.platform,
+          region: item.listingId.region,
+          description: item.listingId.description,
+          thumbnailUrl: item.listingId.thumbnailUrl
+        };
+        delete item.listingId;
+      }
+    });
+  }
+  
+  // Keep seller information for buyer to see (safe fields only)
+  if (orderData.sellerId && typeof orderData.sellerId === 'object') {
+    orderData.seller = {
+      name: orderData.sellerId.name
+      // Email removed for privacy/security
+    };
+    delete orderData.sellerId;
+  }
   
   return orderData;
 };
@@ -259,13 +290,19 @@ orderSchema.statics.getOrdersByBuyer = async function(buyerId, options = {}) {
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate("orderItems.listingId", "title platform region")
+    .populate("orderItems.listingId", "title platform region description thumbnailUrl")
+    .populate("sellerId", "name email")
     .select("+orderItems.purchasedCodes.code +orderItems.purchasedCodes.iv");
 
   const total = await this.countDocuments(query);
 
-  return {
-    orders: orders.map(order => order.getBuyerOrderData()),
+  const processedOrders = orders.map(order => {
+    const processed = order.getBuyerOrderData();
+    return processed;
+  });
+
+  const finalResult = {
+    orders: processedOrders,
     pagination: {
       page,
       limit,
@@ -273,6 +310,8 @@ orderSchema.statics.getOrdersByBuyer = async function(buyerId, options = {}) {
       pages: Math.ceil(total / limit)
     }
   };
+
+  return finalResult;
 };
 
 // Static method to get orders by seller

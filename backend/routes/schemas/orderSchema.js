@@ -159,6 +159,17 @@ const orderSchema = {
                           quantity: { type: "number" },
                           unitPrice: { type: "number" },
                           totalPrice: { type: "number" },
+                          listing: {
+                            type: "object",
+                            properties: {
+                              _id: { type: "string" },
+                              title: { type: "string" },
+                              platform: { type: "string" },
+                              region: { type: "string" },
+                              description: { type: "string" },
+                              thumbnailUrl: { type: "string" }
+                            }
+                          },
                           purchasedCodes: {
                             type: "array",
                             items: {
@@ -172,6 +183,12 @@ const orderSchema = {
                             }
                           }
                         }
+                      }
+                    },
+                    seller: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" }
                       }
                     },
                     totalAmount: { type: "number" },

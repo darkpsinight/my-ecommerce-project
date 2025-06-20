@@ -7,6 +7,7 @@ import {
   useCategoryData
 } from './hooks';
 import { uploadImage } from 'src/services/api/imageUpload';
+import { validateListingForm } from '../ValidationHelpers';
 
 const ModalContext = createContext<ModalContextProps | null>(null);
 
@@ -105,13 +106,26 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({
     }));
   };
 
+  // Custom validation that considers temporary image file
+  const validateFormWithTempFile = () => {
+    const { errors, isValid } = validateListingForm(formData);
+    
+    // Special handling for thumbnailUrl - if there's a temporary file, don't require the URL
+    if (temporaryImageFile && !formData.thumbnailUrl.trim()) {
+      errors.thumbnailUrl = ''; // Clear the error if there's a temporary file
+    }
+    
+    setFormErrors(errors);
+    return isValid && (formData.thumbnailUrl.trim() || temporaryImageFile);
+  };
+
   // Custom submit handler that first uploads the image if needed
   const handleSubmitWithImageUpload = async () => {
     // Set form submission attempted to true
     setFormSubmitAttempted(true);
 
     // First validate the form before attempting any upload
-    if (!validateForm()) {
+    if (!validateFormWithTempFile()) {
       // Scroll to the codes section if there's an error with codes
       if (formErrors.codes) {
         const codesSection = document.getElementById('codes-section');

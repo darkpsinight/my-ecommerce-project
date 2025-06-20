@@ -112,7 +112,7 @@ const PricingSection: React.FC<PricingSectionProps> = ({
           <Grid item xs={12}>
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Price*
+                Price <span style={{ color: 'red' }}>*</span>
               </Typography>
               <Stack
                 spacing={2}

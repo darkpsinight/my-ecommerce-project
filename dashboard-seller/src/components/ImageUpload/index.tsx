@@ -11,7 +11,8 @@ import {
   Tab,
   Paper,
   useTheme,
-  alpha
+  alpha,
+  FormHelperText
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LinkIcon from '@mui/icons-material/Link';
@@ -299,7 +300,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         elevation={0}
         sx={{
           borderRadius: 1,
-          border: `1px solid ${theme.palette.divider}`,
+          border: `1px solid ${error ? theme.palette.error.main : theme.palette.divider}`,
           mb: 1
         }}
       >
@@ -385,15 +386,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </Box>
 
           {uploadError && (
-            <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
+            <FormHelperText error sx={{ mt: 1 }}>
               {uploadError}
-            </Alert>
+            </FormHelperText>
           )}
 
           {error && !uploadError && (
-            <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: '0.75rem' }}>
+            <FormHelperText error sx={{ mt: 1 }}>
               {error}
-            </Alert>
+            </FormHelperText>
           )}
         </TabPanel>
 

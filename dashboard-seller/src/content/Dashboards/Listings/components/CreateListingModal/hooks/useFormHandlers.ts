@@ -148,20 +148,28 @@ export const useFormHandlers = ({
     const { name, value } = e.target;
 
     // Validate specific fields on blur
-    if (name === 'thumbnailUrl' && value) {
-      try {
-        new URL(value);
-        // Valid URL, clear error
+    if (name === 'thumbnailUrl') {
+      if (!value || !value.trim()) {
+        // Empty value, set required error
         setFormErrors((prev) => ({
           ...prev,
-          [name]: ''
+          [name]: 'Product thumbnail is required'
         }));
-      } catch (error) {
-        // Invalid URL, set error
-        setFormErrors((prev) => ({
-          ...prev,
-          [name]: 'Please enter a valid URL'
-        }));
+      } else {
+        try {
+          new URL(value);
+          // Valid URL, clear error
+          setFormErrors((prev) => ({
+            ...prev,
+            [name]: ''
+          }));
+        } catch (error) {
+          // Invalid URL, set error
+          setFormErrors((prev) => ({
+            ...prev,
+            [name]: 'Please enter a valid URL'
+          }));
+        }
       }
     }
   };

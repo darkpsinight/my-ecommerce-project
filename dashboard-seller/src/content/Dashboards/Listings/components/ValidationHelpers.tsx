@@ -152,10 +152,11 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
     }
   }
 
-  // Thumbnail URL validation - only validate if there's a URL
-  // For the Create Listing modal with deferred image upload, we don't validate here
-  // as the URL will be empty until form submission
-  if (formData.thumbnailUrl && !isValidUrl(formData.thumbnailUrl)) {
+  // Thumbnail URL validation - now required
+  if (!formData.thumbnailUrl || !formData.thumbnailUrl.trim()) {
+    errors.thumbnailUrl = 'Product thumbnail is required';
+    isValid = false;
+  } else if (!isValidUrl(formData.thumbnailUrl)) {
     errors.thumbnailUrl = 'Please enter a valid URL';
     isValid = false;
   }

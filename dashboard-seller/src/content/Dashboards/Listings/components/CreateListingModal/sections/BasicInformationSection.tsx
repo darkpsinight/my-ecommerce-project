@@ -88,7 +88,7 @@ const BasicInformationSection: React.FC<BasicInformationSectionProps> = ({
                     value={formData.description}
                     onChange={handleDescriptionChange}
                     modules={modules}
-                    style={{ minHeight: isMobile ? '120px' : '250px' }}
+                    style={{ minHeight: isMobile ? '120px' : '202px' }}
                     placeholder="Provide a detailed description of your product. Include important features, usage instructions, and any other information buyers should know."
                   />
                   {formErrors.description && (
@@ -102,7 +102,7 @@ const BasicInformationSection: React.FC<BasicInformationSectionProps> = ({
               {/* Product Thumbnail - Full width on mobile, 40% on larger screens */}
               <Grid item xs={12} md={5}>
                 <Typography variant="subtitle2" gutterBottom>
-                  Product Thumbnail
+                  Product Thumbnail <span style={{ color: 'red' }}>*</span>
                 </Typography>
                 <ImageUpload
                   value={formData.thumbnailUrl}

@@ -9,7 +9,7 @@ import { useAppSelector } from "@/redux/store";
 import { getProductById } from "@/services/product";
 import { Product } from "@/types/product";
 import { useRouter, useSearchParams } from "next/navigation";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addItemToCart, selectCartAddingItem } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
 import {
   updateproductDetails,
@@ -51,6 +51,9 @@ const ShopDetails = () => {
   const productFromStorage = useAppSelector(
     (state) => state.productDetailsReducer.value
   );
+  
+  // Get cart loading state
+  const isAddingToCart = useAppSelector(selectCartAddingItem);
 
   // Initialize fallback product
   const [fallbackProduct, setFallbackProduct] = useState<Product | null>(null);
@@ -565,8 +568,7 @@ const ShopDetails = () => {
                       Stock Information
                     </h4>
                     <p className="text-sm text-gray-600">
-                      {product.quantityOfActiveCodes || 0} active codes
-                      available
+                      {product.quantityOfActiveCodes || 0} active codes available
                     </p>
                   </div>
                   <div className="text-right">
@@ -601,7 +603,8 @@ const ShopDetails = () => {
                       max={product.quantityOfActiveCodes || 1}
                       disabled={
                         !product.quantityOfActiveCodes ||
-                        product.quantityOfActiveCodes === 0
+                        product.quantityOfActiveCodes === 0 ||
+                        (product.status && product.status.toLowerCase() === 'inactive')
                       }
                       handleQuantityChange={setQuantity}
                     />
@@ -618,13 +621,40 @@ const ShopDetails = () => {
                   <button
                     onClick={handleAddToCart}
                     disabled={
+                      isAddingToCart ||
                       !product.quantityOfActiveCodes ||
-                      product.quantityOfActiveCodes === 0
+                      product.quantityOfActiveCodes === 0 ||
+                      (product.status && product.status.toLowerCase() === 'inactive')
                     }
-                    className="flex-1 min-w-[200px] bg-gradient-to-r from-blue to-blue-dark hover:from-blue-dark hover:to-blue-light disabled:from-gray-300 disabled:to-gray-400 disabled:text-gray-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                    className="flex-1 min-w-[200px] bg-gradient-to-r from-blue to-blue-dark hover:from-blue-dark hover:to-blue-light disabled:from-gray-300 disabled:to-gray-400 disabled:text-gray-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {!product.quantityOfActiveCodes ||
-                    product.quantityOfActiveCodes === 0
+                    {isAddingToCart && (
+                      <svg
+                        className="animate-spin h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    )}
+                    {isAddingToCart
+                      ? "Adding to Cart..."
+                      : (!product.quantityOfActiveCodes ||
+                          product.quantityOfActiveCodes === 0 ||
+                          (product.status && product.status.toLowerCase() === 'inactive'))
                       ? "Out of Stock"
                       : "Add to Cart"}
                   </button>

@@ -32,6 +32,37 @@ const initialState: InitialState = {
   clearingCart: false,
 };
 
+// Helper function to check if error is authentication related
+const isAuthError = (error: any): boolean => {
+  const errorMessage = error?.message || error?.data?.message || error?.response?.data?.message || '';
+  
+  return errorMessage.toLowerCase().includes('unauthorized') || 
+         errorMessage.toLowerCase().includes('token') ||
+         errorMessage.toLowerCase().includes('authentication') ||
+         error?.status === 401 ||
+         error?.response?.status === 401;
+};
+
+// Helper function to get user-friendly error messages
+const getErrorMessage = (error: any, defaultMessage: string): string => {
+  const errorMessage = error?.message || error?.data?.message || error?.response?.data?.message || '';
+  
+  // Check for authentication-related errors
+  if (isAuthError(error)) {
+    return 'Please login to add items to your cart';
+  }
+  
+  return errorMessage || defaultMessage;
+};
+
+// Helper function to handle redirect after authentication error
+const handleAuthRedirect = () => {
+  setTimeout(() => {
+    // Use window.location for redirect since we're in a Redux slice
+    window.location.href = '/signin';
+  }, 2000);
+};
+
 // Async thunks
 export const fetchCart = createAsyncThunk(
   'cart/fetchCart',
@@ -41,7 +72,8 @@ export const fetchCart = createAsyncThunk(
       return cart;
     } catch (error: any) {
       console.error('Error fetching cart:', error);
-      return rejectWithValue(error?.message || 'Failed to fetch cart');
+      const message = getErrorMessage(error, 'Failed to fetch cart');
+      return rejectWithValue(message);
     }
   }
 );
@@ -54,8 +86,14 @@ export const addItemToCartAsync = createAsyncThunk(
       toast.success(`${item.title} added to cart`);
       return cart;
     } catch (error: any) {
-      const message = error?.message || 'Failed to add item to cart';
+      const message = getErrorMessage(error, 'Failed to add item to cart');
       toast.error(message);
+      
+      // Handle redirect for authentication errors
+      if (isAuthError(error)) {
+        handleAuthRedirect();
+      }
+      
       return rejectWithValue(message);
     }
   }
@@ -73,8 +111,14 @@ export const updateCartItemAsync = createAsyncThunk(
       }
       return cart;
     } catch (error: any) {
-      const message = error?.message || 'Failed to update cart item';
+      const message = getErrorMessage(error, 'Failed to update cart item');
       toast.error(message);
+      
+      // Handle redirect for authentication errors
+      if (isAuthError(error)) {
+        handleAuthRedirect();
+      }
+      
       return rejectWithValue(message);
     }
   }
@@ -88,8 +132,14 @@ export const removeItemFromCartAsync = createAsyncThunk(
       toast.success('Item removed from cart');
       return cart;
     } catch (error: any) {
-      const message = error?.message || 'Failed to remove item from cart';
+      const message = getErrorMessage(error, 'Failed to remove item from cart');
       toast.error(message);
+      
+      // Handle redirect for authentication errors
+      if (isAuthError(error)) {
+        handleAuthRedirect();
+      }
+      
       return rejectWithValue(message);
     }
   }
@@ -103,8 +153,14 @@ export const clearCartAsync = createAsyncThunk(
       toast.success('Cart cleared');
       return cart;
     } catch (error: any) {
-      const message = error?.message || 'Failed to clear cart';
+      const message = getErrorMessage(error, 'Failed to clear cart');
       toast.error(message);
+      
+      // Handle redirect for authentication errors
+      if (isAuthError(error)) {
+        handleAuthRedirect();
+      }
+      
       return rejectWithValue(message);
     }
   }

@@ -4,6 +4,13 @@ import axios from 'axios';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 // API Response types
+interface CodeData {
+  codeId: string;
+  hashCode: string;
+  soldStatus: string;
+  _id: string;
+}
+
 interface ListingData {
   externalId: string;
   title: string;
@@ -23,6 +30,7 @@ interface ListingData {
   quantityOfActiveCodes?: number;
   quantityOfAllCodes?: number;
   sellerId?: string;
+  codes?: CodeData[];
 }
 
 interface ApiResponse<T> {
@@ -94,6 +102,10 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
         // Transform backend data to match our Product type
         const listing = (response.data as ApiResponse<ListingData>).data;
 
+        // Calculate quantities from codes array
+        const totalCodes = listing.codes?.length || 0;
+        const activeCodes = listing.codes?.filter(code => code.soldStatus === 'active').length || 0;
+
         // Create a product object from the listing data
         const product = {
           id: listing.externalId,
@@ -113,8 +125,8 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
           tags: listing.tags || [],
           status: listing.status,
           reviews: 0, // Default value as backend doesn't have reviews yet
-          quantityOfActiveCodes: listing.quantityOfActiveCodes || 0,
-          quantityOfAllCodes: listing.quantityOfAllCodes || 0,
+          quantityOfActiveCodes: activeCodes,
+          quantityOfAllCodes: totalCodes,
           imgs: {
             // Use thumbnailUrl for both if no separate images are provided
             thumbnails: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png'],
@@ -189,35 +201,41 @@ export const getProducts = async (params?: {
     if (response.data && (response.data as ApiResponse<ListingsResponse>).success) {
       const listings = (response.data as ApiResponse<ListingsResponse>).data.listings;
 
-      const products = listings.map(listing => ({
-        id: listing.externalId,
-        title: listing.title,
-        description: listing.description || '',
-        price: listing.originalPrice || listing.price, // Original price for strikethrough
-        discountedPrice: listing.price, // Current discounted price
-        originalPrice: listing.originalPrice,
-        categoryId: listing.categoryId,
-        categoryName: listing.categoryName,
-        platform: listing.platform,
-        region: listing.region,
-        isRegionLocked: listing.isRegionLocked,
-        supportedLanguages: listing.supportedLanguages || ['English'],
-        thumbnailUrl: listing.thumbnailUrl,
-        autoDelivery: listing.autoDelivery,
-        tags: listing.tags || [],
-        status: listing.status,
-        reviews: 0,
-        quantityOfActiveCodes: listing.quantityOfActiveCodes || 0,
-        quantityOfAllCodes: listing.quantityOfAllCodes || 0,
-        imgs: {
-          thumbnails: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png'],
-          previews: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png']
-        },
-        // Add seller information
-        sellerId: listing.sellerId || '',
-        sellerName: "Michael", // Hardcoded as requested
-        isSellerVerified: true // All sellers are verified for now
-      }));
+      const products = listings.map(listing => {
+        // Calculate quantities from codes array
+        const totalCodes = listing.codes?.length || 0;
+        const activeCodes = listing.codes?.filter(code => code.soldStatus === 'active').length || 0;
+        
+        return {
+          id: listing.externalId,
+          title: listing.title,
+          description: listing.description || '',
+          price: listing.originalPrice || listing.price, // Original price for strikethrough
+          discountedPrice: listing.price, // Current discounted price
+          originalPrice: listing.originalPrice,
+          categoryId: listing.categoryId,
+          categoryName: listing.categoryName,
+          platform: listing.platform,
+          region: listing.region,
+          isRegionLocked: listing.isRegionLocked,
+          supportedLanguages: listing.supportedLanguages || ['English'],
+          thumbnailUrl: listing.thumbnailUrl,
+          autoDelivery: listing.autoDelivery,
+          tags: listing.tags || [],
+          status: listing.status,
+          reviews: 0,
+          quantityOfActiveCodes: activeCodes,
+          quantityOfAllCodes: totalCodes,
+          imgs: {
+            thumbnails: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png'],
+            previews: listing.thumbnailUrl ? [listing.thumbnailUrl, listing.thumbnailUrl] : ['/images/products/placeholder.png', '/images/products/placeholder.png']
+          },
+          // Add seller information
+          sellerId: listing.sellerId || '',
+          sellerName: "Michael", // Hardcoded as requested
+          isSellerVerified: true // All sellers are verified for now
+        };
+      });
 
       // Also cache individual products while we're at it
       products.forEach(product => {

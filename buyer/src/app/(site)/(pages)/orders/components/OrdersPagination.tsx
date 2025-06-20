@@ -27,33 +27,36 @@ const OrdersPagination: React.FC<OrdersPaginationProps> = ({
   };
 
   return (
-    <div className="flex justify-center mt-12">
-      <div className="bg-white rounded-2xl shadow-3 border border-gray-3 p-2">
+    <div className="flex justify-center mt-8 sm:mt-10 lg:mt-12">
+      <div className="bg-white rounded-2xl shadow-3 border border-gray-3 p-1.5 sm:p-2">
         <div className="flex items-center space-x-1">
           <button
             onClick={handlePrevious}
             disabled={currentPage === 1}
-            className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-body bg-gray-1 border border-gray-3 rounded-xl hover:bg-blue hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-1 disabled:hover:text-body"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 text-xs sm:text-sm font-semibold text-body bg-gray-1 border border-gray-3 rounded-xl hover:bg-blue hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-1 disabled:hover:text-body"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Previous
+            <span className="hidden sm:inline">Previous</span>
+            <span className="sm:hidden">Prev</span>
           </button>
           
-          <div className="px-8 py-3 bg-blue rounded-xl">
-            <span className="text-sm font-bold text-white">
-              Page {currentPage} of {totalPages}
+          <div className="px-3 sm:px-4 lg:px-8 py-2 sm:py-2.5 lg:py-3 bg-blue rounded-xl">
+            <span className="text-xs sm:text-sm font-bold text-white">
+              <span className="hidden sm:inline">Page {currentPage} of {totalPages}</span>
+              <span className="sm:hidden">{currentPage}/{totalPages}</span>
             </span>
           </div>
           
           <button
             onClick={handleNext}
             disabled={currentPage === totalPages}
-            className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-body bg-gray-1 border border-gray-3 rounded-xl hover:bg-blue hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-1 disabled:hover:text-body"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 text-xs sm:text-sm font-semibold text-body bg-gray-1 border border-gray-3 rounded-xl hover:bg-blue hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-1 disabled:hover:text-body"
           >
-            Next
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="hidden sm:inline">Next</span>
+            <span className="sm:hidden">Next</span>
+            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>

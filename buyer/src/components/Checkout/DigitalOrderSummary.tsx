@@ -39,14 +39,14 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
         <h3 className="font-medium text-xl text-dark">Order Summary</h3>
       </div>
 
-      <div className="pt-2.5 pb-8.5 px-4 sm:px-8.5">
+      <div className="pt-2.5 pb-6 sm:pb-8.5 px-4 sm:px-6 lg:px-8.5">
         {/* Header */}
-        <div className="flex items-center justify-between py-5 border-b border-gray-3">
+        <div className="flex items-center justify-between py-4 sm:py-5 border-b border-gray-3">
           <div>
-            <h4 className="font-medium text-dark">Digital Code</h4>
+            <h4 className="font-medium text-dark text-sm sm:text-base">Digital Code</h4>
           </div>
           <div>
-            <h4 className="font-medium text-dark text-right">Price</h4>
+            <h4 className="font-medium text-dark text-right text-sm sm:text-base">Price</h4>
           </div>
         </div>
 
@@ -54,11 +54,11 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
         {cartItems.map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between py-5 border-b border-gray-3"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-5 border-b border-gray-3 gap-3 sm:gap-0"
           >
             <div className="flex items-center gap-3 flex-1">
               {/* Product Image */}
-              <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
                 {item.imgs?.thumbnails?.[0] || item.imgs?.previews?.[0] ? (
                   <Image
                     src={item.imgs.thumbnails?.[0] || item.imgs.previews?.[0] || 'https://via.placeholder.com/48x48/f3f4f6/6b7280?text=IMG'}
@@ -76,7 +76,7 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <svg
-                      className="w-6 h-6 text-gray-400"
+                      className="w-4 h-4 sm:w-6 sm:h-6 text-gray-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -94,10 +94,13 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
 
               {/* Product Details */}
               <div className="flex-1 min-w-0">
-                <p className="text-dark font-medium text-sm leading-tight">
-                  {item.title.length > 30
-                    ? `${item.title.substring(0, 30)}...`
-                    : item.title}
+                <p className="text-dark font-medium text-xs sm:text-sm leading-tight">
+                  <span className="block sm:hidden">
+                    {item.title.length > 25 ? `${item.title.substring(0, 25)}...` : item.title}
+                  </span>
+                  <span className="hidden sm:block">
+                    {item.title.length > 30 ? `${item.title.substring(0, 30)}...` : item.title}
+                  </span>
                 </p>
                 <p className="text-gray-500 text-xs mt-1">
                   Qty: {item.quantity} × ${item.discountedPrice.toFixed(2)}
@@ -107,19 +110,20 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
                     <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    Instant Delivery
+                    <span className="hidden sm:inline">Instant Delivery</span>
+                    <span className="sm:hidden">Instant</span>
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Price */}
-            <div className="text-right">
-              <p className="text-dark font-medium">
+            <div className="text-left sm:text-right">
+              <p className="text-dark font-medium text-sm sm:text-base">
                 ${(item.discountedPrice * item.quantity).toFixed(2)}
               </p>
               {item.price !== item.discountedPrice && (
-                <p className="text-gray-500 text-sm line-through">
+                <p className="text-gray-500 text-xs sm:text-sm line-through">
                   ${(item.price * item.quantity).toFixed(2)}
                 </p>
               )}
@@ -128,34 +132,34 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
         ))}
 
         {/* Total */}
-        <div className="flex items-center justify-between pt-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 sm:pt-5 gap-2 sm:gap-0">
           <div>
-            <p className="font-semibold text-lg text-dark">Total</p>
-            <p className="text-sm text-gray-500">
+            <p className="font-semibold text-base sm:text-lg text-dark">Total</p>
+            <p className="text-xs sm:text-sm text-gray-500">
               {cartItems.reduce((sum, item) => sum + item.quantity, 0)} digital code(s)
             </p>
           </div>
-          <div className="text-right">
-            <p className="font-semibold text-lg text-dark">
+          <div className="text-left sm:text-right">
+            <p className="font-semibold text-base sm:text-lg text-dark">
               ${totalPrice.toFixed(2)}
             </p>
-            <p className="text-sm text-gray-500">USD</p>
+            <p className="text-xs sm:text-sm text-gray-500">USD</p>
           </div>
         </div>
 
         {/* Digital Delivery Info */}
-        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-start gap-3">
+        <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-green-light-6 border border-green-light-4 rounded-lg">
+          <div className="flex items-start gap-2 sm:gap-3">
             <div className="flex-shrink-0">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div>
-              <h4 className="font-medium text-green-900 text-sm mb-1">
+              <h4 className="font-medium text-green-dark text-xs sm:text-sm mb-1">
                 Instant Digital Delivery
               </h4>
-              <p className="text-green-800 text-xs">
+              <p className="text-green-dark text-xs leading-relaxed">
                 Your codes will be available immediately after payment confirmation. 
                 Access them from your account dashboard.
               </p>

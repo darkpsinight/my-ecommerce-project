@@ -10,7 +10,7 @@ interface OrdersHeaderProps {
 
 const OrdersHeader: React.FC<OrdersHeaderProps> = ({ title, subtitle, icon, isLoading = false }) => {
   const renderIcon = () => {
-    const baseClasses = "w-8 h-8 text-white";
+    const baseClasses = "w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white";
     const iconClasses = isLoading ? `${baseClasses} animate-pulse` : baseClasses;
 
     switch (icon) {
@@ -59,14 +59,14 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ title, subtitle, icon, isLo
   };
 
   return (
-    <div className="text-center mb-12">
-      <div className={`inline-flex items-center justify-center w-16 h-16 ${getIconBgColor()} rounded-full mb-4 shadow-1${isLoading ? " animate-pulse" : ""}`}>
+    <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+      <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 ${getIconBgColor()} rounded-full mb-3 sm:mb-4 shadow-1${isLoading ? " animate-pulse" : ""}`}>
         {renderIcon()}
       </div>
-      <h1 className="text-4xl font-bold text-dark mb-3">
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-dark mb-2 sm:mb-3">
         {title}
       </h1>
-      <p className="text-body text-lg">{subtitle}</p>
+      <p className="text-body text-sm sm:text-base lg:text-lg px-2 sm:px-0">{subtitle}</p>
     </div>
   );
 };

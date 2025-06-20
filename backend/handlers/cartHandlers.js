@@ -11,7 +11,7 @@ const getCart = async (request, reply) => {
     
     let cart = await Cart.findByUserId(userId).populate({
       path: 'items.listingObjectId',
-      select: 'title price discountedPrice imgs status isActive sellerId externalId',
+      select: 'title price discountedPrice imgs status isActive sellerId externalId codes',
       populate: {
         path: 'sellerId',
         select: 'name'
@@ -49,7 +49,9 @@ const getCart = async (request, reply) => {
         imgs: item.imgs,
         sellerId: item.sellerId,
         sellerName: item.listingObjectId?.sellerId?.name || 'Unknown Seller',
-        listingSnapshot: item.listingSnapshot
+        listingSnapshot: item.listingSnapshot,
+        // Add available stock information
+        availableStock: item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),
@@ -143,7 +145,7 @@ const addToCart = async (request, reply) => {
     // Populate the updated cart for response
     await cart.populate({
       path: 'items.listingObjectId',
-      select: 'title price discountedPrice imgs status isActive sellerId externalId'
+      select: 'title price discountedPrice imgs status isActive sellerId externalId codes'
     });
 
     const transformedCart = {
@@ -157,7 +159,9 @@ const addToCart = async (request, reply) => {
         quantity: item.quantity,
         imgs: item.imgs,
         sellerId: item.sellerId,
-        listingSnapshot: item.listingSnapshot
+        listingSnapshot: item.listingSnapshot,
+        // Add available stock information
+        availableStock: item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),
@@ -189,6 +193,35 @@ const updateCartItem = async (request, reply) => {
     const userId = request.user.uid;
     const { listingId, quantity } = request.body;
 
+    // Validate quantity is positive integer
+    if (quantity < 0 || !Number.isInteger(quantity)) {
+      return reply.code(400).send({
+        success: false,
+        message: "Quantity must be a positive integer"
+      });
+    }
+
+    // If quantity > 0, validate against available stock
+    if (quantity > 0) {
+      const listing = await Listing.findOne({ externalId: listingId }).select("+codes");
+      
+      if (!listing || listing.status !== 'active') {
+        return reply.code(400).send({
+          success: false,
+          message: "Product is not available"
+        });
+      }
+
+      // Check if listing has available codes for the requested quantity
+      if (!listing.hasAvailableCodes(quantity)) {
+        const availableCount = listing.getAvailableCodesCount();
+        return reply.code(400).send({
+          success: false,
+          message: `Only ${availableCount} codes available for this product`
+        });
+      }
+    }
+
     const cart = await Cart.createOrUpdate(userId, 'updateQuantity', {
       listingId,
       quantity
@@ -197,7 +230,7 @@ const updateCartItem = async (request, reply) => {
     // Populate the updated cart for response
     await cart.populate({
       path: 'items.listingObjectId',
-      select: 'title price discountedPrice imgs status isActive sellerId externalId'
+      select: 'title price discountedPrice imgs status isActive sellerId externalId codes'
     });
 
     const transformedCart = {
@@ -211,7 +244,9 @@ const updateCartItem = async (request, reply) => {
         quantity: item.quantity,
         imgs: item.imgs,
         sellerId: item.sellerId,
-        listingSnapshot: item.listingSnapshot
+        listingSnapshot: item.listingSnapshot,
+        // Add available stock information
+        availableStock: item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),
@@ -250,7 +285,7 @@ const removeFromCart = async (request, reply) => {
     // Populate the updated cart for response
     await cart.populate({
       path: 'items.listingObjectId',
-      select: 'title price discountedPrice imgs status isActive sellerId externalId'
+      select: 'title price discountedPrice imgs status isActive sellerId externalId codes'
     });
 
     const transformedCart = {
@@ -264,7 +299,9 @@ const removeFromCart = async (request, reply) => {
         quantity: item.quantity,
         imgs: item.imgs,
         sellerId: item.sellerId,
-        listingSnapshot: item.listingSnapshot
+        listingSnapshot: item.listingSnapshot,
+        // Add available stock information
+        availableStock: item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),

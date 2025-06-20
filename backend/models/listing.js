@@ -125,6 +125,26 @@ const listingSchema = new mongoose.Schema({
 // Add compound index for status to optimize queries
 listingSchema.index({ status: 1 });
 
+// Virtual field for quantity of active codes
+listingSchema.virtual('quantityOfActiveCodes').get(function() {
+  if (!this.codes || this.codes.length === 0) {
+    return 0;
+  }
+  return this.codes.filter(code => code.soldStatus === "active").length;
+});
+
+// Virtual field for quantity of all codes
+listingSchema.virtual('quantityOfAllCodes').get(function() {
+  if (!this.codes || this.codes.length === 0) {
+    return 0;
+  }
+  return this.codes.length;
+});
+
+// Ensure virtual fields are serialized when converting to JSON
+listingSchema.set('toJSON', { virtuals: true });
+listingSchema.set('toObject', { virtuals: true });
+
 // Track status changes
 listingSchema.pre("save", function(next) {
   // Store the previous status if the status field is being modified

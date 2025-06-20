@@ -22,10 +22,25 @@ const SingleListItem = ({ item }: { item: Product }) => {
 
   // add to cart
   const handleAddToCart = () => {
+    // Check if item has available stock
+    if (!item.quantityOfActiveCodes || item.quantityOfActiveCodes === 0) {
+      return; // Don't add if no stock available
+    }
+
     dispatch(
       addItemToCart({
-        ...item,
+        listingId: item.id,
+        title: item.title,
+        price: item.price,
+        discountedPrice: item.discountedPrice,
         quantity: 1,
+        imgs: item.imgs,
+        sellerId: item.sellerId || "",
+        listingSnapshot: {
+          category: item.categoryName,
+          platform: item.platform,
+          region: item.region,
+        },
       })
     );
   };

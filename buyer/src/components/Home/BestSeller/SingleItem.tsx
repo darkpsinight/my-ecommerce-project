@@ -21,10 +21,25 @@ const SingleItem = ({ item }: { item: Product }) => {
 
   // add to cart
   const handleAddToCart = () => {
+    // Check if item has available stock
+    if (!item.quantityOfActiveCodes || item.quantityOfActiveCodes === 0) {
+      return; // Don't add if no stock available
+    }
+
     dispatch(
       addItemToCart({
-        ...item,
+        listingId: item.id,
+        title: item.title,
+        price: item.price,
+        discountedPrice: item.discountedPrice,
         quantity: 1,
+        imgs: item.imgs,
+        sellerId: item.sellerId || "",
+        listingSnapshot: {
+          category: item.categoryName,
+          platform: item.platform,
+          region: item.region,
+        },
       })
     );
   };
@@ -145,9 +160,14 @@ const SingleItem = ({ item }: { item: Product }) => {
               e.stopPropagation();
               handleAddToCart();
             }}
+            disabled={!item.quantityOfActiveCodes || item.quantityOfActiveCodes === 0}
             aria-label="button for add to cart"
             id="addCartOne"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue relative z-20"
+            className={`flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 relative z-20 ${
+              (!item.quantityOfActiveCodes || item.quantityOfActiveCodes === 0)
+                ? 'text-gray-500 bg-gray-200 cursor-not-allowed'
+                : 'text-dark bg-white hover:text-white hover:bg-blue'
+            }`}
           >
             <svg
               className="fill-current"

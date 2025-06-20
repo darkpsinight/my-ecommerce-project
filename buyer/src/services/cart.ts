@@ -121,6 +121,7 @@ export interface CartItem {
   };
   sellerId: string;
   sellerName?: string;
+  availableStock?: number;
   listingSnapshot?: {
     category?: string;
     subcategory?: string;
@@ -239,9 +240,11 @@ export const cartApi = {
   // Remove item from cart
   removeFromCart: async (item: RemoveFromCartRequest): Promise<Cart> => {
     try {
-      const response = await axiosInstance.delete<ApiResponse<Cart>>('/cart/remove', {
-        data: item
-      });
+      const response = await axiosInstance.request<ApiResponse<Cart>>({
+        method: 'DELETE',
+        url: '/cart/remove',
+        data: item,
+      } as any);
       if (response.data.success && response.data.data) {
         return response.data.data;
       }

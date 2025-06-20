@@ -21,6 +21,7 @@ interface CartItem {
     previews: string[];
   };
   sellerId: string;
+  availableStock?: number;
   listingSnapshot?: {
     category?: string;
     subcategory?: string;
@@ -50,6 +51,11 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
 
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity === quantity) return;
+    
+    // Check if quantity exceeds available stock
+    if (newQuantity > (item.availableStock || 0)) {
+      return; // Don't proceed if exceeding stock
+    }
     
     setIsUpdating(true);
     setQuantity(newQuantity); // Optimistic update
@@ -94,6 +100,21 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
               Subtotal: ${(item.discountedPrice * quantity).toFixed(2)}
             </p>
           </div>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-xs text-gray-500">
+              {item.availableStock || 0} codes available
+            </span>
+            {(item.availableStock || 0) <= 5 && (item.availableStock || 0) > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                Low Stock
+              </span>
+            )}
+            {(item.availableStock || 0) === 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                Out of Stock
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -103,7 +124,9 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
           quantity={quantity}
           onIncrease={() => handleQuantityChange(quantity + 1)}
           onDecrease={() => handleQuantityChange(quantity - 1)}
-          disabled={isUpdating}
+          min={1}
+          max={item.availableStock || 1}
+          disabled={isUpdating || !item.availableStock || item.availableStock === 0}
           handleQuantityChange={handleQuantityChange}
         />
         

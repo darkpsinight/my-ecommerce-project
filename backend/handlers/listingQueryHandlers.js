@@ -37,6 +37,7 @@ const getListings = async (request, reply) => {
 
     // Find listings with filters and pagination
     const listings = await Listing.find(filter)
+      .select("+codes") // Include codes for virtual field calculations
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -47,10 +48,10 @@ const getListings = async (request, reply) => {
     // Count total listings matching the filter
     const total = await Listing.countDocuments(filter);
 
-    // Transform listings to use externalId as primary identifier and remove _id
+    // Transform listings to use externalId as primary identifier and remove _id and sensitive data
     const transformedListings = listings.map(listing => {
       const listingObj = listing.toObject();
-      const { _id, ...cleanedListing } = listingObj;
+      const { _id, codes, ...cleanedListing } = listingObj;
       return cleanedListing;
     });
 
@@ -82,7 +83,7 @@ const getListingById = async (request, reply) => {
     const { id } = request.params;
 
     // Find the listing by externalId instead of _id
-    const listing = await Listing.findOne({ externalId: id });
+    const listing = await Listing.findOne({ externalId: id }).select("+codes");
 
     if (!listing) {
       return reply.code(404).send({
@@ -121,9 +122,9 @@ const getListingById = async (request, reply) => {
       });
     }
 
-    // Transform listing to use externalId as primary identifier and remove _id
+    // Transform listing to use externalId as primary identifier and remove _id and sensitive data
     const listingObj = listing.toObject();
-    const { _id, ...cleanedListing } = listingObj;
+    const { _id, codes, ...cleanedListing } = listingObj;
 
     return reply.code(200).send({
       success: true,

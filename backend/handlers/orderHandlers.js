@@ -67,13 +67,14 @@ const createOrder = async (request, reply) => {
       // Check if listing has enough active codes
       const activeCodes = listing.codes.filter(code => code.soldStatus === "active");
       if (activeCodes.length < quantity) {
-        request.log.error(`handlers/createOrder - Not enough codes available for ${listing.title}`);
+        request.log.error(`handlers/createOrder - Not enough codes available for ${listing.title}. Available: ${activeCodes.length}, Requested: ${quantity}`);
         return sendErrorResponse(reply, 400, `Not enough codes available for ${listing.title}. Available: ${activeCodes.length}, Requested: ${quantity}`);
       }
 
       // Select codes to purchase
       const codesToPurchase = activeCodes.slice(0, quantity);
-      const itemTotal = listing.price * quantity;
+      const unitPrice = listing.discountedPrice || listing.price;
+      const itemTotal = unitPrice * quantity;
       totalAmount += itemTotal;
 
       // Prepare order item
@@ -83,7 +84,7 @@ const createOrder = async (request, reply) => {
         platform: listing.platform,
         region: listing.region,
         quantity,
-        unitPrice: listing.price,
+        unitPrice: unitPrice,
         totalPrice: itemTotal,
         purchasedCodes: codesToPurchase.map(code => ({
           codeId: code.codeId,

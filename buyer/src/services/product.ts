@@ -64,6 +64,8 @@ const api = axios.create({
 const productCache: Record<string, { product: Product; timestamp: number }> = {};
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+
+
 // Track in-flight requests to prevent duplicate API calls
 const pendingRequests: Record<string, Promise<Product | null>> = {};
 
@@ -102,9 +104,19 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
         // Transform backend data to match our Product type
         const listing = (response.data as ApiResponse<ListingData>).data;
 
-        // Calculate quantities from codes array
-        const totalCodes = listing.codes?.length || 0;
-        const activeCodes = listing.codes?.filter(code => code.soldStatus === 'active').length || 0;
+        // Use backend-provided quantities instead of calculating from codes array
+        const activeCodes = listing.quantityOfActiveCodes || 0;
+        const totalCodes = listing.quantityOfAllCodes || 0;
+        
+        // Debug logging to help troubleshoot stock issues
+        console.log(`🔄 Product Stock Debug (${listing.title}):`, {
+          'Backend quantityOfActiveCodes': listing.quantityOfActiveCodes,
+          'Backend quantityOfAllCodes': listing.quantityOfAllCodes,
+          'Frontend activeCodes': activeCodes,
+          'Frontend totalCodes': totalCodes,
+          'Codes array length': listing.codes?.length || 'N/A (not provided)',
+          'Should show stock': activeCodes > 0 ? 'YES' : 'NO'
+        });
 
         // Create a product object from the listing data
         const product = {
@@ -176,6 +188,13 @@ const listingsCache: Record<string, {
   timestamp: number
 }> = {};
 
+// Helper function to clear all caches (useful after service updates)
+export const clearProductCaches = () => {
+  Object.keys(productCache).forEach(key => delete productCache[key]);
+  Object.keys(listingsCache).forEach(key => delete listingsCache[key]);
+  console.log('Product caches cleared');
+};
+
 // Get all products with optional filters
 export const getProducts = async (params?: {
   page?: number;
@@ -202,9 +221,9 @@ export const getProducts = async (params?: {
       const listings = (response.data as ApiResponse<ListingsResponse>).data.listings;
 
       const products = listings.map(listing => {
-        // Calculate quantities from codes array
-        const totalCodes = listing.codes?.length || 0;
-        const activeCodes = listing.codes?.filter(code => code.soldStatus === 'active').length || 0;
+        // Use backend-provided quantities instead of calculating from codes array
+        const activeCodes = listing.quantityOfActiveCodes || 0;
+        const totalCodes = listing.quantityOfAllCodes || 0;
         
         return {
           id: listing.externalId,

@@ -31,10 +31,25 @@ const QuickViewModal = () => {
 
   // add to cart
   const handleAddToCart = () => {
+    // Check if item has available stock
+    if (!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0) {
+      return; // Don't add if no stock available
+    }
+
     dispatch(
       addItemToCart({
-        ...product,
+        listingId: product.id,
+        title: product.title,
+        price: product.price,
+        discountedPrice: product.discountedPrice,
         quantity,
+        imgs: product.imgs,
+        sellerId: product.sellerId || "",
+        listingSnapshot: {
+          category: product.categoryName,
+          platform: product.platform,
+          region: product.region,
+        },
       })
     );
 
@@ -284,11 +299,11 @@ const QuickViewModal = () => {
                     <g clipPath="url(#clip0_375_9221)">
                       <path
                         d="M10 0.5625C4.78125 0.5625 0.5625 4.78125 0.5625 10C0.5625 15.2188 4.78125 19.4688 10 19.4688C15.2188 19.4688 19.4688 15.2188 19.4688 10C19.4688 4.78125 15.2188 0.5625 10 0.5625ZM10 18.0625C5.5625 18.0625 1.96875 14.4375 1.96875 10C1.96875 5.5625 5.5625 1.96875 10 1.96875C14.4375 1.96875 18.0625 5.59375 18.0625 10.0312C18.0625 14.4375 14.4375 18.0625 10 18.0625Z"
-                        fill="#22AD5C"
+                        fill={product.quantityOfActiveCodes && product.quantityOfActiveCodes > 0 ? "#22AD5C" : "#EF4444"}
                       />
                       <path
                         d="M12.6875 7.09374L8.9688 10.7187L7.2813 9.06249C7.00005 8.78124 6.56255 8.81249 6.2813 9.06249C6.00005 9.34374 6.0313 9.78124 6.2813 10.0625L8.2813 12C8.4688 12.1875 8.7188 12.2812 8.9688 12.2812C9.2188 12.2812 9.4688 12.1875 9.6563 12L13.6875 8.12499C13.9688 7.84374 13.9688 7.40624 13.6875 7.12499C13.4063 6.84374 12.9688 6.84374 12.6875 7.09374Z"
-                        fill="#22AD5C"
+                        fill={product.quantityOfActiveCodes && product.quantityOfActiveCodes > 0 ? "#22AD5C" : "#EF4444"}
                       />
                     </g>
                     <defs>
@@ -298,7 +313,12 @@ const QuickViewModal = () => {
                     </defs>
                   </svg>
 
-                  <span className="font-medium text-dark"> In Stock </span>
+                  <span className="font-medium text-dark"> 
+                    {product.quantityOfActiveCodes && product.quantityOfActiveCodes > 0 
+                      ? `${product.quantityOfActiveCodes} codes available` 
+                      : 'Out of Stock'
+                    }
+                  </span>
                 </div>
               </div>
 
@@ -332,8 +352,8 @@ const QuickViewModal = () => {
                     <button
                       onClick={() => quantity > 1 && setQuantity(quantity - 1)}
                       aria-label="button for remove product"
-                      className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue"
-                      disabled={quantity < 0 && true}
+                      className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={quantity <= 1}
                     >
                       <svg
                         className="fill-current"
@@ -362,7 +382,8 @@ const QuickViewModal = () => {
                     <button
                       onClick={() => setQuantity(quantity + 1)}
                       aria-label="button for add product"
-                      className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue"
+                      className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={quantity >= (product.quantityOfActiveCodes || 1)}
                     >
                       <svg
                         className="fill-current"
@@ -392,12 +413,18 @@ const QuickViewModal = () => {
 
               <div className="flex flex-wrap items-center gap-4">
                 <button
-                  disabled={quantity === 0 && true}
+                  disabled={!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0 || quantity === 0}
                   onClick={() => handleAddToCart()}
-                  className={`inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark
-                  `}
+                  className={`inline-flex font-medium py-3 px-7 rounded-md ease-out duration-200 ${
+                    (!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0 || quantity === 0)
+                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                      : 'text-white bg-blue hover:bg-blue-dark'
+                  }`}
                 >
-                  Add to Cart
+                  {(!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0) 
+                    ? 'Out of Stock' 
+                    : 'Add to Cart'
+                  }
                 </button>
 
                 <button

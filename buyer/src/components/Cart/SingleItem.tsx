@@ -89,7 +89,7 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
     <div className={`group relative flex flex-col lg:flex-row items-start lg:items-center gap-6 py-8 px-6 transition-all duration-300 hover:bg-blue-light-5/30 cart-item-hover ${isUpdating ? 'opacity-60' : ''}`}>
       {/* Product Image and Title */}
       <div className="flex-grow flex flex-col sm:flex-row items-start sm:items-center gap-6 min-w-0">
-        <Link href={`/product/${item.id}`} className="shrink-0">
+        <Link href={`/shop-details?id=${item.id}`} className="shrink-0">
           <div className="relative w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-gray-1 to-gray-2 rounded-2xl overflow-hidden shadow-1">
             <Image 
               src={item.imgs?.thumbnails?.[0] || item.imgs?.previews?.[0] || '/images/placeholder.jpg'} 
@@ -99,18 +99,13 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
               sizes="(max-width: 768px) 96px, 128px"
             />
             
-            {/* Digital Code Badge */}
-            <div className="absolute top-2 left-2">
-              <div className="bg-blue text-white text-xs px-2 py-1 rounded-lg font-bold shadow-1">
-                DIGITAL
-              </div>
-            </div>
+            
           </div>
         </Link>
         
         <div className="min-w-0 flex-1">
           <Link 
-            href={`/product/${item.id}`}
+            href={`/shop-details?id=${item.id}`}
             className="block text-xl font-bold text-gray-7 hover:text-blue transition-colors duration-200 line-clamp-2 mb-3"
           >
             {item.title}

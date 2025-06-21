@@ -104,22 +104,20 @@ const QuantityControl: React.FC<QuantityControlProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="quantity-control-container inline-flex items-center rounded-md border border-gray-3 bg-white shadow-sm transition-all duration-200">
+    <div className="flex flex-col items-center gap-2">
+      <div className="quantity-control-container inline-flex items-center rounded-2xl border-2 border-gray-3 bg-gradient-to-r from-gray-1 to-white shadow-1 hover:shadow-2 transition-all duration-300">
         <button
           onClick={handleDecrease}
           disabled={disabled || quantity <= min}
           aria-label="Decrease quantity"
-          className={`flex items-center justify-center w-10 h-10 transition-colors duration-200 
+          className={`group flex items-center justify-center w-12 h-12 rounded-l-2xl transition-all duration-300 
             ${disabled || quantity <= min 
-              ? 'text-gray-5 cursor-not-allowed' 
-              : 'hover:text-blue hover:bg-gray-1 active:bg-gray-2'
+              ? 'text-gray-4 cursor-not-allowed bg-gray-2' 
+              : 'hover:text-white hover:bg-red hover:scale-110 active:scale-95 text-gray-6'
             }`}
         >
           <svg
-            className="fill-current"
-            width="20"
-            height="20"
+            className="fill-current w-5 h-5 transition-transform duration-300 group-hover:scale-110"
             viewBox="0 0 20 20"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -127,32 +125,36 @@ const QuantityControl: React.FC<QuantityControlProps> = ({
           </svg>
         </button>
 
-        <input
-          ref={inputRef}
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          onBlur={handleBlur}
-          disabled={disabled}
-          className="w-14 h-10 border-x border-gray-3 bg-gray-1 font-medium text-gray-7 text-center focus:outline-none focus:ring-2 focus:ring-blue-light-5 transition-all duration-200"
-          aria-label="Quantity"
-        />
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            disabled={disabled}
+            className="w-16 h-12 border-none bg-transparent font-bold text-lg text-gray-7 text-center focus:outline-none focus:ring-2 focus:ring-blue focus:rounded-lg transition-all duration-300 disabled:opacity-50"
+            aria-label="Quantity"
+          />
+          {/* Quantity Label */}
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-5 font-medium whitespace-nowrap mb-2">
+            {quantity === 1 ? 'code' : 'codes'}
+          </div>
+        </div>
 
         <button
           onClick={handleIncrease}
           disabled={disabled || quantity >= max}
           aria-label="Increase quantity"
           title={quantity >= max ? `Maximum available: ${max}` : 'Increase quantity'}
-          className={`flex items-center justify-center w-10 h-10 transition-colors duration-200
+          className={`group flex items-center justify-center w-12 h-12 rounded-r-2xl transition-all duration-300
             ${disabled || quantity >= max
-              ? 'text-gray-5 cursor-not-allowed bg-gray-2 opacity-50' 
-              : 'hover:text-blue hover:bg-gray-1 active:bg-gray-2 text-gray-7'
+              ? 'text-gray-4 cursor-not-allowed bg-gray-2 opacity-50' 
+              : 'hover:text-white hover:bg-green hover:scale-110 active:scale-95 text-gray-6'
             }`}
         >
           <svg
-            className="fill-current"
-            width="20"
-            height="20"
+            className="fill-current w-5 h-5 transition-transform duration-300 group-hover:scale-110"
             viewBox="0 0 20 20"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -160,6 +162,16 @@ const QuantityControl: React.FC<QuantityControlProps> = ({
           </svg>
         </button>
       </div>
+      
+      {/* Visual feedback for max quantity */}
+      {quantity >= max && max < 999 && (
+        <div className="flex items-center gap-1 text-xs text-red font-medium animate-pulse mt-2">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          Max quantity
+        </div>
+      )}
     </div>
   );
 };

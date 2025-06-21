@@ -11,7 +11,7 @@ const getCart = async (request, reply) => {
     
     let cart = await Cart.findByUserId(userId).populate({
       path: 'items.listingObjectId',
-      select: 'title price discountedPrice imgs status isActive sellerId externalId codes',
+      select: 'title price discountedPrice imgs status isActive sellerId externalId +codes',
       populate: {
         path: 'sellerId',
         select: 'name'
@@ -51,8 +51,20 @@ const getCart = async (request, reply) => {
         sellerName: item.listingObjectId?.sellerId?.name || 'Unknown Seller',
         listingSnapshot: item.listingSnapshot,
         // Use stored available stock information, fallback to listing's current stock
-        availableStock: item.availableStock !== undefined ? item.availableStock : 
-                       (item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0)
+        availableStock: (() => {
+          if (item.availableStock !== undefined) {
+            return item.availableStock;
+          }
+          
+          if (item.listingObjectId) {
+            if (typeof item.listingObjectId.getAvailableCodesCount === 'function') {
+              return item.listingObjectId.getAvailableCodesCount();
+            }
+            return 0;
+          }
+          
+          return 0;
+        })()
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),

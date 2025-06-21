@@ -9,6 +9,7 @@ import Image from "next/image";
 import QuantityControl from "./QuantityControl";
 import Link from "next/link";
 import { formatPrice, multiplyCurrency } from "@/utils/currency";
+import toast from "react-hot-toast";
 
 interface CartItem {
   id: string;
@@ -41,6 +42,8 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
 
   const dispatch = useDispatch<AppDispatch>();
 
+
+
   const handleRemoveFromCart = async () => {
     setIsUpdating(true);
     try {
@@ -53,8 +56,20 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity === quantity) return;
     
-    // Check if quantity exceeds available stock (only if we have stock info)
-    if (item.availableStock !== undefined && newQuantity > item.availableStock) {
+    // Check if quantity exceeds available stock
+    const maxStock = item.availableStock ?? 999;
+    if (maxStock < 999 && newQuantity > maxStock) {
+      // Show toast message for better UX
+      toast.error(`Only ${maxStock} codes available in stock`);
+      // Force update to max available stock if current quantity is greater than stock
+      if (quantity > maxStock) {
+        setQuantity(maxStock);
+        try {
+          await dispatch(updateCartItemQuantity({ listingId: item.listingId || item.id, quantity: maxStock }));
+        } catch (error) {
+          console.error('Error updating quantity to max stock:', error);
+        }
+      }
       return; // Don't proceed if exceeding stock
     }
     
@@ -102,17 +117,22 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
             </p>
           </div>
           <div className="mt-1 flex items-center gap-2">
-            <span className="text-xs text-gray-500">
-              {item.availableStock || 0} codes available
+            <span className="text-xs text-gray-5">
+              {item.availableStock ?? 0} codes available
             </span>
-            {(item.availableStock || 0) <= 5 && (item.availableStock || 0) > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+            {(item.availableStock ?? 0) <= 5 && (item.availableStock ?? 0) > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-light-2 text-yellow-dark-2">
                 Low Stock
               </span>
             )}
-            {(item.availableStock || 0) === 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            {(item.availableStock ?? 0) === 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-light-5 text-red-dark">
                 Out of Stock
+              </span>
+            )}
+            {item.availableStock !== undefined && quantity >= item.availableStock && item.availableStock > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-light-5 text-blue-dark">
+                Max in Cart
               </span>
             )}
           </div>
@@ -123,10 +143,18 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
       <div className="flex items-center gap-4 self-end sm:self-center">
         <QuantityControl
           quantity={quantity}
-          onIncrease={() => handleQuantityChange(quantity + 1)}
+          onIncrease={() => {
+            // Only allow increase if not at max stock
+            const maxStock = item.availableStock ?? 999;
+            if (maxStock < 999 && quantity >= maxStock) {
+              toast.error(`Only ${maxStock} codes available in stock`);
+              return;
+            }
+            handleQuantityChange(quantity + 1);
+          }}
           onDecrease={() => handleQuantityChange(quantity - 1)}
           min={1}
-          max={item.availableStock || 999}
+          max={item.availableStock ?? 999}
           disabled={isUpdating}
           handleQuantityChange={handleQuantityChange}
         />
@@ -135,7 +163,7 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
           onClick={handleRemoveFromCart}
           disabled={isUpdating}
           aria-label="Remove item from cart"
-          className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-2 border border-gray-3 text-gray-500 transition-colors duration-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-2 border border-gray-3 text-gray-5 transition-colors duration-200 hover:bg-red-light-6 hover:border-red-200 hover:text-red disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg
             className="w-5 h-5"

@@ -3,6 +3,7 @@ const { responseErrors } = require("./common");
 const cartItemSchema = {
   type: "object",
   properties: {
+    id: { type: "string" },
     listingId: { type: "string" },
     title: { type: "string" },
     price: { type: "number", minimum: 0 },
@@ -11,6 +12,10 @@ const cartItemSchema = {
     imgs: {
       type: "object",
       properties: {
+        thumbnails: {
+          type: "array",
+          items: { type: "string" }
+        },
         previews: {
           type: "array",
           items: { type: "string" }
@@ -18,6 +23,8 @@ const cartItemSchema = {
       }
     },
     sellerId: { type: "string" },
+    sellerName: { type: "string" },
+    availableStock: { type: "integer", minimum: 0 },
     listingSnapshot: {
       type: "object",
       properties: {

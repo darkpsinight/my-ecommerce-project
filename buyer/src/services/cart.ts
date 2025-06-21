@@ -186,6 +186,7 @@ export const cartApi = {
   getCart: async (): Promise<Cart> => {
     try {
       const response = await axiosInstance.get<ApiResponse<Cart>>('/cart');
+      
       if (response.data.success && response.data.data) {
         return response.data.data;
       }

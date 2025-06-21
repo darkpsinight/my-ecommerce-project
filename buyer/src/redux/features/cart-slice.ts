@@ -1,6 +1,7 @@
 import { createSelector, createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { cartApi, Cart, CartItem, AddToCartRequest, UpdateCartItemRequest, RemoveFromCartRequest } from "@/services/cart";
+import { multiplyCurrency, sumCurrency } from "@/utils/currency";
 import toast from "react-hot-toast";
 
 type InitialState = {
@@ -196,14 +197,16 @@ export const cartSlice = createSlice({
       } else {
         state.items.push(action.payload);
       }
-      // Recalculate totals
-      state.totalAmount = state.items.reduce((total, item) => total + (item.discountedPrice * item.quantity), 0);
+      // Recalculate totals with proper currency precision
+      const itemTotals = state.items.map(item => multiplyCurrency(item.discountedPrice, item.quantity));
+      state.totalAmount = sumCurrency(itemTotals);
       state.totalItems = state.items.reduce((total, item) => total + item.quantity, 0);
     },
     optimisticRemoveItem: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(item => item.id !== action.payload);
-      // Recalculate totals
-      state.totalAmount = state.items.reduce((total, item) => total + (item.discountedPrice * item.quantity), 0);
+      // Recalculate totals with proper currency precision
+      const itemTotals = state.items.map(item => multiplyCurrency(item.discountedPrice, item.quantity));
+      state.totalAmount = sumCurrency(itemTotals);
       state.totalItems = state.items.reduce((total, item) => total + item.quantity, 0);
     },
     optimisticUpdateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
@@ -216,8 +219,9 @@ export const cartSlice = createSlice({
           item.quantity = quantity;
         }
       }
-      // Recalculate totals
-      state.totalAmount = state.items.reduce((total, item) => total + (item.discountedPrice * item.quantity), 0);
+      // Recalculate totals with proper currency precision
+      const itemTotals = state.items.map(item => multiplyCurrency(item.discountedPrice, item.quantity));
+      state.totalAmount = sumCurrency(itemTotals);
       state.totalItems = state.items.reduce((total, item) => total + item.quantity, 0);
     },
   },
@@ -317,9 +321,8 @@ export const selectCartClearingCart = (state: RootState) => state.cartReducer.cl
 
 // Memoized selectors
 export const selectTotalPrice = createSelector([selectCartItems], (items) => {
-  return items.reduce((total, item) => {
-    return total + item.discountedPrice * item.quantity;
-  }, 0);
+  const itemTotals = items.map(item => multiplyCurrency(item.discountedPrice, item.quantity));
+  return sumCurrency(itemTotals);
 });
 
 export const selectCartItemCount = createSelector([selectCartItems], (items) => {

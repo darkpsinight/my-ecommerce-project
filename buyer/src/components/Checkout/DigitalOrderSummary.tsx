@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { formatPrice, multiplyCurrency } from "@/utils/currency";
 
 interface CartItem {
   id: string;
@@ -103,7 +104,7 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
                   </span>
                 </p>
                 <p className="text-gray-500 text-xs mt-1">
-                  Qty: {item.quantity} × ${item.discountedPrice.toFixed(2)}
+                  Qty: {item.quantity} × ${formatPrice(item.discountedPrice)}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
@@ -120,11 +121,11 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
             {/* Price */}
             <div className="text-left sm:text-right">
               <p className="text-dark font-medium text-sm sm:text-base">
-                ${(item.discountedPrice * item.quantity).toFixed(2)}
+                ${formatPrice(multiplyCurrency(item.discountedPrice, item.quantity))}
               </p>
               {item.price !== item.discountedPrice && (
                 <p className="text-gray-500 text-xs sm:text-sm line-through">
-                  ${(item.price * item.quantity).toFixed(2)}
+                  ${formatPrice(multiplyCurrency(item.price, item.quantity))}
                 </p>
               )}
             </div>
@@ -141,7 +142,7 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
           </div>
           <div className="text-left sm:text-right">
             <p className="font-semibold text-base sm:text-lg text-dark">
-              ${totalPrice.toFixed(2)}
+              ${formatPrice(totalPrice)}
             </p>
             <p className="text-xs sm:text-sm text-gray-500">USD</p>
           </div>

@@ -8,6 +8,7 @@ import {
 import Image from "next/image";
 import QuantityControl from "./QuantityControl";
 import Link from "next/link";
+import { formatPrice, multiplyCurrency } from "@/utils/currency";
 
 interface CartItem {
   id: string;
@@ -94,10 +95,10 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
           </Link>
           <div className="mt-1 flex items-center gap-4">
             <p className="text-lg font-medium text-gray-900">
-              ${item.discountedPrice}
+              ${formatPrice(item.discountedPrice)}
             </p>
             <p className="text-sm text-gray-500">
-              Subtotal: ${(item.discountedPrice * quantity).toFixed(2)}
+              Subtotal: ${formatPrice(multiplyCurrency(item.discountedPrice, quantity))}
             </p>
           </div>
           <div className="mt-1 flex items-center gap-2">

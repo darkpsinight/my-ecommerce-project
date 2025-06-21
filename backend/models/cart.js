@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { multiplyCurrency, sumCurrency } = require("../utils/currency");
 
 const cartItemSchema = new mongoose.Schema({
   listingId: {
@@ -88,9 +89,8 @@ cartSchema.index({ 'items.listingId': 1 }); // For checking item availability
 
 // Instance methods
 cartSchema.methods.getTotalAmount = function() {
-  return this.items.reduce((total, item) => {
-    return total + (item.discountedPrice * item.quantity);
-  }, 0);
+  const itemTotals = this.items.map(item => multiplyCurrency(item.discountedPrice, item.quantity));
+  return sumCurrency(itemTotals);
 };
 
 cartSchema.methods.getTotalItems = function() {

@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useAppSelector } from "@/redux/store";
 import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
+import { formatPrice } from "@/utils/currency";
 
 const CartButton: React.FC = () => {
   const { openCartModal } = useCartModalContext();
@@ -54,7 +55,7 @@ const CartButton: React.FC = () => {
           cart
         </span>
         <p className="font-medium text-custom-sm text-dark">
-          ${totalPrice}
+          ${formatPrice(totalPrice)}
         </p>
       </div>
     </button>

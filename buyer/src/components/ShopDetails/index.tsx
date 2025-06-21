@@ -9,7 +9,7 @@ import { useAppSelector } from "@/redux/store";
 import { getProductById } from "@/services/product";
 import { Product } from "@/types/product";
 import { useRouter, useSearchParams } from "next/navigation";
-import { addItemToCart, selectCartAddingItem } from "@/redux/features/cart-slice";
+import { addItemToCartAsync, selectCartAddingItem, selectCartItems, selectIsItemBeingAdded } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
 import {
   updateproductDetails,
@@ -20,6 +20,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import PageContainer from "../Common/PageContainer";
 import ProductDetailSkeleton from "../Common/ProductDetailSkeleton";
+import toast from "react-hot-toast";
 
 const ShopDetails = () => {
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,7 @@ const ShopDetails = () => {
   
   // Get cart loading state
   const isAddingToCart = useAppSelector(selectCartAddingItem);
+  const cartItems = useAppSelector(selectCartItems);
 
   // Initialize fallback product
   const [fallbackProduct, setFallbackProduct] = useState<Product | null>(null);
@@ -165,26 +167,75 @@ const ShopDetails = () => {
   // Use the fetched product data or fallback
   const product = productData || fallbackProduct;
 
+  // Get per-item loading state (must be after product is defined)
+  const isItemBeingAdded = useAppSelector(state => 
+    product ? selectIsItemBeingAdded(state, product.id) : false
+  );
+
+  // Stock validation logic
+  const availableStock = product?.quantityOfActiveCodes || 0;
+  const cartItem = product ? cartItems.find(cartItem => cartItem.listingId === product.id) : null;
+  const quantityInCart = cartItem ? cartItem.quantity : 0;
+  const isOutOfStock = availableStock === 0;
+  const wouldExceedStock = (quantityInCart + quantity) > availableStock;
+  const maxAddableQuantity = Math.max(1, availableStock - quantityInCart);
+
+  // Reset quantity if it exceeds the available stock considering cart items
+  useEffect(() => {
+    if (quantity > maxAddableQuantity) {
+      setQuantity(Math.max(1, maxAddableQuantity));
+    }
+  }, [quantity, maxAddableQuantity]);
+
   // Add to cart handler
   const handleAddToCart = () => {
-    if (product) {
-      dispatch(
-        addItemToCart({
-          listingId: product.id,
-          title: product.title,
-          price: product.price,
-          discountedPrice: product.discountedPrice,
-          quantity: quantity,
-          imgs: product.imgs,
-          sellerId: product.sellerId || "",
-          listingSnapshot: {
-            category: product.categoryName,
-            platform: product.platform,
-            region: product.region,
-          },
-        })
-      );
+    if (!product) {
+      toast.error('Product not found');
+      return;
     }
+
+    if (!product.sellerId) {
+      toast.error('Invalid product data');
+      return;
+    }
+
+    if (isOutOfStock) {
+      toast.error('This product is out of stock');
+      return;
+    }
+
+    if (wouldExceedStock) {
+      const availableToAdd = availableStock - quantityInCart;
+      if (availableToAdd <= 0) {
+        toast.error(`You already have the maximum available quantity (${availableStock}) in your cart`);
+      } else {
+        toast.error(`Cannot add ${quantity} items. You can only add ${availableToAdd} more (${quantityInCart} already in cart, ${availableStock} available)`);
+      }
+      return;
+    }
+
+    if (isItemBeingAdded) {
+      toast.error('This item is already being added to cart');
+      return;
+    }
+
+    dispatch(
+      addItemToCartAsync({
+        listingId: product.id,
+        title: product.title,
+        price: product.price,
+        discountedPrice: product.discountedPrice,
+        quantity: quantity,
+        imgs: product.imgs,
+        sellerId: product.sellerId,
+        availableStock: availableStock,
+        listingSnapshot: {
+          category: product.categoryName,
+          platform: product.platform,
+          region: product.region,
+        },
+      })
+    );
   };
 
   // Add to wishlist handler
@@ -568,16 +619,37 @@ const ShopDetails = () => {
                       Stock Information
                     </h4>
                     <p className="text-sm text-gray-600">
-                      {product.quantityOfActiveCodes || 0} active codes available
+                      {availableStock} active codes available
+                      {quantityInCart > 0 && (
+                        <span className="text-blue-600 font-medium">
+                          {" "}• {quantityInCart} in your cart
+                        </span>
+                      )}
                     </p>
+                    {quantityInCart > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        You can add {Math.max(0, availableStock - quantityInCart)} more
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">
-                      {product.quantityOfActiveCodes || 0}
+                    <div className={`text-2xl font-bold ${
+                      availableStock > 5 
+                        ? 'text-green-600' 
+                        : availableStock > 0 
+                        ? 'text-yellow-600' 
+                        : 'text-red-600'
+                    }`}>
+                      {availableStock}
                     </div>
                     <div className="text-xs text-gray-500">
                       of {product.quantityOfAllCodes || 0} total
                     </div>
+                    {quantityInCart > 0 && (
+                      <div className="text-xs text-blue-600 font-medium mt-1">
+                        {quantityInCart} in cart
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -591,22 +663,24 @@ const ShopDetails = () => {
                     </label>
                     <QuantityControl
                       quantity={quantity}
-                      onIncrease={() =>
-                        setQuantity((prev) =>
-                          Math.min(prev + 1, product.quantityOfActiveCodes || 1)
-                        )
-                      }
+                      onIncrease={() => {
+                        const maxAddable = availableStock - quantityInCart;
+                        setQuantity((prev) => Math.min(prev + 1, maxAddable));
+                      }}
                       onDecrease={() =>
                         setQuantity((prev) => Math.max(prev - 1, 1))
                       }
                       min={1}
-                      max={product.quantityOfActiveCodes || 1}
+                      max={Math.max(1, availableStock - quantityInCart)}
                       disabled={
-                        !product.quantityOfActiveCodes ||
-                        product.quantityOfActiveCodes === 0 ||
+                        isOutOfStock ||
+                        (availableStock - quantityInCart) <= 0 ||
                         (product.status && product.status.toLowerCase() === 'inactive')
                       }
-                      handleQuantityChange={setQuantity}
+                      handleQuantityChange={(newQuantity) => {
+                        const maxAddable = availableStock - quantityInCart;
+                        setQuantity(Math.min(Math.max(newQuantity, 1), maxAddable));
+                      }}
                     />
                   </div>
                   <div className="text-sm text-gray-500">
@@ -621,14 +695,23 @@ const ShopDetails = () => {
                   <button
                     onClick={handleAddToCart}
                     disabled={
-                      isAddingToCart ||
-                      !product.quantityOfActiveCodes ||
-                      product.quantityOfActiveCodes === 0 ||
+                      isItemBeingAdded ||
+                      isOutOfStock ||
+                      wouldExceedStock ||
                       (product.status && product.status.toLowerCase() === 'inactive')
                     }
                     className="flex-1 min-w-[200px] bg-gradient-to-r from-blue to-blue-dark hover:from-blue-dark hover:to-blue-light disabled:from-gray-300 disabled:to-gray-400 disabled:text-gray-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    title={
+                      isOutOfStock
+                        ? 'Out of stock'
+                        : wouldExceedStock
+                        ? `Cannot add ${quantity} items. Maximum available: ${availableStock - quantityInCart}`
+                        : isItemBeingAdded
+                        ? 'Adding to cart...'
+                        : ''
+                    }
                   >
-                    {isAddingToCart && (
+                    {isItemBeingAdded && (
                       <svg
                         className="animate-spin h-5 w-5 text-white"
                         xmlns="http://www.w3.org/2000/svg"
@@ -650,12 +733,16 @@ const ShopDetails = () => {
                         ></path>
                       </svg>
                     )}
-                    {isAddingToCart
+                    {isItemBeingAdded
                       ? "Adding to Cart..."
-                      : (!product.quantityOfActiveCodes ||
-                          product.quantityOfActiveCodes === 0 ||
-                          (product.status && product.status.toLowerCase() === 'inactive'))
+                      : isOutOfStock
                       ? "Out of Stock"
+                      : wouldExceedStock
+                      ? "Quantity Exceeds Stock"
+                      : (product.status && product.status.toLowerCase() === 'inactive')
+                      ? "Inactive Product"
+                      : quantityInCart > 0
+                      ? `Add to Cart (${quantityInCart} in cart)`
                       : "Add to Cart"}
                   </button>
 

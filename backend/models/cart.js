@@ -47,6 +47,11 @@ const cartItemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  // Store available stock at the time of adding to cart
+  availableStock: {
+    type: Number,
+    default: 0,
+  },
   // Snapshot of listing data to prevent issues if listing changes
   listingSnapshot: {
     category: String,
@@ -103,8 +108,12 @@ cartSchema.methods.addItem = function(itemData) {
   );
 
   if (existingItemIndex > -1) {
-    // Update existing item quantity
+    // Update existing item quantity and refresh stock info
     this.items[existingItemIndex].quantity += itemData.quantity || 1;
+    // Update available stock info when adding more of existing item
+    if (itemData.availableStock !== undefined) {
+      this.items[existingItemIndex].availableStock = itemData.availableStock;
+    }
   } else {
     // Add new item
     this.items.push({
@@ -116,6 +125,7 @@ cartSchema.methods.addItem = function(itemData) {
       quantity: itemData.quantity || 1,
       imgs: itemData.imgs || { thumbnails: [], previews: [] },
       sellerId: itemData.sellerId,
+      availableStock: itemData.availableStock || 0,
       listingSnapshot: itemData.listingSnapshot || {},
     });
   }

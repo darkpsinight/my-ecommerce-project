@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useAppSelector, useAppDispatch } from "@/redux/store";
-import { removeAllItemsFromCart, selectCartItems, selectCartTotalAmount, selectCartClearingCart } from "@/redux/features/cart-slice";
+import { removeAllItemsFromCart, selectCartItems, selectCartTotalAmount, selectCartClearingCart, fetchCart } from "@/redux/features/cart-slice";
 import SingleItem from "./SingleItem";
 import Link from "next/link";
 import PageContainer from "../Common/PageContainer";
@@ -16,6 +16,10 @@ const Cart = () => {
     if (window.confirm("Are you sure you want to clear your cart?")) {
       dispatch(removeAllItemsFromCart());
     }
+  };
+
+  const handleRefreshCart = () => {
+    dispatch(fetchCart());
   };
 
   if (cartItems.length === 0) {
@@ -80,13 +84,21 @@ const Cart = () => {
           <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
             Shopping Cart
           </h1>
-          <button
-            onClick={handleClearCart}
-            disabled={isClearing}
-            className="text-sm text-gray-600 hover:text-red-600 transition-colors duration-200 disabled:opacity-50"
-          >
-            {isClearing ? 'Clearing...' : 'Clear Cart'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleRefreshCart}
+              className="text-sm px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors duration-200"
+            >
+              Refresh Cart
+            </button>
+            <button
+              onClick={handleClearCart}
+              disabled={isClearing}
+              className="text-sm text-gray-600 hover:text-red-600 transition-colors duration-200 disabled:opacity-50"
+            >
+              {isClearing ? 'Clearing...' : 'Clear Cart'}
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-[#3C50E0] overflow-hidden">

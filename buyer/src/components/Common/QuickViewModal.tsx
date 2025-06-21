@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { AppDispatch, useAppSelector } from "@/redux/store";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addItemToCartAsync } from "@/redux/features/cart-slice";
 import { useDispatch } from "react-redux";
 import Image from "next/image";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
@@ -37,7 +37,7 @@ const QuickViewModal = () => {
     }
 
     dispatch(
-      addItemToCart({
+      addItemToCartAsync({
         listingId: product.id,
         title: product.title,
         price: product.price,
@@ -45,6 +45,7 @@ const QuickViewModal = () => {
         quantity,
         imgs: product.imgs,
         sellerId: product.sellerId || "",
+        availableStock: product.quantityOfActiveCodes || 0,
         listingSnapshot: {
           category: product.categoryName,
           platform: product.platform,

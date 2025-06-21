@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addItemToCartAsync } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
 import { selectCartItemById } from "@/redux/features/cart-slice";
@@ -42,7 +42,7 @@ const ProductItem = ({ item }: { item: Product }) => {
     }
 
     dispatch(
-      addItemToCart({
+      addItemToCartAsync({
         listingId: item.id,
         title: item.title,
         price: item.price,
@@ -50,6 +50,7 @@ const ProductItem = ({ item }: { item: Product }) => {
         quantity: 1,
         imgs: item.imgs,
         sellerId: item.sellerId || "",
+        availableStock: item.quantityOfActiveCodes || 0,
         listingSnapshot: {
           category: item.categoryName,
           platform: item.platform,

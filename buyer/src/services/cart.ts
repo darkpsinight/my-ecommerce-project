@@ -156,6 +156,7 @@ export interface AddToCartRequest {
     previews: string[];
   };
   sellerId: string;
+  availableStock?: number;
   listingSnapshot?: {
     category?: string;
     subcategory?: string;

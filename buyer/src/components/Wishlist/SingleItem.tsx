@@ -3,7 +3,7 @@ import { AppDispatch } from "@/redux/store";
 import { useDispatch } from "react-redux";
 
 import { removeItemFromWishlist } from "@/redux/features/wishlist-slice";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addItemToCartAsync } from "@/redux/features/cart-slice";
 
 import Image from "next/image";
 
@@ -16,9 +16,20 @@ const SingleItem = ({ item }) => {
 
   const handleAddToCart = () => {
     dispatch(
-      addItemToCart({
-        ...item,
+      addItemToCartAsync({
+        listingId: item.id,
+        title: item.title,
+        price: item.price,
+        discountedPrice: item.discountedPrice,
         quantity: 1,
+        imgs: item.imgs,
+        sellerId: item.sellerId || "",
+        availableStock: item.quantityOfActiveCodes || 0,
+        listingSnapshot: {
+          category: item.categoryName,
+          platform: item.platform,
+          region: item.region,
+        },
       })
     );
   };

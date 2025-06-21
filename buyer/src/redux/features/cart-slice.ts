@@ -17,6 +17,8 @@ type InitialState = {
   updatingItem: boolean;
   removingItem: boolean;
   clearingCart: boolean;
+  // Track which items are being added by listingId
+  addingItems: Record<string, boolean>;
 };
 
 const initialState: InitialState = {
@@ -31,6 +33,7 @@ const initialState: InitialState = {
   updatingItem: false,
   removingItem: false,
   clearingCart: false,
+  addingItems: {},
 };
 
 // Helper function to check if error is authentication related
@@ -85,7 +88,7 @@ export const addItemToCartAsync = createAsyncThunk(
     try {
       const cart = await cartApi.addToCart(item);
       toast.success(`${item.title} added to cart`);
-      return cart;
+      return { cart, listingId: item.listingId };
     } catch (error: any) {
       const message = getErrorMessage(error, 'Failed to add item to cart');
       toast.error(message);
@@ -95,7 +98,7 @@ export const addItemToCartAsync = createAsyncThunk(
         handleAuthRedirect();
       }
       
-      return rejectWithValue(message);
+      return rejectWithValue({ message, listingId: item.listingId });
     }
   }
 );
@@ -191,7 +194,7 @@ export const cartSlice = createSlice({
     },
     // Optimistic updates (for immediate UI feedback)
     optimisticAddItem: (state, action: PayloadAction<CartItem>) => {
-      const existingItem = state.items.find(item => item.id === action.payload.id);
+      const existingItem = state.items.find(item => item.listingId === action.payload.listingId);
       if (existingItem) {
         existingItem.quantity += action.payload.quantity;
       } else {
@@ -244,17 +247,29 @@ export const cartSlice = createSlice({
 
     // Add item to cart
     builder
-      .addCase(addItemToCartAsync.pending, (state) => {
+      .addCase(addItemToCartAsync.pending, (state, action) => {
         state.addingItem = true;
         state.error = null;
+        // Track which item is being added
+        const listingId = action.meta.arg.listingId;
+        state.addingItems[listingId] = true;
       })
       .addCase(addItemToCartAsync.fulfilled, (state, action) => {
         state.addingItem = false;
-        updateStateFromCart(state, action.payload);
+        updateStateFromCart(state, action.payload.cart);
+        // Clear the adding state for this item
+        const listingId = action.payload.listingId;
+        delete state.addingItems[listingId];
       })
       .addCase(addItemToCartAsync.rejected, (state, action) => {
         state.addingItem = false;
-        state.error = action.payload as string;
+        const payload = action.payload as any;
+        state.error = payload?.message || payload;
+        // Clear the adding state for this item
+        const listingId = payload?.listingId || action.meta.arg.listingId;
+        if (listingId) {
+          delete state.addingItems[listingId];
+        }
       });
 
     // Update cart item
@@ -318,6 +333,11 @@ export const selectCartAddingItem = (state: RootState) => state.cartReducer.addi
 export const selectCartUpdatingItem = (state: RootState) => state.cartReducer.updatingItem;
 export const selectCartRemovingItem = (state: RootState) => state.cartReducer.removingItem;
 export const selectCartClearingCart = (state: RootState) => state.cartReducer.clearingCart;
+export const selectCartAddingItems = (state: RootState) => state.cartReducer.addingItems;
+
+// Selector to check if a specific item is being added
+export const selectIsItemBeingAdded = (state: RootState, listingId: string) => 
+  state.cartReducer.addingItems[listingId] || false;
 
 // Memoized selectors
 export const selectTotalPrice = createSelector([selectCartItems], (items) => {

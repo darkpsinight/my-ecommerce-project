@@ -5,7 +5,7 @@ import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addItemToCartAsync } from "@/redux/features/cart-slice";
 import Image from "next/image";
 import Link from "next/link";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
@@ -27,7 +27,7 @@ const SingleItem = ({ item }: { item: Product }) => {
     }
 
     dispatch(
-      addItemToCart({
+      addItemToCartAsync({
         listingId: item.id,
         title: item.title,
         price: item.price,
@@ -35,6 +35,7 @@ const SingleItem = ({ item }: { item: Product }) => {
         quantity: 1,
         imgs: item.imgs,
         sellerId: item.sellerId || "",
+        availableStock: item.quantityOfActiveCodes || 0,
         listingSnapshot: {
           category: item.categoryName,
           platform: item.platform,

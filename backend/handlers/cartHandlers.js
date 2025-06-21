@@ -50,8 +50,9 @@ const getCart = async (request, reply) => {
         sellerId: item.sellerId,
         sellerName: item.listingObjectId?.sellerId?.name || 'Unknown Seller',
         listingSnapshot: item.listingSnapshot,
-        // Add available stock information
-        availableStock: item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0
+        // Use stored available stock information, fallback to listing's current stock
+        availableStock: item.availableStock !== undefined ? item.availableStock : 
+                       (item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0)
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),
@@ -80,17 +81,10 @@ const getCart = async (request, reply) => {
 const addToCart = async (request, reply) => {
   try {
     const userId = request.user.uid;
-    const { listingId, title, price, discountedPrice, quantity = 1, imgs, sellerId, listingSnapshot } = request.body;
+    const { listingId, title, price, discountedPrice, quantity = 1, imgs, sellerId, listingSnapshot, availableStock } = request.body;
 
     // Verify listing exists and is active (need to select codes to check availability)
     const listing = await Listing.findOne({ externalId: listingId }).select("+codes");
-    console.log(`Found listing:`, listing ? 'Yes' : 'No');
-    console.log(`Listing status:`, listing?.status);
-    console.log(`Listing codes count:`, listing?.codes?.length);
-    if (listing?.codes) {
-      console.log(`Codes status breakdown:`, listing.codes.map(c => c.soldStatus));
-    }
-    console.log(`Available codes count:`, listing?.getAvailableCodesCount());
     
     if (!listing || listing.status !== 'active') {
       return reply.code(400).send({
@@ -134,6 +128,7 @@ const addToCart = async (request, reply) => {
       quantity,
       imgs: imgs || { thumbnails: [], previews: [] },
       sellerId,
+      availableStock: availableStock || listing.getAvailableCodesCount(), // Use provided stock or get from listing
       listingSnapshot: listingSnapshot || {
         category: listing.category,
         subcategory: listing.subcategory,
@@ -160,8 +155,9 @@ const addToCart = async (request, reply) => {
         imgs: item.imgs,
         sellerId: item.sellerId,
         listingSnapshot: item.listingSnapshot,
-        // Add available stock information
-        availableStock: item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0
+        // Use stored available stock information, fallback to listing's current stock
+        availableStock: item.availableStock !== undefined ? item.availableStock : 
+                       (item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0)
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),
@@ -245,8 +241,9 @@ const updateCartItem = async (request, reply) => {
         imgs: item.imgs,
         sellerId: item.sellerId,
         listingSnapshot: item.listingSnapshot,
-        // Add available stock information
-        availableStock: item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0
+        // Use stored available stock information, fallback to listing's current stock
+        availableStock: item.availableStock !== undefined ? item.availableStock : 
+                       (item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0)
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),
@@ -300,8 +297,9 @@ const removeFromCart = async (request, reply) => {
         imgs: item.imgs,
         sellerId: item.sellerId,
         listingSnapshot: item.listingSnapshot,
-        // Add available stock information
-        availableStock: item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0
+        // Use stored available stock information, fallback to listing's current stock
+        availableStock: item.availableStock !== undefined ? item.availableStock : 
+                       (item.listingObjectId ? item.listingObjectId.getAvailableCodesCount() : 0)
       })),
       totalAmount: cart.getTotalAmount(),
       totalItems: cart.getTotalItems(),

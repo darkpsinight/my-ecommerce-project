@@ -53,8 +53,8 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity === quantity) return;
     
-    // Check if quantity exceeds available stock
-    if (newQuantity > (item.availableStock || 0)) {
+    // Check if quantity exceeds available stock (only if we have stock info)
+    if (item.availableStock !== undefined && newQuantity > item.availableStock) {
       return; // Don't proceed if exceeding stock
     }
     
@@ -126,8 +126,8 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
           onIncrease={() => handleQuantityChange(quantity + 1)}
           onDecrease={() => handleQuantityChange(quantity - 1)}
           min={1}
-          max={item.availableStock || 1}
-          disabled={isUpdating || !item.availableStock || item.availableStock === 0}
+          max={item.availableStock || 999}
+          disabled={isUpdating}
           handleQuantityChange={handleQuantityChange}
         />
         

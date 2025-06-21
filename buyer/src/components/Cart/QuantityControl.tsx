@@ -8,6 +8,7 @@ interface QuantityControlProps {
   max?: number;
   disabled?: boolean;
   handleQuantityChange: (newQuantity: number) => void;
+  showMaximumPulse?: boolean; // New prop to control pulse animation
 }
 
 const QuantityControl: React.FC<QuantityControlProps> = ({
@@ -18,6 +19,7 @@ const QuantityControl: React.FC<QuantityControlProps> = ({
   max = 9999,
   disabled = false,
   handleQuantityChange,
+  showMaximumPulse = true, // Default to true to maintain existing behavior
 }) => {
   const [inputValue, setInputValue] = useState(quantity.toString());
   const inputRef = useRef<HTMLInputElement>(null);
@@ -86,21 +88,20 @@ const QuantityControl: React.FC<QuantityControlProps> = ({
       onIncrease();
     } else {
       // Visual feedback when user tries to exceed maximum - pulse the entire control
-      const button = e.currentTarget;
-      const container = button.closest('.quantity-control-container');
-      if (container) {
-        container.classList.add('animate-pulse', 'ring-2', 'ring-orange');
-        setTimeout(() => {
-          container.classList.remove('animate-pulse', 'ring-2', 'ring-orange');
-        }, 800);
+      if (showMaximumPulse) {
+        const button = e.currentTarget;
+        const container = button.closest('.quantity-control-container');
+        if (container) {
+          container.classList.add('animate-pulse', 'ring-2', 'ring-orange');
+          setTimeout(() => {
+            container.classList.remove('animate-pulse', 'ring-2', 'ring-orange');
+          }, 800);
+        }
+        // Also call onIncrease to trigger the toast in parent component
+        onIncrease();
       }
-      // Also call onIncrease to trigger the toast in parent component
-      onIncrease();
     }
   };
-
-  // Check if at maximum quantity
-  const isAtMax = quantity >= max;
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -141,7 +142,7 @@ const QuantityControl: React.FC<QuantityControlProps> = ({
           onClick={handleIncrease}
           disabled={disabled || quantity >= max}
           aria-label="Increase quantity"
-          title={isAtMax ? `Maximum available: ${max}` : 'Increase quantity'}
+          title={quantity >= max ? `Maximum available: ${max}` : 'Increase quantity'}
           className={`flex items-center justify-center w-10 h-10 transition-colors duration-200
             ${disabled || quantity >= max
               ? 'text-gray-5 cursor-not-allowed bg-gray-2 opacity-50' 
@@ -159,18 +160,6 @@ const QuantityControl: React.FC<QuantityControlProps> = ({
           </svg>
         </button>
       </div>
-      
-      {/* Show max stock indicator */}
-      {isAtMax && max < 999 && (
-        <div className="flex items-center gap-1 px-3 py-2 bg-red-light-5 text-red-dark rounded-md border border-red-light-3 animate-pulse">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-          <span className="text-sm font-bold">
-            MAXIMUM REACHED: {max}
-          </span>
-        </div>
-      )}
     </div>
   );
 };

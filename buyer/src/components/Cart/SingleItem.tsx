@@ -131,7 +131,7 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
               </span>
             )}
             {item.availableStock !== undefined && quantity >= item.availableStock && item.availableStock > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-light-5 text-blue-dark">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-light-5 text-red-dark animate-pulse">
                 Max in Cart
               </span>
             )}

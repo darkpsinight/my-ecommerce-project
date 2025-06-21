@@ -681,6 +681,7 @@ const ShopDetails = () => {
                         const maxAddable = availableStock - quantityInCart;
                         setQuantity(Math.min(Math.max(newQuantity, 1), maxAddable));
                       }}
+                      showMaximumPulse={false}
                     />
                   </div>
                   <div className="text-sm text-gray-500">

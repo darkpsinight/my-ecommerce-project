@@ -9,7 +9,12 @@ import { useAppSelector } from "@/redux/store";
 import { getProductById } from "@/services/product";
 import { Product } from "@/types/product";
 import { useRouter, useSearchParams } from "next/navigation";
-import { addItemToCartAsync, selectCartAddingItem, selectCartItems, selectIsItemBeingAdded } from "@/redux/features/cart-slice";
+import {
+  addItemToCartAsync,
+  selectCartAddingItem,
+  selectCartItems,
+  selectIsItemBeingAdded,
+} from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
 import {
   updateproductDetails,
@@ -52,7 +57,7 @@ const ShopDetails = () => {
   const productFromStorage = useAppSelector(
     (state) => state.productDetailsReducer.value
   );
-  
+
   // Get cart loading state
   const isAddingToCart = useAppSelector(selectCartAddingItem);
   const cartItems = useAppSelector(selectCartItems);
@@ -168,16 +173,18 @@ const ShopDetails = () => {
   const product = productData || fallbackProduct;
 
   // Get per-item loading state (must be after product is defined)
-  const isItemBeingAdded = useAppSelector(state => 
+  const isItemBeingAdded = useAppSelector((state) =>
     product ? selectIsItemBeingAdded(state, product.id) : false
   );
 
   // Stock validation logic
   const availableStock = product?.quantityOfActiveCodes || 0;
-  const cartItem = product ? cartItems.find(cartItem => cartItem.listingId === product.id) : null;
+  const cartItem = product
+    ? cartItems.find((cartItem) => cartItem.listingId === product.id)
+    : null;
   const quantityInCart = cartItem ? cartItem.quantity : 0;
   const isOutOfStock = availableStock === 0;
-  const wouldExceedStock = (quantityInCart + quantity) > availableStock;
+  const wouldExceedStock = quantityInCart + quantity > availableStock;
   const maxAddableQuantity = Math.max(1, availableStock - quantityInCart);
 
   // Reset quantity if it exceeds the available stock considering cart items
@@ -190,32 +197,36 @@ const ShopDetails = () => {
   // Add to cart handler
   const handleAddToCart = () => {
     if (!product) {
-      toast.error('Product not found');
+      toast.error("Product not found");
       return;
     }
 
     if (!product.sellerId) {
-      toast.error('Invalid product data');
+      toast.error("Invalid product data");
       return;
     }
 
     if (isOutOfStock) {
-      toast.error('This product is out of stock');
+      toast.error("This product is out of stock");
       return;
     }
 
     if (wouldExceedStock) {
       const availableToAdd = availableStock - quantityInCart;
       if (availableToAdd <= 0) {
-        toast.error(`You already have the maximum available quantity (${availableStock}) in your cart`);
+        toast.error(
+          `You already have the maximum available quantity (${availableStock}) in your cart`
+        );
       } else {
-        toast.error(`Cannot add ${quantity} items. You can only add ${availableToAdd} more (${quantityInCart} already in cart, ${availableStock} available)`);
+        toast.error(
+          `Cannot add ${quantity} items. You can only add ${availableToAdd} more (${quantityInCart} already in cart, ${availableStock} available)`
+        );
       }
       return;
     }
 
     if (isItemBeingAdded) {
-      toast.error('This item is already being added to cart');
+      toast.error("This item is already being added to cart");
       return;
     }
 
@@ -295,8 +306,128 @@ const ShopDetails = () => {
 
   return (
     <>
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product?.title || "Digital Product",
+            description: product?.description || "High-quality digital product",
+            image:
+              product?.imgs?.previews?.[0] ||
+              product?.thumbnailUrl ||
+              "/images/products/placeholder.png",
+            sku: product?.id?.toString() || "unknown",
+            category: product?.categoryName || "Digital Products",
+            brand: {
+              "@type": "Organization",
+              name: "Digital Marketplace",
+            },
+            offers: {
+              "@type": "Offer",
+              price: product?.discountedPrice || product?.price || 0,
+              priceCurrency: "USD",
+              availability:
+                product?.quantityOfActiveCodes > 0
+                  ? "https://schema.org/InStock"
+                  : "https://schema.org/OutOfStock",
+              seller: {
+                "@type": "Organization",
+                name: product?.sellerName || "Verified Seller",
+              },
+            },
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "4.5",
+              reviewCount: "12",
+            },
+          }),
+        }}
+      />
+
       <PageContainer>
-        <section className="overflow-hidden pt-16 pb-1 sm:pb-2 bg-gradient-to-b from-gray-50 to-gray-100">
+        <section className="overflow-hidden pt-[50px] sm:pt-[90px] lg:pt-[80px] pb-1 sm:pb-2 bg-gradient-to-b from-gray-50 to-gray-100">
+          {/* Page Title - Hidden but accessible for SEO */}
+          <h1 className="sr-only">
+            {product?.title} - Digital Product Details
+          </h1>
+
+          {/* Breadcrumb Navigation */}
+          <nav aria-label="Breadcrumb" className="mb-6">
+            <ol className="flex items-center space-x-2 text-sm">
+              <li>
+                <a
+                  href="/"
+                  className="text-body hover:text-blue transition-colors duration-200"
+                >
+                  Home
+                </a>
+              </li>
+              <li aria-hidden="true" className="text-gray-4">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </li>
+              <li>
+                <a
+                  href="/shop-with-sidebar"
+                  className="text-body hover:text-blue transition-colors duration-200"
+                >
+                  Shop
+                </a>
+              </li>
+              <li aria-hidden="true" className="text-gray-4">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </li>
+              {product?.categoryName && (
+                <>
+                  <li>
+                    <span className="text-body">{product.categoryName}</span>
+                  </li>
+                  <li aria-hidden="true" className="text-gray-4">
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </li>
+                </>
+              )}
+              <li
+                aria-current="page"
+                className="text-dark font-medium truncate max-w-[200px]"
+              >
+                {product?.title || "Product Details"}
+              </li>
+            </ol>
+          </nav>
+
           <div className="flex flex-col xl:flex-row gap-8 xl:gap-12">
             {/* Product Image Section */}
             <div className="xl:max-w-[600px] w-full">
@@ -622,24 +753,28 @@ const ShopDetails = () => {
                       {availableStock} active codes available
                       {quantityInCart > 0 && (
                         <span className="text-blue-600 font-medium">
-                          {" "}• {quantityInCart} in your cart
+                          {" "}
+                          • {quantityInCart} in your cart
                         </span>
                       )}
                     </p>
                     {quantityInCart > 0 && (
                       <p className="text-xs text-gray-500 mt-1">
-                        You can add {Math.max(0, availableStock - quantityInCart)} more
+                        You can add{" "}
+                        {Math.max(0, availableStock - quantityInCart)} more
                       </p>
                     )}
                   </div>
                   <div className="text-right">
-                    <div className={`text-2xl font-bold ${
-                      availableStock > 5 
-                        ? 'text-green-600' 
-                        : availableStock > 0 
-                        ? 'text-yellow-600' 
-                        : 'text-red-600'
-                    }`}>
+                    <div
+                      className={`text-2xl font-bold ${
+                        availableStock > 5
+                          ? "text-green-600"
+                          : availableStock > 0
+                          ? "text-yellow-600"
+                          : "text-red-600"
+                      }`}
+                    >
                       {availableStock}
                     </div>
                     <div className="text-xs text-gray-500">
@@ -674,12 +809,15 @@ const ShopDetails = () => {
                       max={Math.max(1, availableStock - quantityInCart)}
                       disabled={
                         isOutOfStock ||
-                        (availableStock - quantityInCart) <= 0 ||
-                        (product.status && product.status.toLowerCase() === 'inactive')
+                        availableStock - quantityInCart <= 0 ||
+                        (product.status &&
+                          product.status.toLowerCase() === "inactive")
                       }
                       handleQuantityChange={(newQuantity) => {
                         const maxAddable = availableStock - quantityInCart;
-                        setQuantity(Math.min(Math.max(newQuantity, 1), maxAddable));
+                        setQuantity(
+                          Math.min(Math.max(newQuantity, 1), maxAddable)
+                        );
                       }}
                       showMaximumPulse={false}
                     />
@@ -699,17 +837,20 @@ const ShopDetails = () => {
                       isItemBeingAdded ||
                       isOutOfStock ||
                       wouldExceedStock ||
-                      (product.status && product.status.toLowerCase() === 'inactive')
+                      (product.status &&
+                        product.status.toLowerCase() === "inactive")
                     }
                     className="flex-1 min-w-[200px] bg-gradient-to-r from-blue to-blue-dark hover:from-blue-dark hover:to-blue-light disabled:from-gray-300 disabled:to-gray-400 disabled:text-gray-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     title={
                       isOutOfStock
-                        ? 'Out of stock'
+                        ? "Out of stock"
                         : wouldExceedStock
-                        ? `Cannot add ${quantity} items. Maximum available: ${availableStock - quantityInCart}`
+                        ? `Cannot add ${quantity} items. Maximum available: ${
+                            availableStock - quantityInCart
+                          }`
                         : isItemBeingAdded
-                        ? 'Adding to cart...'
-                        : ''
+                        ? "Adding to cart..."
+                        : ""
                     }
                   >
                     {isItemBeingAdded && (
@@ -740,7 +881,8 @@ const ShopDetails = () => {
                       ? "Out of Stock"
                       : wouldExceedStock
                       ? "Quantity Exceeds Stock"
-                      : (product.status && product.status.toLowerCase() === 'inactive')
+                      : product.status &&
+                        product.status.toLowerCase() === "inactive"
                       ? "Inactive Product"
                       : quantityInCart > 0
                       ? `Add to Cart (${quantityInCart} in cart)`

@@ -104,6 +104,7 @@ const config: Config = {
       teal: {
         DEFAULT: "#02AAA4",
         dark: "#06A09B",
+        light: "#14B8B8",
       },
       orange: {
         DEFAULT: "#F27430",

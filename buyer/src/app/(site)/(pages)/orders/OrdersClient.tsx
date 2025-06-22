@@ -16,6 +16,7 @@ const OrdersClient = () => {
     error,
     currentPage,
     totalPages,
+    totalOrders,
     setCurrentPage,
   } = useOrders();
 
@@ -37,6 +38,7 @@ const OrdersClient = () => {
         orders={orders}
         currentPage={currentPage}
         totalPages={totalPages}
+        totalOrders={totalOrders}
         onPageChange={setCurrentPage}
         formatDate={formatDate}
       />

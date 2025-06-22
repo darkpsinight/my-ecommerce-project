@@ -1,6 +1,6 @@
 // Orders page constants
 
-export const ORDERS_PER_PAGE = 10;
+export const ORDERS_PER_PAGE = 5;
 
 export const ORDER_STATUS = {
   COMPLETED: 'completed',

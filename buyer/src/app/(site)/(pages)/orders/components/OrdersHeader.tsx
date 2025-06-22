@@ -6,9 +6,10 @@ interface OrdersHeaderProps {
   subtitle: string;
   icon: "orders" | "loading" | "error" | "empty";
   isLoading?: boolean;
+  totalOrders?: number;
 }
 
-const OrdersHeader: React.FC<OrdersHeaderProps> = ({ title, subtitle, icon, isLoading = false }) => {
+const OrdersHeader: React.FC<OrdersHeaderProps> = ({ title, subtitle, icon, isLoading = false, totalOrders }) => {
   const renderIcon = () => {
     const baseClasses = "w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white";
     const iconClasses = isLoading ? `${baseClasses} animate-pulse` : baseClasses;
@@ -17,13 +18,17 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ title, subtitle, icon, isLo
       case "orders":
         return (
           <svg className={iconClasses} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17" />
+            <circle cx="9" cy="20" r="1" />
+            <circle cx="20" cy="20" r="1" />
           </svg>
         );
       case "loading":
         return (
           <svg className={iconClasses} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17" />
+            <circle cx="9" cy="20" r="1" />
+            <circle cx="20" cy="20" r="1" />
           </svg>
         );
       case "error":
@@ -35,7 +40,9 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ title, subtitle, icon, isLo
       case "empty":
         return (
           <svg className={iconClasses} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17" />
+            <circle cx="9" cy="20" r="1" />
+            <circle cx="20" cy="20" r="1" />
           </svg>
         );
       default:
@@ -65,6 +72,11 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ title, subtitle, icon, isLo
       </div>
       <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-dark mb-2 sm:mb-3">
         {title}
+        {totalOrders !== undefined && (
+          <span className="ml-2 sm:ml-3 text-base sm:text-lg lg:text-xl font-normal text-body">
+            ({totalOrders} {totalOrders === 1 ? 'order' : 'orders'})
+          </span>
+        )}
       </h1>
       <p className="text-body text-sm sm:text-base lg:text-lg px-2 sm:px-0">{subtitle}</p>
     </div>

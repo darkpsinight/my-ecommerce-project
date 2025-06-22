@@ -10,6 +10,7 @@ interface UseOrdersReturn {
   error: string | null;
   currentPage: number;
   totalPages: number;
+  totalOrders: number;
   setCurrentPage: (page: number) => void;
   refetch: () => void;
 }
@@ -20,6 +21,7 @@ export const useOrders = (): UseOrdersReturn => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
   
   const token = useAppSelector((state) => state.authReducer.token);
 
@@ -34,6 +36,7 @@ export const useOrders = (): UseOrdersReturn => {
       if (response.success) {
         setOrders(response.data.orders);
         setTotalPages(response.data.pagination.pages);
+        setTotalOrders(response.data.pagination.total);
         setError(null);
       } else {
         setError("Failed to fetch orders");
@@ -62,6 +65,7 @@ export const useOrders = (): UseOrdersReturn => {
     error,
     currentPage,
     totalPages,
+    totalOrders,
     setCurrentPage,
     refetch,
   };

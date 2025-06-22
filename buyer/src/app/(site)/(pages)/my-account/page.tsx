@@ -3,21 +3,21 @@ import MyAccount from "@/components/MyAccount";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "My Account - Manage Your Digital Codes | Digital Marketplace",
-  description: "Access your digital marketplace account to view purchased codes, manage orders, and update your profile. Secure, fast, and reliable digital code management.",
-  keywords: "digital codes, account management, purchased codes, orders, digital marketplace, user dashboard",
+  title: "Profile Settings - Manage Your Account | Digital Marketplace",
+  description: "Manage your personal information, security settings, notifications, and privacy preferences. Complete control over your digital marketplace account.",
+  keywords: "profile settings, account management, security settings, privacy, notifications, digital marketplace, user preferences",
   authors: [{ name: "Digital Marketplace" }],
   robots: "index, follow",
   openGraph: {
-    title: "My Account - Digital Marketplace",
-    description: "Manage your digital codes, orders, and account settings in one secure place.",
+    title: "Profile Settings - Digital Marketplace",
+    description: "Manage your personal information, security settings, and account preferences in one secure place.",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "My Account - Digital Marketplace",
-    description: "Manage your digital codes, orders, and account settings in one secure place.",
+    title: "Profile Settings - Digital Marketplace",
+    description: "Manage your personal information, security settings, and account preferences in one secure place.",
   },
 };
 

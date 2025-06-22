@@ -3,35 +3,91 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAppSelector } from "@/redux/store";
-import { selectAuthToken } from "@/redux/features/auth-slice";
-import Orders from "../Orders";
-import MyCodes from "./MyCodes";
+
 import PageContainer from "../Common/PageContainer";
 import ProtectedRoute from "../Common/ProtectedRoute";
 
 const MyAccount = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("my-codes");
+  const [activeSection, setActiveSection] = useState("profile");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    displayName: "",
+    username: "",
+    email: "",
+    bio: "",
+    phone: "",
+    dateOfBirth: "",
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const { user } = useAppSelector((state: any) => state.authReducer);
 
-  // Check for tab parameter in URL
+  // Initialize profile data
   useEffect(() => {
-    const tabParam = searchParams.get("tab");
+    if (user) {
+      setProfileData({
+        displayName: user.displayName || "",
+        username: user.username || "",
+        email: user.email || "",
+        bio: user.bio || "",
+        phone: user.phone || "",
+        dateOfBirth: user.dateOfBirth || "",
+      });
+    }
+  }, [user]);
+
+  // Check for section parameter in URL
+  useEffect(() => {
+    const sectionParam = searchParams.get("section");
     if (
-      tabParam &&
-      ["my-codes", "orders", "account-details"].includes(tabParam)
+      sectionParam &&
+      ["profile", "security", "preferences", "privacy"].includes(sectionParam)
     ) {
-      setActiveTab(tabParam);
+      setActiveSection(sectionParam);
     }
   }, [searchParams]);
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section);
     // Update URL without refreshing the page
     const params = new URLSearchParams(searchParams);
-    params.set("tab", tab);
+    params.set("section", section);
     router.push(`/my-account?${params.toString()}`, { scroll: false });
+  };
+
+  const handleProfileUpdate = (field: string, value: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePasswordUpdate = (field: string, value: string) => {
+    setPasswordData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveProfile = () => {
+    // Add API call to save profile data
+    console.log("Saving profile:", profileData);
+    setIsEditingProfile(false);
+  };
+
+  const handleChangePassword = () => {
+    // Add API call to change password
+    console.log("Changing password");
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
   };
 
   const handleLogout = () => {
@@ -40,66 +96,10 @@ const MyAccount = () => {
     // You can implement logout functionality here
   };
 
-  const tabs = [
+  const sections = [
     {
-      id: "my-codes",
-      label: "My Codes",
-      icon: (
-        <svg className="w-5 h-5" viewBox="0 0 22 22" fill="none">
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M6.875 2.0625C4.38968 2.0625 2.375 4.07718 2.375 6.5625V15.4375C2.375 17.9228 4.38968 19.9375 6.875 19.9375H15.125C17.6103 19.9375 19.625 17.9228 19.625 15.4375V6.5625C19.625 4.07718 17.6103 2.0625 15.125 2.0625H6.875ZM3.625 6.5625C3.625 4.76802 5.08052 3.3125 6.875 3.3125H15.125C16.9195 3.3125 18.375 4.76802 18.375 6.5625V15.4375C18.375 17.232 16.9195 18.6875 15.125 18.6875H6.875C5.08052 18.6875 3.625 17.232 3.625 15.4375V6.5625Z"
-            fill="currentColor"
-          />
-          <path
-            d="M7.5625 6.875C7.5625 6.52982 7.84232 6.25 8.1875 6.25H9.625C9.97018 6.25 10.25 6.52982 10.25 6.875C10.25 7.22018 9.97018 7.5 9.625 7.5H8.1875C7.84232 7.5 7.5625 7.22018 7.5625 6.875Z"
-            fill="currentColor"
-          />
-          <path
-            d="M7.5625 9.625C7.5625 9.27982 7.84232 9 8.1875 9H13.1875C13.5327 9 13.8125 9.27982 13.8125 9.625C13.8125 9.97018 13.5327 10.25 13.1875 10.25H8.1875C7.84232 10.25 7.5625 9.97018 7.5625 9.625Z"
-            fill="currentColor"
-          />
-          <path
-            d="M7.5625 12.375C7.5625 12.0298 7.84232 11.75 8.1875 11.75H11.9375C12.2827 11.75 12.5625 12.0298 12.5625 12.375C12.5625 12.7202 12.2827 13 11.9375 13H8.1875C7.84232 13 7.5625 12.7202 7.5625 12.375Z"
-            fill="currentColor"
-          />
-        </svg>
-      ),
-      gradient: "from-blue to-blue-light-2",
-      color: "blue",
-    },
-    {
-      id: "orders",
-      label: "My Orders",
-      icon: (
-        <svg className="w-5 h-5" viewBox="0 0 22 22" fill="none">
-          <path
-            d="M8.0203 11.9167C8.0203 11.537 7.71249 11.2292 7.3328 11.2292C6.9531 11.2292 6.6453 11.537 6.6453 11.9167V15.5833C6.6453 15.963 6.9531 16.2708 7.3328 16.2708C7.71249 16.2708 8.0203 15.963 8.0203 15.5833V11.9167Z"
-            fill="currentColor"
-          />
-          <path
-            d="M14.6661 11.2292C15.0458 11.2292 15.3536 11.537 15.3536 11.9167V15.5833C15.3536 15.963 15.0458 16.2708 14.6661 16.2708C14.2864 16.2708 13.9786 15.963 13.9786 15.5833V11.9167C13.9786 11.537 14.2864 11.2292 14.6661 11.2292Z"
-            fill="currentColor"
-          />
-          <path
-            d="M11.687 11.9167C11.687 11.537 11.3792 11.2292 10.9995 11.2292C10.6198 11.2292 10.312 11.537 10.312 11.9167V15.5833C10.312 15.963 10.6198 16.2708 10.9995 16.2708C11.3792 16.2708 11.687 15.963 11.687 15.5833V11.9167Z"
-            fill="currentColor"
-          />
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M15.8338 3.18356C15.3979 3.01319 14.9095 2.98443 14.2829 2.97987C14.0256 2.43753 13.473 2.0625 12.8328 2.0625H9.16613C8.52593 2.0625 7.97332 2.43753 7.716 2.97987C7.08942 2.98443 6.60107 3.01319 6.16515 3.18356C5.64432 3.38713 5.19129 3.73317 4.85788 4.18211C4.52153 4.63502 4.36363 5.21554 4.14631 6.01456L3.57076 8.12557C3.21555 8.30747 2.90473 8.55242 2.64544 8.88452C2.07527 9.61477 1.9743 10.4845 2.07573 11.4822C2.17415 12.4504 2.47894 13.6695 2.86047 15.1955L2.88467 15.2923C3.12592 16.2573 3.32179 17.0409 3.55475 17.6524C3.79764 18.2899 4.10601 18.8125 4.61441 19.2095C5.12282 19.6064 5.70456 19.7788 6.38199 19.8598C7.03174 19.9375 7.8394 19.9375 8.83415 19.9375H13.1647C14.1594 19.9375 14.9671 19.9375 15.6169 19.8598C16.2943 19.7788 16.876 19.6064 17.3844 19.2095C17.8928 18.8125 18.2012 18.2899 18.4441 17.6524C18.6771 17.0409 18.8729 16.2573 19.1142 15.2923L19.1384 15.1956C19.5199 13.6695 19.8247 12.4504 19.9231 11.4822C20.0245 10.4845 19.9236 9.61477 19.3534 8.88452C19.0941 8.55245 18.7833 8.30751 18.4282 8.12562L17.8526 6.01455C17.6353 5.21554 17.4774 4.63502 17.141 4.18211C16.8076 3.73317 16.3546 3.38713 15.8338 3.18356Z"
-            fill="currentColor"
-          />
-        </svg>
-      ),
-      gradient: "from-green to-green-light-2",
-      color: "green",
-    },
-    {
-      id: "account-details",
-      label: "Profile Settings",
+      id: "profile",
+      label: "Profile Information",
       icon: (
         <svg className="w-5 h-5" viewBox="0 0 22 22" fill="none">
           <path
@@ -116,8 +116,58 @@ const MyAccount = () => {
           />
         </svg>
       ),
-      gradient: "from-teal to-blue-light",
-      color: "teal",
+      gradient: "from-blue to-blue-light-2",
+      color: "blue",
+    },
+    {
+      id: "security",
+      label: "Security & Password",
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 22 22" fill="none">
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M11 1.83325C11.3866 1.83325 11.7492 2.02118 11.9756 2.33518L14.3089 5.49992H17.4166C18.1071 5.49992 18.7692 5.77424 19.2624 6.26738C19.7556 6.76052 20.0299 7.42258 20.0299 8.11325V16.4999C20.0299 17.1906 19.7556 17.8526 19.2624 18.3458C18.7692 18.8389 18.1071 19.1132 17.4166 19.1132H4.58325C3.89258 19.1132 3.23052 18.8389 2.73738 18.3458C2.24424 17.8526 1.96992 17.1906 1.96992 16.4999V8.11325C1.96992 7.42258 2.24424 6.76052 2.73738 6.26738C3.23052 5.77424 3.89258 5.49992 4.58325 5.49992H7.69087L10.0242 2.33518C10.2506 2.02118 10.6132 1.83325 11 1.83325ZM11 4.58325L9.16659 6.91659C8.94018 7.23059 8.57761 7.41845 8.19118 7.41845H4.58325C4.5832 7.41845 4.58325 7.41849 4.58325 7.41855V16.4999C4.58325 16.5 4.58329 16.4999 4.58325 16.4999H17.4166C17.4166 16.4999 17.4165 16.5 17.4166 16.4999V7.41855C17.4166 7.41849 17.4166 7.41845 17.4166 7.41845H13.8086C13.4222 7.41845 13.0596 7.23059 12.8332 6.91659L11 4.58325Z"
+            fill="currentColor"
+          />
+          <path
+            d="M11 9.62492C10.2777 9.62492 9.62492 10.2777 9.62492 10.9999C9.62492 11.7222 10.2777 12.3749 11 12.3749C11.7222 12.3749 12.3749 11.7222 12.3749 10.9999C12.3749 10.2777 11.7222 9.62492 11 9.62492Z"
+            fill="currentColor"
+          />
+        </svg>
+      ),
+      gradient: "from-red to-red-light-2",
+      color: "red",
+    },
+    {
+      id: "preferences",
+      label: "Notifications & Preferences",
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 22 22" fill="none">
+          <path
+            d="M11 2.0625C9.44036 2.0625 8.17708 3.32578 8.17708 4.88542V5.89062C6.75391 6.64063 5.77083 8.05078 5.77083 9.69792V14.4375C5.77083 15.1563 5.1875 15.7396 4.46875 15.7396C4.12357 15.7396 3.84375 16.0194 3.84375 16.3646C3.84375 16.7098 4.12357 16.9896 4.46875 16.9896H8.90625C8.90625 18.3438 10.0208 19.4583 11.375 19.4583C12.7292 19.4583 13.8438 18.3438 13.8438 16.9896H18.5312C18.8764 16.9896 19.1562 16.7098 19.1562 16.3646C19.1562 16.0194 18.8764 15.7396 18.5312 15.7396C17.8125 15.7396 17.2292 15.1563 17.2292 14.4375V9.69792C17.2292 8.05078 16.2461 6.64063 14.8229 5.89062V4.88542C14.8229 3.32578 13.5596 2.0625 12 2.0625H11ZM9.42708 4.88542C9.42708 4.01641 10.1311 3.3125 11 3.3125H12C12.8689 3.3125 13.5729 4.01641 13.5729 4.88542V5.5C12.5417 5.22917 11.4583 5.22917 10.4271 5.5V4.88542H9.42708ZM11 6.83333C12.9688 6.83333 14.5729 8.4375 14.5729 10.4062V14.4375C14.5729 14.7896 14.6875 15.1146 14.8854 15.3854H8.11458C8.3125 15.1146 8.42708 14.7896 8.42708 14.4375V10.4062C8.42708 8.4375 10.0312 6.83333 11 6.83333ZM11.375 18.2083C10.7115 18.2083 10.1562 17.6531 10.1562 16.9896H12.5938C12.5938 17.6531 12.0385 18.2083 11.375 18.2083Z"
+            fill="currentColor"
+          />
+        </svg>
+      ),
+      gradient: "from-yellow to-yellow-light-2",
+      color: "yellow",
+    },
+    {
+      id: "privacy",
+      label: "Privacy & Data",
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 22 22" fill="none">
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M11 2.75C11.2834 2.75 11.5518 2.88125 11.7287 3.10625L14.1954 6.38125C14.3079 6.52625 14.4871 6.65 14.6954 6.65H18.5625C19.1041 6.65 19.5625 7.10844 19.5625 7.65V17.25C19.5625 17.7916 19.1041 18.25 18.5625 18.25H3.4375C2.89594 18.25 2.4375 17.7916 2.4375 17.25V7.65C2.4375 7.10844 2.89594 6.65 3.4375 6.65H7.30462C7.51288 6.65 7.69206 6.52625 7.80456 6.38125L10.2712 3.10625C10.4482 2.88125 10.7166 2.75 11 2.75ZM11 14.4375C12.7259 14.4375 14.125 13.0384 14.125 11.3125C14.125 9.58656 12.7259 8.1875 11 8.1875C9.27406 8.1875 7.875 9.58656 7.875 11.3125C7.875 13.0384 9.27406 14.4375 11 14.4375Z"
+            fill="currentColor"
+          />
+        </svg>
+      ),
+      gradient: "from-green to-green-light-2",
+      color: "green",
     },
   ];
 
@@ -140,10 +190,10 @@ const MyAccount = () => {
                 </svg>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-dark to-teal bg-clip-text text-transparent mb-4">
-                Welcome Back!
+                Profile Settings
               </h1>
               <p className="text-lg text-gray-6 max-w-2xl mx-auto">
-                Manage your digital codes, track orders, and customize your account settings in one secure place.
+                Manage your personal information, security settings, and account preferences in one secure place.
               </p>
             </div>
 
@@ -175,41 +225,40 @@ const MyAccount = () => {
                         </div>
                       </div>
                       
-                      {/* Quick Stats */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white/20 rounded-lg p-3 text-center">
-                          <div className="text-xl font-bold">24</div>
-                          <div className="text-xs text-white/80">Codes</div>
+                      {/* Profile Completion */}
+                      <div className="bg-white/20 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-white/90">Profile Completion</span>
+                          <span className="text-sm font-semibold">75%</span>
                         </div>
-                        <div className="bg-white/20 rounded-lg p-3 text-center">
-                          <div className="text-xl font-bold">12</div>
-                          <div className="text-xs text-white/80">Orders</div>
+                        <div className="w-full bg-white/20 rounded-full h-2">
+                          <div className="bg-white rounded-full h-2 w-3/4"></div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Navigation Tabs */}
+                  {/* Navigation Sections */}
                   <div className="p-6">
                     <nav className="space-y-3">
-                      {tabs.map((tab) => (
+                      {sections.map((section) => (
                         <button
-                          key={tab.id}
-                          onClick={() => handleTabChange(tab.id)}
+                          key={section.id}
+                          onClick={() => handleSectionChange(section.id)}
                           className={`group w-full flex items-center gap-4 p-4 rounded-xl font-medium transition-all duration-300 ${
-                            activeTab === tab.id
-                              ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg transform scale-105`
+                            activeSection === section.id
+                              ? `bg-gradient-to-r ${section.gradient} text-white shadow-lg transform scale-105`
                               : "text-gray-6 hover:text-gray-7 hover:bg-gradient-to-r hover:from-gray-1 hover:to-gray-2 hover:shadow-md"
                           }`}
                         >
                           <div className={`
                             transition-transform duration-300 
-                            ${activeTab === tab.id ? "scale-110" : "group-hover:scale-105"}
+                            ${activeSection === section.id ? "scale-110" : "group-hover:scale-105"}
                           `}>
-                            {tab.icon}
+                            {section.icon}
                           </div>
-                          <span className="text-left">{tab.label}</span>
-                          {activeTab === tab.id && (
+                          <span className="text-left">{section.label}</span>
+                          {activeSection === section.id && (
                             <div className="ml-auto">
                               <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                             </div>
@@ -237,178 +286,526 @@ const MyAccount = () => {
 
               {/* Main Content Area */}
               <div className="flex-1">
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2 border border-white/20 min-h-[600px]">
-                  {/* My Codes Tab */}
-                  {activeTab === "my-codes" && (
-                    <div className="h-full">
-                      <div className="p-6 border-b border-gray-3">
-                        <div className="flex items-center gap-3 mb-2">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2 border border-white/20 min-h-[700px]">
+                  
+                  {/* Profile Information Section */}
+                  {activeSection === "profile" && (
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-gradient-to-r from-blue to-blue-light rounded-lg flex items-center justify-center">
                             <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
                               <path
                                 fillRule="evenodd"
                                 clipRule="evenodd"
-                                d="M6.875 2.0625C4.38968 2.0625 2.375 4.07718 2.375 6.5625V15.4375C2.375 17.9228 4.38968 19.9375 6.875 19.9375H15.125C17.6103 19.9375 19.625 17.9228 19.625 15.4375V6.5625C19.625 4.07718 17.6103 2.0625 15.125 2.0625H6.875Z"
+                                d="M10.9995 1.14581C8.59473 1.14581 6.64531 3.09524 6.64531 5.49998C6.64531 7.90472 8.59473 9.85415 10.9995 9.85415C13.4042 9.85415 15.3536 7.90472 15.3536 5.49998C15.3536 3.09524 13.4042 1.14581 10.9995 1.14581Z"
                                 fill="currentColor"
                               />
                             </svg>
                           </div>
-                          <h2 className="text-2xl font-bold text-gray-7">My Digital Codes</h2>
-                        </div>
-                        <p className="text-gray-5">View and manage all your purchased digital codes</p>
-                      </div>
-                      <MyCodes isActive={activeTab === "my-codes"} />
-                    </div>
-                  )}
-
-                  {/* Orders Tab */}
-                  {activeTab === "orders" && (
-                    <div className="h-full">
-                      <div className="p-6 border-b border-gray-3">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-8 h-8 bg-gradient-to-r from-green to-green-light rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
-                              <path
-                                d="M8.0203 11.9167C8.0203 11.537 7.71249 11.2292 7.3328 11.2292C6.9531 11.2292 6.6453 11.537 6.6453 11.9167V15.5833C6.6453 15.963 6.9531 16.2708 7.3328 16.2708C7.71249 16.2708 8.0203 15.963 8.0203 15.5833V11.9167Z"
-                                fill="currentColor"
-                              />
-                            </svg>
+                          <div>
+                            <h2 className="text-2xl font-bold text-gray-7">Profile Information</h2>
+                            <p className="text-gray-5">Manage your personal details and profile picture</p>
                           </div>
-                          <h2 className="text-2xl font-bold text-gray-7">Order History</h2>
                         </div>
-                        <p className="text-gray-5">Track your purchases and order status</p>
+                        <button
+                          onClick={() => setIsEditingProfile(!isEditingProfile)}
+                          className="bg-gradient-to-r from-blue to-blue-light text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all duration-300"
+                        >
+                          {isEditingProfile ? "Cancel" : "Edit Profile"}
+                        </button>
                       </div>
-                      <Orders />
+
+                      <div className="grid lg:grid-cols-3 gap-8">
+                        {/* Profile Picture Section */}
+                        <div className="lg:col-span-1">
+                          <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6 text-center">
+                            <div className="w-32 h-32 mx-auto mb-4 relative">
+                              <Image
+                                src="/images/users/user-04.jpg"
+                                alt="Profile"
+                                width={128}
+                                height={128}
+                                className="w-full h-full object-cover rounded-full ring-4 ring-white shadow-lg"
+                              />
+                              {isEditingProfile && (
+                                <button className="absolute bottom-2 right-2 w-8 h-8 bg-blue rounded-full flex items-center justify-center text-white hover:bg-blue-dark transition-colors">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-7 mb-1">
+                              {profileData.displayName || "John Doe"}
+                            </h3>
+                            <p className="text-sm text-gray-5">@{profileData.username || "johndoe"}</p>
+                            {isEditingProfile && (
+                              <button className="mt-4 w-full bg-white text-blue border border-blue rounded-lg py-2 hover:bg-blue hover:text-white transition-colors">
+                                Change Picture
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Profile Form */}
+                        <div className="lg:col-span-2 space-y-6">
+                          <div className="bg-gradient-to-r from-green-light-6 to-teal-light rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Personal Information</h3>
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Display Name</label>
+                                <input
+                                  type="text"
+                                  value={profileData.displayName}
+                                  onChange={(e) => handleProfileUpdate("displayName", e.target.value)}
+                                  disabled={!isEditingProfile}
+                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Username</label>
+                                <input
+                                  type="text"
+                                  value={profileData.username}
+                                  onChange={(e) => handleProfileUpdate("username", e.target.value)}
+                                  disabled={!isEditingProfile}
+                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1"
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Email Address</label>
+                                <input
+                                  type="email"
+                                  value={profileData.email}
+                                  className="w-full px-4 py-3 bg-gray-1 rounded-lg border border-gray-3 cursor-not-allowed"
+                                  readOnly
+                                />
+                                <p className="text-xs text-gray-5 mt-1">Email cannot be changed directly. Contact support if needed.</p>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Phone Number</label>
+                                <input
+                                  type="tel"
+                                  value={profileData.phone}
+                                  onChange={(e) => handleProfileUpdate("phone", e.target.value)}
+                                  disabled={!isEditingProfile}
+                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1"
+                                  placeholder="+1 (555) 123-4567"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Date of Birth</label>
+                                <input
+                                  type="date"
+                                  value={profileData.dateOfBirth}
+                                  onChange={(e) => handleProfileUpdate("dateOfBirth", e.target.value)}
+                                  disabled={!isEditingProfile}
+                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1"
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Bio</label>
+                                <textarea
+                                  value={profileData.bio}
+                                  onChange={(e) => handleProfileUpdate("bio", e.target.value)}
+                                  disabled={!isEditingProfile}
+                                  rows={3}
+                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1 resize-none"
+                                  placeholder="Tell us about yourself..."
+                                />
+                              </div>
+                            </div>
+                            {isEditingProfile && (
+                              <div className="flex gap-3 mt-6">
+                                <button
+                                  onClick={handleSaveProfile}
+                                  className="flex-1 bg-gradient-to-r from-blue to-blue-light text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all duration-300"
+                                >
+                                  Save Changes
+                                </button>
+                                <button
+                                  onClick={() => setIsEditingProfile(false)}
+                                  className="px-6 py-3 border border-gray-3 text-gray-6 rounded-lg hover:bg-gray-1 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  {/* Account Details Tab */}
-                  {activeTab === "account-details" && (
+                  {/* Security & Password Section */}
+                  {activeSection === "security" && (
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-gradient-to-r from-teal to-blue-light rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-gradient-to-r from-red to-red-light rounded-lg flex items-center justify-center">
                           <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
                             <path
                               fillRule="evenodd"
                               clipRule="evenodd"
-                              d="M10.9995 1.14581C8.59473 1.14581 6.64531 3.09524 6.64531 5.49998C6.64531 7.90472 8.59473 9.85415 10.9995 9.85415C13.4042 9.85415 15.3536 7.90472 15.3536 5.49998C15.3536 3.09524 13.4042 1.14581 10.9995 1.14581Z"
+                              d="M11 1.83325C11.3866 1.83325 11.7492 2.02118 11.9756 2.33518L14.3089 5.49992H17.4166C18.1071 5.49992 18.7692 5.77424 19.2624 6.26738C19.7556 6.76052 20.0299 7.42258 20.0299 8.11325V16.4999C20.0299 17.1906 19.7556 17.8526 19.2624 18.3458C18.7692 18.8389 18.1071 19.1132 17.4166 19.1132H4.58325C3.89258 19.1132 3.23052 18.8389 2.73738 18.3458C2.24424 17.8526 1.96992 17.1906 1.96992 16.4999V8.11325C1.96992 7.42258 2.24424 6.76052 2.73738 6.26738C3.23052 5.77424 3.89258 5.49992 4.58325 5.49992H7.69087L10.0242 2.33518C10.2506 2.02118 10.6132 1.83325 11 1.83325Z"
                               fill="currentColor"
                             />
                           </svg>
                         </div>
                         <div>
-                          <h2 className="text-2xl font-bold text-gray-7">Profile Settings</h2>
-                          <p className="text-gray-5">Manage your account information and preferences</p>
+                          <h2 className="text-2xl font-bold text-gray-7">Security & Password</h2>
+                          <p className="text-gray-5">Manage your password and security settings</p>
                         </div>
                       </div>
 
-                      <div className="grid md:grid-cols-2 gap-8">
-                        {/* Account Information */}
+                      <div className="grid lg:grid-cols-2 gap-8">
+                        {/* Change Password */}
+                        <div className="bg-gradient-to-r from-red-light-6 to-red-light-5 rounded-xl p-6">
+                          <h3 className="text-lg font-semibold text-gray-7 mb-4">Change Password</h3>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-6 mb-2">Current Password</label>
+                              <input
+                                type="password"
+                                value={passwordData.currentPassword}
+                                onChange={(e) => handlePasswordUpdate("currentPassword", e.target.value)}
+                                className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-red focus:border-transparent"
+                                placeholder="Enter current password"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-6 mb-2">New Password</label>
+                              <input
+                                type="password"
+                                value={passwordData.newPassword}
+                                onChange={(e) => handlePasswordUpdate("newPassword", e.target.value)}
+                                className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-red focus:border-transparent"
+                                placeholder="Enter new password"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-6 mb-2">Confirm New Password</label>
+                              <input
+                                type="password"
+                                value={passwordData.confirmPassword}
+                                onChange={(e) => handlePasswordUpdate("confirmPassword", e.target.value)}
+                                className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-red focus:border-transparent"
+                                placeholder="Confirm new password"
+                              />
+                            </div>
+                            <button
+                              onClick={handleChangePassword}
+                              className="w-full bg-gradient-to-r from-red to-red-light text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all duration-300"
+                            >
+                              Update Password
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Security Options */}
                         <div className="space-y-6">
-                          <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Account Information</h3>
-                            <div className="space-y-4">
+                          <div className="bg-gradient-to-r from-yellow-light-4 to-amber-100 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Two-Factor Authentication</h3>
+                            <div className="flex items-center justify-between mb-4">
                               <div>
-                                <label className="block text-sm font-medium text-gray-6 mb-2">Email Address</label>
-                                <input
-                                  type="email"
-                                  value={user?.email || "john@example.com"}
-                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent"
-                                  readOnly
-                                />
+                                <p className="font-medium text-gray-7">SMS Authentication</p>
+                                <p className="text-sm text-gray-5">Receive codes via SMS</p>
                               </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-between">
                               <div>
-                                <label className="block text-sm font-medium text-gray-6 mb-2">Display Name</label>
-                                <input
-                                  type="text"
-                                  value={user?.displayName || "John Doe"}
-                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent"
-                                />
+                                <p className="font-medium text-gray-7">App Authentication</p>
+                                <p className="text-sm text-gray-5">Use authenticator app</p>
                               </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-3 transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
+                              </button>
                             </div>
                           </div>
 
-                          <div className="bg-gradient-to-r from-yellow-light-4 to-amber-100 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Security Settings</h3>
+                          <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Login History</h3>
                             <div className="space-y-3">
-                              <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-gray-3 hover:shadow-md transition-shadow">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium text-gray-7">Change Password</span>
-                                  <svg className="w-4 h-4 text-gray-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                  </svg>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-2">
+                                <div>
+                                  <p className="font-medium text-gray-7">Current Session</p>
+                                  <p className="text-sm text-gray-5">Chrome on Windows • Now</p>
                                 </div>
+                                <span className="text-xs bg-green-light-5 text-green px-2 py-1 rounded-full">Active</span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-2">
+                                <div>
+                                  <p className="font-medium text-gray-7">Mobile Device</p>
+                                  <p className="text-sm text-gray-5">Safari on iPhone • 2 hours ago</p>
+                                </div>
+                                <button className="text-xs text-red hover:underline">Revoke</button>
+                              </div>
+                              <div className="flex items-center justify-between py-2">
+                                <div>
+                                  <p className="font-medium text-gray-7">Previous Session</p>
+                                  <p className="text-sm text-gray-5">Firefox on Mac • Yesterday</p>
+                                </div>
+                                <span className="text-xs text-gray-5">Expired</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notifications & Preferences Section */}
+                  {activeSection === "preferences" && (
+                    <div className="p-6">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-gradient-to-r from-yellow to-yellow-light rounded-lg flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
+                            <path
+                              d="M11 2.0625C9.44036 2.0625 8.17708 3.32578 8.17708 4.88542V5.89062C6.75391 6.64063 5.77083 8.05078 5.77083 9.69792V14.4375C5.77083 15.1563 5.1875 15.7396 4.46875 15.7396C4.12357 15.7396 3.84375 16.0194 3.84375 16.3646C3.84375 16.7098 4.12357 16.9896 4.46875 16.9896H8.90625C8.90625 18.3438 10.0208 19.4583 11.375 19.4583C12.7292 19.4583 13.8438 18.3438 13.8438 16.9896H18.5312C18.8764 16.9896 19.1562 16.7098 19.1562 16.3646C19.1562 16.0194 18.8764 15.7396 18.5312 15.7396C17.8125 15.7396 17.2292 15.1563 17.2292 14.4375V9.69792C17.2292 8.05078 16.2461 6.64063 14.8229 5.89062V4.88542C14.8229 3.32578 13.5596 2.0625 12 2.0625H11Z"
+                              fill="currentColor"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-7">Notifications & Preferences</h2>
+                          <p className="text-gray-5">Control how you receive notifications and updates</p>
+                        </div>
+                      </div>
+
+                      <div className="grid lg:grid-cols-2 gap-8">
+                        {/* Email Notifications */}
+                        <div className="bg-gradient-to-r from-yellow-light-4 to-amber-100 rounded-xl p-6">
+                          <h3 className="text-lg font-semibold text-gray-7 mb-4">Email Notifications</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-7">Order Updates</p>
+                                <p className="text-sm text-gray-5">Notifications about your orders</p>
+                              </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
                               </button>
-                              <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-gray-3 hover:shadow-md transition-shadow">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium text-gray-7">Two-Factor Authentication</span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-green bg-green-light-5 px-2 py-1 rounded-full">Enabled</span>
-                                    <svg className="w-4 h-4 text-gray-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                  </div>
-                                </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-7">New Listings</p>
+                                <p className="text-sm text-gray-5">Updates about new digital codes</p>
+                              </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-7">Marketing Emails</p>
+                                <p className="text-sm text-gray-5">Promotional offers and news</p>
+                              </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-3 transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-7">Security Alerts</p>
+                                <p className="text-sm text-gray-5">Important security notifications</p>
+                              </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-red transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
                               </button>
                             </div>
                           </div>
                         </div>
 
-                        {/* Account Stats & Activity */}
+                        {/* Display Preferences */}
                         <div className="space-y-6">
                           <div className="bg-gradient-to-r from-green-light-6 to-teal-light rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Account Statistics</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="bg-white rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-blue">24</div>
-                                <div className="text-sm text-gray-5">Total Codes</div>
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Display Preferences</h3>
+                            <div className="space-y-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Language</label>
+                                <select className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-green focus:border-transparent">
+                                  <option>English (US)</option>
+                                  <option>English (UK)</option>
+                                  <option>Spanish</option>
+                                  <option>French</option>
+                                  <option>German</option>
+                                </select>
                               </div>
-                              <div className="bg-white rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-green">12</div>
-                                <div className="text-sm text-gray-5">Orders</div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Time Zone</label>
+                                <select className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-green focus:border-transparent">
+                                  <option>UTC-5 (Eastern Time)</option>
+                                  <option>UTC-6 (Central Time)</option>
+                                  <option>UTC-7 (Mountain Time)</option>
+                                  <option>UTC-8 (Pacific Time)</option>
+                                </select>
                               </div>
-                              <div className="bg-white rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-teal">$240</div>
-                                <div className="text-sm text-gray-5">Total Spent</div>
-                              </div>
-                              <div className="bg-white rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-yellow">4.8</div>
-                                <div className="text-sm text-gray-5">Rating</div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-6 mb-2">Currency</label>
+                                <select className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-green focus:border-transparent">
+                                  <option>USD ($)</option>
+                                  <option>EUR (€)</option>
+                                  <option>GBP (£)</option>
+                                  <option>CAD (C$)</option>
+                                </select>
                               </div>
                             </div>
                           </div>
 
-                          <div className="bg-gradient-to-r from-red-light-6 to-red-light-5 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Preferences</h3>
-                            <div className="space-y-3">
+                          <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Interface Settings</h3>
+                            <div className="space-y-4">
                               <div className="flex items-center justify-between">
-                                <span className="text-gray-6">Email Notifications</span>
-                                <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue transition-colors">
-                                  <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-                                </button>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-gray-6">Marketing Updates</span>
+                                <div>
+                                  <p className="font-medium text-gray-7">Dark Mode</p>
+                                  <p className="text-sm text-gray-5">Use dark theme</p>
+                                </div>
                                 <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-3 transition-colors">
                                   <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
                                 </button>
                               </div>
                               <div className="flex items-center justify-between">
-                                <span className="text-gray-6">Order Updates</span>
+                                <div>
+                                  <p className="font-medium text-gray-7">Compact View</p>
+                                  <p className="text-sm text-gray-5">Show more items per page</p>
+                                </div>
                                 <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue transition-colors">
                                   <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
                                 </button>
                               </div>
                             </div>
                           </div>
+                        </div>
+                      </div>
 
-                          <button className="w-full bg-gradient-to-r from-blue to-blue-light text-white font-semibold py-4 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                            Save Changes
-                          </button>
+                      <div className="mt-8 text-center">
+                        <button className="bg-gradient-to-r from-yellow to-yellow-light text-gray-7 font-semibold px-8 py-3 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                          Save Preferences
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Privacy & Data Section */}
+                  {activeSection === "privacy" && (
+                    <div className="p-6">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-gradient-to-r from-green to-green-light rounded-lg flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
+                            <path
+                              fillRule="evenodd"
+                              clipRule="evenodd"
+                              d="M11 2.75C11.2834 2.75 11.5518 2.88125 11.7287 3.10625L14.1954 6.38125C14.3079 6.52625 14.4871 6.65 14.6954 6.65H18.5625C19.1041 6.65 19.5625 7.10844 19.5625 7.65V17.25C19.5625 17.7916 19.1041 18.25 18.5625 18.25H3.4375C2.89594 18.25 2.4375 17.7916 2.4375 17.25V7.65C2.4375 7.10844 2.89594 6.65 3.4375 6.65H7.30462C7.51288 6.65 7.69206 6.52625 7.80456 6.38125L10.2712 3.10625C10.4482 2.88125 10.7166 2.75 11 2.75Z"
+                              fill="currentColor"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-7">Privacy & Data</h2>
+                          <p className="text-gray-5">Control your privacy settings and data management</p>
+                        </div>
+                      </div>
+
+                      <div className="grid lg:grid-cols-2 gap-8">
+                        {/* Privacy Controls */}
+                        <div className="bg-gradient-to-r from-green-light-6 to-teal-light rounded-xl p-6">
+                          <h3 className="text-lg font-semibold text-gray-7 mb-4">Privacy Controls</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-7">Profile Visibility</p>
+                                <p className="text-sm text-gray-5">Make profile visible to others</p>
+                              </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-7">Activity Status</p>
+                                <p className="text-sm text-gray-5">Show when you&apos;re online</p>
+                              </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-3 transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-7">Purchase History</p>
+                                <p className="text-sm text-gray-5">Allow analytics tracking</p>
+                              </div>
+                              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green transition-colors">
+                                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Data Management */}
+                        <div className="space-y-6">
+                          <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Data Management</h3>
+                            <div className="space-y-3">
+                              <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-gray-3 hover:shadow-md transition-shadow">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-medium text-gray-7">Download My Data</p>
+                                    <p className="text-sm text-gray-5">Get a copy of your account data</p>
+                                  </div>
+                                  <svg className="w-4 h-4 text-gray-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                </div>
+                              </button>
+                              <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-gray-3 hover:shadow-md transition-shadow">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-medium text-gray-7">Data Portability</p>
+                                    <p className="text-sm text-gray-5">Transfer data to another service</p>
+                                  </div>
+                                  <svg className="w-4 h-4 text-gray-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                  </svg>
+                                </div>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="bg-gradient-to-r from-red-light-6 to-red-light-5 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Danger Zone</h3>
+                            <div className="space-y-3">
+                              <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-red-light-2 hover:bg-red-light-6 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-medium text-red">Clear All Data</p>
+                                    <p className="text-sm text-gray-5">Remove all your data except account</p>
+                                  </div>
+                                  <svg className="w-4 h-4 text-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </div>
+                              </button>
+                              <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-red hover:bg-red-light-6 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-medium text-red">Delete Account</p>
+                                    <p className="text-sm text-gray-5">Permanently delete your account</p>
+                                  </div>
+                                  <svg className="w-4 h-4 text-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </div>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
+
                 </div>
               </div>
             </div>

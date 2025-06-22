@@ -557,7 +557,7 @@ export const getCategories = async () => {
   }
 };
 
-// Bulk delete multiple listings
+// Bulk delete multiple listings (soft delete)
 export const bulkDeleteListings = async (ids: string[]) => {
   try {
     if (!ids || ids.length === 0) {
@@ -569,53 +569,53 @@ export const bulkDeleteListings = async (ids: string[]) => {
     }
 
     const api = getAuthAxios();
-    const results = {
-      success: true,
-      message: 'Bulk delete operation completed',
-      totalCount: ids.length,
-      successCount: 0,
-      failureCount: 0,
-      errors: [] as { id: string; error: string }[]
-    };
-
-    // Process each listing deletion sequentially
-    for (const id of ids) {
-      try {
-        const response = await api.delete(`/listings/${id}`);
-        if (response.data.success) {
-          results.successCount++;
-        } else {
-          results.failureCount++;
-          results.errors.push({ id, error: response.data.message || 'Unknown error' });
-        }
-      } catch (error) {
-        results.failureCount++;
-        results.errors.push({
-          id,
-          error: error.response?.data?.message || error.message || 'Failed to delete listing'
-        });
-      }
-    }
-
-    // Update the overall success status based on results
-    results.success = results.successCount > 0;
-
-    // Update the message based on results
-    if (results.successCount === ids.length) {
-      results.message = `Successfully deleted ${results.successCount} listings`;
-    } else if (results.successCount > 0) {
-      results.message = `Deleted ${results.successCount} listings, but failed to delete ${results.failureCount} listings`;
+    const response = await api.post('/listings/bulk-delete', { listingIds: ids });
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        message: response.data.message,
+        totalCount: response.data.data.requested,
+        successCount: response.data.data.processed,
+        failureCount: response.data.data.requested - response.data.data.processed,
+        errors: []
+      };
     } else {
-      results.message = `Failed to delete any of the ${results.failureCount} listings`;
-      results.success = false;
+      return {
+        success: false,
+        message: response.data.message || 'Bulk delete operation failed',
+        totalCount: ids.length,
+        successCount: 0,
+        failureCount: ids.length,
+        errors: ids.map(id => ({ id, error: response.data.message || 'Unknown error' }))
+      };
     }
-
-    return results;
   } catch (error) {
     console.error('Error in bulk delete operation:', error);
+    
+    // Handle API errors
+    if (error.response) {
+      return {
+        success: false,
+        message: error.response.data.message || 'Bulk delete operation failed',
+        totalCount: ids.length,
+        successCount: 0,
+        failureCount: ids.length,
+        errors: ids.map(id => ({ 
+          id, 
+          error: error.response.data.message || 'Failed to delete listing' 
+        })),
+        error: error.response.data.error
+      };
+    }
+    
     return {
       success: false,
       message: 'Bulk delete operation failed',
+      totalCount: ids.length,
+      successCount: 0,
+      failureCount: ids.length,
+      errors: ids.map(id => ({ id, error: error.message || 'Unknown error' })),
       error: error.message || 'Unknown error'
     };
   }
@@ -641,76 +641,59 @@ export const bulkUpdateListingsStatus = async (ids: string[], status: string) =>
     }
 
     const api = getAuthAxios();
-    const results = {
-      success: true,
-      message: 'Bulk status update operation completed',
-      totalCount: ids.length,
-      successCount: 0,
-      failureCount: 0,
-      errors: [] as { id: string; error: string }[]
-    };
-
-    // Process each listing status update sequentially
-    for (const id of ids) {
-      try {
-        // For draft to active transitions, we need to also update all draft codes to active
-        // Use a type assertion to allow additional properties
-        let updateData: Record<string, any> = { status };
-
-        // If we're changing to active status, add a special flag to indicate this is an explicit status change
-        if (status === 'active') {
-          updateData._isExplicitStatusChange = true;
-          // We no longer automatically update draft codes to active
-        }
-
-        const response = await api.put(`/listings/${id}`, updateData);
-
-        // Check if the response was successful
-        if (response.data.success) {
-          // Check if the status in the response matches what we requested
-          // This handles the case where the backend might have overridden our status change
-          if (response.data.data && response.data.data.status === status) {
-            results.successCount++;
-          } else {
-            results.failureCount++;
-            results.errors.push({
-              id,
-              error: `Status not updated. Current status: ${response.data.data?.status || 'unknown'}`
-            });
-          }
-        } else {
-          results.failureCount++;
-          results.errors.push({ id, error: response.data.message || 'Unknown error' });
-        }
-      } catch (error) {
-        results.failureCount++;
-        results.errors.push({
-          id,
-          error: error.response?.data?.message || error.message || 'Failed to update listing status'
-        });
-      }
-    }
-
-    // Update the overall success status based on results
-    results.success = results.successCount > 0;
-
-    // Update the message based on results
-    const statusDisplay = status === 'active' ? 'On Sale' : status.charAt(0).toUpperCase() + status.slice(1);
-    if (results.successCount === ids.length) {
-      results.message = `Successfully updated ${results.successCount} listings to ${statusDisplay}`;
-    } else if (results.successCount > 0) {
-      results.message = `Updated ${results.successCount} listings to ${statusDisplay}, but failed to update ${results.failureCount} listings`;
+    const response = await api.post('/listings/bulk-update-status', { 
+      listingIds: ids, 
+      status 
+    });
+    
+    if (response.data.success) {
+      const statusDisplay = status === 'active' ? 'On Sale' : status.charAt(0).toUpperCase() + status.slice(1);
+      return {
+        success: true,
+        message: response.data.message,
+        totalCount: response.data.data.requested,
+        successCount: response.data.data.processed,
+        failureCount: response.data.data.requested - response.data.data.processed,
+        errors: []
+      };
     } else {
-      results.message = `Failed to update any of the ${results.failureCount} listings to ${statusDisplay}`;
-      results.success = false;
+      const statusDisplay = status === 'active' ? 'On Sale' : status.charAt(0).toUpperCase() + status.slice(1);
+      return {
+        success: false,
+        message: response.data.message || `Failed to update listings to ${statusDisplay}`,
+        totalCount: ids.length,
+        successCount: 0,
+        failureCount: ids.length,
+        errors: ids.map(id => ({ id, error: response.data.message || 'Unknown error' }))
+      };
     }
-
-    return results;
   } catch (error) {
     console.error('Error in bulk status update operation:', error);
+    
+    // Handle API errors
+    if (error.response) {
+      const statusDisplay = status === 'active' ? 'On Sale' : status.charAt(0).toUpperCase() + status.slice(1);
+      return {
+        success: false,
+        message: error.response.data.message || `Bulk status update failed`,
+        totalCount: ids.length,
+        successCount: 0,
+        failureCount: ids.length,
+        errors: ids.map(id => ({ 
+          id, 
+          error: error.response.data.message || `Failed to update to ${statusDisplay}` 
+        })),
+        error: error.response.data.error
+      };
+    }
+    
     return {
       success: false,
       message: 'Bulk status update operation failed',
+      totalCount: ids.length,
+      successCount: 0,
+      failureCount: ids.length,
+      errors: ids.map(id => ({ id, error: error.message || 'Unknown error' })),
       error: error.message || 'Unknown error'
     };
   }

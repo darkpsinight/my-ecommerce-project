@@ -1,7 +1,7 @@
 import React from 'react';
 
 // Define types locally to avoid import issues
-export type ListingStatusType = 'active' | 'sold' | 'expired' | 'suspended' | 'draft';
+export type ListingStatusType = 'active' | 'sold' | 'expired' | 'suspended' | 'draft' | 'deleted';
 
 // Interface for a product code
 export interface ListingCode {

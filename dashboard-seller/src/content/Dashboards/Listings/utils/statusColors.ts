@@ -44,6 +44,14 @@ export const LISTING_STATUS_COLORS = {
     dark: 'error.dark',
     contrastText: 'error.contrastText',
     chipColor: 'error'
+  },
+  // "Deleted" status - dark gray/disabled color scheme
+  deleted: {
+    main: 'text.disabled',
+    light: 'action.disabledBackground',
+    dark: 'action.disabled',
+    contrastText: 'text.secondary',
+    chipColor: 'default'
   }
 };
 
@@ -80,6 +88,14 @@ export const CODE_STATUS_COLORS = {
     dark: 'warning.dark',
     contrastText: 'warning.contrastText',
     chipColor: 'warning'
+  },
+  // "Deleted" codes - dark gray/disabled color scheme
+  deleted: {
+    main: 'text.disabled',
+    light: 'action.disabledBackground',
+    dark: 'action.disabled',
+    contrastText: 'text.secondary',
+    chipColor: 'default'
   }
 };
 

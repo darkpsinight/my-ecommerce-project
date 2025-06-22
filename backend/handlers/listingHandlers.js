@@ -827,42 +827,6 @@ const updateListing = async (request, reply) => {
   }
 };
 
-// Delete a listing
-const deleteListing = async (request, reply) => {
-  try {
-    const { id } = request.params;
-    const sellerId = request.user.uid;
-
-    // Check if user is admin (admins can delete any listing)
-    const isAdmin = request.user.role === "admin";
-
-    // Query to find the listing - use externalId instead of _id
-    const query = isAdmin ? { externalId: id } : { externalId: id, sellerId };
-
-    // Find and delete the listing
-    const result = await Listing.findOneAndDelete(query);
-
-    if (!result) {
-      return reply.code(404).send({
-        success: false,
-        error: "Listing not found or you don't have permission to delete it"
-      });
-    }
-
-    return reply.code(200).send({
-      success: true,
-      message: "Listing deleted successfully"
-    });
-  } catch (error) {
-    request.log.error(`Error deleting listing: ${error.message}`);
-    return reply.code(500).send({
-      success: false,
-      error: "Failed to delete listing",
-      message: error.message
-    });
-  }
-};
-
 // Get a listing by externalId
 const getListingByExternalId = async (request, reply) => {
   try {
@@ -1201,10 +1165,297 @@ const updateCodeStatus = async (request, reply) => {
   }
 };
 
+// Soft delete a listing by changing its status to "deleted"
+const deleteListing = async (request, reply) => {
+  try {
+    const { id } = request.params;
+    const userId = request.user.uid;
+
+    // Find the listing by externalId and ensure it belongs to the seller
+    const listing = await measureQueryTime(
+      () => Listing.findOne({ externalId: id, sellerId: userId }),
+      'findListingForDelete',
+      { externalId: id, sellerId: userId }
+    );
+
+    if (!listing) {
+      return reply.code(404).send({
+        success: false,
+        error: "Listing not found",
+        message: "Listing not found or you don't have permission to delete it"
+      });
+    }
+
+    // Check if listing is already deleted
+    if (listing.status === 'deleted') {
+      return reply.code(400).send({
+        success: false,
+        error: "Listing already deleted",
+        message: "This listing has already been deleted"
+      });
+    }
+
+    // Update the listing status to "deleted" and set updatedAt
+    listing.status = 'deleted';
+    listing.updatedAt = new Date();
+
+    // Also mark all codes as deleted to maintain consistency
+    if (listing.codes && listing.codes.length > 0) {
+      listing.codes.forEach(code => {
+        if (code.soldStatus !== 'sold') { // Don't change sold codes
+          code.soldStatus = 'deleted';
+        }
+      });
+    }
+
+    // Skip status calculation since we're explicitly setting it to deleted
+    listing._skipStatusCalculation = true;
+
+    // Save the updated listing
+    await measureQueryTime(
+      () => listing.save(),
+      'saveDeletedListing',
+      { externalId: id }
+    );
+
+    request.log.info(`Listing soft deleted: ${id} by user ${userId}`);
+
+    return reply.send({
+      success: true,
+      message: "Listing deleted successfully",
+      data: {
+        id: listing.externalId,
+        title: listing.title,
+        status: listing.status,
+        deletedAt: listing.updatedAt
+      }
+    });
+
+  } catch (error) {
+    request.log.error(`Error deleting listing: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to delete listing",
+      message: error.message
+    });
+  }
+};
+
+// Bulk soft delete listings by changing their status to "deleted"
+const bulkDeleteListings = async (request, reply) => {
+  try {
+    const { listingIds } = request.body;
+    const userId = request.user.uid;
+
+    // Validate input
+    if (!Array.isArray(listingIds) || listingIds.length === 0) {
+      return reply.code(400).send({
+        success: false,
+        error: "Invalid input",
+        message: "listingIds must be a non-empty array"
+      });
+    }
+
+    // Find listings by externalIds and ensure they belong to the seller
+    const listings = await measureQueryTime(
+      () => Listing.find({ 
+        externalId: { $in: listingIds }, 
+        sellerId: userId,
+        status: { $ne: 'deleted' } // Don't process already deleted listings
+      }),
+      'findListingsForBulkDelete',
+      { externalIds: listingIds, sellerId: userId }
+    );
+
+    if (listings.length === 0) {
+      return reply.code(404).send({
+        success: false,
+        error: "No listings found",
+        message: "No valid listings found or you don't have permission to delete them"
+      });
+    }
+
+    const updatedListings = [];
+    const now = new Date();
+
+    // Process each listing
+    for (const listing of listings) {
+      // Update the listing status to "deleted" and set updatedAt
+      listing.status = 'deleted';
+      listing.updatedAt = now;
+
+      // Also mark all codes as deleted to maintain consistency
+      if (listing.codes && listing.codes.length > 0) {
+        listing.codes.forEach(code => {
+          if (code.soldStatus !== 'sold') { // Don't change sold codes
+            code.soldStatus = 'deleted';
+          }
+        });
+      }
+
+      // Skip status calculation since we're explicitly setting it to deleted
+      listing._skipStatusCalculation = true;
+
+      // Save the updated listing
+      await measureQueryTime(
+        () => listing.save(),
+        'saveBulkDeletedListing',
+        { externalId: listing.externalId }
+      );
+
+      updatedListings.push({
+        id: listing.externalId,
+        title: listing.title,
+        status: listing.status,
+        deletedAt: listing.updatedAt
+      });
+    }
+
+    request.log.info(`Bulk soft deleted ${updatedListings.length} listings by user ${userId}`);
+
+    return reply.send({
+      success: true,
+      message: `Successfully deleted ${updatedListings.length} listing(s)`,
+      data: {
+        count: updatedListings.length,
+        requested: listingIds.length,
+        processed: updatedListings.length,
+        listings: updatedListings
+      }
+    });
+
+  } catch (error) {
+    request.log.error(`Error bulk deleting listings: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to bulk delete listings",
+      message: error.message
+    });
+  }
+};
+
+// Bulk update listings status
+const bulkUpdateListingsStatus = async (request, reply) => {
+  try {
+    const { listingIds, status } = request.body;
+    const userId = request.user.uid;
+
+    // Validate input
+    if (!Array.isArray(listingIds) || listingIds.length === 0) {
+      return reply.code(400).send({
+        success: false,
+        error: "Invalid input",
+        message: "listingIds must be a non-empty array"
+      });
+    }
+
+    // Validate status
+    const validStatuses = ['active', 'draft', 'suspended'];
+    if (!validStatuses.includes(status)) {
+      return reply.code(400).send({
+        success: false,
+        error: "Invalid status",
+        message: `Status must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    // Find listings by externalIds and ensure they belong to the seller
+    const listings = await measureQueryTime(
+      () => Listing.find({ 
+        externalId: { $in: listingIds }, 
+        sellerId: userId,
+        status: { $ne: 'deleted' } // Don't process deleted listings
+      }),
+      'findListingsForBulkStatusUpdate',
+      { externalIds: listingIds, sellerId: userId }
+    );
+
+    if (listings.length === 0) {
+      return reply.code(404).send({
+        success: false,
+        error: "No listings found",
+        message: "No valid listings found or you don't have permission to update them"
+      });
+    }
+
+    const updatedListings = [];
+    const now = new Date();
+
+    // Process each listing
+    for (const listing of listings) {
+      // Update the listing status
+      listing.status = status;
+      listing.updatedAt = now;
+
+      // If setting to active, ensure we have active codes
+      if (status === 'active') {
+        // Check if we have any codes that can be activated
+        const hasActivatableCodes = listing.codes && listing.codes.some(code => 
+          code.soldStatus === 'draft' || code.soldStatus === 'suspended'
+        );
+
+        if (!hasActivatableCodes && (!listing.codes || listing.codes.length === 0)) {
+          // Skip this listing if it has no codes to activate
+          continue;
+        }
+
+        // Activate draft/suspended codes when setting listing to active
+        if (listing.codes && listing.codes.length > 0) {
+          listing.codes.forEach(code => {
+            if (code.soldStatus === 'draft' || code.soldStatus === 'suspended') {
+              code.soldStatus = 'active';
+            }
+          });
+        }
+      }
+
+      // Save the updated listing (let the pre-save middleware handle status calculation)
+      listing._skipStatusCalculation = false; // Allow status calculation
+
+      await measureQueryTime(
+        () => listing.save(),
+        'saveBulkStatusUpdatedListing',
+        { externalId: listing.externalId }
+      );
+
+      updatedListings.push({
+        id: listing.externalId,
+        title: listing.title,
+        status: listing.status,
+        updatedAt: listing.updatedAt
+      });
+    }
+
+    request.log.info(`Bulk updated status to ${status} for ${updatedListings.length} listings by user ${userId}`);
+
+    return reply.send({
+      success: true,
+      message: `Successfully updated status for ${updatedListings.length} listing(s)`,
+      data: {
+        count: updatedListings.length,
+        requested: listingIds.length,
+        processed: updatedListings.length,
+        newStatus: status,
+        listings: updatedListings
+      }
+    });
+
+  } catch (error) {
+    request.log.error(`Error bulk updating listings status: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to bulk update listings status",
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createListing,
   updateListing,
   deleteListing,
+  bulkDeleteListings,
+  bulkUpdateListingsStatus,
   getListingByExternalId,
   deleteListingCode,
   maskCode,

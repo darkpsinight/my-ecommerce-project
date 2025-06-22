@@ -26,6 +26,7 @@ const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({
       case 'draft':
       case 'expired':
       case 'suspended':
+      case 'deleted':
         return statusValue as ListingStatusType;
       default:
         return 'active';
@@ -38,7 +39,9 @@ const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({
   // Format the display text
   const getDisplayText = (status: string): string => {
     if (!status) return 'On Sale';
-    return status === 'active' ? 'On Sale' : status.charAt(0).toUpperCase() + status.slice(1);
+    if (status === 'active') return 'On Sale';
+    if (status === 'deleted') return 'Deleted';
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const displayText = getDisplayText(validStatus);
@@ -62,6 +65,9 @@ const ListingStatusBadge: FC<ListingStatusBadgeProps> = ({
         break;
       case 'suspended':
         chipColor = 'error';
+        break;
+      case 'deleted':
+        chipColor = 'default';
         break;
       default:
         chipColor = 'default';

@@ -67,7 +67,7 @@ const listingSchema = new mongoose.Schema({
     },
     soldStatus: {
       type: String,
-      enum: ["active", "sold", "expired", "suspended", "draft"],
+      enum: ["active", "sold", "expired", "suspended", "draft", "deleted"],
       default: "active"
     },
     soldAt: {
@@ -98,7 +98,7 @@ const listingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["active", "sold", "expired", "suspended", "draft"],
+    enum: ["active", "sold", "expired", "suspended", "draft", "deleted"],
     default: "active"
   },
   sellerId: {
@@ -172,7 +172,8 @@ listingSchema.pre("save", function(next) {
       sold: 0,
       expired: 0,
       suspended: 0,
-      draft: 0
+      draft: 0,
+      deleted: 0
     };
 
     this.codes.forEach(code => {
@@ -200,9 +201,10 @@ listingSchema.pre("save", function(next) {
                                this._previousStatus === 'draft' &&
                                this.status === 'active';
 
-    if (this.status === "draft" || isExplicitActivation) {
+    if (this.status === "draft" || this.status === "deleted" || isExplicitActivation) {
       // Preserve draft status if explicitly set
       // Or preserve active status if explicitly changed from draft to active
+      // Or preserve deleted status - once deleted, always deleted
       // Do nothing to change the status
     } else {
       // Apply the status rules based on the scenarios
@@ -231,8 +233,8 @@ listingSchema.pre("save", function(next) {
     }
   } else {
     // No codes at all
-    // Only update status if not in draft state
-    if (this.status !== "draft") {
+    // Only update status if not in draft or deleted state
+    if (this.status !== "draft" && this.status !== "deleted") {
       this.status = "suspended";
     }
   }
@@ -446,7 +448,8 @@ listingSchema.statics.determineListingStatus = function(codes, currentStatus) {
     sold: 0,
     expired: 0,
     suspended: 0,
-    draft: 0
+    draft: 0,
+    deleted: 0
   };
 
   codes.forEach(code => {
@@ -458,6 +461,11 @@ listingSchema.statics.determineListingStatus = function(codes, currentStatus) {
   // Check if this is an explicit status change from draft to active
   const isExplicitActivation = currentStatus === "active" &&
                              this._isExplicitStatusChange === true;
+
+  // Preserve deleted status - once deleted, always deleted
+  if (currentStatus === "deleted") {
+    return "deleted";
+  }
 
   // Preserve draft status if explicitly set, or active status if explicitly changed
   if (currentStatus === "draft" || isExplicitActivation) {

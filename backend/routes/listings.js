@@ -5,6 +5,8 @@ const {
   createListing,
   updateListing,
   deleteListing,
+  bulkDeleteListings,
+  bulkUpdateListingsStatus,
   getListingByExternalId,
   deleteListingCode,
   checkCodeExists,
@@ -234,6 +236,28 @@ const listingsRoutes = async (fastify, opts) => {
     preHandler: verifyAuth(["seller"]),
     schema: listingSchema.updateCodeStatus,
     handler: updateCodeStatus
+  });
+
+  // Bulk delete listings
+  fastify.route({
+    config: {
+      rateLimit: deleteRateLimit
+    },
+    method: "POST",
+    url: "/bulk-delete",
+    preHandler: verifyAuth(["seller"]),
+    handler: bulkDeleteListings
+  });
+
+  // Bulk update listings status
+  fastify.route({
+    config: {
+      rateLimit: updateRateLimit
+    },
+    method: "POST",
+    url: "/bulk-update-status",
+    preHandler: verifyAuth(["seller"]),
+    handler: bulkUpdateListingsStatus
   });
 };
 

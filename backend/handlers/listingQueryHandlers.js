@@ -152,8 +152,11 @@ const getSellerListings = async (request, reply) => {
     // Get the seller ID from the authenticated user
     const sellerId = request.user.uid;
 
-    // Build filter object - always filter by the authenticated seller's ID
-    const filter = { sellerId };
+    // Build filter object - always filter by the authenticated seller's ID and exclude deleted listings
+    const filter = { 
+      sellerId,
+      status: { $ne: 'deleted' } // Exclude soft deleted listings
+    };
 
     // Handle category filtering with support for "all" option
     if (categoryId && categoryId.toLowerCase() !== 'all') {
@@ -168,7 +171,19 @@ const getSellerListings = async (request, reply) => {
     }
 
     if (region) filter.region = region;
-    if (status) filter.status = status;
+    
+    // Handle status filtering - if status is explicitly provided and it's 'deleted', 
+    // override the default exclusion of deleted listings
+    if (status) {
+      if (status === 'deleted') {
+        // If explicitly requesting deleted listings, remove the $ne filter and set status to deleted
+        delete filter.status;
+        filter.status = 'deleted';
+      } else {
+        // For other statuses, combine with the existing filter
+        filter.status = { $ne: 'deleted', $eq: status };
+      }
+    }
 
     // Price range filter
     if (minPrice !== undefined || maxPrice !== undefined) {

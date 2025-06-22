@@ -74,7 +74,7 @@ const ListingRow: FC<ListingRowProps> = ({
     listing.quantityOfAllCodes :
     (listing.codes ? listing.codes.length : 0);
 
-  const isInactive = listing.status === 'sold' || activeCodes === 0;
+  const isInactive = listing.status === 'sold' || listing.status === 'deleted' || activeCodes === 0;
   const isNewListing = newListingId === listing.externalId;
 
   useEffect(() => {
@@ -124,6 +124,7 @@ const ListingRow: FC<ListingRowProps> = ({
           color="primary"
           checked={isSelected}
           onClick={(event) => onSelectClick(event, listing.externalId)}
+          disabled={listing.status === 'deleted'}
           inputProps={{
             'aria-labelledby': `enhanced-table-checkbox-${listing.externalId}`
           }}
@@ -243,7 +244,7 @@ const ListingRow: FC<ListingRowProps> = ({
 
           <MenuItem
             onClick={() => onEditClick(listing.externalId)}
-            disabled={listing.status === 'sold' || listing.status === 'expired'}
+            disabled={listing.status === 'sold' || listing.status === 'expired' || listing.status === 'deleted'}
           >
             <EditTwoToneIcon
               fontSize="small"
@@ -252,12 +253,15 @@ const ListingRow: FC<ListingRowProps> = ({
             Edit Listing
           </MenuItem>
 
-          <MenuItem onClick={() => onDeleteClick(listing.externalId)}>
+          <MenuItem 
+            onClick={() => onDeleteClick(listing.externalId)}
+            disabled={listing.status === 'deleted'}
+          >
             <DeleteTwoToneIcon
               fontSize="small"
               sx={{ mr: 1, color: theme.palette.error.main }}
             />
-            Delete Listing
+            {listing.status === 'deleted' ? 'Already Deleted' : 'Delete Listing'}
           </MenuItem>
         </Menu>
       </TableCell>

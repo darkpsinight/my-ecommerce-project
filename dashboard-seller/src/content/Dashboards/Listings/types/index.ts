@@ -37,7 +37,7 @@ export interface ListingCode {
   expirationDate?: string | Date | null;
 }
 
-export type ListingStatus = 'active' | 'draft' | 'sold' | 'expired' | 'suspended';
+export type ListingStatus = 'active' | 'draft' | 'sold' | 'expired' | 'suspended' | 'deleted';
 
 export interface ListingsTableProps {
   selected: string[];

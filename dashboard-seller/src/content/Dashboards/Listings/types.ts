@@ -4,11 +4,12 @@ export enum ListingStatus {
   SOLD = 'sold',
   EXPIRED = 'expired',
   SUSPENDED = 'suspended',
-  DRAFT = 'draft'
+  DRAFT = 'draft',
+  DELETED = 'deleted'
 }
 
 // String literal type for status values
-export type ListingStatusType = 'active' | 'sold' | 'expired' | 'suspended' | 'draft';
+export type ListingStatusType = 'active' | 'sold' | 'expired' | 'suspended' | 'draft' | 'deleted';
 
 // Interface for a product code
 export interface ListingCode {

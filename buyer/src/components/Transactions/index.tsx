@@ -60,7 +60,7 @@ const Transactions = () => {
     }));
   }, [searchParams]);
 
-  const   = useCallback(async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);

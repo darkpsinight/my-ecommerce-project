@@ -83,16 +83,26 @@ const CategoryGrid = () => {
   }
 
   return (
-    <section className="py-10 lg:py-12.5 xl:py-15 bg-gray-1">
+    <section className="py-16 lg:py-20 xl:py-24 bg-gradient-to-b from-white to-gray-1">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        {/* Section Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-2xl lg:text-heading-5 font-bold text-dark mb-3">
+            Popular <span className="text-blue">Digital Categories</span>
+          </h2>
+          <p className="text-dark-4 text-lg max-w-[500px] mx-auto">
+            Discover instant digital codes for games, gift cards, and more from verified sellers worldwide
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {getDisplayCategories().map((category) => (
             <Link
               key={category.id}
               href={category.href}
               className="group block"
             >
-              <div className={`bg-gradient-to-br ${category.gradient} rounded-lg p-6 h-[180px] flex flex-col justify-between transition-all duration-300 hover:scale-105 hover:shadow-lg border border-gray-3 hover:border-blue-light-3`}>
+              <div className={`bg-gradient-to-br ${category.gradient} rounded-2xl p-6 h-[200px] flex flex-col justify-between transition-all duration-500 hover:scale-105 hover:shadow-2xl border border-gray-3 hover:border-blue-light-3 group-hover:transform group-hover:-translate-y-2`}>
                 <div className="space-y-3">
                   <div className="text-4xl mb-2 animate-pulse-slow">{category.icon}</div>
                   <h3 className="font-semibold text-lg text-dark group-hover:text-blue transition-colors">
@@ -102,7 +112,7 @@ const CategoryGrid = () => {
                     {category.description}
                   </p>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-blue bg-white bg-opacity-70 px-3 py-1.5 rounded-full border">
+                    <span className="text-sm font-medium text-blue bg-white bg-opacity-80 px-3 py-1.5 rounded-full border group-hover:bg-opacity-100 transition-all">
                       {category.count}
                     </span>
                   </div>

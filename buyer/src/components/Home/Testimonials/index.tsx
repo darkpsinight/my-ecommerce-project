@@ -23,33 +23,38 @@ const Testimonials = () => {
   }, []);
 
   return (
-    <section className="overflow-hidden pb-16.5">
+    <section className="overflow-hidden py-16 lg:py-20 xl:py-24 bg-gradient-to-br from-gray-1 via-white to-blue-light-5">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
         <div className="">
           <div className="swiper testimonial-carousel common-carousel p-5">
             {/* <!-- section title --> */}
-            <div className="mb-10 flex items-center justify-between">
-              <div>
-                <span className="flex items-center gap-2.5 font-medium text-dark mb-1.5">
-                  <Image
-                    src="/images/icons/icon-08.svg"
-                    alt="icon"
-                    width={17}
-                    height={17}
-                  />
+            <div className="mb-16 text-center">
+              <div className="inline-flex items-center gap-3 mb-4">
+                <div className="w-2 h-2 bg-blue rounded-full animate-pulse"></div>
+                <span className="font-semibold text-blue text-lg tracking-wider uppercase">
                   Testimonials
                 </span>
-                <h2 className="font-semibold text-xl xl:text-heading-5 text-dark">
-                  User Feedbacks
-                </h2>
+                <div className="w-2 h-2 bg-blue rounded-full animate-pulse"></div>
               </div>
+              <h2 className="font-bold text-2xl lg:text-heading-4 text-dark mb-4">
+                What Our <span className="text-blue">Happy Customers</span> Say
+              </h2>
+              <p className="text-dark-4 text-lg max-w-[600px] mx-auto">
+                Join thousands of satisfied buyers who trust us for their digital code needs
+              </p>
+            </div>
 
-              <div className="flex items-center gap-3">
-                <div onClick={handlePrev} className="swiper-button-prev">
+            <div className="flex items-center justify-center mb-8">
+              <div className="flex items-center gap-4">
+
+                <div 
+                  onClick={handlePrev} 
+                  className="w-12 h-12 rounded-full bg-white border-2 border-blue text-blue hover:bg-blue hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-110 shadow-lg"
+                >
                   <svg
                     className="fill-current"
-                    width="24"
-                    height="24"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
@@ -63,11 +68,14 @@ const Testimonials = () => {
                   </svg>
                 </div>
 
-                <div onClick={handleNext} className="swiper-button-next">
+                <div 
+                  onClick={handleNext} 
+                  className="w-12 h-12 rounded-full bg-blue text-white hover:bg-blue-dark transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-110 shadow-lg"
+                >
                   <svg
                     className="fill-current"
-                    width="24"
-                    height="24"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"

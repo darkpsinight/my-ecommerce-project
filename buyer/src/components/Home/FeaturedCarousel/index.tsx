@@ -128,13 +128,41 @@ const FeaturedCarousel = () => {
   }
 
   return (
-    <section className="py-10 lg:py-12.5 xl:py-15">
-      <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-        <div className="mb-8">
-          <h2 className="text-2xl lg:text-heading-5 font-semibold text-dark mb-2">
-            Player&apos;s Favorites
+    <section className="py-16 lg:py-20 xl:py-24 bg-gradient-to-br from-white via-blue-light-5 to-purple-50 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-0 left-0 w-full h-full">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-4 h-4 bg-blue rounded-full animate-pulse"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${2 + Math.random() * 2}s`
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0 relative z-10">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <span className="text-2xl animate-bounce">⭐</span>
+            <span className="font-bold text-blue text-lg tracking-wider uppercase">
+              Featured Deals
+            </span>
+            <span className="text-2xl animate-bounce" style={{ animationDelay: '0.5s' }}>⭐</span>
+          </div>
+          <h2 className="text-2xl lg:text-heading-4 font-bold text-dark mb-6">
+            Top <span className="text-blue">Digital Codes</span> This Week
           </h2>
-          <p className="text-dark-4">Top picks from our verified sellers</p>
+          <p className="text-dark-4 text-lg max-w-[700px] mx-auto leading-relaxed">
+            Discover the most popular digital codes, hand-picked by our team and loved by customers worldwide. 
+            <span className="text-blue font-semibold"> Limited time offers!</span>
+          </p>
         </div>
 
         <div className="relative">
@@ -168,9 +196,12 @@ const FeaturedCarousel = () => {
           >
             {featuredProducts.map((product) => (
               <SwiperSlide key={product.id}>
-                <div className="bg-white rounded-lg p-6 border border-gray-3 hover:border-blue-light-3 hover:shadow-xl transition-all duration-300 group h-[300px] flex flex-col justify-between relative overflow-hidden">
+                <div className="bg-gradient-to-br from-white to-blue-light-5 rounded-2xl p-6 border border-blue-light-3 hover:border-blue hover:shadow-2xl transition-all duration-500 group h-[320px] flex flex-col justify-between relative overflow-hidden hover:scale-105 hover:-translate-y-2">
                   {/* Background gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-light-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-light-5 via-purple-50 to-green-light-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-light-4 to-purple-100 rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500 opacity-20"></div>
                   
                   <div className="relative z-10">
                     <div className="flex justify-between items-start mb-4">
@@ -232,15 +263,15 @@ const FeaturedCarousel = () => {
             ))}
           </Swiper>
 
-          {/* Navigation Buttons */}
-          <button className="featured-prev absolute top-1/2 -left-4 -translate-y-1/2 w-10 h-10 bg-white border border-gray-3 rounded-full flex items-center justify-center hover:border-blue hover:text-blue transition-all duration-300 z-10 shadow-lg">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Enhanced Navigation Buttons */}
+          <button className="featured-prev absolute top-1/2 -left-6 -translate-y-1/2 w-14 h-14 bg-gradient-to-r from-blue to-blue-dark text-white rounded-full flex items-center justify-center hover:scale-110 hover:shadow-2xl transition-all duration-300 z-10 border-2 border-white">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           
-          <button className="featured-next absolute top-1/2 -right-4 -translate-y-1/2 w-10 h-10 bg-white border border-gray-3 rounded-full flex items-center justify-center hover:border-blue hover:text-blue transition-all duration-300 z-10 shadow-lg">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="featured-next absolute top-1/2 -right-6 -translate-y-1/2 w-14 h-14 bg-gradient-to-r from-blue to-blue-dark text-white rounded-full flex items-center justify-center hover:scale-110 hover:shadow-2xl transition-all duration-300 z-10 border-2 border-white">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>

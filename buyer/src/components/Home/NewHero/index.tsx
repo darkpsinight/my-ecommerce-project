@@ -10,7 +10,7 @@ const NewHero = () => {
   }, []);
 
   return (
-    <section className="relative h-screen max-h-[60vh] pt-[170px] sm:pt-[110px] lg:pt-[110px] overflow-hidden bg-gradient-to-br from-blue-light-5 via-blue-light-4 to-blue-light-3 flex items-center justify-center">
+    <section className="relative h-screen max-h-[70vh] pt-[170px] sm:pt-[110px] lg:pt-[110px] overflow-hidden bg-gradient-to-br from-blue-light-5 via-purple-100 to-green-light-6 flex items-center justify-center">
       {/* Abstract Digital Pattern Background */}
       <div className="absolute inset-0 opacity-10">
         <svg
@@ -72,10 +72,10 @@ const NewHero = () => {
             <span className="text-orange">24/7 Support</span>
           </h1>
           
-          <div className="mt-8">
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/shop-without-sidebar"
-              className="inline-flex items-center justify-center px-8 py-4 bg-blue hover:bg-blue-dark text-white font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg text-lg"
+              className="inline-flex items-center justify-center px-8 py-4 bg-blue hover:bg-blue-dark text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl text-lg shadow-lg"
             >
               Browse Collections
               <svg
@@ -88,6 +88,38 @@ const NewHero = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
+            
+            <Link
+              href="/sell-digital-codes"
+              className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-1 text-blue border-2 border-blue font-semibold rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl text-lg"
+            >
+              Start Selling
+              <svg
+                className="ml-2 w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="mt-12 flex flex-wrap justify-center gap-8 text-center">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green rounded-full animate-pulse"></div>
+              <span className="text-dark-3 font-medium">Instant Delivery</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+              <span className="text-dark-3 font-medium">120+ Regions</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-orange rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+              <span className="text-dark-3 font-medium">24/7 Support</span>
+            </div>
           </div>
         </div>
       </div>

@@ -60,16 +60,6 @@ const Transactions = () => {
     }));
   }, [searchParams]);
 
-  // Fetch transactions when filters change
-  useEffect(() => {
-    fetchTransactions();
-  }, [filters, fetchTransactions]);
-
-  // Fetch transaction stats on component mount
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
   const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
@@ -92,6 +82,16 @@ const Transactions = () => {
       setLoading(false);
     }
   }, [filters]);
+
+  // Fetch transactions when filters change
+  useEffect(() => {
+    fetchTransactions();
+  }, [filters, fetchTransactions]);
+
+  // Fetch transaction stats on component mount
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   const fetchStats = async () => {
     try {

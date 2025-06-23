@@ -76,6 +76,8 @@ const AccountDropdown: React.FC<AccountDropdownProps> = ({
             }
           ] : []),
           { title: "Profile", path: "/my-account" },
+          { title: "Digital Library", path: "/library" },
+          { title: "Transaction Hub", path: "/transactions" },
           { title: "Wallet", path: "/wallet" },
           { title: "Orders", path: "/orders" },
           { title: "Logout", path: "#", onClick: handleLogout },

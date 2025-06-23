@@ -15,12 +15,18 @@ export const menuData: Menu[] = [
   },
   {
     id: 3,
+    title: "Library",
+    newTab: false,
+    path: "/library",
+  },
+  {
+    id: 4,
     title: "Contact",
     newTab: false,
     path: "/contact",
   },
   {
-    id: 6,
+    id: 5,
     title: "pages",
     newTab: false,
     path: "/",
@@ -74,6 +80,12 @@ export const menuData: Menu[] = [
         path: "/my-account",
       },
       {
+        id: 72,
+        title: "Digital Library",
+        newTab: false,
+        path: "/library",
+      },
+      {
         id: 71,
         title: "Wallet",
         newTab: false,
@@ -100,7 +112,7 @@ export const menuData: Menu[] = [
     ],
   },
   {
-    id: 7,
+    id: 6,
     title: "blogs",
     newTab: false,
     path: "/",

@@ -40,31 +40,40 @@ export const getCodeExpirationInfo = (expirationDate?: string): CodeExpirationIn
 /**
  * Get status badge info for code expiration
  */
-export const getExpirationBadge = (expirationInfo: CodeExpirationInfo | null) => {
+export const getExpirationBadgeProps = (expirationDate?: string) => {
+  if (!expirationDate) {
+    return {
+      text: "Never expires",
+      className: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green/10 text-green"
+    };
+  }
+
+  const expirationInfo = getCodeExpirationInfo(expirationDate);
+  
   if (!expirationInfo) {
     return {
-      text: "No expiration",
-      className: "bg-green-100 text-green-800",
+      text: "Never expires",
+      className: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green/10 text-green"
     };
   }
 
   if (expirationInfo.isExpired) {
     return {
       text: "Expired",
-      className: "bg-red-100 text-red-800",
+      className: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red/10 text-red"
     };
   }
 
   if (expirationInfo.isExpiringSoon) {
     return {
       text: `Expires in ${expirationInfo.daysUntilExpiration} day${expirationInfo.daysUntilExpiration === 1 ? "" : "s"}`,
-      className: "bg-yellow-100 text-yellow-800",
+      className: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow/10 text-yellow-dark"
     };
   }
 
   return {
     text: `Expires ${expirationInfo.formattedExpiration}`,
-    className: "bg-blue-100 text-blue-800",
+    className: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue/10 text-blue"
   };
 };
 

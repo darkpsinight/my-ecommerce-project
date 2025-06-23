@@ -5,13 +5,13 @@ import { ordersApi, PurchasedCode, GetPurchasedCodesParams } from "@/services/or
 import { toast } from "react-hot-toast";
 import { 
   getCodeExpirationInfo, 
-  getExpirationBadge, 
   maskCode, 
   copyToClipboard as copyToClipboardUtil,
   formatDate,
   formatCurrency 
 } from "@/utils/codeUtils";
 import CopyableOrderId from "@/components/Common/CopyableOrderId";
+import ExpirationBadge from "@/components/Common/ExpirationBadge";
 import CodeModal from "./CodeModal";
 
 interface MyCodesProps {

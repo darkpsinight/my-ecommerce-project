@@ -3,19 +3,28 @@ import React, { useState } from "react";
 
 const SizeDropdown = () => {
   const [toggleDropdown, setToggleDropdown] = useState(true);
+  const [selectedSize, setSelectedSize] = useState("Popular");
+  
   return (
-    <div className="bg-white shadow-1 rounded-lg">
+    <div className="bg-gradient-to-br from-white to-gray-1 shadow-2 rounded-xl border border-gray-3/30">
       <div
         onClick={() => setToggleDropdown(!toggleDropdown)}
-        className={`cursor-pointer flex items-center justify-between py-3 pl-6 pr-5.5 ${
-          toggleDropdown && "shadow-filter"
-        }`}
+        className={`cursor-pointer flex items-center justify-between py-4 pl-6 pr-5.5 ${
+          toggleDropdown && "shadow-filter rounded-t-xl"
+        } hover:bg-orange-light-5/30 transition-all duration-200`}
       >
-        <p className="text-dark">Size</p>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-orange to-orange-dark rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd"/>
+            </svg>
+          </div>
+          <p className="font-semibold text-dark">Platform</p>
+        </div>
         <button
           onClick={() => setToggleDropdown(!toggleDropdown)}
           aria-label="button for size dropdown"
-          className={`text-dark ease-out duration-200 ${
+          className={`text-dark ease-out duration-200 hover:text-orange ${
             toggleDropdown && "rotate-180"
           }`}
         >
@@ -37,59 +46,36 @@ const SizeDropdown = () => {
         </button>
       </div>
 
-      {/* // <!-- dropdown menu --> */}
+      {/* Enhanced dropdown menu */}
       <div
-        className={`flex-wrap gap-2.5 p-6 ${
+        className={`flex-wrap gap-3 p-6 ${
           toggleDropdown ? "flex" : "hidden"
         }`}
       >
-        <label
-          htmlFor="sizeM"
-          className="cursor-pointer select-none flex items-center rounded-md bg-blue text-white hover:bg-blue hover:text-white"
-        >
-          <div className="relative">
-            <input type="radio" name="size" id="sizeM" className="sr-only" />
-            <div className="text-custom-sm py-[5px] px-3.5 rounded-[5px]">
-              M
+        {['Popular', 'PC', 'PlayStation', 'Xbox', 'Nintendo', 'Mobile'].map((platform) => (
+          <label
+            key={platform}
+            htmlFor={`platform${platform}`}
+            className={`cursor-pointer select-none flex items-center rounded-lg transition-all duration-200 ${
+              selectedSize === platform
+                ? "bg-gradient-to-r from-orange to-orange-dark text-white shadow-1"
+                : "bg-gray-1 text-dark hover:bg-orange-light-4 hover:text-orange-dark border border-gray-3/50 hover:border-orange-light-4"
+            }`}
+          >
+            <div className="relative">
+              <input 
+                type="radio" 
+                name="platform" 
+                id={`platform${platform}`} 
+                className="sr-only" 
+                onChange={() => setSelectedSize(platform)}
+              />
+              <div className="text-sm font-medium py-2 px-4 rounded-lg">
+                {platform}
+              </div>
             </div>
-          </div>
-        </label>
-
-        <label
-          htmlFor="sizeL"
-          className="cursor-pointer select-none flex items-center rounded-md hover:bg-blue hover:text-white"
-        >
-          <div className="relative">
-            <input type="radio" name="size" id="sizeL" className="sr-only" />
-            <div className="text-custom-sm py-[5px] px-3.5 rounded-[5px]">
-              L
-            </div>
-          </div>
-        </label>
-
-        <label
-          htmlFor="sizeXL"
-          className="cursor-pointer select-none flex items-center rounded-md hover:bg-blue hover:text-white"
-        >
-          <div className="relative">
-            <input type="radio" name="size" id="sizeXL" className="sr-only" />
-            <div className="text-custom-sm py-[5px] px-3.5 rounded-[5px]">
-              XL
-            </div>
-          </div>
-        </label>
-
-        <label
-          htmlFor="sizeXXL"
-          className="cursor-pointer select-none flex items-center rounded-md hover:bg-blue hover:text-white"
-        >
-          <div className="relative">
-            <input type="radio" name="size" id="sizeXXL" className="sr-only" />
-            <div className="text-custom-sm py-[5px] px-3.5 rounded-[5px]">
-              XXL
-            </div>
-          </div>
-        </label>
+          </label>
+        ))}
       </div>
     </div>
   );

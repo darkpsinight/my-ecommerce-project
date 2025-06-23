@@ -7,20 +7,20 @@ const CategoryItem = ({ category }) => {
   return (
     <button
       className={`${
-        selected && "text-blue"
-      } group flex items-center justify-between ease-out duration-200 hover:text-blue `}
+        selected ? "bg-blue-light-5 text-blue-dark border-blue-light-4" : "hover:bg-blue-light-5/50"
+      } group flex items-center justify-between p-3 rounded-lg border border-transparent transition-all duration-200 hover:text-blue w-full text-left`}
       onClick={() => setSelected(!selected)}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <div
-          className={`cursor-pointer flex items-center justify-center rounded w-4 h-4 border ${
-            selected ? "border-blue bg-blue" : "bg-white border-gray-3"
+          className={`cursor-pointer flex items-center justify-center rounded-lg w-5 h-5 border transition-all duration-200 ${
+            selected ? "border-blue bg-gradient-to-r from-blue to-blue-dark" : "bg-white border-gray-3 group-hover:border-blue"
           }`}
         >
           <svg
-            className={selected ? "block" : "hidden"}
-            width="10"
-            height="10"
+            className={`${selected ? "block" : "hidden"} transition-all duration-200`}
+            width="12"
+            height="12"
             viewBox="0 0 10 10"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -35,13 +35,15 @@ const CategoryItem = ({ category }) => {
           </svg>
         </div>
 
-        <span>{category.name}</span>
+        <span className="font-medium">{category.name}</span>
       </div>
 
       <span
         className={`${
-          selected ? "text-white bg-blue" : "bg-gray-2"
-        } inline-flex rounded-[30px] text-custom-xs px-2 ease-out duration-200 group-hover:text-white group-hover:bg-blue`}
+          selected 
+            ? "text-white bg-gradient-to-r from-blue to-blue-dark shadow-1" 
+            : "bg-gray-2 text-dark-3 group-hover:bg-blue-light-4 group-hover:text-blue-dark"
+        } inline-flex rounded-full text-xs px-3 py-1 font-medium transition-all duration-200`}
       >
         {category.products}
       </span>
@@ -53,20 +55,27 @@ const CategoryDropdown = ({ categories }) => {
   const [toggleDropdown, setToggleDropdown] = useState(true);
 
   return (
-    <div className="bg-white shadow-1 rounded-lg">
+    <div className="bg-gradient-to-br from-white to-gray-1 shadow-2 rounded-xl border border-gray-3/30">
       <div
         onClick={(e) => {
           e.preventDefault();
           setToggleDropdown(!toggleDropdown);
         }}
-        className={`cursor-pointer flex items-center justify-between py-3 pl-6 pr-5.5 ${
-          toggleDropdown && "shadow-filter"
-        }`}
+        className={`cursor-pointer flex items-center justify-between py-4 pl-6 pr-5.5 ${
+          toggleDropdown && "shadow-filter rounded-t-xl"
+        } hover:bg-blue-light-5/30 transition-all duration-200`}
       >
-        <p className="text-dark">Category</p>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue to-blue-dark rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z"/>
+            </svg>
+          </div>
+          <p className="font-semibold text-dark">Categories</p>
+        </div>
         <button
           aria-label="button for category dropdown"
-          className={`text-dark ease-out duration-200 ${
+          className={`text-dark ease-out duration-200 hover:text-blue ${
             toggleDropdown && "rotate-180"
           }`}
         >
@@ -91,7 +100,7 @@ const CategoryDropdown = ({ categories }) => {
       {/* dropdown && 'shadow-filter */}
       {/* <!-- dropdown menu --> */}
       <div
-        className={`flex-col gap-3 py-6 pl-6 pr-5.5 ${
+        className={`flex-col gap-2 py-6 pl-6 pr-5.5 ${
           toggleDropdown ? "flex" : "hidden"
         }`}
       >

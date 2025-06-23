@@ -6,20 +6,20 @@ const GenderItem = ({ category }) => {
   return (
     <button
       className={`${
-        selected && "text-blue"
-      } group flex items-center justify-between ease-out duration-200 hover:text-blue `}
+        selected ? "bg-teal-light-5 text-teal-dark border-teal-light-4" : "hover:bg-teal-light-5/50"
+      } group flex items-center justify-between p-3 rounded-lg border border-transparent transition-all duration-200 hover:text-teal w-full text-left`}
       onClick={() => setSelected(!selected)}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <div
-          className={`cursor-pointer flex items-center justify-center rounded w-4 h-4 border ${
-            selected ? "border-blue bg-blue" : "bg-white border-gray-3"
+          className={`cursor-pointer flex items-center justify-center rounded-lg w-5 h-5 border transition-all duration-200 ${
+            selected ? "border-teal bg-gradient-to-r from-teal to-teal-dark" : "bg-white border-gray-3 group-hover:border-teal"
           }`}
         >
           <svg
-            className={selected ? "block" : "hidden"}
-            width="10"
-            height="10"
+            className={`${selected ? "block" : "hidden"} transition-all duration-200`}
+            width="12"
+            height="12"
             viewBox="0 0 10 10"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -34,13 +34,15 @@ const GenderItem = ({ category }) => {
           </svg>
         </div>
 
-        <span>{category.name}</span>
+        <span className="font-medium">{category.name}</span>
       </div>
 
       <span
         className={`${
-          selected ? "text-white bg-blue" : "bg-gray-2"
-        } inline-flex rounded-[30px] text-custom-xs px-2 ease-out duration-200 group-hover:text-white group-hover:bg-blue`}
+          selected 
+            ? "text-white bg-gradient-to-r from-teal to-teal-dark shadow-1" 
+            : "bg-gray-2 text-dark-3 group-hover:bg-teal-light-4 group-hover:text-teal-dark"
+        } inline-flex rounded-full text-xs px-3 py-1 font-medium transition-all duration-200`}
       >
         {category.products}
       </span>
@@ -52,18 +54,25 @@ const GenderDropdown = ({ genders }) => {
   const [toggleDropdown, setToggleDropdown] = useState(true);
 
   return (
-    <div className="bg-white shadow-1 rounded-lg">
+    <div className="bg-gradient-to-br from-white to-gray-1 shadow-2 rounded-xl border border-gray-3/30">
       <div
         onClick={() => setToggleDropdown(!toggleDropdown)}
-        className={`cursor-pointer flex items-center justify-between py-3 pl-6 pr-5.5 ${
-          toggleDropdown && "shadow-filter"
-        }`}
+        className={`cursor-pointer flex items-center justify-between py-4 pl-6 pr-5.5 ${
+          toggleDropdown && "shadow-filter rounded-t-xl"
+        } hover:bg-teal-light-5/30 transition-all duration-200`}
       >
-        <p className="text-dark">Gender</p>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-teal to-teal-dark rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
+            </svg>
+          </div>
+          <p className="font-semibold text-dark">Type</p>
+        </div>
         <button
           onClick={() => setToggleDropdown(!toggleDropdown)}
           aria-label="button for gender dropdown"
-          className={`text-dark ease-out duration-200 ${
+          className={`text-dark ease-out duration-200 hover:text-teal ${
             toggleDropdown && "rotate-180"
           }`}
         >
@@ -85,9 +94,9 @@ const GenderDropdown = ({ genders }) => {
         </button>
       </div>
 
-      {/* <!-- dropdown menu --> */}
+      {/* Enhanced dropdown menu */}
       <div
-        className={`flex-col gap-3 py-6 pl-6 pr-5.5 ${
+        className={`flex-col gap-2 py-6 pl-6 pr-5.5 ${
           toggleDropdown ? "flex" : "hidden"
         }`}
       >

@@ -8,17 +8,24 @@ const ColorsDropdwon = () => {
   const colors = ["red", "blue", "orange", "pink", "purple"];
 
   return (
-    <div className="bg-white shadow-1 rounded-lg">
+    <div className="bg-gradient-to-br from-white to-gray-1 shadow-2 rounded-xl border border-gray-3/30">
       <div
         onClick={() => setToggleDropdown(!toggleDropdown)}
-        className={`cursor-pointer flex items-center justify-between py-3 pl-6 pr-5.5 ${
-          toggleDropdown && "shadow-filter"
-        }`}
+        className={`cursor-pointer flex items-center justify-between py-4 pl-6 pr-5.5 ${
+          toggleDropdown && "shadow-filter rounded-t-xl"
+        } hover:bg-purple-light-5/30 transition-all duration-200`}
       >
-        <p className="text-dark">Colors</p>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-purple to-purple-dark rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zM3 15a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zm5-1a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H9a1 1 0 01-1-1v-1zm5-1a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1z" clipRule="evenodd"/>
+            </svg>
+          </div>
+          <p className="font-semibold text-dark">Colors</p>
+        </div>
         <button
           aria-label="button for colors dropdown"
-          className={`text-dark ease-out duration-200 ${
+          className={`text-dark ease-out duration-200 hover:text-purple ${
             toggleDropdown && "rotate-180"
           }`}
         >
@@ -40,9 +47,9 @@ const ColorsDropdwon = () => {
         </button>
       </div>
 
-      {/* <!-- dropdown menu --> */}
+      {/* Enhanced color selection */}
       <div
-        className={`flex-wrap gap-2.5 p-6 ${
+        className={`flex-wrap gap-4 p-6 ${
           toggleDropdown ? "flex" : "hidden"
         }`}
       >
@@ -50,7 +57,7 @@ const ColorsDropdwon = () => {
           <label
             key={key}
             htmlFor={color}
-            className="cursor-pointer select-none flex items-center"
+            className="cursor-pointer select-none flex items-center group"
           >
             <div className="relative">
               <input
@@ -61,16 +68,24 @@ const ColorsDropdwon = () => {
                 onChange={() => setActiveColor(color)}
               />
               <div
-                className={`flex items-center justify-center w-5.5 h-5.5 rounded-full ${
-                  activeColor === color && "border"
+                className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                  activeColor === color 
+                    ? "border-dark shadow-1 scale-110" 
+                    : "border-gray-3 group-hover:border-gray-4 group-hover:scale-105"
                 }`}
-                style={{ borderColor: `${color}` }}
               >
                 <span
-                  className="block w-3 h-3 rounded-full"
+                  className="block w-5 h-5 rounded-full shadow-1"
                   style={{ backgroundColor: `${color}` }}
                 ></span>
               </div>
+              {activeColor === color && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-green to-green-dark rounded-full flex items-center justify-center">
+                  <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                </div>
+              )}
             </div>
           </label>
         ))}

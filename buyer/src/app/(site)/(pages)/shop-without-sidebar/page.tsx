@@ -3,8 +3,14 @@ import ShopWithoutSidebar from "@/components/ShopWithoutSidebar";
 
 import { Metadata } from "next";
 export const metadata: Metadata = {
-  title: "Shop Page | NextCommerce Nextjs E-commerce template",
-  description: "This is Shop Page for NextCommerce Template",
+  title: "All Digital Codes | Complete Marketplace | Buy Digital Products",
+  description: "Browse our complete collection of digital codes, game keys, software licenses, and gift cards. Find the best deals on digital products worldwide.",
+  keywords: "digital codes, all products, game keys, software licenses, gift cards, digital marketplace, buy codes",
+  openGraph: {
+    title: "All Digital Codes | Complete Marketplace",
+    description: "Browse our complete collection of digital codes, game keys, software licenses, and gift cards.",
+    type: "website",
+  },
   // other metadata
 };
 

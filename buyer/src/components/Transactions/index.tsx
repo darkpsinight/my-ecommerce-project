@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import PageContainer from "../Common/PageContainer";
@@ -63,14 +63,14 @@ const Transactions = () => {
   // Fetch transactions when filters change
   useEffect(() => {
     fetchTransactions();
-  }, [filters]);
+  }, [filters, fetchTransactions]);
 
   // Fetch transaction stats on component mount
   useEffect(() => {
     fetchStats();
   }, []);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -91,7 +91,7 @@ const Transactions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const fetchStats = async () => {
     try {

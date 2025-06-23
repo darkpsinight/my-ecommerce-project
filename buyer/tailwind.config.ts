@@ -110,6 +110,11 @@ const config: Config = {
         DEFAULT: "#F27430",
         dark: "#E1580E",
       },
+      purple: {
+        DEFAULT: "#8B5CF6",
+        dark: "#7C3AED",
+        light: "#A78BFA",
+      },
     },
     screens: {
       xsm: "375px",

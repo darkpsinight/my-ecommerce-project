@@ -161,21 +161,57 @@ const ShopWithSidebar = () => {
   return (
     <>
     <PageContainer fullWidth>
-      <section className="overflow-hidden py-20 bg-gray-2">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-light-5 via-white to-green-light-6 py-16 lg:py-24">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue/5 to-green/5"></div>
+        <div className="relative max-w-[1200px] mx-auto px-4 sm:px-8 text-center">
+          <div className="inline-flex items-center gap-2 bg-blue-light-5 text-blue-dark px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Filtered Shopping Experience
+          </div>
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-dark mb-6">
+            Find Your Perfect{" "}
+            <span className="bg-gradient-to-r from-blue to-green bg-clip-text text-transparent">
+              Digital Code
+            </span>
+          </h1>
+          <p className="text-lg lg:text-xl text-dark-3 max-w-2xl mx-auto mb-8">
+            Use our advanced filters to discover exactly what you need from thousands of digital codes, game keys, and gift cards
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full">
+              <div className="w-2 h-2 bg-green rounded-full"></div>
+              <span className="text-dark">Instant Delivery</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full">
+              <div className="w-2 h-2 bg-blue rounded-full"></div>
+              <span className="text-dark">Verified Sellers</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full">
+              <div className="w-2 h-2 bg-teal rounded-full"></div>
+              <span className="text-dark">Global Support</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section className="overflow-hidden py-12 lg:py-20 bg-gradient-to-b from-gray-1 to-white">
         <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-8 xl:px-6">
           <div className="flex gap-6 xl:gap-7">
-            {/* <!-- Sidebar Start --> */}
+            {/* <!-- Enhanced Sidebar Start --> */}
             <div
-              className={`sidebar-content fixed xl:z-1 z-9999 left-0 top-0 xl:translate-x-0 xl:static max-w-[310px] xl:max-w-[280px] w-full ease-out duration-200 ${
+              className={`sidebar-content fixed xl:z-1 z-9999 left-0 top-0 xl:translate-x-0 xl:static max-w-[320px] xl:max-w-[300px] w-full ease-out duration-200 ${
                 productSidebar
-                  ? "translate-x-0 bg-white p-5 h-screen overflow-y-auto"
+                  ? "translate-x-0 bg-gradient-to-b from-white to-gray-1 p-5 h-screen overflow-y-auto shadow-3"
                   : "-translate-x-full"
-              }`}
+              } xl:bg-gradient-to-b xl:from-white xl:to-gray-1 xl:shadow-2 xl:rounded-2xl xl:p-6`}
             >
               <button
                 onClick={() => setProductSidebar(!productSidebar)}
                 aria-label="button for product sidebar toggle"
-                className={`xl:hidden absolute -right-12.5 sm:-right-8 flex items-center justify-center w-8 h-8 rounded-md bg-white shadow-1 ${
+                className={`xl:hidden absolute -right-12.5 sm:-right-8 flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-r from-blue to-blue-dark shadow-2 text-white hover:shadow-3 transition-all duration-300 ${
                   stickyMenu
                     ? "lg:top-20 sm:top-34.5 top-35"
                     : "lg:top-24 sm:top-39 top-37"
@@ -206,11 +242,20 @@ const ShopWithSidebar = () => {
 
               <form onSubmit={(e) => e.preventDefault()}>
                 <div className="flex flex-col gap-6">
-                  {/* <!-- filter box --> */}
-                  <div className="bg-white shadow-1 rounded-lg py-4 px-5">
+                  {/* <!-- Enhanced filter header --> */}
+                  <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl py-4 px-5 border border-blue-light-4">
                     <div className="flex items-center justify-between">
-                      <p>Filters:</p>
-                      <button className="text-blue">Clean All</button>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue rounded-lg flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z"/>
+                          </svg>
+                        </div>
+                        <p className="font-semibold text-dark">Smart Filters</p>
+                      </div>
+                      <button className="text-blue-dark hover:text-blue font-medium px-3 py-1.5 rounded-lg hover:bg-white/50 transition-all duration-200">
+                        Clear All
+                      </button>
                     </div>
                   </div>
 
@@ -233,31 +278,36 @@ const ShopWithSidebar = () => {
             </div>
             {/* // <!-- Sidebar End --> */}
 
-            {/* // <!-- Content Start --> */}
-            <div className="xl:max-w-[calc(100%-310px)] w-full">
-              <div className="rounded-lg bg-white shadow-1 pl-3 pr-2.5 py-2.5 mb-6">
-                <div className="flex items-center justify-between">
-                  {/* <!-- top bar left --> */}
+            {/* <!-- Enhanced Content Start --> */}
+            <div className="xl:max-w-[calc(100%-320px)] w-full">
+              <div className="rounded-xl bg-white shadow-2 p-4 lg:p-6 mb-8 border border-gray-3/30">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  {/* <!-- Enhanced top bar left --> */}
                   <div className="flex flex-wrap items-center gap-4">
                     <CustomSelect options={options} />
 
-                    <p>
-                      Showing <span className="text-dark">{products.length} of {totalProducts}</span>{" "}
-                      Products
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green rounded-full"></div>
+                      <p className="text-dark-3">
+                        Showing <span className="font-semibold text-dark">{products.length}</span> of{" "}
+                        <span className="font-semibold text-dark">{totalProducts}</span> products
+                      </p>
+                    </div>
                   </div>
 
-                  {/* <!-- top bar right --> */}
-                  <div className="flex items-center gap-2.5">
-                    <button
-                      onClick={() => setProductStyle("grid")}
-                      aria-label="button for product grid tab"
-                      className={`${
-                        productStyle === "grid"
-                          ? "bg-blue border-blue text-white"
-                          : "text-dark bg-gray-1 border-gray-3"
-                      } flex items-center justify-center w-10.5 h-9 rounded-[5px] border ease-out duration-200 hover:bg-blue hover:border-blue hover:text-white`}
-                    >
+                  {/* <!-- Enhanced view toggle buttons --> */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-dark-4 text-sm font-medium mr-2">View:</span>
+                    <div className="flex items-center bg-gray-1 rounded-lg p-1">
+                      <button
+                        onClick={() => setProductStyle("grid")}
+                        aria-label="button for product grid tab"
+                        className={`${
+                          productStyle === "grid"
+                            ? "bg-gradient-to-r from-blue to-blue-dark border-blue text-white shadow-1"
+                            : "text-dark-3 hover:text-dark"
+                        } flex items-center justify-center w-10 h-8 rounded-md border-0 transition-all duration-200 hover:bg-white/70`}
+                      >
                       <svg
                         className="fill-current"
                         width="18"
@@ -293,15 +343,15 @@ const ShopWithSidebar = () => {
                       </svg>
                     </button>
 
-                    <button
-                      onClick={() => setProductStyle("list")}
-                      aria-label="button for product list tab"
-                      className={`${
-                        productStyle === "list"
-                          ? "bg-blue border-blue text-white"
-                          : "text-dark bg-gray-1 border-gray-3"
-                      } flex items-center justify-center w-10.5 h-9 rounded-[5px] border ease-out duration-200 hover:bg-blue hover:border-blue hover:text-white`}
-                    >
+                      <button
+                        onClick={() => setProductStyle("list")}
+                        aria-label="button for product list tab"
+                        className={`${
+                          productStyle === "list"
+                            ? "bg-gradient-to-r from-blue to-blue-dark border-blue text-white shadow-1"
+                            : "text-dark-3 hover:text-dark"
+                        } flex items-center justify-center w-10 h-8 rounded-md border-0 transition-all duration-200 hover:bg-white/70`}
+                      >
                       <svg
                         className="fill-current"
                         width="18"
@@ -323,12 +373,13 @@ const ShopWithSidebar = () => {
                           fill=""
                         />
                       </svg>
-                    </button>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* <!-- Products Grid Tab Content Start --> */}
+              {/* <!-- Enhanced Products Grid Section --> */}
               {loading ? (
                 <div
                   className={`${
@@ -359,26 +410,40 @@ const ShopWithSidebar = () => {
                   )}
                 </div>
               ) : (
-                <div className="flex justify-center items-center min-h-[400px]">
-                  <div className="text-center">
-                    <h3 className="text-xl font-medium text-dark mb-2">No Products Found</h3>
-                    <p className="text-dark-4">Try adjusting your filters or check back later for new listings.</p>
+                <div className="flex justify-center items-center min-h-[500px]">
+                  <div className="text-center max-w-md">
+                    <div className="w-24 h-24 bg-gradient-to-br from-blue-light-5 to-green-light-6 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <svg className="w-12 h-12 text-blue" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-dark mb-3">No Products Found</h3>
+                    <p className="text-dark-3 mb-6">We couldn&apos;t find any products matching your criteria. Try adjusting your filters or search terms.</p>
+                    <button 
+                      onClick={() => window.location.reload()} 
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-blue to-blue-dark text-white px-6 py-3 rounded-lg hover:shadow-2 transition-all duration-200"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd"/>
+                      </svg>
+                      Reset Filters
+                    </button>
                   </div>
                 </div>
               )}
               {/* <!-- Products Grid Tab Content End --> */}
 
-              {/* Pagination */}
+              {/* Enhanced Pagination */}
               {!loading && products.length > 0 && totalPages > 1 && (
-                <div className="flex justify-center mt-10">
-                  <div className="flex items-center gap-2">
+                <div className="flex justify-center mt-12">
+                  <div className="flex items-center bg-white rounded-xl shadow-2 p-2 gap-1">
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
-                      className={`w-10 h-10 flex items-center justify-center rounded-md border ${
+                      className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 ${
                         currentPage === 1
-                          ? "border-gray-3 text-dark-4 cursor-not-allowed"
-                          : "border-gray-3 text-dark hover:bg-blue hover:text-white hover:border-blue"
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-dark hover:bg-gradient-to-r hover:from-blue hover:to-blue-dark hover:text-white hover:shadow-1"
                       }`}
                     >
                       <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -386,27 +451,40 @@ const ShopWithSidebar = () => {
                       </svg>
                     </button>
 
-                    {[...Array(totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`w-10 h-10 flex items-center justify-center rounded-md border ${
-                          currentPage === index + 1
-                            ? "bg-blue text-white border-blue"
-                            : "border-gray-3 text-dark hover:bg-blue hover:text-white hover:border-blue"
-                        }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+                    {[...Array(Math.min(totalPages, 5))].map((_, index) => {
+                      let pageToShow;
+                      if (totalPages <= 5) {
+                        pageToShow = index + 1;
+                      } else if (currentPage <= 3) {
+                        pageToShow = index + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageToShow = totalPages - 4 + index;
+                      } else {
+                        pageToShow = currentPage - 2 + index;
+                      }
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(pageToShow)}
+                          className={`w-10 h-10 flex items-center justify-center rounded-lg font-medium transition-all duration-200 ${
+                            currentPage === pageToShow
+                              ? "bg-gradient-to-r from-blue to-blue-dark text-white shadow-1"
+                              : "text-dark hover:bg-gray-1 hover:text-blue"
+                          }`}
+                        >
+                          {pageToShow}
+                        </button>
+                      );
+                    })}
 
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
-                      className={`w-10 h-10 flex items-center justify-center rounded-md border ${
+                      className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 ${
                         currentPage === totalPages
-                          ? "border-gray-3 text-dark-4 cursor-not-allowed"
-                          : "border-gray-3 text-dark hover:bg-blue hover:text-white hover:border-blue"
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-dark hover:bg-gradient-to-r hover:from-blue hover:to-blue-dark hover:text-white hover:shadow-1"
                       }`}
                     >
                       <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -417,123 +495,7 @@ const ShopWithSidebar = () => {
                 </div>
               )}
 
-              {/* <!-- Products Pagination Start --> */}
-              <div className="flex justify-center mt-15">
-                <div className="bg-white shadow-1 rounded-md p-2">
-                  <ul className="flex items-center">
-                    <li>
-                      <button
-                        id="paginationLeft"
-                        aria-label="button for pagination left"
-                        type="button"
-                        disabled
-                        className="flex items-center justify-center w-8 h-9 ease-out duration-200 rounded-[3px disabled:text-gray-4"
-                      >
-                        <svg
-                          className="fill-current"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 18 18"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M12.1782 16.1156C12.0095 16.1156 11.8407 16.0594 11.7282 15.9187L5.37197 9.45C5.11885 9.19687 5.11885 8.80312 5.37197 8.55L11.7282 2.08125C11.9813 1.82812 12.3751 1.82812 12.6282 2.08125C12.8813 2.33437 12.8813 2.72812 12.6282 2.98125L6.72197 9L12.6563 15.0187C12.9095 15.2719 12.9095 15.6656 12.6563 15.9187C12.4876 16.0312 12.347 16.1156 12.1782 16.1156Z"
-                            fill=""
-                          />
-                        </svg>
-                      </button>
-                    </li>
 
-                    <li>
-                      <a
-                        href="#"
-                        className="flex py-1.5 px-3.5 duration-200 rounded-[3px] bg-blue text-white hover:text-white hover:bg-blue"
-                      >
-                        1
-                      </a>
-                    </li>
-
-                    <li>
-                      <a
-                        href="#"
-                        className="flex py-1.5 px-3.5 duration-200 rounded-[3px] hover:text-white hover:bg-blue"
-                      >
-                        2
-                      </a>
-                    </li>
-
-                    <li>
-                      <a
-                        href="#"
-                        className="flex py-1.5 px-3.5 duration-200 rounded-[3px] hover:text-white hover:bg-blue"
-                      >
-                        3
-                      </a>
-                    </li>
-
-                    <li>
-                      <a
-                        href="#"
-                        className="flex py-1.5 px-3.5 duration-200 rounded-[3px] hover:text-white hover:bg-blue"
-                      >
-                        4
-                      </a>
-                    </li>
-
-                    <li>
-                      <a
-                        href="#"
-                        className="flex py-1.5 px-3.5 duration-200 rounded-[3px] hover:text-white hover:bg-blue"
-                      >
-                        5
-                      </a>
-                    </li>
-
-                    <li>
-                      <a
-                        href="#"
-                        className="flex py-1.5 px-3.5 duration-200 rounded-[3px] hover:text-white hover:bg-blue"
-                      >
-                        ...
-                      </a>
-                    </li>
-
-                    <li>
-                      <a
-                        href="#"
-                        className="flex py-1.5 px-3.5 duration-200 rounded-[3px] hover:text-white hover:bg-blue"
-                      >
-                        10
-                      </a>
-                    </li>
-
-                    <li>
-                      <button
-                        id="paginationLeft"
-                        aria-label="button for pagination left"
-                        type="button"
-                        className="flex items-center justify-center w-8 h-9 ease-out duration-200 rounded-[3px] hover:text-white hover:bg-blue disabled:text-gray-4"
-                      >
-                        <svg
-                          className="fill-current"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 18 18"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M5.82197 16.1156C5.65322 16.1156 5.5126 16.0594 5.37197 15.9469C5.11885 15.6937 5.11885 15.3 5.37197 15.0469L11.2782 9L5.37197 2.98125C5.11885 2.72812 5.11885 2.33437 5.37197 2.08125C5.6251 1.82812 6.01885 1.82812 6.27197 2.08125L12.6282 8.55C12.8813 8.80312 12.8813 9.19687 12.6282 9.45L6.27197 15.9187C6.15947 16.0312 5.99072 16.1156 5.82197 16.1156Z"
-                            fill=""
-                          />
-                        </svg>
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              {/* <!-- Products Pagination End --> */}
             </div>
             {/* // <!-- Content End --> */}
           </div>

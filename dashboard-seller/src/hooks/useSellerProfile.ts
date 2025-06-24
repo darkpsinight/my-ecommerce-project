@@ -11,6 +11,7 @@ interface UseSellerProfileReturn {
   updateProfile: (data: Partial<SellerProfileData>) => Promise<boolean>;
   showProfileSetup: boolean;
   setShowProfileSetup: (show: boolean) => void;
+  openProfileSetup: () => void;
 }
 
 export const useSellerProfile = (): UseSellerProfileReturn => {
@@ -18,6 +19,8 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showProfileSetup, setShowProfileSetup] = useState<boolean>(false);
+  const [hasBeenDismissed, setHasBeenDismissed] = useState<boolean>(false);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
   const refreshProfile = useCallback(async () => {
     try {
@@ -27,9 +30,14 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
       const data = await getSellerProfile();
       setProfileData(data);
       
-      // Show profile setup if user doesn't have a profile
-      if (!data.hasProfile && !showProfileSetup) {
+      // Only auto-show profile setup on initial load and if user hasn't dismissed it
+      if (!data.hasProfile && isInitialLoad && !hasBeenDismissed) {
         setShowProfileSetup(true);
+      }
+      
+      // Mark initial load as complete
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
       }
     } catch (err: any) {
       console.error('Error fetching seller profile:', err);
@@ -38,7 +46,7 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     } finally {
       setLoading(false);
     }
-  }, [showProfileSetup]);
+  }, [isInitialLoad, hasBeenDismissed]);
 
   const updateProfile = useCallback(async (data: Partial<SellerProfileData>): Promise<boolean> => {
     try {
@@ -64,6 +72,20 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     }
   }, [refreshProfile]);
 
+  // Function to explicitly open profile setup (e.g., when user clicks "Set Up Profile" button)
+  const openProfileSetup = useCallback(() => {
+    setHasBeenDismissed(false); // Reset dismissal state
+    setShowProfileSetup(true);
+  }, []);
+
+  // Custom setShowProfileSetup that tracks dismissal
+  const handleSetShowProfileSetup = useCallback((show: boolean) => {
+    if (!show) {
+      setHasBeenDismissed(true); // Mark as dismissed when closing
+    }
+    setShowProfileSetup(show);
+  }, []);
+
   // Initial profile fetch
   useEffect(() => {
     refreshProfile();
@@ -77,6 +99,7 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     refreshProfile,
     updateProfile,
     showProfileSetup,
-    setShowProfileSetup
+    setShowProfileSetup: handleSetShowProfileSetup,
+    openProfileSetup
   };
 };

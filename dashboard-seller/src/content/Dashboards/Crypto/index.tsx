@@ -17,7 +17,8 @@ function DashboardCrypto() {
     loading: profileLoading,
     updateProfile,
     showProfileSetup,
-    setShowProfileSetup
+    setShowProfileSetup,
+    openProfileSetup
   } = useSellerProfile();
 
   return (
@@ -33,7 +34,7 @@ function DashboardCrypto() {
         <ProfileStatusBanner
           profileData={profileData}
           loading={profileLoading}
-          onSetupProfile={() => setShowProfileSetup(true)}
+          onSetupProfile={openProfileSetup}
         />
 
         <Grid

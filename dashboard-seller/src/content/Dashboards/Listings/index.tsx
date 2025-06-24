@@ -24,7 +24,8 @@ function DashboardListings() {
     hasProfile,
     updateProfile,
     showProfileSetup,
-    setShowProfileSetup
+    setShowProfileSetup,
+    openProfileSetup
   } = useSellerProfile();
 
   return (
@@ -41,7 +42,7 @@ function DashboardListings() {
           <ProfileStatusBanner
             profileData={profileData}
             loading={profileLoading}
-            onSetupProfile={() => setShowProfileSetup(true)}
+            onSetupProfile={openProfileSetup}
           />
 
           <Grid

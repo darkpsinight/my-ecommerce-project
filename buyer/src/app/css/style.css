@@ -43,6 +43,35 @@
   animation: pulse-slow 2s ease-in-out infinite;
 }
 
+/* Animated Placeholder Transitions */
+.duration-600 {
+  transition-duration: 600ms;
+}
+
+/* Slide up animation for placeholder terms */
+@keyframes slideUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  85% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 3s ease-out infinite;
+}
+
 @import './cart-animations.css';
 
 @layer base {

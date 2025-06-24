@@ -1,14 +1,57 @@
 "use client";
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 interface HeroSearchBarProps {
   className?: string;
 }
 
+// Animated Placeholder Component
+const AnimatedPlaceholder = () => {
+  const searchTerms = [
+    "Steam keys",
+    "PlayStation codes", 
+    "Xbox Game Pass",
+    "Netflix cards",
+    "Spotify codes",
+    "Google Play cards",
+    "iTunes gift cards",
+    "Amazon vouchers",
+    "Discord Nitro",
+    "Minecraft codes"
+  ];
+
+  const [currentTermIndex, setCurrentTermIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTermIndex((prevIndex) => 
+        prevIndex === searchTerms.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 3000); // Change term every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [searchTerms.length]);
+
+  return (
+    <div className="flex items-center text-base sm:text-lg text-gray-400">
+      <span>Search for&nbsp;</span>
+      <div className="relative h-6 sm:h-7 overflow-hidden min-w-[160px]">
+        <div 
+          key={currentTermIndex}
+          className="absolute left-0 top-0 whitespace-nowrap animate-slideUp"
+        >
+          {searchTerms[currentTermIndex]}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const router = useRouter();
 
   const handleSearch = async (e: FormEvent) => {
@@ -53,14 +96,23 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
           </div>
 
           {/* Search Input - Takes all available space */}
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for Steam keys, PlayStation codes, Xbox Game Pass, gift cards..."
-            className="flex-1 min-w-0 px-2 py-3 sm:py-4 text-base sm:text-lg placeholder-gray-400 bg-transparent border-none outline-none focus:ring-0 leading-normal"
-            autoComplete="off"
-          />
+          <div className="flex-1 min-w-0 relative">
+            {!isFocused && !searchQuery && (
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none z-10">
+                <AnimatedPlaceholder />
+              </div>
+            )}
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder=""
+              className="w-full px-2 py-3 sm:py-4 text-base sm:text-lg placeholder-gray-400 bg-transparent border-none outline-none focus:ring-0 leading-normal"
+              autoComplete="off"
+            />
+          </div>
 
           {/* Search Button - Fixed width */}
           <button

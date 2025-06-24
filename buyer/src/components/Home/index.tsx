@@ -28,8 +28,8 @@ const Home = () => {
       <CategoryGrid />
       <FeaturedCarousel />
       <DigitalPromoBanner />
-      <FeatureHighlights />
       <PricingShowcase />
+      <FeatureHighlights />
       <DynamicInventory totalProducts={totalProducts} />
       <Testimonials />
       <Newsletter />

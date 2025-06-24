@@ -1,12 +1,30 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useCategories } from "@/hooks/useCategories";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from 'swiper/modules';
+
+// Import Swiper styles
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/autoplay";
 
 const CategoryGrid = () => {
   const { categories, loading, error } = useCategories();
   const [imageErrors, setImageErrors] = useState<{[key: string]: boolean}>({});
+  const sliderRef = useRef(null);
+
+  const handlePrev = useCallback(() => {
+    if (!sliderRef.current) return;
+    sliderRef.current.swiper.slidePrev();
+  }, []);
+
+  const handleNext = useCallback(() => {
+    if (!sliderRef.current) return;
+    sliderRef.current.swiper.slideNext();
+  }, []);
 
   // Digital marketplace category mappings with better icons and gradients
   const digitalCategories = [
@@ -175,9 +193,15 @@ const CategoryGrid = () => {
             <div className="h-4 bg-gray-3 rounded w-96 mx-auto animate-pulse"></div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6 md:gap-8">
+          {/* Navigation Buttons Skeleton */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <div className="w-12 h-12 bg-gray-3 rounded-full animate-pulse"></div>
+            <div className="w-12 h-12 bg-gray-3 rounded-full animate-pulse"></div>
+          </div>
+
+          <div className="flex gap-6 md:gap-8 overflow-hidden">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-              <div key={item} className="animate-pulse flex flex-col items-center space-y-4">
+              <div key={item} className="animate-pulse flex flex-col items-center space-y-4 flex-shrink-0">
                 <div className="w-24 h-24 md:w-28 md:h-28 bg-gray-3 rounded-full"></div>
                 <div className="h-4 bg-gray-3 rounded w-16"></div>
               </div>
@@ -189,7 +213,7 @@ const CategoryGrid = () => {
   }
 
   return (
-    <section className="py-12 lg:py-16 xl:py-20 bg-white">
+    <section className="py-12 lg:py-16 xl:py-20 bg-white overflow-hidden">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
         {/* Section Header */}
         <div className="text-center mb-10">
@@ -208,52 +232,132 @@ const CategoryGrid = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6 md:gap-8">
-          {getDisplayCategories().map((category, index) => (
-            <Link
-              key={category.id}
-              href={category.href}
-              className="group block text-center"
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <button 
+            onClick={handlePrev} 
+            className="group w-12 h-12 bg-white hover:bg-blue border-2 border-blue hover:border-blue-dark rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg"
+          >
+            <svg
+              className="fill-current text-blue group-hover:text-white transition-colors duration-300"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <div className="flex flex-col items-center space-y-4">
-                {/* Circular Image/Icon */}
-                <div className="relative">
-                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-gray-1 border-4 border-gray-3 group-hover:border-blue transition-all duration-300 group-hover:shadow-lg">
-                    {category.hasImage && category.imageUrl && !imageErrors[category.id] ? (
-                      <div className="relative w-full h-full">
-                        <Image
-                          src={category.imageUrl}
-                          alt={category.title}
-                          fill
-                          sizes="(max-width: 768px) 80px, 96px"
-                          className="object-cover transition-transform duration-300 group-hover:scale-110"
-                          onError={() => handleImageError(String(category.id))}
-                          priority={index < 6}
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-light-5 to-blue-light-3">
-                        {category.icon}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Hover ring effect */}
-                  <div className="absolute inset-0 w-24 h-24 md:w-28 md:h-28 rounded-full border-2 border-blue scale-0 group-hover:scale-110 transition-transform duration-300 opacity-0 group-hover:opacity-100"></div>
-                </div>
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M15.4881 4.43057C15.8026 4.70014 15.839 5.17361 15.5694 5.48811L9.98781 12L15.5694 18.5119C15.839 18.8264 15.8026 19.2999 15.4881 19.5695C15.1736 19.839 14.7001 19.8026 14.4306 19.4881L8.43056 12.4881C8.18981 12.2072 8.18981 11.7928 8.43056 11.5119L14.4306 4.51192C14.7001 4.19743 15.1736 4.161 15.4881 4.43057Z"
+                fill=""
+              />
+            </svg>
+          </button>
 
-                {/* Category Title with animated underline */}
-                <div className="relative">
-                  <h3 className="font-semibold text-sm md:text-base text-black group-hover:text-blue transition-colors duration-300">
-                    {category.title}
-                  </h3>
-                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                </div>
-              </div>
-            </Link>
-          ))}
+          <button 
+            onClick={handleNext} 
+            className="group w-12 h-12 bg-white hover:bg-blue border-2 border-blue hover:border-blue-dark rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg"
+          >
+            <svg
+              className="fill-current text-blue group-hover:text-white transition-colors duration-300"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M8.51192 4.43057C8.82641 4.161 9.29989 4.19743 9.56946 4.51192L15.5695 11.5119C15.8102 11.7928 15.8102 12.2072 15.5695 12.4881L9.56946 19.4881C9.29989 19.8026 8.82641 19.839 8.51192 19.5695C8.19743 19.2999 8.161 18.8264 8.43057 18.5119L14.0122 12L8.43057 5.48811C8.161 5.17361 8.19743 4.70014 8.51192 4.43057Z"
+                fill=""
+              />
+            </svg>
+          </button>
         </div>
 
+        {/* Categories Swiper */}
+        <Swiper
+          ref={sliderRef}
+          modules={[Autoplay, Navigation]}
+          slidesPerView={8}
+          spaceBetween={20}
+          autoplay={{
+            delay: 3000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true,
+          }}
+          loop={getDisplayCategories().length > 8}
+          breakpoints={{
+            0: {
+              slidesPerView: 2,
+              spaceBetween: 15,
+            },
+            640: {
+              slidesPerView: 3,
+              spaceBetween: 20,
+            },
+            768: {
+              slidesPerView: 4,
+              spaceBetween: 20,
+            },
+            1024: {
+              slidesPerView: 6,
+              spaceBetween: 20,
+            },
+            1200: {
+              slidesPerView: 8,
+              spaceBetween: 20,
+            },
+          }}
+          className="categories-swiper pb-2"
+        >
+          {getDisplayCategories().map((category, index) => (
+            <SwiperSlide key={category.id}>
+              <Link
+                href={category.href}
+                className="group block text-center"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  {/* Circular Image/Icon */}
+                  <div className="relative">
+                    <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-gray-1 border-4 border-gray-3 group-hover:border-blue transition-all duration-300 group-hover:shadow-lg">
+                      {category.hasImage && category.imageUrl && !imageErrors[category.id] ? (
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={category.imageUrl}
+                            alt={category.title}
+                            fill
+                            sizes="(max-width: 768px) 80px, 96px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
+                            onError={() => handleImageError(String(category.id))}
+                            priority={index < 6}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-light-5 to-blue-light-3">
+                          {category.icon}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Hover ring effect */}
+                    <div className="absolute inset-0 w-24 h-24 md:w-28 md:h-28 rounded-full border-2 border-blue scale-0 group-hover:scale-110 transition-transform duration-300 opacity-0 group-hover:opacity-100"></div>
+                  </div>
+
+                  {/* Category Title with animated underline */}
+                  <div className="relative">
+                    <h3 className="font-semibold text-sm md:text-base text-black group-hover:text-blue transition-colors duration-300">
+                      {category.title}
+                    </h3>
+                    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                  </div>
+                </div>
+              </Link>
+            </SwiperSlide>
+          ))}
+        </Swiper>
 
       </div>
     </section>

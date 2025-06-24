@@ -44,15 +44,14 @@ const Testimonials = () => {
               </p>
             </div>
 
-            {/* Testimonials with Side Navigation */}
-            <div className="relative">
-              {/* Left Arrow */}
-              <div 
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <button 
                 onClick={handlePrev} 
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 w-12 h-12 rounded-full bg-white border-2 border-blue text-blue hover:bg-blue hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-110 shadow-lg"
+                className="group w-12 h-12 bg-white hover:bg-blue border-2 border-blue hover:border-blue-dark rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg"
               >
                 <svg
-                  className="fill-current"
+                  className="fill-current text-blue group-hover:text-white transition-colors duration-300"
                   width="20"
                   height="20"
                   viewBox="0 0 24 24"
@@ -66,15 +65,14 @@ const Testimonials = () => {
                     fill=""
                   />
                 </svg>
-              </div>
+              </button>
 
-              {/* Right Arrow */}
-              <div 
+              <button 
                 onClick={handleNext} 
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 w-12 h-12 rounded-full bg-blue text-white hover:bg-blue-dark transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-110 shadow-lg"
+                className="group w-12 h-12 bg-white hover:bg-blue border-2 border-blue hover:border-blue-dark rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg"
               >
                 <svg
-                  className="fill-current"
+                  className="fill-current text-blue group-hover:text-white transition-colors duration-300"
                   width="20"
                   height="20"
                   viewBox="0 0 24 24"
@@ -88,35 +86,36 @@ const Testimonials = () => {
                     fill=""
                   />
                 </svg>
-              </div>
-
-              {/* Swiper */}
-              <Swiper
-                ref={sliderRef}
-                slidesPerView={3}
-                spaceBetween={20}
-                breakpoints={{
-                  // when window width is >= 640px
-                  0: {
-                    slidesPerView: 1,
-                  },
-                  1000: {
-                    slidesPerView: 2,
-                    // spaceBetween: 4,
-                  },
-                  // when window width is >= 768px
-                  1200: {
-                    slidesPerView: 3,
-                  },
-                }}
-              >
-                {testimonialsData.map((item, key) => (
-                  <SwiperSlide key={key}>
-                    <SingleItem testimonial={item} />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+              </button>
             </div>
+
+            {/* Testimonials Swiper */}
+            <Swiper
+              ref={sliderRef}
+              slidesPerView={3}
+              spaceBetween={20}
+              breakpoints={{
+                // when window width is >= 640px
+                0: {
+                  slidesPerView: 1,
+                },
+                1000: {
+                  slidesPerView: 2,
+                  // spaceBetween: 4,
+                },
+                // when window width is >= 768px
+                1200: {
+                  slidesPerView: 3,
+                },
+              }}
+              className="testimonials-swiper"
+            >
+              {testimonialsData.map((item, key) => (
+                <SwiperSlide key={key}>
+                  <SingleItem testimonial={item} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
         </div>
       </div>

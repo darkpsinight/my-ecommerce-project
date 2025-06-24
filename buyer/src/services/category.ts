@@ -16,9 +16,15 @@ export const getCategories = async (): Promise<Category[] | null> => {
   try {
     const response = await api.get('/public/categories');
 
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    // Type-safe response handling
+    const responseData = response.data as {
+      success?: boolean;
+      data?: any[];
+    };
+
+    if (responseData && responseData.success && Array.isArray(responseData.data)) {
       // Transform the data to match our frontend Category type
-      return response.data.data.map((category: any) => {
+      return responseData.data.map((category: any) => {
         // Handle image URL - ensure it's properly formatted or use fallback
         let imageUrl = category.imageUrl;
 

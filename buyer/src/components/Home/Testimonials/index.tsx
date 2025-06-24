@@ -36,86 +36,87 @@ const Testimonials = () => {
                 </span>
                 <div className="w-2 h-2 bg-blue rounded-full animate-pulse"></div>
               </div>
-              <h2 className="font-bold text-2xl lg:text-heading-4 text-dark mb-4">
+              <h2 className="font-bold text-2xl lg:text-heading-4 text-black mb-4">
                 What Our <span className="text-blue">Happy Customers</span> Say
               </h2>
-              <p className="text-dark-4 text-lg max-w-[600px] mx-auto">
+              <p className="text-black text-lg max-w-[600px] mx-auto">
                 Join thousands of satisfied buyers who trust us for their digital code needs
               </p>
             </div>
 
-            <div className="flex items-center justify-center mb-8">
-              <div className="flex items-center gap-4">
-
-                <div 
-                  onClick={handlePrev} 
-                  className="w-12 h-12 rounded-full bg-white border-2 border-blue text-blue hover:bg-blue hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-110 shadow-lg"
+            {/* Testimonials with Side Navigation */}
+            <div className="relative">
+              {/* Left Arrow */}
+              <div 
+                onClick={handlePrev} 
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 w-12 h-12 rounded-full bg-white border-2 border-blue text-blue hover:bg-blue hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-110 shadow-lg"
+              >
+                <svg
+                  className="fill-current"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <svg
-                    className="fill-current"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M15.4881 4.43057C15.8026 4.70014 15.839 5.17361 15.5694 5.48811L9.98781 12L15.5694 18.5119C15.839 18.8264 15.8026 19.2999 15.4881 19.5695C15.1736 19.839 14.7001 19.8026 14.4306 19.4881L8.43056 12.4881C8.18981 12.2072 8.18981 11.7928 8.43056 11.5119L14.4306 4.51192C14.7001 4.19743 15.1736 4.161 15.4881 4.43057Z"
-                      fill=""
-                    />
-                  </svg>
-                </div>
-
-                <div 
-                  onClick={handleNext} 
-                  className="w-12 h-12 rounded-full bg-blue text-white hover:bg-blue-dark transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-110 shadow-lg"
-                >
-                  <svg
-                    className="fill-current"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M8.51192 4.43057C8.82641 4.161 9.29989 4.19743 9.56946 4.51192L15.5695 11.5119C15.8102 11.7928 15.8102 12.2072 15.5695 12.4881L9.56946 19.4881C9.29989 19.8026 8.82641 19.839 8.51192 19.5695C8.19743 19.2999 8.161 18.8264 8.43057 18.5119L14.0122 12L8.43057 5.48811C8.161 5.17361 8.19743 4.70014 8.51192 4.43057Z"
-                      fill=""
-                    />
-                  </svg>
-                </div>
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M15.4881 4.43057C15.8026 4.70014 15.839 5.17361 15.5694 5.48811L9.98781 12L15.5694 18.5119C15.839 18.8264 15.8026 19.2999 15.4881 19.5695C15.1736 19.839 14.7001 19.8026 14.4306 19.4881L8.43056 12.4881C8.18981 12.2072 8.18981 11.7928 8.43056 11.5119L14.4306 4.51192C14.7001 4.19743 15.1736 4.161 15.4881 4.43057Z"
+                    fill=""
+                  />
+                </svg>
               </div>
-            </div>
 
-            <Swiper
-              ref={sliderRef}
-              slidesPerView={3}
-              spaceBetween={20}
-              breakpoints={{
-                // when window width is >= 640px
-                0: {
-                  slidesPerView: 1,
-                },
-                1000: {
-                  slidesPerView: 2,
-                  // spaceBetween: 4,
-                },
-                // when window width is >= 768px
-                1200: {
-                  slidesPerView: 3,
-                },
-              }}
-            >
-              {testimonialsData.map((item, key) => (
-                <SwiperSlide key={key}>
-                  <SingleItem testimonial={item} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+              {/* Right Arrow */}
+              <div 
+                onClick={handleNext} 
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 w-12 h-12 rounded-full bg-blue text-white hover:bg-blue-dark transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-110 shadow-lg"
+              >
+                <svg
+                  className="fill-current"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M8.51192 4.43057C8.82641 4.161 9.29989 4.19743 9.56946 4.51192L15.5695 11.5119C15.8102 11.7928 15.8102 12.2072 15.5695 12.4881L9.56946 19.4881C9.29989 19.8026 8.82641 19.839 8.51192 19.5695C8.19743 19.2999 8.161 18.8264 8.43057 18.5119L14.0122 12L8.43057 5.48811C8.161 5.17361 8.19743 4.70014 8.51192 4.43057Z"
+                    fill=""
+                  />
+                </svg>
+              </div>
+
+              {/* Swiper */}
+              <Swiper
+                ref={sliderRef}
+                slidesPerView={3}
+                spaceBetween={20}
+                breakpoints={{
+                  // when window width is >= 640px
+                  0: {
+                    slidesPerView: 1,
+                  },
+                  1000: {
+                    slidesPerView: 2,
+                    // spaceBetween: 4,
+                  },
+                  // when window width is >= 768px
+                  1200: {
+                    slidesPerView: 3,
+                  },
+                }}
+              >
+                {testimonialsData.map((item, key) => (
+                  <SwiperSlide key={key}>
+                    <SingleItem testimonial={item} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
           </div>
         </div>
       </div>

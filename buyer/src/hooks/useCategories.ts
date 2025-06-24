@@ -19,9 +19,9 @@ export function useCategories() {
   const [loading, setLoading] = useState<boolean>(!categoriesCache);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // If we already have cached data and it's not expired, use it
-    if (categoriesCache && Date.now() - categoriesCache.timestamp < CACHE_DURATION) {
+  const fetchCategories = async (force: boolean = false) => {
+    // If we already have cached data and it's not expired and not forced, use it
+    if (!force && categoriesCache && Date.now() - categoriesCache.timestamp < CACHE_DURATION) {
       setCategories(categoriesCache.data);
       setLoading(false);
       return;
@@ -35,59 +35,70 @@ export function useCategories() {
     // Set flag to prevent duplicate requests
     isRequestInProgress = true;
     
-    const fetchCategories = async () => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+      const response = await axios.get(`${API_URL}/public/categories`);
       
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
-        const response = await axios.get(`${API_URL}/public/categories`);
-        
-        if (response.data && response.data.success && Array.isArray(response.data.data)) {
-          // Transform the data to match our frontend Category type
-          const transformedData = response.data.data.map((category: any) => {
-            // Handle image URL - ensure it's properly formatted or use fallback
-            let imageUrl = category.imageUrl;
-            
-            // If imageUrl is null/undefined or empty, use fallback
-            if (!imageUrl) {
-              imageUrl = `/images/categories/categories-01.png`;
-            } 
-            // If it's a relative path, ensure it starts with /
-            else if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
-              imageUrl = `/${imageUrl}`;
-            }
-            
-            return {
-              id: category._id,
-              title: category.name,
-              img: imageUrl,
-              description: category.description
-            };
-          });
+      // Type-safe response handling
+      const responseData = response.data as {
+        success?: boolean;
+        data?: any[];
+      };
+      
+      if (responseData && responseData.success && Array.isArray(responseData.data)) {
+        // Transform the data to match our frontend Category type
+        const transformedData = responseData.data.map((category: any) => {
+          // Handle image URL - ensure it's properly formatted or use fallback
+          let imageUrl = category.imageUrl;
           
-          // Update the cache
-          categoriesCache = {
-            data: transformedData,
-            timestamp: Date.now()
+          // If imageUrl is null/undefined or empty, use fallback
+          if (!imageUrl) {
+            imageUrl = `/images/categories/categories-01.png`;
+          } 
+          // If it's a relative path, ensure it starts with /
+          else if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+            imageUrl = `/${imageUrl}`;
+          }
+          
+          return {
+            id: category._id,
+            title: category.name,
+            img: imageUrl,
+            imageUrl: imageUrl, // Keep both for compatibility
+            description: category.description
           };
-          
-          setCategories(transformedData);
-        } else {
-          setError('Invalid data format received from server');
-        }
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to fetch categories');
-      } finally {
-        setLoading(false);
-        // Reset the flag when the request is complete
-        isRequestInProgress = false;
+        });
+        
+        // Update the cache
+        categoriesCache = {
+          data: transformedData,
+          timestamp: Date.now()
+        };
+        
+        setCategories(transformedData);
+      } else {
+        setError('Invalid data format received from server');
       }
-    };
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      setError('Failed to fetch categories');
+    } finally {
+      setLoading(false);
+      // Reset the flag when the request is complete
+      isRequestInProgress = false;
+    }
+  };
 
+  const refetch = () => {
+    fetchCategories(true);
+  };
+
+  useEffect(() => {
     fetchCategories();
   }, []);
 
-  return { categories, loading, error };
+  return { categories, loading, error, refetch };
 }

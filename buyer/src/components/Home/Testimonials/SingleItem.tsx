@@ -24,7 +24,7 @@ const SingleItem = ({ testimonial }: { testimonial: Testimonial }) => {
 
       {/* Review Text */}
       <div className="relative">
-        <p className="text-dark-2 mb-8 leading-relaxed text-base italic">
+        <p className="text-black mb-8 leading-relaxed text-base italic">
           &ldquo;{testimonial.review}&rdquo;
         </p>
       </div>
@@ -47,10 +47,10 @@ const SingleItem = ({ testimonial }: { testimonial: Testimonial }) => {
         </div>
 
         <div className="flex-1">
-          <h3 className="font-bold text-dark text-lg group-hover:text-blue transition-colors duration-300">
+          <h3 className="font-bold text-black text-lg group-hover:text-blue transition-colors duration-300">
             {testimonial.authorName}
           </h3>
-          <p className="text-dark-4 text-sm font-medium">{testimonial.authorRole}</p>
+          <p className="text-black text-sm font-medium">{testimonial.authorRole}</p>
           <div className="flex items-center gap-1 mt-1">
             <div className="w-2 h-2 bg-green rounded-full"></div>
             <span className="text-green text-xs font-medium">Verified Buyer</span>

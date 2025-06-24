@@ -21,6 +21,7 @@ interface FeaturedProduct {
   tag: 'New' | 'Bestseller' | 'Hot Deal';
   tagColor: string;
   discount?: number;
+  imageUrl?: string;
 }
 
 const FeaturedCarousel = () => {
@@ -34,7 +35,7 @@ const FeaturedCarousel = () => {
   const featuredProducts: FeaturedProduct[] = [
     {
       id: '1',
-      title: 'Steam Wallet Code',
+      title: 'Steam Wallet Code $50',
       price: 49.99,
       originalPrice: 59.99,
       region: 'Global',
@@ -43,11 +44,12 @@ const FeaturedCarousel = () => {
       platformIcon: '🎮',
       tag: 'Bestseller',
       tagColor: 'bg-green text-white',
-      discount: 17
+      discount: 17,
+      imageUrl: '/images/products/steam-wallet.jpg'
     },
     {
       id: '2',
-      title: 'PlayStation Plus Premium',
+      title: 'PlayStation Plus Premium 1 Month',
       price: 29.99,
       originalPrice: 39.99,
       region: 'US/EU',
@@ -56,22 +58,24 @@ const FeaturedCarousel = () => {
       platformIcon: '🎯',
       tag: 'New',
       tagColor: 'bg-blue text-white',
-      discount: 25
+      discount: 25,
+      imageUrl: '/images/products/ps-plus.jpg'
     },
     {
       id: '3',
-      title: 'Xbox Game Pass Ultimate',
+      title: 'Xbox Game Pass Ultimate 3 Months',
       price: 14.99,
       region: 'Global',
       regionFlag: '🌍',
       platform: 'Xbox',
       platformIcon: '🎪',
       tag: 'Hot Deal',
-      tagColor: 'bg-orange text-white'
+      tagColor: 'bg-orange text-white',
+      imageUrl: '/images/products/xbox-gamepass.jpg'
     },
     {
       id: '4',
-      title: 'Amazon Gift Card',
+      title: 'Amazon Gift Card $100',
       price: 99.99,
       originalPrice: 100.00,
       region: 'US',
@@ -80,18 +84,22 @@ const FeaturedCarousel = () => {
       platformIcon: '🎁',
       tag: 'Bestseller',
       tagColor: 'bg-green text-white',
-      discount: 1
+      discount: 1,
+      imageUrl: '/images/products/amazon-gift.jpg'
     },
     {
       id: '5',
-      title: 'Google Play Gift Card',
-      price: 24.99,
+      title: 'Netflix Gift Card $25',
+      price: 23.99,
+      originalPrice: 25.00,
       region: 'Global',
       regionFlag: '🌍',
-      platform: 'Google',
-      platformIcon: '📱',
+      platform: 'Netflix',
+      platformIcon: '🎬',
       tag: 'New',
-      tagColor: 'bg-blue text-white'
+      tagColor: 'bg-red text-white',
+      discount: 4,
+      imageUrl: '/images/products/netflix-gift.jpg'
     }
   ];
 
@@ -168,8 +176,8 @@ const FeaturedCarousel = () => {
         <div className="relative">
           <Swiper
             modules={[Autoplay, Navigation]}
-            slidesPerView={3}
-            spaceBetween={24}
+            slidesPerView={5}
+            spaceBetween={20}
             autoplay={{
               delay: 5000,
               disableOnInteraction: false,
@@ -183,82 +191,90 @@ const FeaturedCarousel = () => {
                 slidesPerView: 1,
                 spaceBetween: 16,
               },
-              768: {
+              640: {
                 slidesPerView: 2,
-                spaceBetween: 20,
+                spaceBetween: 16,
+              },
+              768: {
+                slidesPerView: 3,
+                spaceBetween: 18,
               },
               1024: {
-                slidesPerView: 3,
-                spaceBetween: 24,
+                slidesPerView: 4,
+                spaceBetween: 20,
+              },
+              1280: {
+                slidesPerView: 5,
+                spaceBetween: 20,
               },
             }}
             className="featured-products-carousel"
           >
             {featuredProducts.map((product) => (
               <SwiperSlide key={product.id}>
-                <div className="bg-gradient-to-br from-white to-blue-light-5 rounded-2xl p-6 border border-blue-light-3 hover:border-blue hover:shadow-2xl transition-all duration-500 group h-[320px] flex flex-col justify-between relative overflow-hidden hover:scale-105 hover:-translate-y-2">
-                  {/* Background gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-light-5 via-purple-50 to-green-light-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  
-                  {/* Decorative elements */}
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-light-4 to-purple-100 rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500 opacity-20"></div>
-                  
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-2 bg-gray-1 px-3 py-1.5 rounded-full">
-                        <span className="text-lg">{product.regionFlag}</span>
-                        <span className="text-sm text-dark-4 font-medium">
-                          {product.region}
-                        </span>
-                      </div>
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${product.tagColor} shadow-sm animate-pulse`}>
+                <Link href={`/shop-details/${product.id}`} className="block">
+                  <div className="bg-white rounded-2xl border border-gray-3 hover:border-blue hover:shadow-2xl transition-all duration-500 group h-[300px] relative overflow-hidden hover:scale-105 hover:-translate-y-2 cursor-pointer">
+                    {/* Top Tag */}
+                    <div className="absolute top-3 left-3 z-20">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${product.tagColor} shadow-lg`}>
                         {product.tag}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-2xl">{product.platformIcon}</span>
-                      <span className="text-sm bg-blue-light-5 text-blue px-3 py-1.5 rounded-full font-medium">
-                        {product.platform}
-                      </span>
+                    {/* Region Tag */}
+                    <div className="absolute top-3 right-3 z-20">
+                      <div className="flex items-center gap-1 bg-white bg-opacity-90 px-2 py-1 rounded-full shadow-lg">
+                        <span className="text-xs">{product.regionFlag}</span>
+                        <span className="text-xs text-black font-medium">
+                          {product.region}
+                        </span>
+                      </div>
                     </div>
 
-                    <h3 className="font-semibold text-lg text-dark group-hover:text-blue transition-colors mb-4 line-clamp-2">
-                      {product.title}
-                    </h3>
+                    {/* Image Placeholder */}
+                    <div className="relative h-[180px] bg-gradient-to-br from-blue-light-5 to-purple-50 flex items-center justify-center group-hover:from-blue-light-4 group-hover:to-purple-100 transition-all duration-500">
+                      <div className="text-6xl opacity-50 group-hover:opacity-70 transition-opacity">
+                        {product.platformIcon}
+                                  </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    </div>
 
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-dark">
+                    {/* Content */}
+                    <div className="p-4">
+                      {/* Platform Badge */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm bg-blue-light-5 text-blue px-2 py-1 rounded-full font-medium">
+                          {product.platform}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="font-semibold text-base text-black group-hover:text-blue transition-colors mb-3 line-clamp-2">
+                        {product.title}
+                      </h3>
+
+                      {/* Price */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-bold text-green">
                           ${product.price}
                         </span>
                         {product.originalPrice && (
-                          <span className="text-lg text-dark-4 line-through">
+                          <span className="text-sm text-gray-5 line-through">
                             ${product.originalPrice}
                           </span>
                         )}
-                      </div>
-                      
-                      {product.discount && (
-                        <div className="flex items-center gap-2 flex-wrap">
+                        {product.discount && (
                           <span className="text-xs bg-red text-white px-2 py-1 rounded-full font-semibold">
-                            {product.discount}% OFF
+                            -{product.discount}%
                           </span>
-                          <span className="text-xs text-green font-semibold bg-green-light-6 px-2 py-1 rounded-full">
-                            Save ${((product.originalPrice || 0) - product.price).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <Link
-                    href={`/shop-details/${product.id}`}
-                    className="relative z-10 w-full bg-blue hover:bg-blue-dark text-white font-semibold py-3.5 rounded-lg transition-all duration-300 hover:scale-105 text-center mt-4 block shadow-lg hover:shadow-xl"
-                  >
-                    View Details
-                  </Link>
-                </div>
+                    {/* Hover Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-light-5 to-purple-50 opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
+                  </div>
+                </Link>
               </SwiperSlide>
             ))}
           </Swiper>

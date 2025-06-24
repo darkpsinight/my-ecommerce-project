@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import HeroSearchBar from "./HeroSearchBar";
+import DynamicSearchDemo from "./DynamicSearchDemo";
 
 const NewHero = () => {
   const [mounted, setMounted] = useState(false);
@@ -10,7 +12,7 @@ const NewHero = () => {
   }, []);
 
   return (
-    <section className="relative h-screen max-h-[70vh] pt-[170px] sm:pt-[110px] lg:pt-[110px] overflow-hidden bg-gradient-to-br from-blue-light-5 via-purple-100 to-green-light-6 flex items-center justify-center">
+    <section className="relative h-screen max-h-[85vh] sm:max-h-[75vh] lg:max-h-[70vh] pt-[300px] sm:pt-[220px] lg:pt-[160px] overflow-hidden bg-gradient-to-br from-blue-light-5 via-purple-100 to-green-light-6 flex items-center justify-center">
       {/* Abstract Digital Pattern Background */}
       <div className="absolute inset-0 opacity-10">
         <svg
@@ -63,16 +65,17 @@ const NewHero = () => {
 
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0 z-10 relative">
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-heading-2 font-bold text-dark mb-4 leading-tight">
-            Instant Digital Codes,{" "}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-heading-2 font-bold text-dark mb-6 leading-tight">
+            Instant Digital Codes{" "}<span className="text-dark-4">∙</span>{" "}
             <span className="text-blue">Any Region</span>{" "}
             <span className="text-dark-4">∙</span>{" "}
-            <span className="text-green">Verified Sellers</span>{" "}
-            <span className="text-dark-4">∙</span>{" "}
-            <span className="text-orange">24/7 Support</span>
+            <span className="text-green">Verified Sellers</span>
           </h1>
+
+          {/* Hero Search Bar */}
+          <HeroSearchBar className="mb-8" />
           
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/shop-without-sidebar"
               className="inline-flex items-center justify-center px-8 py-4 bg-blue hover:bg-blue-dark text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl text-lg shadow-lg"

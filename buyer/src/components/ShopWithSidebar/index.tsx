@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import CustomSelect from "./CustomSelect";
 import CategoryDropdown from "./CategoryDropdown";
@@ -234,9 +235,11 @@ const ShopWithSidebar = () => {
               <div className="relative">
                 <div className="w-20 h-20 rounded-full border-4 border-white bg-white shadow-1 overflow-hidden">
                   {sellerInfo.profileImageUrl ? (
-                    <img
+                    <Image
                       src={sellerInfo.profileImageUrl}
                       alt={`${sellerInfo.nickname} profile`}
+                      width={80}
+                      height={80}
                       className="w-full h-full object-cover"
                     />
                   ) : (

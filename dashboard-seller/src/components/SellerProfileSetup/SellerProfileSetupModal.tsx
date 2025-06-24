@@ -107,7 +107,11 @@ const SellerProfileSetupModal: React.FC<SellerProfileSetupModalProps> = ({
 
   const isValidUrl = (url: string): boolean => {
     try {
-      new URL(url);
+      // Add protocol if missing
+      const urlToTest = url.startsWith('http://') || url.startsWith('https://') 
+        ? url 
+        : `https://${url}`;
+      new URL(urlToTest);
       return true;
     } catch {
       return false;

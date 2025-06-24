@@ -27,7 +27,8 @@ const SingleSellerListItem: React.FC<SingleSellerListItemProps> = ({ seller }) =
   };
 
   return (
-    <div className="group relative overflow-hidden rounded-xl bg-white shadow-1 hover:shadow-2 transition-all duration-300 border border-gray-3/20 hover:border-green/30">
+    <Link href={`/marketplace/${seller.externalId || seller._id}`} className="block">
+      <div className="group relative overflow-hidden rounded-xl bg-white shadow-1 hover:shadow-2 transition-all duration-300 border-2 border-green/20 hover:border-green cursor-pointer">
       <div className="flex gap-6 p-6">
         {/* Left Section - Profile Image */}
         <div className="flex-shrink-0">
@@ -165,8 +166,9 @@ const SingleSellerListItem: React.FC<SingleSellerListItemProps> = ({ seller }) =
         </div>
 
 
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

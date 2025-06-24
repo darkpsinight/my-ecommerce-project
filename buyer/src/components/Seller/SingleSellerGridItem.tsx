@@ -26,7 +26,8 @@ const SingleSellerGridItem: React.FC<SingleSellerGridItemProps> = ({ seller }) =
   };
 
   return (
-    <div className="group relative overflow-hidden rounded-xl bg-white shadow-1 hover:shadow-2 transition-all duration-300 border border-gray-3/20 hover:border-green/30">
+    <Link href={`/marketplace/${seller.externalId || seller._id}`} className="block">
+      <div className="group relative overflow-hidden rounded-xl bg-white shadow-1 hover:shadow-2 transition-all duration-300 border-2 border-green/20 hover:border-green cursor-pointer">
       {/* Banner Image */}
       <div className="relative h-24 bg-gradient-to-r from-green-light-5 to-blue-light-6 overflow-hidden">
         {seller.bannerImageUrl ? (
@@ -129,8 +130,9 @@ const SingleSellerGridItem: React.FC<SingleSellerGridItemProps> = ({ seller }) =
         )}
 
 
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

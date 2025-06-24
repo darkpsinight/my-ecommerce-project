@@ -8,8 +8,18 @@ import AccountBalance from './AccountBalance';
 import Wallets from './Wallets';
 import AccountSecurity from './AccountSecurity';
 import WatchList from './WatchList';
+import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
+import { useSellerProfile } from 'src/hooks/useSellerProfile';
 
 function DashboardCrypto() {
+  const {
+    profileData,
+    loading: profileLoading,
+    updateProfile,
+    showProfileSetup,
+    setShowProfileSetup
+  } = useSellerProfile();
+
   return (
     <>
       <Helmet>
@@ -19,6 +29,13 @@ function DashboardCrypto() {
         <PageHeader />
       </PageTitleWrapper>
       <Container maxWidth="lg">
+        {/* Seller Profile Status Banner */}
+        <ProfileStatusBanner
+          profileData={profileData}
+          loading={profileLoading}
+          onSetupProfile={() => setShowProfileSetup(true)}
+        />
+
         <Grid
           container
           direction="row"
@@ -39,6 +56,14 @@ function DashboardCrypto() {
             <WatchList />
           </Grid>
         </Grid>
+
+        {/* Seller Profile Setup Modal */}
+        <SellerProfileSetupModal
+          open={showProfileSetup}
+          onClose={() => setShowProfileSetup(false)}
+          onSubmit={updateProfile}
+          loading={profileLoading}
+        />
       </Container>
       <Footer />
     </>

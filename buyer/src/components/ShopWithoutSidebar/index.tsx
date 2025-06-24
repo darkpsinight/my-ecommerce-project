@@ -1,58 +1,64 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import SingleGridItem from "../Shop/SingleGridItem";
-import SingleListItem from "../Shop/SingleListItem";
+import SingleSellerGridItem from "../Seller/SingleSellerGridItem";
+import SingleSellerListItem from "../Seller/SingleSellerListItem";
 import CustomSelect from "../ShopWithSidebar/CustomSelect";
 import PageContainer from "../Common/PageContainer";
-import ProductCardSkeleton from "../Common/ProductCardSkeleton";
-import { getProducts } from "@/services/product";
-import { Product } from "@/types/product";
+import SellerCardSkeleton from "../Common/SellerCardSkeleton";
+import { getSellers } from "@/services/seller";
+import { Seller } from "@/types/seller";
 
 const ShopWithoutSidebar = () => {
-  const [productStyle, setProductStyle] = useState("grid");
-  const [products, setProducts] = useState<Product[]>([]);
+  const [sellerStyle, setSellerStyle] = useState("grid");
+  const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalSellers, setTotalSellers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch products from API
+  // Fetch sellers from API
   useEffect(() => {
-    const fetchProductsData = async () => {
+    const fetchSellersData = async () => {
       setLoading(true);
       try {
         // Prepare filter parameters
         const params: any = {
           page: currentPage,
-          limit: 24, // Show more products on this page
-          status: "active", // Only show active listings
+          limit: 24, // Show more sellers on this page
+          sort: "newest", // Default sort
         };
 
-        const result = await getProducts(params);
+        // Add search if provided
+        if (searchQuery.trim()) {
+          params.search = searchQuery.trim();
+        }
+
+        const result = await getSellers(params);
 
         if (result) {
-          setProducts(result.products);
-          setTotalProducts(result.total);
+          setSellers(result.sellers);
+          setTotalSellers(result.total);
           setTotalPages(result.totalPages);
         } else {
-          console.error("Failed to fetch products");
-          setProducts([]);
+          console.error("Failed to fetch sellers");
+          setSellers([]);
         }
       } catch (error) {
-        console.error("Error fetching products:", error);
-        setProducts([]);
+        console.error("Error fetching sellers:", error);
+        setSellers([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProductsData();
-  }, [currentPage]);
+    fetchSellersData();
+  }, [currentPage, searchQuery]);
 
   const options = [
-    { label: "Latest Products", value: "0" },
-    { label: "Best Selling", value: "1" },
-    { label: "Old Products", value: "2" },
+    { label: "Newest Sellers", value: "newest" },
+    { label: "Oldest Sellers", value: "oldest" },
+    { label: "Name (A-Z)", value: "name" },
   ];
 
   return (
@@ -64,19 +70,19 @@ const ShopWithoutSidebar = () => {
           <div className="relative max-w-[1400px] mx-auto px-4 sm:px-8 text-center">
             <div className="inline-flex items-center gap-2 bg-green-light-5 text-green-dark px-4 py-2 rounded-full text-sm font-medium mb-6">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
               </svg>
-              Complete Digital Marketplace
+              Trusted Sellers Marketplace
             </div>
             <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-dark mb-6">
-              All Digital Codes{" "}
+              Verified Digital{" "}
               <span className="bg-gradient-to-r from-green to-blue bg-clip-text text-transparent">
-                In One Place
+                Marketplaces
               </span>
             </h1>
             <p className="text-xl lg:text-2xl text-dark-3 max-w-3xl mx-auto mb-10">
-              Browse our complete collection of digital codes, game keys,
-              software licenses, and gift cards from verified sellers worldwide
+              Discover trusted sellers and digital marketplaces offering the best deals on 
+              digital codes, game keys, software licenses, and gift cards worldwide
             </p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-2xl mx-auto">
               <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl">
@@ -90,7 +96,7 @@ const ShopWithoutSidebar = () => {
                   </svg>
                 </div>
                 <p className="font-medium text-dark text-sm">
-                  Instant Delivery
+                  Verified Markets
                 </p>
               </div>
               <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl">
@@ -100,11 +106,11 @@ const ShopWithoutSidebar = () => {
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                   </svg>
                 </div>
                 <p className="font-medium text-dark text-sm">
-                  Verified Sellers
+                  Trusted Sellers
                 </p>
               </div>
               <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl">
@@ -114,10 +120,10 @@ const ShopWithoutSidebar = () => {
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
-                    <path d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
                   </svg>
                 </div>
-                <p className="font-medium text-dark text-sm">Best Prices</p>
+                <p className="font-medium text-dark text-sm">Wide Selection</p>
               </div>
               <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl">
                 <div className="w-12 h-12 bg-gradient-to-r from-purple to-purple-dark rounded-lg flex items-center justify-center mx-auto mb-2">
@@ -128,12 +134,12 @@ const ShopWithoutSidebar = () => {
                   >
                     <path
                       fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z"
                       clipRule="evenodd"
                     />
                   </svg>
                 </div>
-                <p className="font-medium text-dark text-sm">24/7 Support</p>
+                <p className="font-medium text-dark text-sm">Quality Service</p>
               </div>
             </div>
           </div>
@@ -155,13 +161,13 @@ const ShopWithoutSidebar = () => {
                         <p className="text-dark-3">
                           Showing{" "}
                           <span className="font-semibold text-dark">
-                            {products.length}
+                            {sellers.length}
                           </span>{" "}
                           of{" "}
                           <span className="font-semibold text-dark">
-                            {totalProducts}
+                            {totalSellers}
                           </span>{" "}
-                          products
+                          marketplaces
                         </p>
                       </div>
                     </div>
@@ -173,10 +179,10 @@ const ShopWithoutSidebar = () => {
                       </span>
                       <div className="flex items-center bg-gray-1 rounded-lg p-1">
                         <button
-                          onClick={() => setProductStyle("grid")}
-                          aria-label="button for product grid tab"
+                          onClick={() => setSellerStyle("grid")}
+                          aria-label="button for seller grid tab"
                           className={`${
-                            productStyle === "grid"
+                            sellerStyle === "grid"
                               ? "bg-gradient-to-r from-green to-green-dark text-white shadow-1"
                               : "text-dark-3 hover:text-dark"
                           } flex items-center justify-center w-10 h-8 rounded-md border-0 transition-all duration-200 hover:bg-white/70`}
@@ -217,10 +223,10 @@ const ShopWithoutSidebar = () => {
                         </button>
 
                         <button
-                          onClick={() => setProductStyle("list")}
-                          aria-label="button for product list tab"
+                          onClick={() => setSellerStyle("list")}
+                          aria-label="button for seller list tab"
                           className={`${
-                            productStyle === "list"
+                            sellerStyle === "list"
                               ? "bg-gradient-to-r from-green to-green-dark text-white shadow-1"
                               : "text-dark-3 hover:text-dark"
                           } flex items-center justify-center w-10 h-8 rounded-md border-0 transition-all duration-200 hover:bg-white/70`}
@@ -252,36 +258,36 @@ const ShopWithoutSidebar = () => {
                   </div>
                 </div>
 
-                {/* Products Grid Tab Content Start */}
+                {/* Sellers Grid Tab Content Start */}
                 {loading ? (
                   <div
                     className={`${
-                      productStyle === "grid"
-                        ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-x-4 sm:gap-x-5 gap-y-8"
+                      sellerStyle === "grid"
+                        ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 sm:gap-x-5 gap-y-8"
                         : "flex flex-col gap-7.5"
                     }`}
                   >
                     {/* Generate 24 skeleton cards for the without sidebar view */}
                     {[...Array(24)].map((_, index) => (
-                      <ProductCardSkeleton
+                      <SellerCardSkeleton
                         key={index}
-                        gridView={productStyle === "grid"}
+                        gridView={sellerStyle === "grid"}
                       />
                     ))}
                   </div>
-                ) : products.length > 0 ? (
+                ) : sellers.length > 0 ? (
                   <div
                     className={`${
-                      productStyle === "grid"
-                        ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-x-4 sm:gap-x-5 gap-y-8"
+                      sellerStyle === "grid"
+                        ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 sm:gap-x-5 gap-y-8"
                         : "flex flex-col gap-7.5"
                     }`}
                   >
-                    {products.map((item, key) =>
-                      productStyle === "grid" ? (
-                        <SingleGridItem item={item} key={key} />
+                    {sellers.map((seller, key) =>
+                      sellerStyle === "grid" ? (
+                        <SingleSellerGridItem seller={seller} key={key} />
                       ) : (
-                        <SingleListItem item={item} key={key} />
+                        <SingleSellerListItem seller={seller} key={key} />
                       )
                     )}
                   </div>
@@ -332,7 +338,7 @@ const ShopWithoutSidebar = () => {
                 {/* Products Grid Tab Content End */}
 
                 {/* Enhanced Pagination */}
-                {!loading && products.length > 0 && totalPages > 1 && (
+                {!loading && sellers.length > 0 && totalPages > 1 && (
                   <div className="flex justify-center mt-12">
                     <div className="flex items-center bg-white rounded-xl shadow-2 p-2 gap-1">
                       <button

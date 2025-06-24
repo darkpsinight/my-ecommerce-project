@@ -1,13 +1,15 @@
 import { Helmet } from 'react-helmet-async';
 import PageHeader from './PageHeader';
 import PageTitleWrapper from 'src/components/PageTitleWrapper';
-import { Container, Grid } from '@mui/material';
+import { Container, Grid, Box } from '@mui/material';
 import Footer from 'src/components/Footer';
 
 import ListingsTable from './ListingsTable';
 import ListingsSummary from './ListingsSummary';
 import ListingsActions from './ListingsActions';
 import { ListingsProvider } from './context/ListingsContext';
+import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
+import { useSellerProfile } from 'src/hooks/useSellerProfile';
 
 import { useState } from 'react';
 
@@ -16,6 +18,15 @@ import './styles.css';
 
 function DashboardListings() {
   const [selected, setSelected] = useState<string[]>([]);
+  const {
+    profileData,
+    loading: profileLoading,
+    hasProfile,
+    updateProfile,
+    showProfileSetup,
+    setShowProfileSetup
+  } = useSellerProfile();
+
   return (
     <>
       <Helmet>
@@ -26,6 +37,13 @@ function DashboardListings() {
           <PageHeader />
         </PageTitleWrapper>
         <Container maxWidth="lg">
+          {/* Seller Profile Status Banner */}
+          <ProfileStatusBanner
+            profileData={profileData}
+            loading={profileLoading}
+            onSetupProfile={() => setShowProfileSetup(true)}
+          />
+
           <Grid
             container
             direction="row"
@@ -44,6 +62,14 @@ function DashboardListings() {
             </Grid>
           </Grid>
         </Container>
+
+        {/* Seller Profile Setup Modal */}
+        <SellerProfileSetupModal
+          open={showProfileSetup}
+          onClose={() => setShowProfileSetup(false)}
+          onSubmit={updateProfile}
+          loading={profileLoading}
+        />
       </ListingsProvider>
       <Footer />
     </>

@@ -1,6 +1,6 @@
 const { configCache } = require("../services/configCache");
 const { Category } = require("../models/category");
-const { getPublicSellerProfileById } = require("../handlers/publicSellerProfileHandler");
+const { getPublicSellerProfileById, getAllPublicSellerProfiles } = require("../handlers/publicSellerProfileHandler");
 
 async function publicRoutes(fastify, options) {
   // Get all public configs
@@ -118,6 +118,84 @@ async function publicRoutes(fastify, options) {
     }
   });
 
+  // Get all seller profiles (public endpoint)
+  fastify.get("/sellers", {
+    schema: {
+      querystring: {
+        type: "object",
+        properties: {
+          page: { type: "integer", minimum: 1, default: 1 },
+          limit: { type: "integer", minimum: 1, maximum: 100, default: 24 },
+          search: { type: "string" },
+          sort: { type: "string", enum: ["newest", "oldest", "name"], default: "newest" }
+        }
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                sellers: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      nickname: { type: "string" },
+                      profileImageUrl: { type: "string" },
+                      bannerImageUrl: { type: "string" },
+                      marketName: { type: "string" },
+                      about: { type: "string" },
+                      badges: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            name: { type: "string" },
+                            description: { type: "string" },
+                            icon: { type: "string" },
+                            earnedAt: { type: "string" }
+                          }
+                        }
+                      },
+                      enterpriseDetails: {
+                        type: "object",
+                        properties: {
+                          companyName: { type: "string" },
+                          website: { type: "string" },
+                          socialMedia: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                platform: { type: "string" },
+                                url: { type: "string" }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      externalId: { type: "string" },
+                      createdAt: { type: "string" }
+                    }
+                  }
+                },
+                total: { type: "integer" },
+                totalPages: { type: "integer" },
+                currentPage: { type: "integer" },
+                hasNext: { type: "boolean" },
+                hasPrevious: { type: "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    handler: getAllPublicSellerProfiles
+  });
+
   // Get seller profile by ID (public endpoint)
   fastify.get("/seller/:id", {
     schema: {
@@ -140,6 +218,19 @@ async function publicRoutes(fastify, options) {
                 profileImageUrl: { type: "string" },
                 bannerImageUrl: { type: "string" },
                 marketName: { type: "string" },
+                about: { type: "string" },
+                badges: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      description: { type: "string" },
+                      icon: { type: "string" },
+                      earnedAt: { type: "string" }
+                    }
+                  }
+                },
                 enterpriseDetails: {
                   type: "object",
                   properties: {

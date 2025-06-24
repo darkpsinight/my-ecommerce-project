@@ -34,12 +34,12 @@ const AnimatedPlaceholder = () => {
   }, [searchTerms.length]);
 
   return (
-    <div className="flex items-center text-base sm:text-lg text-gray-400">
-      <span>Search for&nbsp;</span>
-      <div className="relative h-6 sm:h-7 overflow-hidden min-w-[160px]">
+    <div className="flex items-center text-sm sm:text-base lg:text-lg text-gray-400 whitespace-nowrap">
+      <span className="flex-shrink-0">Search for&nbsp;</span>
+      <div className="relative h-5 sm:h-6 lg:h-7 overflow-hidden min-w-[120px] sm:min-w-[140px] lg:min-w-[160px]">
         <div 
           key={currentTermIndex}
-          className="absolute left-0 top-0 whitespace-nowrap animate-slideUp"
+          className="absolute left-0 top-0 whitespace-nowrap animate-slideUp text-sm sm:text-base lg:text-lg"
         >
           {searchTerms[currentTermIndex]}
         </div>
@@ -98,7 +98,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
           {/* Search Input - Takes all available space */}
           <div className="flex-1 min-w-0 relative">
             {!isFocused && !searchQuery && (
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none z-10">
+              <div className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 max-w-[calc(100%-2rem)]">
                 <AnimatedPlaceholder />
               </div>
             )}

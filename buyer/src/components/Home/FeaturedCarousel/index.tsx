@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Autoplay } from "swiper/modules";
+
+// Import Swiper styles
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 interface FeaturedProduct {
   id: string;
@@ -154,25 +161,30 @@ const FeaturedCarousel = () => {
               Top <span className="text-blue">Digital Codes</span> This Week
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-              <div key={item} className="animate-pulse">
-                <div className="bg-white rounded-2xl border border-gray-3 h-[380px] p-5">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div className="w-16 h-6 bg-gray-3 rounded-full"></div>
-                      <div className="w-12 h-6 bg-gray-3 rounded-full"></div>
-                    </div>
-                    <div className="h-[220px] bg-gray-3 rounded-xl"></div>
-                    <div className="space-y-3">
-                      <div className="w-20 h-6 bg-gray-3 rounded-full"></div>
-                      <div className="h-6 bg-gray-3 rounded w-4/5"></div>
-                      <div className="h-8 bg-gray-3 rounded w-2/3"></div>
-                    </div>
-                  </div>
+          <div className="relative">
+            <div className="flex gap-6 lg:gap-8 overflow-hidden">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="animate-pulse flex-shrink-0 w-[280px]">
+                  <div className="bg-white rounded-2xl border border-gray-3 h-[380px] p-5">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div className="w-16 h-6 bg-gray-3 rounded-full"></div>
+                        <div className="w-12 h-6 bg-gray-3 rounded-full"></div>
+                      </div>
+                      <div className="h-[220px] bg-gray-3 rounded-xl"></div>
+                      <div className="space-y-3">
+                        <div className="w-20 h-6 bg-gray-3 rounded-full"></div>
+                        <div className="h-6 bg-gray-3 rounded w-4/5"></div>
+                        <div className="h-8 bg-gray-3 rounded w-2/3"></div>
+                      </div>
+                      </div>
                 </div>
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
+            {/* Loading Navigation Buttons */}
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-30 w-12 h-12 bg-gray-3 rounded-full flex items-center justify-center animate-pulse"></div>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-30 w-12 h-12 bg-gray-3 rounded-full flex items-center justify-center animate-pulse"></div>
           </div>
         </div>
       </section>
@@ -217,79 +229,134 @@ const FeaturedCarousel = () => {
           </p>
         </div>
 
-        {/* Products Grid - Two Rows */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-          {featuredProducts.map((product) => (
-            <Link key={product.id} href={`/shop-details/${product.id}`} className="block">
-              <div className="bg-white rounded-2xl border border-gray-3 hover:border-blue hover:shadow-2xl transition-all duration-500 group h-[380px] relative overflow-hidden hover:scale-105 hover:-translate-y-2 cursor-pointer">
-                {/* Top Tag */}
-                <div className="absolute top-4 left-4 z-20">
-                  <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${product.tagColor} shadow-lg`}>
-                    {product.tag}
-                  </span>
-                </div>
-
-                {/* Region Tag */}
-                <div className="absolute top-4 right-4 z-20">
-                  <div className="flex items-center gap-1 bg-white bg-opacity-90 px-2 py-1 rounded-full shadow-lg">
-                    <span className="text-sm">{product.regionFlag}</span>
-                    <span className="text-xs text-black font-medium">
-                      {product.region}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Image Placeholder */}
-                <div className="relative h-[220px] bg-gradient-to-br from-blue-light-5 to-purple-50 flex items-center justify-center group-hover:from-blue-light-4 group-hover:to-purple-100 transition-all duration-500">
-                  <div className="text-8xl opacity-50 group-hover:opacity-70 transition-opacity">
-                    {product.platformIcon}
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  {/* Platform Badge */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm bg-blue-light-5 text-blue px-3 py-1.5 rounded-full font-medium">
-                      {product.platform}
-                    </span>
-                  </div>
-
-                  {/* Title - Truncated for long titles */}
-                  <h3 className="font-semibold text-lg text-black group-hover:text-blue transition-colors mb-4 leading-tight">
-                    {product.title.length > 35 ? `${product.title.substring(0, 35)}...` : product.title}
-                  </h3>
-
-                  {/* Price */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-2xl font-bold text-green">
-                      ${product.price}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-gray-5 line-through">
-                        ${product.originalPrice}
+        {/* Products Swiper - Single Row */}
+        <div className="relative">
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={24}
+            slidesPerView={1}
+            navigation={{
+              nextEl: '.featured-swiper-button-next',
+              prevEl: '.featured-swiper-button-prev',
+            }}
+            pagination={{
+              el: '.featured-swiper-pagination',
+              clickable: true,
+              dynamicBullets: true,
+            }}
+            autoplay={{
+              delay: 4000,
+              disableOnInteraction: false,
+            }}
+            breakpoints={{
+              640: {
+                slidesPerView: 2,
+                spaceBetween: 20,
+              },
+              768: {
+                slidesPerView: 3,
+                spaceBetween: 24,
+              },
+              1024: {
+                slidesPerView: 4,
+                spaceBetween: 24,
+              },
+              1200: {
+                slidesPerView: 4,
+                spaceBetween: 32,
+              },
+            }}
+            className="featured-products-swiper"
+          >
+            {featuredProducts.map((product) => (
+              <SwiperSlide key={product.id}>
+                <Link href={`/shop-details/${product.id}`} className="block">
+                  <div className="bg-white rounded-2xl border border-gray-3 hover:border-blue hover:shadow-2xl transition-all duration-500 group h-[380px] relative overflow-hidden hover:scale-105 hover:-translate-y-2 cursor-pointer">
+                    {/* Top Tag */}
+                    <div className="absolute top-4 left-4 z-20">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${product.tagColor} shadow-lg`}>
+                        {product.tag}
                       </span>
-                    )}
-                    {product.discount && (
-                      <span className="text-xs bg-red text-white px-2 py-1 rounded-full font-semibold">
-                        -{product.discount}%
-                      </span>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Hover Effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-light-5 to-purple-50 opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
-              </div>
-            </Link>
-          ))}
+                    {/* Region Tag */}
+                    <div className="absolute top-4 right-4 z-20">
+                      <div className="flex items-center gap-1 bg-white bg-opacity-90 px-2 py-1 rounded-full shadow-lg">
+                        <span className="text-sm">{product.regionFlag}</span>
+                        <span className="text-xs text-black font-medium">
+                          {product.region}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Image Placeholder */}
+                    <div className="relative h-[220px] bg-gradient-to-br from-blue-light-5 to-purple-50 flex items-center justify-center group-hover:from-blue-light-4 group-hover:to-purple-100 transition-all duration-500">
+                      <div className="text-8xl opacity-50 group-hover:opacity-70 transition-opacity">
+                        {product.platformIcon}
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5">
+                      {/* Platform Badge */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm bg-blue-light-5 text-blue px-3 py-1.5 rounded-full font-medium">
+                          {product.platform}
+                        </span>
+                      </div>
+
+                      {/* Title - Truncated for long titles */}
+                      <h3 className="font-semibold text-lg text-black group-hover:text-blue transition-colors mb-4 leading-tight">
+                        {product.title.length > 35 ? `${product.title.substring(0, 35)}...` : product.title}
+                      </h3>
+
+                      {/* Price */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-2xl font-bold text-green">
+                          ${product.price}
+                        </span>
+                        {product.originalPrice && (
+                          <span className="text-sm text-gray-5 line-through">
+                            ${product.originalPrice}
+                          </span>
+                        )}
+                        {product.discount && (
+                          <span className="text-xs bg-red text-white px-2 py-1 rounded-full font-semibold">
+                            -{product.discount}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Hover Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-light-5 to-purple-50 opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
+                  </div>
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          {/* Navigation Buttons */}
+          <div className="featured-swiper-button-prev absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-30 w-12 h-12 bg-white border border-gray-3 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue hover:text-white hover:border-blue transition-all duration-300 shadow-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </div>
+          <div className="featured-swiper-button-next absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-30 w-12 h-12 bg-white border border-gray-3 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue hover:text-white hover:border-blue transition-all duration-300 shadow-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
         </div>
+
+        {/* Pagination Dots */}
+        <div className="featured-swiper-pagination flex justify-center mt-8"></div>
 
         {/* View All Button */}
         <div className="text-center mt-12">
           <Link 
-            href="/shop" 
+            href="/shop-with-sidebar" 
             className="inline-flex items-center gap-3 bg-gradient-to-r from-blue to-blue-dark text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-blue-light-3"
           >
             <span>View All Digital Codes</span>

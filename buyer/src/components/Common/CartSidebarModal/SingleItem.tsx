@@ -30,7 +30,10 @@ const SingleItem = ({ item, removeItemFromCart }) => {
   };
 
   const handleDecrement = () => {
-    handleQuantityChange(item.quantity - 1);
+    // Only decrease if quantity is greater than 1
+    if (item.quantity > 1) {
+      handleQuantityChange(item.quantity - 1);
+    }
   };
 
   return (
@@ -72,7 +75,7 @@ const SingleItem = ({ item, removeItemFromCart }) => {
             <div className="flex items-center gap-2 bg-gray-1 rounded-lg p-1">
               <button
                 onClick={handleDecrement}
-                disabled={isUpdating || isRemoving}
+                disabled={isUpdating || isRemoving || item.quantity <= 1}
                 className="w-6 h-6 flex items-center justify-center rounded-md bg-white hover:bg-blue hover:text-white transition-colors duration-200 text-dark-4 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Decrease quantity"
               >

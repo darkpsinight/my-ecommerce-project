@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { FormData } from "../types";
+import { FormData } from "../../types";
 
 interface PersonalDetailsSectionProps {
   formData: FormData;

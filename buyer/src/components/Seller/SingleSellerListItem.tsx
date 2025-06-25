@@ -32,15 +32,15 @@ const SingleSellerListItem: React.FC<SingleSellerListItemProps> = ({ seller }) =
       <div className="flex gap-6 p-6">
         {/* Left Section - Profile Image */}
         <div className="flex-shrink-0">
-          <div className="relative">
+          <div className="relative flex flex-col items-center">
             {/* Banner Background */}
-            <div className="w-24 h-16 rounded-lg bg-gradient-to-r from-green-light-5 to-blue-light-6 overflow-hidden mb-2">
+            <div className="w-24 h-12 rounded-lg bg-gradient-to-r from-green-light-5 to-blue-light-6 overflow-hidden mb-3">
               {seller.bannerImageUrl ? (
                 <Image
                   src={seller.bannerImageUrl}
                   alt={`${getDisplayName()} banner`}
                   width={96}
-                  height={64}
+                  height={48}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
@@ -48,8 +48,8 @@ const SingleSellerListItem: React.FC<SingleSellerListItemProps> = ({ seller }) =
               )}
             </div>
             
-            {/* Profile Image */}
-            <div className="w-20 h-20 rounded-full border-4 border-white bg-white shadow-1 overflow-hidden mx-auto -mt-8 relative z-10">
+            {/* Profile Image - Positioned below banner with proper spacing */}
+            <div className="w-20 h-20 rounded-full border-4 border-white bg-white shadow-1 overflow-hidden relative">
               {seller.profileImageUrl ? (
                 <Image
                   src={seller.profileImageUrl}
@@ -65,16 +65,16 @@ const SingleSellerListItem: React.FC<SingleSellerListItemProps> = ({ seller }) =
                   </span>
                 </div>
               )}
+              
+              {/* Verified Badge */}
+              {seller.badges && seller.badges.length > 0 && (
+                <div className="absolute -top-1 -right-1 bg-green text-white p-1 rounded-full">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              )}
             </div>
-
-            {/* Verified Badge */}
-            {seller.badges && seller.badges.length > 0 && (
-              <div className="absolute -top-1 -right-1 bg-green text-white p-1 rounded-full">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            )}
           </div>
         </div>
 

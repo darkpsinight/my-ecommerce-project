@@ -1,5 +1,5 @@
 import FilePreview from "../../components/FilePreview";
-import { FormData } from "../types";
+import { FormData } from "../../types";
 
 interface AddressSectionProps {
   formData: FormData;

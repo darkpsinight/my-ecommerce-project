@@ -29,7 +29,7 @@ const SingleSellerGridItem: React.FC<SingleSellerGridItemProps> = ({ seller }) =
     <Link href={`/marketplace/${seller.externalId || seller._id}`} className="block">
       <div className="group relative overflow-hidden rounded-xl bg-white shadow-1 hover:shadow-2 transition-all duration-300 border-2 border-green/20 hover:border-green cursor-pointer">
       {/* Banner Image */}
-      <div className="relative h-24 bg-gradient-to-r from-green-light-5 to-blue-light-6 overflow-hidden">
+      <div className="relative h-20 bg-gradient-to-r from-green-light-5 to-blue-light-6 overflow-hidden">
         {seller.bannerImageUrl ? (
           <Image
             src={seller.bannerImageUrl}
@@ -40,27 +40,6 @@ const SingleSellerGridItem: React.FC<SingleSellerGridItemProps> = ({ seller }) =
         ) : (
           <div className="absolute inset-0 bg-gradient-to-r from-green/10 to-blue/10" />
         )}
-        
-        {/* Profile Image */}
-        <div className="absolute -bottom-8 left-4">
-          <div className="w-16 h-16 rounded-full border-4 border-white bg-white shadow-1 overflow-hidden">
-            {seller.profileImageUrl ? (
-              <Image
-                src={seller.profileImageUrl}
-                alt={`${getDisplayName()} profile`}
-                width={64}
-                height={64}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-green to-blue flex items-center justify-center">
-                <span className="text-white font-bold text-lg">
-                  {getDisplayName().charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Verified Badge */}
         {seller.badges && seller.badges.length > 0 && (
@@ -73,8 +52,29 @@ const SingleSellerGridItem: React.FC<SingleSellerGridItemProps> = ({ seller }) =
         )}
       </div>
 
+      {/* Profile Image - Positioned on the left side below banner */}
+      <div className="px-4 -mt-8 mb-4 relative z-10">
+        <div className="w-16 h-16 rounded-full border-4 border-white bg-white shadow-1 overflow-hidden">
+          {seller.profileImageUrl ? (
+            <Image
+              src={seller.profileImageUrl}
+              alt={`${getDisplayName()} profile`}
+              width={64}
+              height={64}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-green to-blue flex items-center justify-center">
+              <span className="text-white font-bold text-lg">
+                {getDisplayName().charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Content */}
-      <div className="p-4 pt-10">
+      <div className="px-4 pb-4">
         {/* Seller Name */}
         <h3 className="font-bold text-lg text-dark mb-1 line-clamp-1 group-hover:text-green transition-colors duration-200">
           {getDisplayName()}

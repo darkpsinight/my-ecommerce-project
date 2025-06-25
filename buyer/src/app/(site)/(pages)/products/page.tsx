@@ -3,18 +3,18 @@ import ShopWithSidebar from "@/components/ShopWithSidebar";
 
 import { Metadata } from "next";
 export const metadata: Metadata = {
-  title: "Browse Digital Codes | Shop with Filters | Digital Marketplace",
+  title: "Products | Browse Digital Codes with Filters | Digital Marketplace",
   description: "Discover and purchase digital codes, game keys, gift cards, and more with our advanced filtering system. Find the perfect digital product for your needs.",
-  keywords: "digital codes, game keys, gift cards, shop, filters, digital marketplace, buy codes online",
+  keywords: "digital codes, game keys, gift cards, products, filters, digital marketplace, buy codes online",
   openGraph: {
-    title: "Browse Digital Codes | Shop with Filters",
+    title: "Products | Browse Digital Codes with Filters",
     description: "Discover and purchase digital codes, game keys, gift cards, and more with our advanced filtering system.",
     type: "website",
   },
   // other metadata
 };
 
-const ShopWithSidebarPage = () => {
+const ProductsPage = () => {
   return (
     <main>
       <ShopWithSidebar />
@@ -22,4 +22,4 @@ const ShopWithSidebarPage = () => {
   );
 };
 
-export default ShopWithSidebarPage;
+export default ProductsPage;

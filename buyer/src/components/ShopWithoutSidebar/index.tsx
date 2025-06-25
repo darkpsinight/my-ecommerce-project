@@ -75,7 +75,7 @@ const ShopWithoutSidebar = () => {
     <>
       <PageContainer fullWidth>
         {/* Enhanced Hero Section */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-green-light-5 via-white to-blue-light-6 py-20 lg:py-28">
+        <div className="relative overflow-hidden bg-gradient-to-br from-green-light-5 via-white to-blue-light-6 pt-20 lg:pt-20 pb-10 lg:pb-12">
           <div className="absolute inset-0 bg-gradient-to-r from-green/5 to-blue/5"></div>
           <div className="relative max-w-[1400px] mx-auto px-4 sm:px-8 text-center">
             <div className="inline-flex items-center gap-2 bg-green-light-5 text-green-dark px-4 py-2 rounded-full text-sm font-medium mb-6">
@@ -90,72 +90,15 @@ const ShopWithoutSidebar = () => {
                 Marketplaces
               </span>
             </h1>
-            <p className="text-xl lg:text-2xl text-dark-3 max-w-3xl mx-auto mb-10">
+            <p className="text-xl lg:text-2xl text-dark-3 max-w-3xl mx-auto">
               Discover trusted sellers and digital marketplaces offering the best deals on 
               digital codes, game keys, software licenses, and gift cards worldwide
             </p>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-2xl mx-auto">
-              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue to-blue-dark rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <p className="font-medium text-dark text-sm">
-                  Verified Markets
-                </p>
-              </div>
-              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl">
-                <div className="w-12 h-12 bg-gradient-to-r from-green to-green-dark rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                  </svg>
-                </div>
-                <p className="font-medium text-dark text-sm">
-                  Trusted Sellers
-                </p>
-              </div>
-              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl">
-                <div className="w-12 h-12 bg-gradient-to-r from-teal to-teal-dark rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
-                  </svg>
-                </div>
-                <p className="font-medium text-dark text-sm">Wide Selection</p>
-              </div>
-              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple to-purple-dark rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <p className="font-medium text-dark text-sm">Quality Service</p>
-              </div>
-            </div>
+            
           </div>
         </div>
 
-        <section className="overflow-hidden relative py-16 lg:py-24 bg-gradient-to-b from-gray-1 to-white">
+        <section className="overflow-hidden relative pt-8 lg:pt-12 pb-16 lg:pb-24 bg-gradient-to-b from-gray-1 to-white">
           <div className="max-w-full w-full mx-auto px-4 sm:px-8 xl:px-6">
             <div className="flex gap-5 sm:gap-7.5">
               {/* Enhanced Content Start */}

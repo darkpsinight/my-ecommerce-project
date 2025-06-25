@@ -21,9 +21,21 @@ if (process.env.NEXT_PUBLIC_IMAGE_DOMAINS) {
   imageDomains.push(...envDomains);
 }
 
+// Convert domains to remotePatterns format
+const remotePatterns = imageDomains.map(domain => ({
+  protocol: 'https',
+  hostname: domain,
+}));
+
+// Also add HTTP protocol for localhost
+remotePatterns.push({
+  protocol: 'http',
+  hostname: 'localhost',
+});
+
 const nextConfig = {
   images: {
-    domains: imageDomains,
+    remotePatterns: remotePatterns,
   },
 };
 

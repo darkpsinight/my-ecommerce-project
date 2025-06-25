@@ -20,8 +20,11 @@ const ShopWithoutSidebar = () => {
   // Fetch sellers from API
   useEffect(() => {
     const abortController = new AbortController();
+    let isMounted = true;
     
     const fetchSellersData = async () => {
+      if (!isMounted) return;
+      
       setLoading(true);
       try {
         // Prepare filter parameters
@@ -38,21 +41,21 @@ const ShopWithoutSidebar = () => {
 
         const result = await getSellers(params);
 
-        if (result && !abortController.signal.aborted) {
+        if (result && !abortController.signal.aborted && isMounted) {
           setSellers(result.sellers);
           setTotalSellers(result.total);
           setTotalPages(result.totalPages);
-        } else if (!abortController.signal.aborted) {
+        } else if (!abortController.signal.aborted && isMounted) {
           console.error("Failed to fetch sellers");
           setSellers([]);
         }
       } catch (error) {
-        if (!abortController.signal.aborted) {
+        if (!abortController.signal.aborted && isMounted) {
           console.error("Error fetching sellers:", error);
           setSellers([]);
         }
       } finally {
-        if (!abortController.signal.aborted) {
+        if (!abortController.signal.aborted && isMounted) {
           setLoading(false);
         }
       }
@@ -62,6 +65,7 @@ const ShopWithoutSidebar = () => {
     
     return () => {
       abortController.abort();
+      isMounted = false;
     };
   }, [currentPage, searchQuery]);
 

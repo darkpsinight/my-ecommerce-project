@@ -17,7 +17,11 @@ import { getSellerById } from "@/services/seller";
 import { Product } from "@/types/product";
 import { Seller } from "@/types/seller";
 
-const ShopWithSidebar = () => {
+interface ShopWithSidebarProps {
+  sellerId?: string;
+}
+
+const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
   const searchParams = useSearchParams();
   const [productStyle, setProductStyle] = useState("grid");
   const [productSidebar, setProductSidebar] = useState(false);
@@ -32,6 +36,7 @@ const ShopWithSidebar = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [selectedSeller, setSelectedSeller] = useState<string | null>(null);
   const [sellerInfo, setSellerInfo] = useState<Seller | null>(null);
+  const [sellerResolved, setSellerResolved] = useState<boolean>(false);
 
   const handleStickyMenu = () => {
     if (window.scrollY >= 80) {
@@ -41,25 +46,32 @@ const ShopWithSidebar = () => {
     }
   };
 
-  // Handle URL search parameters
+  // Handle seller ID from props or URL search parameters
   useEffect(() => {
-    const seller = searchParams.get('seller');
+    const seller = sellerId || searchParams.get('seller');
     if (seller) {
       setSelectedSeller(seller);
       // Fetch seller information
       const fetchSellerInfo = async () => {
         const sellerData = await getSellerById(seller);
         setSellerInfo(sellerData);
+        setSellerResolved(true);
       };
       fetchSellerInfo();
     } else {
       setSelectedSeller(null);
       setSellerInfo(null);
+      setSellerResolved(true);
     }
-  }, [searchParams]);
+  }, [sellerId, searchParams]);
 
   // Fetch products from API
   useEffect(() => {
+    // Don't fetch products until seller is resolved
+    if (!sellerResolved) {
+      return;
+    }
+
     const fetchProductsData = async () => {
       setLoading(true);
       try {
@@ -93,6 +105,7 @@ const ShopWithSidebar = () => {
           params.sellerId = selectedSeller;
         }
 
+        console.log('Fetching products with params:', params);
         const result = await getProducts(params);
 
         if (result) {
@@ -112,7 +125,7 @@ const ShopWithSidebar = () => {
     };
 
     fetchProductsData();
-  }, [currentPage, selectedCategory, selectedPlatform, priceRange, selectedSeller]);
+  }, [currentPage, selectedCategory, selectedPlatform, priceRange, selectedSeller, sellerResolved]);
 
   const options = [
     { label: "Latest Products", value: "0" },

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: MarketplacePageProps): Promis
 const MarketplacePage = ({ params }: MarketplacePageProps) => {
   return (
     <main>
-      <ShopWithSidebar />
+      <ShopWithSidebar sellerId={params.sellerId} />
     </main>
   );
 };

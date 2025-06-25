@@ -1,4 +1,6 @@
 const { Listing } = require("../models/listing");
+const { SellerProfile } = require("../models/sellerProfile");
+const { User } = require("../models/user");
 const { processListingsExpiration } = require("../utils/listingHelpers");
 const { maskCode } = require("./listingHandlers");
 
@@ -16,8 +18,26 @@ const getListings = async (request, reply) => {
     if (category) filter.category = category;
     if (platform) filter.platform = platform;
     if (region) filter.region = region;
-    if (sellerId) filter.sellerId = sellerId;
     if (status) filter.status = status;
+
+    // Handle sellerId - could be user UID or seller profile externalId
+    if (sellerId) {
+      // First try to find if sellerId is a seller profile externalId
+      const sellerProfile = await SellerProfile.findOne({ externalId: sellerId });
+      if (sellerProfile) {
+        // Get the user's uid from the seller profile's userId
+        const user = await User.findById(sellerProfile.userId);
+        if (user) {
+          filter.sellerId = user.uid;
+        } else {
+          // If user not found, this will result in no matches
+          filter.sellerId = 'user-not-found';
+        }
+      } else {
+        // Assume it's a direct user UID
+        filter.sellerId = sellerId;
+      }
+    }
 
     // Price range filter
     if (minPrice !== undefined || maxPrice !== undefined) {

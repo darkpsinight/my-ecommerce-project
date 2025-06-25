@@ -80,7 +80,7 @@ const Cart = () => {
 
             <div className="space-y-4">
               <Link
-                href="/shop-with-sidebar"
+                href="/products"
                 className="group w-full max-w-sm mx-auto flex items-center justify-center gap-3 font-bold text-white bg-gradient-to-r from-blue to-blue-light py-4 px-8 rounded-2xl shadow-2 hover:shadow-3 transform hover:scale-105 transition-all duration-300"
               >
                 <svg className="w-5 h-5 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,12 +88,7 @@ const Cart = () => {
                 </svg>
                 Start Shopping Now
               </Link>
-              <Link
-                href="/"
-                className="block text-blue hover:text-blue-dark font-medium transition-colors duration-200"
-              >
-                Explore Categories
-              </Link>
+
             </div>
           </div>
         </div>

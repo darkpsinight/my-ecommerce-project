@@ -53,7 +53,7 @@ const Checkout = () => {
                 Add some digital codes to your cart before proceeding to checkout.
               </p>
               <a
-                href="/shop-with-sidebar"
+                href="/products"
                 className="inline-flex justify-center font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark"
               >
                 Continue Shopping

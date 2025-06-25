@@ -204,7 +204,12 @@ const SingleItem: React.FC<SingleItemProps> = ({ item }) => {
               }
               handleQuantityChange(quantity + 1);
             }}
-            onDecrease={() => handleQuantityChange(quantity - 1)}
+            onDecrease={() => {
+              // Only decrease if quantity is greater than 1
+              if (quantity > 1) {
+                handleQuantityChange(quantity - 1);
+              }
+            }}
             min={1}
             max={item.availableStock ?? 999}
             disabled={isUpdating}

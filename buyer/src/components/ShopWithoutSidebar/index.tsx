@@ -21,10 +21,10 @@ const ShopWithoutSidebar = () => {
   useEffect(() => {
     const abortController = new AbortController();
     let isMounted = true;
-    
+
     const fetchSellersData = async () => {
       if (!isMounted) return;
-      
+
       setLoading(true);
       try {
         // Prepare filter parameters
@@ -62,7 +62,7 @@ const ShopWithoutSidebar = () => {
     };
 
     fetchSellersData();
-    
+
     return () => {
       abortController.abort();
       isMounted = false;
@@ -95,10 +95,10 @@ const ShopWithoutSidebar = () => {
               </span>
             </h1>
             <p className="text-xl lg:text-2xl text-dark-3 max-w-3xl mx-auto">
-              Discover trusted sellers and digital marketplaces offering the best deals on 
-              digital codes, game keys, software licenses, and gift cards worldwide
+              Discover trusted sellers and digital marketplaces offering the
+              best deals on digital codes, game keys, software licenses, and
+              gift cards worldwide
             </p>
-            
           </div>
         </div>
 
@@ -265,12 +265,11 @@ const ShopWithoutSidebar = () => {
                         </svg>
                       </div>
                       <h3 className="text-2xl font-bold text-dark mb-3">
-                        No Products Available
+                        No Markets Available
                       </h3>
                       <p className="text-dark-3 mb-6">
-                        We&apos;re currently updating our inventory. Please
-                        check back soon for new digital products and amazing
-                        deals!
+                        New digital markets launching soon. Get competitive
+                        pricing.
                       </p>
                       <button
                         onClick={() => window.location.reload()}

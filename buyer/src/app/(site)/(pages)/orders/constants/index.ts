@@ -17,7 +17,7 @@ export const PAYMENT_METHODS = {
 } as const;
 
 export const ROUTES = {
-  SHOP: '/shop-with-sidebar',
+  SHOP: '/products',
   ORDERS: '/orders',
 } as const;
 

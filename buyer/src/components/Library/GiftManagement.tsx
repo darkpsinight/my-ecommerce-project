@@ -214,7 +214,7 @@ const GiftManagement: React.FC = () => {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/shop-with-sidebar"
+            href="/products"
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-teal to-blue text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
           >
             <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">

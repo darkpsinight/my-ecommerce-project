@@ -295,7 +295,7 @@ const ShopDetails = () => {
             The product you&apos;re looking for is not available.
           </p>
           <button
-            onClick={() => router.push("/shop-with-sidebar")}
+            onClick={() => router.push("/products")}
             className="inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark"
           >
             Browse Products
@@ -381,7 +381,7 @@ const ShopDetails = () => {
               </li>
               <li>
                 <a
-                  href="/shop-with-sidebar"
+                  href="/products"
                   className="text-body hover:text-blue transition-colors duration-200"
                 >
                   Shop

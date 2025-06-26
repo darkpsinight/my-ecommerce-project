@@ -60,12 +60,12 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
     
     setIsLoading(true);
     
-    // For now, navigate to shop-with-sidebar page (fake implementation)
+    // For now, navigate to products page (fake implementation)
     // Later this will be replaced with dynamic search functionality
     const searchParams = new URLSearchParams();
     searchParams.set('q', searchQuery.trim());
     
-    router.push(`http://localhost:3001/shop-with-sidebar?${searchParams.toString()}`);
+    router.push(`http://localhost:3001/products?${searchParams.toString()}`);
     
     // Reset loading state after a short delay to prevent flickering
     setTimeout(() => {

@@ -194,7 +194,7 @@ const CodeModal: React.FC<CodeModalProps> = ({ isOpen, closeModal, code }) => {
                     View Full Order History
                   </Link>
                   <Link
-                    href="/shop-with-sidebar"
+                    href="/products"
                     className="flex items-center gap-2 text-sm text-blue hover:text-blue-dark transition-colors duration-200"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">

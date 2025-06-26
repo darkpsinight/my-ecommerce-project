@@ -269,7 +269,7 @@ const Cart = () => {
                   </Link>
                   
                   <Link
-                    href="/shop-with-sidebar"
+                    href="/products"
                     className="group w-full flex items-center justify-center gap-3 bg-gradient-to-r from-gray-1 to-gray-2 text-gray-7 font-semibold py-4 px-6 rounded-2xl border-2 border-gray-3 hover:border-blue hover:text-blue hover:bg-gradient-to-r hover:from-blue-light-5 hover:to-blue-light-4 transition-all duration-300 relative overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-light-5/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>

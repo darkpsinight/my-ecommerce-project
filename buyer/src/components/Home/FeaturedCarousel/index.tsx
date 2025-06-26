@@ -356,7 +356,7 @@ const FeaturedCarousel = () => {
         {/* View All Button */}
         <div className="text-center mt-12">
           <Link 
-            href="/shop-with-sidebar" 
+            href="/products" 
             className="inline-flex items-center gap-3 bg-gradient-to-r from-blue to-blue-dark text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-blue-light-3"
           >
             <span>View All Digital Codes</span>

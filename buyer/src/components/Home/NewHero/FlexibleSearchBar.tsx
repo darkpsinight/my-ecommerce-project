@@ -71,7 +71,7 @@ const FlexibleSearchBar: React.FC<FlexibleSearchBarProps> = ({
   className = "",
   rightContent,
   placeholder = "Search for Steam keys, PlayStation codes, Xbox Game Pass, gift cards...",
-  redirectUrl = "http://localhost:3001/shop-with-sidebar",
+  redirectUrl = "http://localhost:3001/products",
   useAnimatedPlaceholder = false
 }) => {
   const [searchQuery, setSearchQuery] = useState("");

@@ -59,7 +59,7 @@ const OrderSuccessClient = () => {
                 View My Orders
               </a>
               <a
-                href="/shop-with-sidebar"
+                href="/products"
                 className="w-full flex justify-center py-3 px-4 border border-gray-3 rounded-md shadow-sm text-sm font-medium text-gray-7 bg-white hover:bg-gray-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue transition-colors duration-200"
               >
                 Continue Shopping

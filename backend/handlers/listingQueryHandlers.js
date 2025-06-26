@@ -68,12 +68,26 @@ const getListings = async (request, reply) => {
     // Count total listings matching the filter
     const total = await Listing.countDocuments(filter);
 
-    // Transform listings to use externalId as primary identifier and remove _id and sensitive data
-    const transformedListings = listings.map(listing => {
+    // Transform listings to use externalId as primary identifier and add market name
+    const transformedListings = await Promise.all(listings.map(async (listing) => {
       const listingObj = listing.toObject();
       const { _id, codes, ...cleanedListing } = listingObj;
+      
+      // Get seller profile to add market name
+      try {
+        const user = await User.findOne({ uid: listing.sellerId });
+        if (user) {
+          const sellerProfile = await SellerProfile.findOne({ userId: user._id });
+          if (sellerProfile) {
+            cleanedListing.sellerMarketName = sellerProfile.marketName || sellerProfile.nickname || 'Unknown Seller';
+          }
+        }
+      } catch (error) {
+        request.log.error(`Error fetching seller profile for listing ${listing.externalId}: ${error.message}`);
+      }
+      
       return cleanedListing;
-    });
+    }));
 
     return reply.code(200).send({
       success: true,
@@ -142,9 +156,22 @@ const getListingById = async (request, reply) => {
       });
     }
 
-    // Transform listing to use externalId as primary identifier and remove _id and sensitive data
+    // Transform listing to use externalId as primary identifier and add market name
     const listingObj = listing.toObject();
     const { _id, codes, ...cleanedListing } = listingObj;
+
+    // Get seller profile to add market name
+    try {
+      const user = await User.findOne({ uid: listing.sellerId });
+      if (user) {
+        const sellerProfile = await SellerProfile.findOne({ userId: user._id });
+        if (sellerProfile) {
+          cleanedListing.sellerMarketName = sellerProfile.marketName || sellerProfile.nickname || 'Unknown Seller';
+        }
+      }
+    } catch (error) {
+      request.log.error(`Error fetching seller profile for listing ${listing.externalId}: ${error.message}`);
+    }
 
     return reply.code(200).send({
       success: true,

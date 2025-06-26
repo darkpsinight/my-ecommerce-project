@@ -118,7 +118,7 @@ const FeatureHighlights = () => {
         <div className="text-center">
           <div className="inline-flex flex-col sm:flex-row gap-4">
             <Link
-              href="/shop-without-sidebar"
+              href="/products"
               className="inline-flex items-center justify-center px-10 py-4 bg-gradient-to-r from-blue to-blue-dark text-white font-bold rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl text-lg"
             >
               Start Shopping

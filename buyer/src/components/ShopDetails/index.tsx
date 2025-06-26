@@ -115,9 +115,10 @@ const ShopDetails = () => {
 
           // Check if the product ID matches what's already in Redux
           const currentProductId = productFromStorage.id?.toString();
-          const shouldBypassCache = currentProductId !== productId;
+          // Force bypass cache to ensure fresh data with seller market names
+          const shouldBypassCache = true;
 
-          // Only force a fresh fetch if the product ID has changed
+          // Force a fresh fetch to get updated seller market names
           const data = await getProductById(productId, shouldBypassCache);
 
           // Only update state if component is still mounted
@@ -335,7 +336,7 @@ const ShopDetails = () => {
                   : "https://schema.org/OutOfStock",
               seller: {
                 "@type": "Organization",
-                name: product?.sellerName || "Verified Seller",
+                name: product?.sellerMarketName || "Verified Seller",
               },
             },
             aggregateRating: {
@@ -478,9 +479,9 @@ const ShopDetails = () => {
                   )}
 
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500 text-sm">by</span>
+                    <span className="text-gray-500 text-sm">Sold by</span>
                     <span className="text-gray-900 font-semibold">
-                      {product.sellerName || "Michael"}
+                      {product.sellerMarketName || product.sellerName || "Unknown Seller"}
                     </span>
                     {product.isSellerVerified && (
                       <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 rounded-full">

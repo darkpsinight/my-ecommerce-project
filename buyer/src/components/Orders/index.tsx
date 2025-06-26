@@ -138,7 +138,7 @@ const Orders = () => {
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
                 <p className="text-gray-600 mb-4">You haven&apos;t placed any orders yet. Start shopping to see your orders here.</p>
                 <a 
-                  href="/shop-without-sidebar" 
+                  href="/products" 
                   className="inline-flex items-center px-4 py-2 bg-blue text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Start Shopping

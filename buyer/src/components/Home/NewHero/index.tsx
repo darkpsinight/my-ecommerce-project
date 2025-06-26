@@ -77,7 +77,7 @@ const NewHero = () => {
           
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/shop-without-sidebar"
+              href="/products"
               className="inline-flex items-center justify-center px-8 py-4 bg-blue hover:bg-blue-dark text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl text-lg shadow-lg"
             >
               Browse Collections

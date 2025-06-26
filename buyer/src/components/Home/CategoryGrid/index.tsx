@@ -39,7 +39,7 @@ const CategoryGrid = () => {
       ),
       description: 'Game Keys & Digital Games',
       gradient: 'from-blue-light-5 via-blue-light-4 to-blue-light-3',
-      href: '/shop-without-sidebar?category=gaming',
+      href: '/products?category=gaming',
       bgColor: 'bg-blue/10',
       textColor: 'text-blue'
     },
@@ -54,7 +54,7 @@ const CategoryGrid = () => {
       ),
       description: 'Professional Software',
       gradient: 'from-green-light-6 via-green-light-5 to-green-light-4',
-      href: '/shop-without-sidebar?category=software',
+      href: '/products?category=software',
       bgColor: 'bg-green/10',
       textColor: 'text-green'
     },
@@ -69,7 +69,7 @@ const CategoryGrid = () => {
       ),
       description: 'Streaming & Media',
       gradient: 'from-purple-100 via-purple-light to-purple/30',
-      href: '/shop-without-sidebar?category=streaming',
+      href: '/products?category=streaming',
       bgColor: 'bg-purple/10',
       textColor: 'text-purple'
     },
@@ -84,7 +84,7 @@ const CategoryGrid = () => {
       ),
       description: 'All Major Brands',
       gradient: 'from-orange/20 via-yellow-light-2 to-yellow-light-1',
-      href: '/shop-without-sidebar?category=giftcards',
+      href: '/products?category=giftcards',
       bgColor: 'bg-orange/10',
       textColor: 'text-orange'
     },
@@ -99,7 +99,7 @@ const CategoryGrid = () => {
       ),
       description: 'Monthly Subscriptions',
       gradient: 'from-teal/20 via-teal-light/30 to-teal/10',
-      href: '/shop-without-sidebar?category=subscriptions',
+      href: '/products?category=subscriptions',
       bgColor: 'bg-teal/10',
       textColor: 'text-teal'
     },
@@ -114,7 +114,7 @@ const CategoryGrid = () => {
       ),
       description: 'Mobile Apps & Games',
       gradient: 'from-pink/20 via-pink-light/30 to-pink/10',
-      href: '/shop-without-sidebar?category=mobile',
+      href: '/products?category=mobile',
       bgColor: 'bg-pink/10',
       textColor: 'text-pink'
     },
@@ -129,7 +129,7 @@ const CategoryGrid = () => {
       ),
       description: 'Security & Privacy',
       gradient: 'from-red/20 via-red-light/30 to-red/10',
-      href: '/shop-without-sidebar?category=vpn',
+      href: '/products?category=vpn',
       bgColor: 'bg-red/10',
       textColor: 'text-red'
     },
@@ -144,7 +144,7 @@ const CategoryGrid = () => {
       ),
       description: 'Online Courses',
       gradient: 'from-indigo/20 via-indigo-light/30 to-indigo/10',
-      href: '/shop-without-sidebar?category=education',
+      href: '/products?category=education',
       bgColor: 'bg-indigo/10',
       textColor: 'text-indigo'
     }
@@ -172,7 +172,7 @@ const CategoryGrid = () => {
           gradient: defaultCategory.gradient,
           bgColor: defaultCategory.bgColor,
           textColor: defaultCategory.textColor,
-          href: `/shop-without-sidebar?category=${encodeURIComponent(cat.title)}`,
+          href: `/products?category=${encodeURIComponent(cat.title)}`,
           imageUrl: apiImageUrl,
           hasImage: !!(apiImageUrl && apiImageUrl.trim() !== '')
         };

@@ -38,7 +38,7 @@ const FloatingActions = () => {
     {
       icon: "🛒",
       label: "Quick Buy",
-      href: "/shop-without-sidebar",
+      href: "/products",
       color: "bg-blue hover:bg-blue-dark",
       action: null
     },

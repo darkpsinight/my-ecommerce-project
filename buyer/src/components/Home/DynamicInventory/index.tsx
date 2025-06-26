@@ -112,7 +112,7 @@ const DynamicInventory = ({ totalProducts = 0 }: DynamicInventoryProps) => {
                   Meanwhile, explore our current collection:
                 </p>
                 <Link
-                  href="/shop-without-sidebar"
+                  href="/products"
                   className="inline-flex items-center gap-2 text-blue hover:text-blue-dark font-medium transition-colors"
                 >
                   Browse Available Codes
@@ -160,7 +160,7 @@ const DynamicInventory = ({ totalProducts = 0 }: DynamicInventoryProps) => {
             </div>
             
             <Link
-              href="/shop-without-sidebar?deal=today"
+              href="/products?deal=today"
               className="bg-white text-orange font-medium px-6 py-3 rounded-lg hover:bg-gray-1 transition-all duration-300 hover:scale-105"
             >
               Shop Now

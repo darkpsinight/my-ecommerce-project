@@ -82,7 +82,7 @@ const SingleItem = ({ item }: { item: Category }) => {
   };
 
   return (
-    <Link href={`/shop-without-sidebar?category=${encodeURIComponent(item.title)}`} className="group block">
+    <Link href={`/products?category=${encodeURIComponent(item.title)}`} className="group block">
       <div className="relative">
         {/* Main Card */}
         <div className={`relative w-full aspect-square bg-gradient-to-br ${getGradientClass()} rounded-2xl p-6 flex flex-col items-center justify-center transition-all duration-300 group-hover:-translate-y-2 group-hover:shadow-2xl border border-white/20 backdrop-blur-sm overflow-hidden`}>

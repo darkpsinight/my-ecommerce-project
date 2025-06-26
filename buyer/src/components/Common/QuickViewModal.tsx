@@ -3,12 +3,16 @@ import React, { useEffect, useState } from "react";
 
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { AppDispatch, useAppSelector } from "@/redux/store";
-import { addItemToCartAsync } from "@/redux/features/cart-slice";
+import { addItemToCartAsync, selectCartItems, selectIsItemBeingAdded } from "@/redux/features/cart-slice";
+import { addItemToWishlist } from "@/redux/features/wishlist-slice";
 import { useDispatch } from "react-redux";
 import Image from "next/image";
+import Link from "next/link";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { resetQuickView } from "@/redux/features/quickView-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
+import QuantityControl from "../Cart/QuantityControl";
+import toast from "react-hot-toast";
 
 const QuickViewModal = () => {
   const { isModalOpen, closeModal } = useModalContext();
@@ -19,21 +23,78 @@ const QuickViewModal = () => {
 
   // get the product data
   const product = useAppSelector((state) => state.quickViewReducer.value);
+  const cartItems = useAppSelector(selectCartItems);
+  const isItemBeingAdded = useAppSelector(state => product ? selectIsItemBeingAdded(state, product.id) : false);
+
+  // Debug logging for seller information in modal
+  useEffect(() => {
+    if (product && product.title) {
+      console.log(`🚀 QuickView Modal Debug (${product.title}):`, {
+        'Product sellerName': product.sellerName,
+        'Product sellerMarketName': product.sellerMarketName,
+        'Product sellerId': product.sellerId,
+        'Full product object': product
+      });
+    }
+  }, [product]);
 
   const [activePreview, setActivePreview] = useState(0);
+
+  // Stock validation logic
+  const availableStock = product?.quantityOfActiveCodes || 0;
+  const cartItem = product ? cartItems.find((cartItem) => cartItem.listingId === product.id) : null;
+  const quantityInCart = cartItem ? cartItem.quantity : 0;
+  const isOutOfStock = availableStock === 0;
+  const wouldExceedStock = quantityInCart + quantity > availableStock;
+  const maxAddableQuantity = Math.max(1, availableStock - quantityInCart);
+
+  // Reset quantity if it exceeds the available stock considering cart items
+  useEffect(() => {
+    if (quantity > maxAddableQuantity) {
+      setQuantity(Math.max(1, maxAddableQuantity));
+    }
+  }, [quantity, maxAddableQuantity]);
 
   // preview modal
   const handlePreviewSlider = () => {
     dispatch(updateproductDetails(product));
-
     openPreviewModal();
   };
 
   // add to cart
   const handleAddToCart = () => {
-    // Check if item has available stock
-    if (!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0) {
-      return; // Don't add if no stock available
+    if (!product) {
+      toast.error("Product not found");
+      return;
+    }
+
+    if (!product.sellerId) {
+      toast.error("Invalid product data");
+      return;
+    }
+
+    if (isOutOfStock) {
+      toast.error("This product is out of stock");
+      return;
+    }
+
+    if (wouldExceedStock) {
+      const availableToAdd = availableStock - quantityInCart;
+      if (availableToAdd <= 0) {
+        toast.error(
+          `You already have the maximum available quantity (${availableStock}) in your cart`
+        );
+      } else {
+        toast.error(
+          `Cannot add ${quantity} items. You can only add ${availableToAdd} more (${quantityInCart} already in cart, ${availableStock} available)`
+        );
+      }
+      return;
+    }
+
+    if (isItemBeingAdded) {
+      toast.error("This item is already being added to cart");
+      return;
     }
 
     dispatch(
@@ -44,8 +105,8 @@ const QuickViewModal = () => {
         discountedPrice: product.discountedPrice,
         quantity,
         imgs: product.imgs,
-        sellerId: product.sellerId || "",
-        availableStock: product.quantityOfActiveCodes || 0,
+        sellerId: product.sellerId,
+        availableStock: availableStock,
         listingSnapshot: {
           category: product.categoryName,
           platform: product.platform,
@@ -57,10 +118,63 @@ const QuickViewModal = () => {
     closeModal();
   };
 
+  // add to wishlist
+  const handleAddToWishlist = () => {
+    if (product) {
+      dispatch(
+        addItemToWishlist({
+          ...product,
+          status: "available",
+          quantity: 1,
+        })
+      );
+      toast.success("Added to wishlist!");
+    }
+  };
+
+  // Calculate discount percentage
+  const calculateDiscountPercentage = () => {
+    if (
+      product &&
+      product.price &&
+      product.discountedPrice &&
+      product.price > product.discountedPrice
+    ) {
+      const discount =
+        ((product.price - product.discountedPrice) / product.price) * 100;
+      return Math.round(discount);
+    }
+    return 0;
+  };
+
+  // Quantity control handlers
+  const handleQuantityIncrease = () => {
+    if (quantity < maxAddableQuantity) {
+      setQuantity(quantity + 1);
+    } else {
+      const availableToAdd = availableStock - quantityInCart;
+      if (availableToAdd <= 0) {
+        toast.error(`Maximum available quantity (${availableStock}) already in cart`);
+      } else {
+        toast.error(`Cannot add more. Only ${availableToAdd} available (${quantityInCart} already in cart)`);
+      }
+    }
+  };
+
+  const handleQuantityDecrease = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    setQuantity(newQuantity);
+  };
+
   useEffect(() => {
     // closing modal while clicking outside
-    function handleClickOutside(event) {
-      if (!event.target.closest(".modal-content")) {
+    function handleClickOutside(event: MouseEvent) {
+      if (!event.target || !(event.target as Element).closest(".modal-content")) {
         closeModal();
       }
     }
@@ -71,10 +185,16 @@ const QuickViewModal = () => {
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-
-      setQuantity(1);
     };
   }, [isModalOpen, closeModal]);
+
+  // Reset quantity when modal opens/closes or product changes
+  useEffect(() => {
+    if (isModalOpen && product) {
+      setQuantity(1);
+      setActivePreview(0);
+    }
+  }, [isModalOpen, product?.id]);
 
   return (
     <div
@@ -165,13 +285,47 @@ const QuickViewModal = () => {
             </div>
 
             <div className="max-w-[445px] w-full">
-              <span className="inline-block text-custom-xs font-medium text-white py-1 px-3 bg-green mb-6.5">
-                SALE 20% OFF
-              </span>
+              {/* Discount Badge */}
+              {calculateDiscountPercentage() > 0 && (
+                <span className="inline-block text-custom-xs font-medium text-white py-1 px-3 bg-green mb-6.5">
+                  SAVE {calculateDiscountPercentage()}% OFF
+                </span>
+              )}
 
+              {/* Product Title */}
               <h3 className="font-semibold text-xl xl:text-heading-5 text-dark mb-4 line-clamp-2">
                 {product.title}
               </h3>
+
+              {/* Category and Platform Info */}
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {product.categoryName && (
+                  <span className="inline-flex items-center gap-1 bg-blue-light-5 text-blue-dark px-2 py-1 rounded-full text-xs font-medium">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/>
+                    </svg>
+                    {product.categoryName}
+                  </span>
+                )}
+                
+                {product.platform && (
+                  <span className="inline-flex items-center gap-1 bg-green-light-5 text-green-dark px-2 py-1 rounded-full text-xs font-medium">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 1a1 1 0 100 2h2a1 1 0 100-2h-2z" clipRule="evenodd"/>
+                    </svg>
+                    {product.platform}
+                  </span>
+                )}
+
+                {product.region && (
+                  <span className="inline-flex items-center gap-1 bg-teal-light-5 text-teal-dark px-2 py-1 rounded-full text-xs font-medium">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd"/>
+                    </svg>
+                    {product.region}
+                  </span>
+                )}
+              </div>
 
               <div className="flex flex-wrap items-center gap-5 mb-6">
                 <div className="flex items-center gap-1.5">
@@ -323,10 +477,33 @@ const QuickViewModal = () => {
                 </div>
               </div>
 
-              <p>
-                Lorem Ipsum is simply dummy text of the printing and typesetting
-                industry. Lorem Ipsum has.
-              </p>
+              {/* Product Description */}
+              <div className="mb-6">
+                {product.description ? (
+                  <div 
+                    className="text-dark-3 leading-relaxed line-clamp-3 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                  />
+                ) : (
+                  <p className="text-dark-4 italic">
+                    Instant digital delivery of your {product.categoryName || 'digital code'}. 
+                    Verified by our team for authenticity and quality.
+                  </p>
+                )}
+                
+                {/* Seller Info */}
+                {product.sellerMarketName && (
+                  <div className="flex items-center gap-2 mt-3 p-2 bg-gray-1 rounded-lg">
+                    <svg className="w-4 h-4 text-blue" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
+                    </svg>
+                    <span className="text-sm">
+                      <span className="text-dark-4">Sold by </span>
+                      <span className="font-medium text-dark">{product.sellerMarketName}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
 
               <div className="flex flex-wrap justify-between gap-5 mt-6 mb-7.5">
                 <div>
@@ -349,104 +526,86 @@ const QuickViewModal = () => {
                     Quantity
                   </h4>
 
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => quantity > 1 && setQuantity(quantity - 1)}
-                      aria-label="button for remove product"
-                      className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={quantity <= 1}
-                    >
-                      <svg
-                        className="fill-current"
-                        width="16"
-                        height="2"
-                        viewBox="0 0 16 2"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M-8.548e-08 0.977778C-3.82707e-08 0.437766 0.437766 3.82707e-08 0.977778 8.548e-08L15.0222 1.31328e-06C15.5622 1.36049e-06 16 0.437767 16 0.977779C16 1.51779 15.5622 1.95556 15.0222 1.95556L0.977778 1.95556C0.437766 1.95556 -1.32689e-07 1.51779 -8.548e-08 0.977778Z"
-                          fill=""
-                        />
-                      </svg>
-                    </button>
+                  <QuantityControl
+                    quantity={quantity}
+                    onIncrease={handleQuantityIncrease}
+                    onDecrease={handleQuantityDecrease}
+                    min={1}
+                    max={maxAddableQuantity}
+                    disabled={isOutOfStock}
+                    handleQuantityChange={handleQuantityChange}
+                    showMaximumPulse={true}
+                  />
 
-                    <span
-                      className="flex items-center justify-center w-20 h-10 rounded-[5px] border border-gray-4 bg-white font-medium text-dark"
-                      x-text="quantity"
-                    >
-                      {quantity}
-                    </span>
-
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      aria-label="button for add product"
-                      className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={quantity >= (product.quantityOfActiveCodes || 1)}
-                    >
-                      <svg
-                        className="fill-current"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M8.08889 0C8.6289 2.36047e-08 9.06667 0.437766 9.06667 0.977778L9.06667 15.0222C9.06667 15.5622 8.6289 16 8.08889 16C7.54888 16 7.11111 15.5622 7.11111 15.0222L7.11111 0.977778C7.11111 0.437766 7.54888 -2.36047e-08 8.08889 0Z"
-                          fill=""
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M0 7.91111C4.72093e-08 7.3711 0.437766 6.93333 0.977778 6.93333L15.0222 6.93333C15.5622 6.93333 16 7.3711 16 7.91111C16 8.45112 15.5622 8.88889 15.0222 8.88889L0.977778 8.88889C0.437766 8.88889 -4.72093e-08 8.45112 0 7.91111Z"
-                          fill=""
-                        />
-                      </svg>
-                    </button>
+                  {/* Stock Information */}
+                  <div className="mt-3 text-sm">
+                    {quantityInCart > 0 && (
+                      <p className="text-blue mb-1">
+                        <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 1a1 1 0 100 2h2a1 1 0 100-2h-2z" clipRule="evenodd"/>
+                        </svg>
+                        {quantityInCart} already in cart
+                      </p>
+                    )}
+                    {isOutOfStock && (
+                      <p className="text-red font-medium">
+                        <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                        </svg>
+                        Out of stock
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4">
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                {/* Add to Cart Button - Primary Action */}
                 <button
-                  disabled={!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0 || quantity === 0}
-                  onClick={() => handleAddToCart()}
-                  className={`inline-flex font-medium py-3 px-7 rounded-md ease-out duration-200 ${
-                    (!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0 || quantity === 0)
-                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                      : 'text-white bg-blue hover:bg-blue-dark'
+                  disabled={isItemBeingAdded || isOutOfStock || wouldExceedStock || quantity === 0}
+                  onClick={handleAddToCart}
+                  className={`inline-flex items-center justify-center gap-2 font-semibold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 transform disabled:cursor-not-allowed ${
+                    isOutOfStock || wouldExceedStock
+                      ? 'bg-gray-200 text-gray-500 shadow-none'
+                      : isItemBeingAdded
+                      ? 'bg-blue-light text-blue shadow-blue/20'
+                      : 'text-white bg-gradient-to-r from-blue to-blue-dark hover:from-blue-dark hover:to-blue shadow-blue/30 hover:shadow-blue/50 hover:scale-105 active:scale-95'
                   }`}
                 >
-                  {(!product.quantityOfActiveCodes || product.quantityOfActiveCodes === 0) 
-                    ? 'Out of Stock' 
-                    : 'Add to Cart'
-                  }
+                  {isItemBeingAdded && (
+                    <svg className="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  <span className="truncate">
+                    {isItemBeingAdded
+                      ? 'Adding...'
+                      : isOutOfStock
+                      ? 'Out of Stock'
+                      : wouldExceedStock
+                      ? 'Max Reached'
+                      : quantityInCart > 0
+                      ? `Add ${quantity} More`
+                      : `Add ${quantity} to Cart`
+                    }
+                  </span>
                 </button>
 
+                {/* Wishlist Button */}
                 <button
-                  className={`inline-flex items-center gap-2 font-medium text-white bg-dark py-3 px-6 rounded-md ease-out duration-200 hover:bg-opacity-95 `}
+                  onClick={handleAddToWishlist}
+                  className="inline-flex items-center justify-center gap-2 font-semibold py-4 px-6 rounded-xl border-2 border-gray-3 bg-white shadow-lg transition-all duration-300 transform hover:border-red hover:text-red hover:shadow-red/20 hover:scale-105 active:scale-95"
+                  title="Add to Wishlist"
                 >
-                  <svg
-                    className="fill-current"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M4.68698 3.68688C3.30449 4.31882 2.29169 5.82191 2.29169 7.6143C2.29169 9.44546 3.04103 10.8569 4.11526 12.0665C5.00062 13.0635 6.07238 13.8897 7.11763 14.6956C7.36588 14.8869 7.61265 15.0772 7.85506 15.2683C8.29342 15.6139 8.68445 15.9172 9.06136 16.1374C9.43847 16.3578 9.74202 16.4584 10 16.4584C10.258 16.4584 10.5616 16.3578 10.9387 16.1374C11.3156 15.9172 11.7066 15.6139 12.145 15.2683C12.3874 15.0772 12.6342 14.8869 12.8824 14.6956C13.9277 13.8897 14.9994 13.0635 15.8848 12.0665C16.959 10.8569 17.7084 9.44546 17.7084 7.6143C17.7084 5.82191 16.6955 4.31882 15.3131 3.68688C13.97 3.07295 12.1653 3.23553 10.4503 5.01733C10.3325 5.13974 10.1699 5.20891 10 5.20891C9.83012 5.20891 9.66754 5.13974 9.54972 5.01733C7.83474 3.23553 6.03008 3.07295 4.68698 3.68688ZM10 3.71573C8.07331 1.99192 5.91582 1.75077 4.16732 2.55002C2.32061 3.39415 1.04169 5.35424 1.04169 7.6143C1.04169 9.83557 1.9671 11.5301 3.18062 12.8966C4.15241 13.9908 5.34187 14.9067 6.39237 15.7155C6.63051 15.8989 6.8615 16.0767 7.0812 16.2499C7.50807 16.5864 7.96631 16.9453 8.43071 17.2166C8.8949 17.4879 9.42469 17.7084 10 17.7084C10.5754 17.7084 11.1051 17.4879 11.5693 17.2166C12.0337 16.9453 12.492 16.5864 12.9188 16.2499C13.1385 16.0767 13.3695 15.8989 13.6077 15.7155C14.6582 14.9067 15.8476 13.9908 16.8194 12.8966C18.0329 11.5301 18.9584 9.83557 18.9584 7.6143C18.9584 5.35424 17.6794 3.39415 15.8327 2.55002C14.0842 1.75077 11.9267 1.99192 10 3.71573Z"
-                      fill=""
-                    />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
-                  Add to Wishlist
+                  <span className="truncate">Add to Wishlist</span>
                 </button>
               </div>
             </div>

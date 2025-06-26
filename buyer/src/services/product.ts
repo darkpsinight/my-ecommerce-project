@@ -30,6 +30,7 @@ interface ListingData {
   quantityOfActiveCodes?: number;
   quantityOfAllCodes?: number;
   sellerId?: string;
+  sellerMarketName?: string;
   codes?: CodeData[];
 }
 
@@ -63,6 +64,34 @@ const api = axios.create({
 // Cache for product details to prevent redundant API calls
 const productCache: Record<string, { product: Product; timestamp: number }> = {};
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+// Cache for product listings to prevent redundant API calls
+const listingsCache: Record<string, {
+  result: { products: Product[]; total: number; page: number; totalPages: number };
+  timestamp: number
+}> = {};
+
+// Helper function to clear all caches (useful after service updates)
+export const clearProductCaches = () => {
+  Object.keys(productCache).forEach(key => delete productCache[key]);
+  Object.keys(listingsCache).forEach(key => delete listingsCache[key]);
+  console.log('Product caches cleared');
+};
+
+// Clear cache on module load to ensure fresh data after updates
+if (typeof window !== 'undefined') {
+  console.log('Clearing product cache for fresh data...');
+  clearProductCaches();
+  
+  // Also clear localStorage to prevent stale cached data
+  try {
+    localStorage.removeItem('productDetails');
+    localStorage.removeItem('recentlyViewedProducts');
+    console.log('Cleared localStorage product data');
+  } catch (error) {
+    console.log('Could not clear localStorage:', error);
+  }
+}
 
 
 
@@ -118,6 +147,14 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
           'Should show stock': activeCodes > 0 ? 'YES' : 'NO'
         });
 
+        // Debug logging for seller information
+        console.log(`🔍 Seller Debug (${listing.title}):`, {
+          'Backend sellerId': listing.sellerId,
+          'Backend sellerMarketName': listing.sellerMarketName,
+          'Will use sellerName': listing.sellerMarketName || 'Unknown Seller',
+          'Will use sellerMarketName': listing.sellerMarketName || 'Unknown Seller'
+        });
+
         // Create a product object from the listing data
         const product = {
           id: listing.externalId,
@@ -146,8 +183,8 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
           },
           // Add seller information
           sellerId: listing.sellerId || '',
-          // For now, hardcode the seller name as "Michael" as requested
-          sellerName: "Michael",
+          sellerName: listing.sellerMarketName || 'Unknown Seller',
+          sellerMarketName: listing.sellerMarketName || 'Unknown Seller',
           // Set seller as verified
           isSellerVerified: true
         };
@@ -182,19 +219,6 @@ export const getProductById = async (id: string, bypassCache: boolean = false): 
   return requestPromise;
 };
 
-// Cache for product listings to prevent redundant API calls
-const listingsCache: Record<string, {
-  result: { products: Product[]; total: number; page: number; totalPages: number };
-  timestamp: number
-}> = {};
-
-// Helper function to clear all caches (useful after service updates)
-export const clearProductCaches = () => {
-  Object.keys(productCache).forEach(key => delete productCache[key]);
-  Object.keys(listingsCache).forEach(key => delete listingsCache[key]);
-  console.log('Product caches cleared');
-};
-
 // Get all products with optional filters
 export const getProducts = async (params?: {
   page?: number;
@@ -207,12 +231,12 @@ export const getProducts = async (params?: {
   // Create a cache key based on the params
   const cacheKey = JSON.stringify(params || {});
 
-  // Check if we have a cached version that's still valid
-  const cachedData = listingsCache[cacheKey];
-  if (cachedData && Date.now() - cachedData.timestamp < CACHE_EXPIRY) {
-    console.log(`Using cached products data for params:`, params);
-    return cachedData.result;
-  }
+  // Temporarily disable caching to ensure fresh data with seller market names
+  // const cachedData = listingsCache[cacheKey];
+  // if (cachedData && Date.now() - cachedData.timestamp < CACHE_EXPIRY) {
+  //   console.log(`Using cached products data for params:`, params);
+  //   return cachedData.result;
+  // }
 
   try {
     console.log('Fetching products with params:', params);
@@ -225,6 +249,14 @@ export const getProducts = async (params?: {
         // Use backend-provided quantities instead of calculating from codes array
         const activeCodes = listing.quantityOfActiveCodes || 0;
         const totalCodes = listing.quantityOfAllCodes || 0;
+        
+        // Debug logging for seller information
+        console.log(`🔍 Products Seller Debug (${listing.title}):`, {
+          'Backend sellerId': listing.sellerId,
+          'Backend sellerMarketName': listing.sellerMarketName,
+          'Will use sellerName': listing.sellerMarketName || 'Unknown Seller',
+          'Will use sellerMarketName': listing.sellerMarketName || 'Unknown Seller'
+        });
         
         return {
           id: listing.externalId,
@@ -252,7 +284,8 @@ export const getProducts = async (params?: {
           },
           // Add seller information
           sellerId: listing.sellerId || '',
-          sellerName: "Michael", // Hardcoded as requested
+          sellerName: listing.sellerMarketName || 'Unknown Seller',
+          sellerMarketName: listing.sellerMarketName || 'Unknown Seller',
           isSellerVerified: true // All sellers are verified for now
         };
       });

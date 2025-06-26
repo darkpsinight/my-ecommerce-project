@@ -25,5 +25,6 @@ export type Product = {
   // Seller information
   sellerId?: string;
   sellerName?: string;
+  sellerMarketName?: string;
   isSellerVerified?: boolean;
 };

@@ -44,7 +44,7 @@ const DigitalPromoBanner = () => {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                href="/shop-without-sidebar?category=steam"
+                href="/products?category=steam"
                 className="inline-flex items-center justify-center font-semibold text-lg text-blue bg-white py-4 px-8 rounded-xl hover:bg-gray-1 transition-all duration-300 hover:scale-105 hover:shadow-lg"
               >
                 Shop Now
@@ -54,7 +54,7 @@ const DigitalPromoBanner = () => {
               </Link>
               
               <Link
-                href="/shop-without-sidebar"
+                href="/products"
                 className="inline-flex items-center justify-center font-semibold text-lg text-white border-2 border-white py-4 px-8 rounded-xl hover:bg-white hover:text-blue transition-all duration-300"
               >
                 View All Deals
@@ -95,7 +95,7 @@ const DigitalPromoBanner = () => {
               </p>
 
               <Link
-                href="/shop-without-sidebar?category=playstation"
+                href="/products?category=playstation"
                 className="inline-flex items-center font-semibold text-white bg-blue py-3 px-6 rounded-lg hover:bg-blue-dark transition-all duration-300 hover:scale-105"
               >
                 Explore
@@ -128,7 +128,7 @@ const DigitalPromoBanner = () => {
               </p>
 
               <Link
-                href="/shop-without-sidebar?category=xbox"
+                href="/products?category=xbox"
                 className="inline-flex items-center font-semibold text-white bg-green py-3 px-6 rounded-lg hover:bg-green-dark transition-all duration-300 hover:scale-105"
               >
                 Shop Xbox

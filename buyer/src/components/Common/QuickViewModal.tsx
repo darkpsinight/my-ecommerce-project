@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { AppDispatch, useAppSelector } from "@/redux/store";
 import { addItemToCartAsync, selectCartItems, selectIsItemBeingAdded } from "@/redux/features/cart-slice";
-import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import { addItemToWishlistAsync, removeItemFromWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
 import { useDispatch } from "react-redux";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,6 +18,7 @@ const QuickViewModal = () => {
   const { isModalOpen, closeModal } = useModalContext();
   const { openPreviewModal } = usePreviewSlider();
   const [quantity, setQuantity] = useState(1);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -25,6 +26,8 @@ const QuickViewModal = () => {
   const product = useAppSelector((state) => state.quickViewReducer.value);
   const cartItems = useAppSelector(selectCartItems);
   const isItemBeingAdded = useAppSelector(state => product ? selectIsItemBeingAdded(state, product.id) : false);
+  const isInWishlist = useAppSelector(state => product ? selectIsItemInWishlist(state, product.id) : false);
+  const isWishlistLoading = useAppSelector(selectWishlistLoading);
 
   // Debug logging for seller information in modal
   useEffect(() => {
@@ -118,17 +121,26 @@ const QuickViewModal = () => {
     closeModal();
   };
 
-  // add to wishlist
-  const handleAddToWishlist = () => {
-    if (product) {
-      dispatch(
-        addItemToWishlist({
-          ...product,
-          status: "available",
-          quantity: 1,
-        })
-      );
-      toast.success("Added to wishlist!");
+  // toggle wishlist
+  const handleToggleWishlist = async () => {
+    if (product && !isWishlistLoading) {
+      try {
+        if (isInWishlist) {
+          await dispatch(removeItemFromWishlistAsync(product.id)).unwrap();
+          toast.success("Removed from wishlist!");
+        } else {
+          await dispatch(
+            addItemToWishlistAsync({
+              ...product,
+              status: "available",
+              quantity: 1,
+            })
+          ).unwrap();
+          toast.success("Added to wishlist!");
+        }
+      } catch (error: any) {
+        toast.error(error || "Failed to update wishlist");
+      }
     }
   };
 
@@ -193,8 +205,12 @@ const QuickViewModal = () => {
     if (isModalOpen && product) {
       setQuantity(1);
       setActivePreview(0);
+      setIsDescriptionExpanded(false); // Reset description state
     }
   }, [isModalOpen, product?.id]);
+
+  // Check if description needs expanding based on length
+  const isDescriptionLong = product?.description && product.description.length > 200;
 
   return (
     <div
@@ -477,13 +493,37 @@ const QuickViewModal = () => {
                 </div>
               </div>
 
-              {/* Product Description */}
+              {/* Product Description with Accordion */}
               <div className="mb-6">
                 {product.description ? (
-                  <div 
-                    className="text-dark-3 leading-relaxed line-clamp-3 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: product.description }}
-                  />
+                  <div>
+                    <div 
+                      className={`text-dark-3 leading-relaxed prose prose-sm max-w-none transition-all duration-300 ${
+                        isDescriptionExpanded || !isDescriptionLong ? '' : 'line-clamp-3'
+                      }`}
+                      dangerouslySetInnerHTML={{ __html: product.description }}
+                    />
+                    
+                    {/* Read More/Less Button */}
+                    {isDescriptionLong && (
+                      <button
+                        onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                        className="inline-flex items-center gap-1 mt-2 text-blue hover:text-blue-dark transition-colors duration-200 text-sm font-medium"
+                      >
+                        <span>{isDescriptionExpanded ? 'Show Less' : 'Read More'}</span>
+                        <svg 
+                          className={`w-4 h-4 transform transition-transform duration-200 ${
+                            isDescriptionExpanded ? 'rotate-180' : ''
+                          }`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <p className="text-dark-4 italic">
                     Instant digital delivery of your {product.categoryName || 'digital code'}. 
@@ -598,14 +638,35 @@ const QuickViewModal = () => {
 
                 {/* Wishlist Button */}
                 <button
-                  onClick={handleAddToWishlist}
-                  className="inline-flex items-center justify-center gap-2 font-semibold py-4 px-6 rounded-xl border-2 border-gray-3 bg-white shadow-lg transition-all duration-300 transform hover:border-red hover:text-red hover:shadow-red/20 hover:scale-105 active:scale-95"
-                  title="Add to Wishlist"
+                  onClick={handleToggleWishlist}
+                  disabled={isWishlistLoading}
+                  className={`inline-flex items-center justify-center gap-2 font-semibold py-4 px-6 rounded-xl border-2 shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 ${
+                    isInWishlist
+                      ? 'border-red bg-red text-white hover:border-red-dark hover:bg-red-dark hover:shadow-red/30'
+                      : 'border-gray-3 bg-white text-dark hover:border-red hover:text-red hover:shadow-red/20'
+                  }`}
+                  title={isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  <span className="truncate">Add to Wishlist</span>
+                  {isWishlistLoading ? (
+                    // Loading spinner
+                    <svg className="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : isInWishlist ? (
+                    // Filled heart icon for wishlisted items
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  ) : (
+                    // Outline heart icon for non-wishlisted items
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  )}
+                  <span className="truncate">
+                    {isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+                  </span>
                 </button>
               </div>
             </div>

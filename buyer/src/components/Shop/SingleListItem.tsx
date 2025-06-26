@@ -5,7 +5,7 @@ import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
 import { addItemToCartAsync, selectCartAddingItem, selectCartItems, selectIsItemBeingAdded } from "@/redux/features/cart-slice";
-import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import { addItemToWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
 import Link from "next/link";
 import Image from "next/image";
@@ -77,14 +77,18 @@ const SingleListItem = ({ item }: { item: Product }) => {
     );
   };
 
-  const handleItemToWishList = () => {
-    dispatch(
-      addItemToWishlist({
-        ...item,
-        status: "available",
-        quantity: 1,
-      })
-    );
+  const handleItemToWishList = async () => {
+    try {
+      await dispatch(
+        addItemToWishlistAsync({
+          ...item,
+          status: "available",
+          quantity: 1,
+        })
+      ).unwrap();
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
+    }
   };
 
   return (

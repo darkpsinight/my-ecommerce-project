@@ -35,6 +35,7 @@ const { imageUploadRoutes } = require("./routes/imageUpload");
 const { walletRoutes } = require("./routes/wallet");
 const { orderRoutes } = require("./routes/orders");
 const cartRoutes = require("./routes/cart");
+const wishlistRoutes = require("./routes/wishlist");
 const performanceRoutes = require("./routes/performanceRoutes");
 const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
@@ -133,6 +134,9 @@ fastify.register(orderRoutes, { prefix: "/api/v1/orders" });
 
 // Register cart routes
 fastify.register(cartRoutes, { prefix: "/api/v1/cart" });
+
+// Register wishlist routes
+fastify.register(wishlistRoutes, { prefix: "/api/v1/wishlist" });
 
 // Register multipart content parser for file uploads
 fastify.register(require('fastify-multipart'), {

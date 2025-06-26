@@ -15,7 +15,7 @@ import {
   selectCartItems,
   selectIsItemBeingAdded,
 } from "@/redux/features/cart-slice";
-import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import { addItemToWishlistAsync, removeItemFromWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
 import {
   updateproductDetails,
   clearProductDetails,
@@ -61,6 +61,12 @@ const ShopDetails = () => {
   // Get cart loading state
   const isAddingToCart = useAppSelector(selectCartAddingItem);
   const cartItems = useAppSelector(selectCartItems);
+  
+  // Get wishlist state
+  const isInWishlist = useAppSelector((state) => 
+    product ? selectIsItemInWishlist(state, product.id) : false
+  );
+  const isWishlistLoading = useAppSelector(selectWishlistLoading);
 
   // Initialize fallback product
   const [fallbackProduct, setFallbackProduct] = useState<Product | null>(null);
@@ -251,15 +257,25 @@ const ShopDetails = () => {
   };
 
   // Add to wishlist handler
-  const handleAddToWishlist = () => {
-    if (product) {
-      dispatch(
-        addItemToWishlist({
-          ...product,
-          status: "available",
-          quantity: 1,
-        })
-      );
+  const handleAddToWishlist = async () => {
+    if (product && !isWishlistLoading) {
+      try {
+        if (isInWishlist) {
+          await dispatch(removeItemFromWishlistAsync(product.id)).unwrap();
+          toast.success("Removed from wishlist!");
+        } else {
+          await dispatch(
+            addItemToWishlistAsync({
+              ...product,
+              status: "available",
+              quantity: 1,
+            })
+          ).unwrap();
+          toast.success("Added to wishlist!");
+        }
+      } catch (error: any) {
+        toast.error(error || "Failed to update wishlist");
+      }
     }
   };
 
@@ -892,23 +908,40 @@ const ShopDetails = () => {
 
                   <button
                     onClick={handleAddToWishlist}
-                    className="flex items-center justify-center w-14 h-14 bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 rounded-xl transition-all duration-200 group"
-                    aria-label="Add to wishlist"
+                    disabled={isWishlistLoading}
+                    className={`flex items-center justify-center w-14 h-14 border-2 rounded-xl transition-all duration-200 group disabled:cursor-not-allowed disabled:opacity-70 ${
+                      isInWishlist 
+                        ? 'bg-red-50 border-red text-red hover:bg-red hover:text-white' 
+                        : 'bg-white border-gray-200 hover:border-red-300 hover:bg-red-50'
+                    }`}
+                    aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
                   >
-                    <svg
-                      className="w-6 h-6 text-gray-400 group-hover:text-red-500 transition-colors"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
+                    {isWishlistLoading ? (
+                      // Loading spinner
+                      <svg className="animate-spin h-6 w-6 text-current" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg
+                        className={`w-6 h-6 transition-colors ${
+                          isInWishlist 
+                            ? 'text-red group-hover:text-white' 
+                            : 'text-gray-400 group-hover:text-red-500'
+                        }`}
+                        fill={isInWishlist ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                      </svg>
+                    )}
                   </button>
                 </div>
               </div>

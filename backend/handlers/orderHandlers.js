@@ -16,6 +16,7 @@ const { Listing } = require("../models/listing");
 const { User } = require("../models/user");
 const { Wallet } = require("../models/wallet");
 const { Transaction } = require("../models/transaction");
+const { Wishlist } = require("../models/wishlist");
 const { configs } = require("../configs");
 const { sendSuccessResponse, sendErrorResponse } = require("../utils/responseHelpers");
 const { decryptData, simpleDecrypt } = require("../utils/encryption");
@@ -164,6 +165,22 @@ const createOrder = async (request, reply) => {
 
     // Mark order as completed
     await order.markAsCompleted();
+
+    // Remove purchased items from user's wishlist and update analytics
+    try {
+      const wishlist = await Wishlist.findOne({ userId: user._id });
+      if (wishlist) {
+        for (const orderItem of order.orderItems) {
+          if (wishlist.hasItem(orderItem.listingId)) {
+            wishlist.markItemAsPurchased(orderItem.listingId);
+          }
+        }
+        await wishlist.save();
+      }
+    } catch (wishlistError) {
+      // Log error but don't fail the order if wishlist update fails
+      request.log.warn(`Failed to update wishlist after purchase: ${wishlistError.message}`);
+    }
 
     return sendSuccessResponse(reply, {
       statusCode: 201,

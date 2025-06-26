@@ -75,10 +75,11 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
             value={formData.title}
             onChange={handleTextChange}
             error={!!formErrors.title}
-            helperText={formErrors.title || 'Enter a descriptive title for your listing'}
+            helperText={formErrors.title || 'Enter a descriptive title for your listing (max 50 characters)'}
             variant="outlined"
             InputLabelProps={{ shrink: true }}
             required
+            inputProps={{ maxLength: 50 }}
           />
         </Grid>
 

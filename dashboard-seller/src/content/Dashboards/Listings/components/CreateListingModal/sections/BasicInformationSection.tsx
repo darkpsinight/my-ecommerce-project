@@ -68,9 +68,10 @@ const BasicInformationSection: React.FC<BasicInformationSectionProps> = ({
               onChange={handleChange}
               placeholder="e.g. Steam Game Key for Cyberpunk 2077"
               error={!!formErrors.title}
-              helperText={formErrors.title || "Enter a descriptive title for your listing"}
+              helperText={formErrors.title || "Enter a descriptive title for your listing (max 50 characters)"}
               required
               size={isMobile ? "small" : "medium"}
+              inputProps={{ maxLength: 50 }}
             />
           </Grid>
 

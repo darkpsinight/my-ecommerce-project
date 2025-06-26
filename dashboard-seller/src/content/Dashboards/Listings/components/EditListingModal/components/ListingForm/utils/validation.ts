@@ -33,8 +33,8 @@ export const validateBasicInfo = (
   } else if (formData.title.length < 5) {
     errors.title = 'Title must be at least 5 characters';
     isValid = false;
-  } else if (formData.title.length > 100) {
-    errors.title = 'Title must be less than 100 characters';
+  } else if (formData.title.length > 50) {
+    errors.title = 'Title must be less than 50 characters';
     isValid = false;
   } else {
     errors.title = '';

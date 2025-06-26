@@ -83,8 +83,8 @@ export const validateListingForm = (formData: ListingFormData): { errors: Listin
   if (!formData.title.trim()) {
     errors.title = 'Title is required';
     isValid = false;
-  } else if (formData.title.length > 100) {
-    errors.title = 'Title must be less than 100 characters';
+  } else if (formData.title.length > 50) {
+    errors.title = 'Title must be less than 50 characters';
     isValid = false;
   }
 

@@ -36,17 +36,7 @@ const Header = () => {
   const decodedToken = token ? decodeToken(token) : null;
   const isSeller = hasRole(decodedToken, "seller");
 
-  // Header category options for the search component
-  const searchOptions = [
-    { label: "All Categories", value: "0" },
-    { label: "Desktop", value: "1" },
-    { label: "Laptop", value: "2" },
-    { label: "Monitor", value: "3" },
-    { label: "Phone", value: "4" },
-    { label: "Watch", value: "5" },
-    { label: "Mouse", value: "6" },
-    { label: "Tablet", value: "7" },
-  ];
+  // Removed searchOptions as SearchBar no longer uses dropdown
 
   // Handle account dropdown toggle
   const toggleAccountDropdown = () => {
@@ -155,7 +145,7 @@ const Header = () => {
           {/* Logo and search area */}
           <div className="xl:w-auto flex-col sm:flex-row w-full flex sm:justify-between sm:items-center gap-5 sm:gap-10">
             <Logo />
-            <SearchBar options={searchOptions} />
+            <SearchBar />
           </div>
 
           {/* Header right section */}

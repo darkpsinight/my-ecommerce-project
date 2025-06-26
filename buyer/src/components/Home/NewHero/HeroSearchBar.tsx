@@ -60,12 +60,11 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
     
     setIsLoading(true);
     
-    // For now, navigate to products page (fake implementation)
-    // Later this will be replaced with dynamic search functionality
+    // Navigate to products page with search query
     const searchParams = new URLSearchParams();
     searchParams.set('q', searchQuery.trim());
     
-    router.push(`http://localhost:3001/products?${searchParams.toString()}`);
+    router.push(`/products?${searchParams.toString()}`);
     
     // Reset loading state after a short delay to prevent flickering
     setTimeout(() => {
@@ -163,7 +162,8 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
               type="button"
               onClick={() => {
                 setSearchQuery(term);
-                const event = new Event('submit') as any;
+                // Create a proper form event
+                const event = { preventDefault: () => {} } as FormEvent;
                 handleSearch(event);
               }}
               className="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-blue-light-5 hover:bg-blue-light-4 text-blue-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap"

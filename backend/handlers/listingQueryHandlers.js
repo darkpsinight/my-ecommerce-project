@@ -9,7 +9,7 @@ const getListings = async (request, reply) => {
   try {
     const {
       category, platform, region, minPrice, maxPrice,
-      sellerId, status, page = 1, limit = 10
+      sellerId, status, page = 1, limit = 10, search
     } = request.query;
 
     // Build filter object
@@ -19,6 +19,18 @@ const getListings = async (request, reply) => {
     if (platform) filter.platform = platform;
     if (region) filter.region = region;
     if (status) filter.status = status;
+
+    // Add search functionality
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { category: searchRegex },
+        { platform: searchRegex },
+        { region: searchRegex }
+      ];
+    }
 
     // Handle sellerId - could be user UID or seller profile externalId
     if (sellerId) {

@@ -227,6 +227,7 @@ export const getProducts = async (params?: {
   platform?: string;
   category?: string;
   sellerId?: string;
+  search?: string;
 }): Promise<{ products: Product[]; total: number; page: number; totalPages: number } | null> => {
   // Create a cache key based on the params
   const cacheKey = JSON.stringify(params || {});

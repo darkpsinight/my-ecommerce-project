@@ -37,6 +37,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
   const [selectedSeller, setSelectedSeller] = useState<string | null>(null);
   const [sellerInfo, setSellerInfo] = useState<Seller | null>(null);
   const [sellerResolved, setSellerResolved] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const handleStickyMenu = () => {
     if (window.scrollY >= 80) {
@@ -46,9 +47,12 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
     }
   };
 
-  // Handle seller ID from props or URL search parameters
+  // Handle seller ID and search query from props or URL search parameters
   useEffect(() => {
     const seller = sellerId || searchParams.get('seller');
+    const query = searchParams.get('q');
+    
+    // Handle seller
     if (seller) {
       setSelectedSeller(seller);
       // Fetch seller information
@@ -62,6 +66,13 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
       setSelectedSeller(null);
       setSellerInfo(null);
       setSellerResolved(true);
+    }
+
+    // Handle search query
+    if (query) {
+      setSearchQuery(query);
+    } else {
+      setSearchQuery("");
     }
   }, [sellerId, searchParams]);
 
@@ -105,6 +116,11 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
           params.sellerId = selectedSeller;
         }
 
+        // Add search query if provided
+        if (searchQuery.trim()) {
+          params.search = searchQuery.trim();
+        }
+
         console.log('Fetching products with params:', params);
         const result = await getProducts(params);
 
@@ -125,7 +141,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
     };
 
     fetchProductsData();
-  }, [currentPage, selectedCategory, selectedPlatform, priceRange, selectedSeller, sellerResolved]);
+  }, [currentPage, selectedCategory, selectedPlatform, priceRange, selectedSeller, sellerResolved, searchQuery]);
 
   const options = [
     { label: "Latest Products", value: "0" },
@@ -211,17 +227,43 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            Filtered Shopping Experience
+            {searchQuery ? "Search Results" : "Filtered Shopping Experience"}
           </div>
-          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-dark mb-6">
-            Find Your Perfect{" "}
-            <span className="bg-gradient-to-r from-blue to-green bg-clip-text text-transparent">
-              Digital Code
-            </span>
-          </h1>
-          <p className="text-lg lg:text-xl text-dark-3 max-w-2xl mx-auto mb-8">
-            Use our advanced filters to discover exactly what you need from thousands of digital codes, game keys, and gift cards
-          </p>
+          
+          {searchQuery ? (
+            <>
+              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-dark mb-6">
+                Search Results for{" "}
+                <span className="bg-gradient-to-r from-blue to-green bg-clip-text text-transparent">
+                  "{searchQuery}"
+                </span>
+              </h1>
+              <p className="text-lg lg:text-xl text-dark-3 max-w-2xl mx-auto mb-6">
+                {loading ? "Searching..." : `Found ${totalProducts} products matching your search`}
+              </p>
+              <button
+                onClick={() => window.location.href = '/products'}
+                className="inline-flex items-center gap-2 bg-blue hover:bg-blue-dark text-white px-6 py-3 rounded-full transition-all duration-200 hover:scale-105 text-sm font-medium mb-4"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear Search
+              </button>
+            </>
+          ) : (
+            <>
+              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-dark mb-6">
+                Find Your Perfect{" "}
+                <span className="bg-gradient-to-r from-blue to-green bg-clip-text text-transparent">
+                  Digital Code
+                </span>
+              </h1>
+              <p className="text-lg lg:text-xl text-dark-3 max-w-2xl mx-auto mb-8">
+                Use our advanced filters to discover exactly what you need from thousands of digital codes, game keys, and gift cards
+              </p>
+            </>
+          )}
           <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
             <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full">
               <div className="w-2 h-2 bg-green rounded-full"></div>

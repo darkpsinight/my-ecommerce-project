@@ -1,34 +1,44 @@
-import React, { useState } from "react";
-import CustomSelect from "../CustomSelect";
+import React, { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
 interface SearchBarProps {
-  options: Array<{ label: string; value: string }>;
+  // Remove dependency on options since we're removing the dropdown
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ options }) => {
+const SearchBar: React.FC<SearchBarProps> = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    // Navigate to products page with search query
+    const searchParams = new URLSearchParams();
+    searchParams.set('q', searchQuery.trim());
+    
+    router.push(`/products?${searchParams.toString()}`);
+  };
 
   return (
     <div className="max-w-[475px] w-full">
-      <form>
+      <form onSubmit={handleSearch}>
         <div className="flex items-center">
-          <CustomSelect options={options} />
-
-          <div className="relative max-w-[333px] sm:min-w-[333px] w-full">
-            {/* divider */}
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 inline-block w-px h-5.5 bg-gray-4"></span>
+          {/* Expanded search input - now takes the full width */}
+          <div className="relative w-full">
             <input
               onChange={(e) => setSearchQuery(e.target.value)}
               value={searchQuery}
               type="search"
               name="search"
               id="search"
-              placeholder="I am shopping for..."
+              placeholder="Search for digital codes, games, gift cards..."
               autoComplete="off"
-              className="custom-search w-full rounded-r-[5px] bg-gray-1 !border-l-0 border border-gray-3 py-2.5 pl-4 pr-10 outline-none ease-in duration-200"
+              className="custom-search w-full rounded-[5px] bg-gray-1 border border-gray-3 py-2.5 pl-4 pr-12 outline-none ease-in duration-200 focus:border-blue focus:ring-1 focus:ring-blue/20"
             />
 
             <button
+              type="submit"
               id="search-btn"
               aria-label="Search"
               className="flex items-center justify-center absolute right-3 top-1/2 -translate-y-1/2 ease-in duration-200 hover:text-blue"

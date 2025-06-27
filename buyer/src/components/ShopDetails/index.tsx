@@ -583,9 +583,12 @@ const ShopDetails = () => {
 
                   <div className="flex items-center gap-2">
                     <span className="text-gray-500 text-sm">Sold by</span>
-                    <span className="text-gray-900 font-semibold">
+                    <button
+                      onClick={() => router.push(`/marketplace/${product.sellerId}`)}
+                      className="text-blue font-semibold hover:text-blue-dark transition-colors duration-200 cursor-pointer underline decoration-1 underline-offset-2 hover:decoration-2"
+                    >
                       {product.sellerMarketName || product.sellerName || "Unknown Seller"}
-                    </span>
+                    </button>
                     {product.isSellerVerified && (
                       <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 rounded-full">
                         <svg
@@ -618,7 +621,7 @@ const ShopDetails = () => {
                     {[...Array(5)].map((_, index) => (
                       <svg
                         key={index}
-                        className="fill-yellow-400"
+                        className="fill-yellow"
                         width="16"
                         height="16"
                         viewBox="0 0 18 18"
@@ -1048,69 +1051,27 @@ const ShopDetails = () => {
         </section>
       </PageContainer>
 
-      {/* Reviews Section - Prominently Displayed */}
+      {/* Comments Section */}
       <PageContainer>
         <section className="py-8 lg:py-12">
-          <div className="mb-6">
+          <div className="mb-8">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 text-center">
-              Customer Reviews
+              Comments
             </h2>
             <p className="text-body text-center max-w-2xl mx-auto">
-              See what our customers are saying about this product. Reviews are crucial for making informed purchasing decisions.
+              See what customers are saying about this product.
             </p>
           </div>
 
-          {/* Review Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-            {/* Overall Rating Card */}
-            <div className="bg-gradient-to-br from-blue-light-5 to-blue-light-4 rounded-2xl p-6 text-center">
-              <div className="text-4xl font-bold text-blue mb-2">5.0</div>
-              <div className="flex justify-center items-center gap-1 mb-2">
-                {[...Array(5)].map((_, index) => (
-                  <svg
-                    key={index}
-                    className="w-5 h-5 fill-yellow-400"
-                    viewBox="0 0 15 16"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                      fill=""
-                    />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-blue text-sm font-medium">
-                Based on {product?.reviews || 0} reviews
-              </p>
-            </div>
-
-            {/* Satisfaction Rate Card */}
-            <div className="bg-gradient-to-br from-green-light-6 to-green-light-5 rounded-2xl p-6 text-center">
-              <div className="text-4xl font-bold text-green mb-2">98%</div>
-              <p className="text-green-dark font-medium mb-1">Satisfaction Rate</p>
-              <p className="text-green text-sm">
-                Customers love this product
-              </p>
-            </div>
-          </div>
-
-          {/* Customer Reviews */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                What Our Customers Say
-              </h3>
-
-              <div className="space-y-6">
-                {/* Review Item 1 */}
+          {/* Comments List - Maximum 5 comments */}
+          <div className="max-w-4xl mx-auto space-y-6">
+                {/* Comment 1 */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-light to-blue">
                       <Image
                         src="/images/users/user-01.jpg"
-                        alt="Customer review"
+                        alt="Customer comment"
                         className="w-full h-full object-cover"
                         width={48}
                         height={48}
@@ -1133,10 +1094,10 @@ const ShopDetails = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, index) => (
+                          {[...Array(4)].map((_, index) => (
                             <svg
                               key={index}
-                              className="w-4 h-4 fill-yellow-400"
+                              className="w-4 h-4 fill-yellow"
                               viewBox="0 0 15 16"
                               fill="none"
                               xmlns="http://www.w3.org/2000/svg"
@@ -1147,6 +1108,17 @@ const ShopDetails = () => {
                               />
                             </svg>
                           ))}
+                          <svg
+                            className="w-4 h-4 fill-gray-5"
+                            viewBox="0 0 15 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                              fill=""
+                            />
+                          </svg>
                         </div>
                       </div>
                       <p className="text-gray-700 leading-relaxed mb-3">
@@ -1167,13 +1139,13 @@ const ShopDetails = () => {
                   </div>
                 </div>
 
-                {/* Review Item 2 */}
+                {/* Comment 2 */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-purple-light to-purple">
                       <Image
                         src="/images/users/user-01.jpg"
-                        alt="Customer review"
+                        alt="Customer comment"
                         className="w-full h-full object-cover"
                         width={48}
                         height={48}
@@ -1196,10 +1168,24 @@ const ShopDetails = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, index) => (
+                          {[...Array(3)].map((_, index) => (
                             <svg
                               key={index}
-                              className="w-4 h-4 fill-yellow-400"
+                              className="w-4 h-4 fill-yellow"
+                              viewBox="0 0 15 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                fill=""
+                              />
+                            </svg>
+                          ))}
+                          {[...Array(2)].map((_, index) => (
+                            <svg
+                              key={index + 3}
+                              className="w-4 h-4 fill-gray-5"
                               viewBox="0 0 15 16"
                               fill="none"
                               xmlns="http://www.w3.org/2000/svg"
@@ -1230,13 +1216,13 @@ const ShopDetails = () => {
                   </div>
                 </div>
 
-                {/* Review Item 3 */}
+                {/* Comment 3 */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-green-light to-green">
                       <Image
                         src="/images/users/user-01.jpg"
-                        alt="Customer review"
+                        alt="Customer comment"
                         className="w-full h-full object-cover"
                         width={48}
                         height={48}
@@ -1262,7 +1248,7 @@ const ShopDetails = () => {
                           {[...Array(5)].map((_, index) => (
                             <svg
                               key={index}
-                              className="w-4 h-4 fill-yellow-400"
+                              className="w-4 h-4 fill-yellow"
                               viewBox="0 0 15 16"
                               fill="none"
                               xmlns="http://www.w3.org/2000/svg"
@@ -1292,90 +1278,143 @@ const ShopDetails = () => {
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* View All Reviews Button */}
-              <div className="text-center mt-8">
-                <button className="bg-gradient-to-r from-blue to-blue-dark hover:from-blue-dark hover:to-blue-light text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
-                  View All {product?.reviews || 0} Reviews
-                </button>
-              </div>
-            </div>
+                {/* Comment 4 */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-red-light to-red">
+                      <Image
+                        src="/images/users/user-01.jpg"
+                        alt="Customer comment"
+                        className="w-full h-full object-cover"
+                        width={48}
+                        height={48}
+                      />
+                    </div>
 
-            {/* Leave Review Section */}
-            <div>
-              <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8 sticky top-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  Customer Reviews
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  {isAuthenticated 
-                    ? hasPurchased 
-                      ? "Share your experience with this product to help other customers."
-                      : "Purchase this product to leave a review and help other customers."
-                    : "Login and purchase this product to leave a review."
-                  }
-                </p>
-
-                {/* Leave Review Button - Only for authenticated users who purchased */}
-                {isAuthenticated && hasPurchased && (
-                  <button
-                    onClick={handleLeaveReview}
-                    disabled={checkingPurchase}
-                    className="w-full bg-gradient-to-r from-green to-green-dark hover:from-green-dark hover:to-green-light disabled:from-gray-300 disabled:to-gray-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {checkingPurchase ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Checking...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Leave a Review
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {/* Purchase Required Message */}
-                {isAuthenticated && !hasPurchased && !checkingPurchase && (
-                  <div className="text-center">
-                    <div className="bg-blue-light-5 rounded-lg p-4">
-                      <svg className="w-8 h-8 text-blue mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                      </svg>
-                      <p className="text-blue font-medium">Purchase Required</p>
-                      <p className="text-blue text-sm mt-1">You need to purchase this product to leave a review</p>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-lg">
+                            David Wilson
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-green-600 font-medium bg-green-light-6 px-2 py-1 rounded-full">
+                              Verified Buyer
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              1 month ago
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          {[...Array(4)].map((_, index) => (
+                            <svg
+                              key={index}
+                              className="w-4 h-4 fill-yellow"
+                              viewBox="0 0 15 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                fill=""
+                              />
+                            </svg>
+                          ))}
+                          <svg
+                            className="w-4 h-4 fill-gray-5"
+                            viewBox="0 0 15 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                              fill=""
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed mb-3">
+                        "Good product overall. The code worked as expected and delivery was quick. Only reason I didn't give 5 stars is because the instructions could have been clearer for first-time users."
+                      </p>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1 text-green-600">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Verified Purchase
+                        </div>
+                        <div className="text-gray-500">
+                          Helpful (6)
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
 
-                {/* Login Required Message */}
-                {!isAuthenticated && (
-                  <div className="text-center">
-                    <div className="bg-gray-100 rounded-lg p-4">
-                      <svg className="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      <p className="text-gray-700 font-medium">Login Required</p>
-                      <p className="text-gray-600 text-sm mt-1">Please login to leave a review</p>
-                      <button
-                        onClick={() => router.push('/signin')}
-                        className="mt-3 bg-blue text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-dark transition-colors duration-200"
-                      >
-                        Login Now
-                      </button>
+                {/* Comment 5 */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-teal-light to-teal">
+                      <Image
+                        src="/images/users/user-01.jpg"
+                        alt="Customer comment"
+                        className="w-full h-full object-cover"
+                        width={48}
+                        height={48}
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-lg">
+                            Emma Rodriguez
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-green-600 font-medium bg-green-light-6 px-2 py-1 rounded-full">
+                              Verified Buyer
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              2 months ago
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          {[...Array(5)].map((_, index) => (
+                            <svg
+                              key={index}
+                              className="w-4 h-4 fill-yellow"
+                              viewBox="0 0 15 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                fill=""
+                              />
+                            </svg>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed mb-3">
+                        "Perfect transaction! The code was delivered immediately and worked flawlessly. Great customer service and very reliable seller. Will definitely shop here again!"
+                      </p>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1 text-green-600">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Verified Purchase
+                        </div>
+                        <div className="text-gray-500">
+                          Helpful (9)
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
           </div>
         </section>
       </PageContainer>

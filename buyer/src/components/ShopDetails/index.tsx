@@ -38,6 +38,7 @@ const ShopDetails = () => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [checkingPurchase, setCheckingPurchase] = useState(false);
+  const [showReviewsInfo, setShowReviewsInfo] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -1051,27 +1052,168 @@ const ShopDetails = () => {
         </section>
       </PageContainer>
 
-      {/* Comments Section */}
+      {/* Customer Reviews Section */}
       <PageContainer>
         <section className="py-8 lg:py-12">
           <div className="mb-8">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 text-center">
-              Comments
+              Customer Reviews
             </h2>
             <p className="text-body text-center max-w-2xl mx-auto">
-              See what customers are saying about this product.
+              See what verified customers are saying about this product.
             </p>
           </div>
 
-          {/* Comments List - Maximum 5 comments */}
+          {/* Reviews Summary */}
+          <div className="max-w-4xl mx-auto mb-8">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Overall Rating */}
+                <div className="text-center lg:text-left">
+                  <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4">
+                    <div>
+                      <div className="text-5xl font-bold text-gray-900 mb-2">4.1</div>
+                      <div className="flex items-center justify-center lg:justify-start gap-1 mb-2">
+                        {[...Array(4)].map((_, index) => (
+                          <svg
+                            key={index}
+                            className="w-6 h-6 fill-yellow"
+                            viewBox="0 0 18 18"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
+                              fill=""
+                            />
+                          </svg>
+                        ))}
+                        <svg
+                          className="w-6 h-6 fill-gray-3"
+                          viewBox="0 0 18 18"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
+                            fill=""
+                          />
+                        </svg>
+                      </div>
+                      <div className="text-gray-600 text-lg font-medium">4.1 out of 5 stars</div>
+                      <div className="text-gray-500 text-sm mt-1">20 global ratings</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rating Breakdown */}
+                <div className="space-y-3">
+                  {/* 5 Stars */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-sm font-medium text-blue w-16">
+                      <span>5 star</span>
+                    </div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-yellow to-yellow-dark h-full rounded-full transition-all duration-700 ease-out"
+                        style={{ width: '55%' }}
+                      ></div>
+                    </div>
+                    <div className="text-sm font-medium text-blue w-10 text-right">55%</div>
+                  </div>
+
+                  {/* 4 Stars */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-sm font-medium text-blue w-16">
+                      <span>4 star</span>
+                    </div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-yellow to-yellow-dark h-full rounded-full transition-all duration-700 ease-out"
+                        style={{ width: '25%' }}
+                      ></div>
+                    </div>
+                    <div className="text-sm font-medium text-blue w-10 text-right">25%</div>
+                  </div>
+
+                  {/* 3 Stars */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-sm font-medium text-blue w-16">
+                      <span>3 star</span>
+                    </div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-yellow to-yellow-dark h-full rounded-full transition-all duration-700 ease-out"
+                        style={{ width: '15%' }}
+                      ></div>
+                    </div>
+                    <div className="text-sm font-medium text-blue w-10 text-right">15%</div>
+                  </div>
+
+                  {/* 2 Stars */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-sm font-medium text-blue w-16">
+                      <span>2 star</span>
+                    </div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-yellow to-yellow-dark h-full rounded-full transition-all duration-700 ease-out"
+                        style={{ width: '5%' }}
+                      ></div>
+                    </div>
+                    <div className="text-sm font-medium text-blue w-10 text-right">5%</div>
+                  </div>
+
+                  {/* 1 Star */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-sm font-medium text-blue w-16">
+                      <span>1 star</span>
+                    </div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-yellow to-yellow-dark h-full rounded-full transition-all duration-700 ease-out"
+                        style={{ width: '0%' }}
+                      ></div>
+                    </div>
+                    <div className="text-sm font-medium text-blue w-10 text-right">0%</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* How Reviews Work - Accordion */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => setShowReviewsInfo(!showReviewsInfo)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
+                >
+                  <h4 className="font-semibold text-gray-900 text-left">How customer reviews and ratings work</h4>
+                  <div className={`transform transition-transform duration-200 ${showReviewsInfo ? 'rotate-180' : ''}`}>
+                    <svg className="w-5 h-5 text-gray-600 group-hover:text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showReviewsInfo ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-4 bg-gray-50 rounded-b-lg">
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Customer Reviews, including Product Star Ratings help customers to learn more about the product and decide whether it is the right product for them. 
+                      To calculate the overall star rating and percentage breakdown by star, we don&apos;t use a simple average. Instead, our system considers things like how recent a review is and if the reviewer bought the item on our platform. It also analyzes reviews to verify trustworthiness.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Individual Reviews */}
           <div className="max-w-4xl mx-auto space-y-6">
-                {/* Comment 1 */}
+                {/* Review 1 */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-light to-blue">
                       <Image
                         src="/images/users/user-01.jpg"
-                        alt="Customer comment"
+                        alt="Customer review"
                         className="w-full h-full object-cover"
                         width={48}
                         height={48}
@@ -1079,73 +1221,66 @@ const ShopDetails = () => {
                     </div>
 
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-start justify-between mb-3">
                         <div>
                           <h4 className="font-semibold text-gray-900 text-lg">
                             John Smith
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-green-600 font-medium bg-green-light-6 px-2 py-1 rounded-full">
-                              Verified Buyer
-                            </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(5)].map((_, index) => (
+                                <svg
+                                  key={index}
+                                  className="w-4 h-4 fill-yellow"
+                                  viewBox="0 0 15 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                    fill=""
+                                  />
+                                </svg>
+                              ))}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900">Excellent value!</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
                             <span className="text-sm text-gray-500">
-                              2 days ago
+                              Reviewed on December 15, 2024
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(4)].map((_, index) => (
-                            <svg
-                              key={index}
-                              className="w-4 h-4 fill-yellow"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          ))}
-                          <svg
-                            className="w-4 h-4 fill-gray-5"
-                            viewBox="0 0 15 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                              fill=""
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 leading-relaxed mb-3">
-                        &ldquo;Fast delivery and the code worked without any issues. The product description was accurate and I got exactly what I expected. The platform-specific instructions were very helpful. Would definitely recommend!&rdquo;
-                      </p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-sm text-green-600 bg-green-light-6 px-3 py-1 rounded-full">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                          Verified Purchase
+                          <span className="font-medium">Verified Purchase</span>
                         </div>
-                        <div className="text-gray-500">
-                          Helpful (12)
-                        </div>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed mb-4">
+                        Fast delivery and the code worked without any issues. The product description was accurate and I got exactly what I expected. The platform-specific instructions were very helpful. Would definitely recommend!
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <button className="flex items-center gap-1 hover:text-blue transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                          </svg>
+                          Helpful (23)
+                        </button>
+                        <button className="hover:text-blue transition-colors">Report</button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Comment 2 */}
+                {/* Review 2 */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-purple-light to-purple">
                       <Image
                         src="/images/users/user-01.jpg"
-                        alt="Customer comment"
+                        alt="Customer review"
                         className="w-full h-full object-cover"
                         width={48}
                         height={48}
@@ -1153,76 +1288,77 @@ const ShopDetails = () => {
                     </div>
 
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-start justify-between mb-3">
                         <div>
                           <h4 className="font-semibold text-gray-900 text-lg">
                             Michael Chen
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-green-600 font-medium bg-green-light-6 px-2 py-1 rounded-full">
-                              Verified Buyer
-                            </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(4)].map((_, index) => (
+                                <svg
+                                  key={index}
+                                  className="w-4 h-4 fill-yellow"
+                                  viewBox="0 0 15 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                    fill=""
+                                  />
+                                </svg>
+                              ))}
+                              <svg
+                                className="w-4 h-4 fill-gray-3"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900">Great quality!</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
                             <span className="text-sm text-gray-500">
-                              1 week ago
+                              Reviewed on December 8, 2024
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(3)].map((_, index) => (
-                            <svg
-                              key={index}
-                              className="w-4 h-4 fill-yellow"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          ))}
-                          {[...Array(2)].map((_, index) => (
-                            <svg
-                              key={index + 3}
-                              className="w-4 h-4 fill-gray-5"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-gray-700 leading-relaxed mb-3">
-                        &ldquo;I was hesitant at first, but this turned out to be a great purchase. The code was delivered instantly after payment, and activation was straightforward. The seller even followed up to make sure everything was working properly. Five stars!&rdquo;
-                      </p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-sm text-green-600 bg-green-light-6 px-3 py-1 rounded-full">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                          Verified Purchase
+                          <span className="font-medium">Verified Purchase</span>
                         </div>
-                        <div className="text-gray-500">
-                          Helpful (8)
-                        </div>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed mb-4">
+                        I was hesitant at first, but this turned out to be a great purchase. The code was delivered instantly after payment, and activation was straightforward. The seller even followed up to make sure everything was working properly.
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <button className="flex items-center gap-1 hover:text-blue transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                          </svg>
+                          Helpful (18)
+                        </button>
+                        <button className="hover:text-blue transition-colors">Report</button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Comment 3 */}
+                {/* Review 3 */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-green-light to-green">
                       <Image
                         src="/images/users/user-01.jpg"
-                        alt="Customer comment"
+                        alt="Customer review"
                         className="w-full h-full object-cover"
                         width={48}
                         height={48}
@@ -1230,62 +1366,66 @@ const ShopDetails = () => {
                     </div>
 
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-start justify-between mb-3">
                         <div>
                           <h4 className="font-semibold text-gray-900 text-lg">
                             Sarah Johnson
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-green-600 font-medium bg-green-light-6 px-2 py-1 rounded-full">
-                              Verified Buyer
-                            </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(5)].map((_, index) => (
+                                <svg
+                                  key={index}
+                                  className="w-4 h-4 fill-yellow"
+                                  viewBox="0 0 15 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                    fill=""
+                                  />
+                                </svg>
+                              ))}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900">Excellent service!</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
                             <span className="text-sm text-gray-500">
-                              3 weeks ago
+                              Reviewed on November 25, 2024
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, index) => (
-                            <svg
-                              key={index}
-                              className="w-4 h-4 fill-yellow"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-gray-700 leading-relaxed mb-3">
-                        &ldquo;Excellent service! The digital code was exactly what I needed and worked perfectly. The automatic delivery system is really convenient. I&apos;ve bought from this seller multiple times now and never had any issues.&rdquo;
-                      </p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-sm text-green-600 bg-green-light-6 px-3 py-1 rounded-full">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                          Verified Purchase
+                          <span className="font-medium">Verified Purchase</span>
                         </div>
-                        <div className="text-gray-500">
-                          Helpful (15)
-                        </div>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed mb-4">
+                        Excellent service! The digital code was exactly what I needed and worked perfectly. The automatic delivery system is really convenient. I&apos;ve bought from this seller multiple times now and never had any issues.
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <button className="flex items-center gap-1 hover:text-blue transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                          </svg>
+                          Helpful (31)
+                        </button>
+                        <button className="hover:text-blue transition-colors">Report</button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Comment 4 */}
+                {/* Review 4 */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-red-light to-red">
                       <Image
                         src="/images/users/user-01.jpg"
-                        alt="Customer comment"
+                        alt="Customer review"
                         className="w-full h-full object-cover"
                         width={48}
                         height={48}
@@ -1293,73 +1433,80 @@ const ShopDetails = () => {
                     </div>
 
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-start justify-between mb-3">
                         <div>
                           <h4 className="font-semibold text-gray-900 text-lg">
                             David Wilson
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-green-600 font-medium bg-green-light-6 px-2 py-1 rounded-full">
-                              Verified Buyer
-                            </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(3)].map((_, index) => (
+                                <svg
+                                  key={index}
+                                  className="w-4 h-4 fill-yellow"
+                                  viewBox="0 0 15 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                    fill=""
+                                  />
+                                </svg>
+                              ))}
+                              {[...Array(2)].map((_, index) => (
+                                <svg
+                                  key={index + 3}
+                                  className="w-4 h-4 fill-gray-3"
+                                  viewBox="0 0 15 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                    fill=""
+                                  />
+                                </svg>
+                              ))}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900">Good overall</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
                             <span className="text-sm text-gray-500">
-                              1 month ago
+                              Reviewed on November 15, 2024
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(4)].map((_, index) => (
-                            <svg
-                              key={index}
-                              className="w-4 h-4 fill-yellow"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          ))}
-                          <svg
-                            className="w-4 h-4 fill-gray-5"
-                            viewBox="0 0 15 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                              fill=""
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 leading-relaxed mb-3">
-                        "Good product overall. The code worked as expected and delivery was quick. Only reason I didn't give 5 stars is because the instructions could have been clearer for first-time users."
-                      </p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-sm text-green-600 bg-green-light-6 px-3 py-1 rounded-full">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                          Verified Purchase
+                          <span className="font-medium">Verified Purchase</span>
                         </div>
-                        <div className="text-gray-500">
-                          Helpful (6)
-                        </div>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed mb-4">
+                        Good product overall. The code worked as expected and delivery was quick. Only reason I didn&apos;t give 5 stars is because the instructions could have been clearer for first-time users.
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <button className="flex items-center gap-1 hover:text-blue transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                          </svg>
+                          Helpful (12)
+                        </button>
+                        <button className="hover:text-blue transition-colors">Report</button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Comment 5 */}
+                {/* Review 5 */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-teal-light to-teal">
+                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-green-light-2 to-green-light">
                       <Image
                         src="/images/users/user-01.jpg"
-                        alt="Customer comment"
+                        alt="Customer review"
                         className="w-full h-full object-cover"
                         width={48}
                         height={48}
@@ -1367,50 +1514,54 @@ const ShopDetails = () => {
                     </div>
 
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-start justify-between mb-3">
                         <div>
                           <h4 className="font-semibold text-gray-900 text-lg">
                             Emma Rodriguez
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-green-600 font-medium bg-green-light-6 px-2 py-1 rounded-full">
-                              Verified Buyer
-                            </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(5)].map((_, index) => (
+                                <svg
+                                  key={index}
+                                  className="w-4 h-4 fill-yellow"
+                                  viewBox="0 0 15 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                    fill=""
+                                  />
+                                </svg>
+                              ))}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900">Perfect transaction!</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
                             <span className="text-sm text-gray-500">
-                              2 months ago
+                              Reviewed on October 18, 2024
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, index) => (
-                            <svg
-                              key={index}
-                              className="w-4 h-4 fill-yellow"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-gray-700 leading-relaxed mb-3">
-                        "Perfect transaction! The code was delivered immediately and worked flawlessly. Great customer service and very reliable seller. Will definitely shop here again!"
-                      </p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-sm text-green-600 bg-green-light-6 px-3 py-1 rounded-full">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                          Verified Purchase
+                          <span className="font-medium">Verified Purchase</span>
                         </div>
-                        <div className="text-gray-500">
-                          Helpful (9)
-                        </div>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed mb-4">
+                        Perfect transaction! The code was delivered immediately and worked flawlessly. Great customer service and very reliable seller. Will definitely shop here again!
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <button className="flex items-center gap-1 hover:text-blue transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                          </svg>
+                          Helpful (27)
+                        </button>
+                        <button className="hover:text-blue transition-colors">Report</button>
                       </div>
                     </div>
                   </div>

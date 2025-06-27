@@ -9,6 +9,28 @@ const createReview = async (request, reply) => {
     const { orderId, rating, comment } = request.body;
     const reviewerId = request.user.id;
 
+    // Enhanced input validation
+    if (!orderId) {
+      return reply.status(400).send({
+        success: false,
+        message: "Order ID is required"
+      });
+    }
+
+    if (!rating || rating < 1 || rating > 5 || !Number.isInteger(rating)) {
+      return reply.status(400).send({
+        success: false,
+        message: "Rating must be an integer between 1 and 5"
+      });
+    }
+
+    if (comment && (typeof comment !== 'string' || comment.length > 1000)) {
+      return reply.status(400).send({
+        success: false,
+        message: "Comment must be a string with maximum 1000 characters"
+      });
+    }
+
     // Convert orderId to ObjectId if it's a string
     let orderObjectId;
     try {
@@ -25,7 +47,7 @@ const createReview = async (request, reply) => {
       orderObjectId = order._id;
     }
 
-    // Verify order exists and belongs to the user
+    // Verify order exists, belongs to the user, and is completed
     const order = await Order.findOne({
       _id: orderObjectId,
       buyerId: reviewerId,
@@ -33,20 +55,32 @@ const createReview = async (request, reply) => {
     }).populate("orderItems.listingId");
 
     if (!order) {
-      return reply.status(404).send({
+      return reply.status(403).send({
         success: false,
-        message: "Order not found or not eligible for review"
+        message: "Order not found, not completed, or you don't have permission to review this order"
       });
     }
 
-    // Check if user already reviewed this order
+    // Additional security check: Ensure order was completed recently enough to review
+    // For example, within the last 6 months
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    if (order.createdAt < sixMonthsAgo) {
+      return reply.status(400).send({
+        success: false,
+        message: "This order is too old to review. Reviews can only be submitted within 6 months of purchase."
+      });
+    }
+
+    // Check if user already reviewed this order (double-check for race conditions)
     const existingReview = await Review.findOne({
       reviewerId,
       orderId: orderObjectId
     });
 
     if (existingReview) {
-      return reply.status(400).send({
+      return reply.status(409).send({
         success: false,
         message: "You have already reviewed this order"
       });
@@ -61,17 +95,30 @@ const createReview = async (request, reply) => {
       });
     }
 
-    // Create the review
+    // Verify the listing still exists and is not deleted
+    if (!firstOrderItem.listingId || firstOrderItem.listingId.deleted) {
+      return reply.status(400).send({
+        success: false,
+        message: "The item in this order is no longer available for review"
+      });
+    }
+
+    // Create the review with additional security measures
     const review = await Review.createReview({
       reviewerId,
       orderId: orderObjectId,
       listingId: firstOrderItem.listingId._id,
       sellerId: order.sellerId,
       rating,
-      comment
+      comment: comment ? comment.trim() : undefined,
+      // Add IP address for abuse prevention (if available)
+      reviewerIp: request.ip || request.connection.remoteAddress
     });
 
-    // Return success response
+    // Log the review creation for security monitoring
+    console.log(`Review created: ${review._id} by user ${reviewerId} for order ${order.externalId}`);
+
+    // Return success response with minimal data
     return reply.send({
       success: true,
       message: "Review created successfully",
@@ -86,16 +133,24 @@ const createReview = async (request, reply) => {
   } catch (error) {
     console.error("Error creating review:", error);
     
+    // Handle specific errors
     if (error.message === "You have already reviewed this order") {
-      return reply.status(400).send({
+      return reply.status(409).send({
         success: false,
         message: error.message
       });
     }
 
+    if (error.code === 11000) { // MongoDB duplicate key error
+      return reply.status(409).send({
+        success: false,
+        message: "You have already reviewed this order"
+      });
+    }
+
     return reply.status(500).send({
       success: false,
-      message: "Error creating review"
+      message: "Error creating review. Please try again later."
     });
   }
 };
@@ -187,6 +242,14 @@ const canUserReviewOrder = async (request, reply) => {
     const { orderId } = request.params;
     const userId = request.user.id;
 
+    // Enhanced input validation
+    if (!orderId) {
+      return reply.status(400).send({
+        success: false,
+        message: "Order ID is required"
+      });
+    }
+
     // Convert orderId to ObjectId if it's a string
     let orderObjectId;
     try {
@@ -206,19 +269,48 @@ const canUserReviewOrder = async (request, reply) => {
       orderObjectId = order._id;
     }
 
-    // Check if order exists and is completed
+    // Check if order exists, belongs to user, and is completed
     const order = await Order.findOne({
       _id: orderObjectId,
       buyerId: userId,
       status: "completed"
-    });
+    }).populate("orderItems.listingId");
 
     if (!order) {
       return reply.send({
         success: true,
         data: {
           canReview: false,
-          reason: "Order not found or not completed"
+          reason: "Order not found, not completed, or you don't have permission to review this order"
+        }
+      });
+    }
+
+    // Additional security check: Ensure order was completed recently enough to review
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    if (order.createdAt < sixMonthsAgo) {
+      return reply.send({
+        success: true,
+        data: {
+          canReview: false,
+          reason: "This order is too old to review. Reviews can only be submitted within 6 months of purchase."
+        }
+      });
+    }
+
+    // Verify that the order has valid items to review
+    const validOrderItems = order.orderItems.filter(item => 
+      item.listingId && !item.listingId.deleted
+    );
+
+    if (validOrderItems.length === 0) {
+      return reply.send({
+        success: true,
+        data: {
+          canReview: false,
+          reason: "The items in this order are no longer available for review"
         }
       });
     }
@@ -244,16 +336,20 @@ const canUserReviewOrder = async (request, reply) => {
       });
     }
 
+    // Log the review eligibility check for security monitoring
+    console.log(`Review eligibility checked for order ${order.externalId} by user ${userId}`);
+
     return reply.send({
       success: true,
       data: {
         canReview: true,
+        reason: "Order completed - eligible for review",
         order: {
           externalId: order.externalId,
           totalAmount: order.totalAmount,
           currency: order.currency,
           createdAt: order.createdAt,
-          orderItems: order.orderItems.map(item => ({
+          orderItems: validOrderItems.map(item => ({
             title: item.title,
             platform: item.platform,
             region: item.region,
@@ -268,7 +364,7 @@ const canUserReviewOrder = async (request, reply) => {
     console.error("Error checking review eligibility:", error);
     return reply.status(500).send({
       success: false,
-      message: "Error checking review eligibility"
+      message: "Error checking review eligibility. Please try again later."
     });
   }
 };

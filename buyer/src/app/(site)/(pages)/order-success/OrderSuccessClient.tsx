@@ -1,16 +1,52 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import ReviewForm from "../../../../components/ReviewForm";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { reviewService } from "@/services/reviews";
 
 const OrderSuccessClient = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const orderId = searchParams.get("orderId");
   const [mounted, setMounted] = useState(false);
+  const [canReview, setCanReview] = useState<boolean | null>(null);
+  const [isCheckingReview, setIsCheckingReview] = useState(false);
+  const { token } = useSelector((state: RootState) => state.authReducer);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    console.log('🚀 OrderSuccess mounted:', { token: !!token, orderId, canReview });
+    // Check review eligibility if user is authenticated
+    if (token && orderId) {
+      checkReviewEligibility();
+    } else {
+      console.log('⚠️ Cannot check review eligibility:', { hasToken: !!token, hasOrderId: !!orderId });
+    }
+  }, [token, orderId]);
+
+  const checkReviewEligibility = async () => {
+    if (!orderId) return;
+    
+    try {
+      setIsCheckingReview(true);
+      console.log('🔍 Checking review eligibility for order:', orderId);
+      const response = await reviewService.canUserReviewOrder(orderId);
+      console.log('✅ Review eligibility response:', response);
+      setCanReview(response.canReview);
+    } catch (error) {
+      console.error('❌ Error checking review eligibility:', error);
+      setCanReview(false);
+    } finally {
+      setIsCheckingReview(false);
+    }
+  };
+
+  const handleLeaveReview = () => {
+    if (orderId) {
+      router.push(`/review/${orderId}`);
+    }
+  };
 
   if (!mounted) {
     return null; // Prevent hydration mismatch
@@ -68,6 +104,76 @@ const OrderSuccessClient = () => {
               </a>
             </div>
 
+            {/* Debug Info - Remove in production */}
+            <div className="mt-6 p-4 bg-gray-1 rounded-lg text-xs text-gray-6">
+              <strong>Debug Info:</strong><br/>
+              • User logged in: {token ? '✅ Yes' : '❌ No'}<br/>
+              • Order ID: {orderId || '❌ Missing'}<br/>
+              • Can review: {canReview === null ? '🔄 Checking...' : canReview ? '✅ Yes' : '❌ No'}<br/>
+              • Show button: {token && canReview ? '✅ Yes' : '❌ No'}
+            </div>
+
+            {/* Leave Review Button */}
+            {token && canReview && (
+              <div className="mt-6 pt-6 border-t border-gray-2">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-3">
+                    <svg
+                      className="w-5 h-5 text-blue mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-7">
+                      Share Your Experience
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-6 mb-4">
+                    Help other buyers by leaving a review of your purchase
+                  </p>
+                  <button
+                    onClick={handleLeaveReview}
+                    disabled={isCheckingReview}
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green hover:bg-green-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCheckingReview ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                          />
+                        </svg>
+                        Leave Review
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Additional Info */}
             <div className="mt-8 p-4 bg-blue-light-5 rounded-lg">
               <div className="flex items-start">
@@ -102,16 +208,7 @@ const OrderSuccessClient = () => {
             </div>
           </div>
 
-          {/* Review Section */}
-          {orderId && (
-            <ReviewForm 
-              orderId={orderId}
-              onReviewSubmitted={() => {
-                // Optional: Show a success message or refresh data
-                console.log('Review submitted successfully');
-              }}
-            />
-          )}
+
         </div>
       </div>
     </main>

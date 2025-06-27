@@ -3,6 +3,7 @@ import React from "react";
 import { Order } from "@/services/orders";
 import { getStatusColor, getStatusDotColor, getFormattedOrderId } from "../utils/orderUtils";
 import { FaShoppingBasket } from "react-icons/fa";
+import ReviewButton from "./ReviewButton";
 
 interface OrderCardHeaderProps {
   order: Order;
@@ -52,10 +53,15 @@ const OrderCardHeader: React.FC<OrderCardHeaderProps> = ({ order, formatDate, is
           </div>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <span className={`inline-flex items-center px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold shadow-1 ${getStatusColor(order.status)} w-fit`}>
-            <div className={`w-2 h-2 rounded-full mr-2 ${getStatusDotColor(order.status)}`}></div>
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-          </span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <span className={`inline-flex items-center px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold shadow-1 ${getStatusColor(order.status)} w-fit`}>
+              <div className={`w-2 h-2 rounded-full mr-2 ${getStatusDotColor(order.status)}`}></div>
+              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            </span>
+            {order.status === 'completed' && (
+              <ReviewButton orderId={order.externalId} />
+            )}
+          </div>
           <div className="bg-white/20 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-2 w-fit">
             <span className="text-xl sm:text-2xl font-bold text-white">
               ${order.totalAmount.toFixed(2)}

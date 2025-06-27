@@ -9,14 +9,54 @@ const {
   removeHelpfulMark
 } = require("../handlers/reviewHandlers");
 
-// Rate limiting configurations
+// Custom middleware for additional review security checks
+const reviewSecurityMiddleware = async (request, reply) => {
+  try {
+    // Ensure user is properly authenticated
+    if (!request.user || !request.user.id) {
+      return reply.status(401).send({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // Check if user account is active (not banned/suspended)
+    if (request.user.status && request.user.status !== 'active') {
+      return reply.status(403).send({
+        success: false,
+        message: "Account access restricted"
+      });
+    }
+
+    // Log security-sensitive operations
+    console.log(`Review operation attempted by user ${request.user.id} at ${new Date().toISOString()}`);
+    
+    return;
+  } catch (error) {
+    console.error("Review security middleware error:", error);
+    return reply.status(500).send({
+      success: false,
+      message: "Security check failed"
+    });
+  }
+};
+
+// Rate limiting configurations - Enhanced for security
 const rateLimits = {
   create: {
-    max: 5, // 5 reviews
+    max: 3, // 3 reviews per minute (reduced for security)
     timeWindow: "1 minute"
+  },
+  createDaily: {
+    max: 10, // Maximum 10 reviews per day per user
+    timeWindow: "24 hours"
   },
   read: {
     max: 100, // 100 requests
+    timeWindow: "1 minute"
+  },
+  eligibilityCheck: {
+    max: 30, // 30 eligibility checks per minute
     timeWindow: "1 minute"
   },
   action: {
@@ -29,11 +69,11 @@ const reviewRoutes = async (fastify, opts) => {
   // Create a new review
   fastify.route({
     config: {
-      rateLimit: rateLimits.create
+      rateLimit: [rateLimits.create, rateLimits.createDaily]
     },
     method: "POST",
     url: "/create",
-    preHandler: verifyAuth(["buyer"]),
+    preHandler: [verifyAuth(["buyer"]), reviewSecurityMiddleware],
     schema: reviewSchema.createReview,
     handler: createReview
   });
@@ -64,11 +104,11 @@ const reviewRoutes = async (fastify, opts) => {
   // Check if user can review an order
   fastify.route({
     config: {
-      rateLimit: rateLimits.read
+      rateLimit: rateLimits.eligibilityCheck
     },
     method: "GET",
     url: "/can-review/:orderId",
-    preHandler: verifyAuth(["buyer"]),
+    preHandler: [verifyAuth(["buyer"]), reviewSecurityMiddleware],
     schema: reviewSchema.canUserReviewOrder,
     handler: canUserReviewOrder
   });

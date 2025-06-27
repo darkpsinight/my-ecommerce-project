@@ -16,6 +16,7 @@ import {
   selectIsItemBeingAdded,
 } from "@/redux/features/cart-slice";
 import { addItemToWishlistAsync, removeItemFromWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
+import { selectIsAuthenticated } from "@/redux/features/auth-slice";
 import {
   updateproductDetails,
   clearProductDetails,
@@ -37,6 +38,7 @@ const ShopDetails = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productId = searchParams.get("id");
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   const tabs = [
     {
@@ -61,11 +63,6 @@ const ShopDetails = () => {
   // Get cart loading state
   const isAddingToCart = useAppSelector(selectCartAddingItem);
   const cartItems = useAppSelector(selectCartItems);
-  
-  // Get wishlist state
-  const isInWishlist = useAppSelector((state) => 
-    product ? selectIsItemInWishlist(state, product.id) : false
-  );
   const isWishlistLoading = useAppSelector(selectWishlistLoading);
 
   // Initialize fallback product
@@ -184,6 +181,11 @@ const ShopDetails = () => {
     product ? selectIsItemBeingAdded(state, product.id) : false
   );
 
+  // Get wishlist state (must be after product is defined)
+  const isInWishlist = useAppSelector((state) => 
+    product ? selectIsItemInWishlist(state, product.id) : false
+  );
+
   // Stock validation logic
   const availableStock = product?.quantityOfActiveCodes || 0;
   const cartItem = product
@@ -258,6 +260,15 @@ const ShopDetails = () => {
 
   // Add to wishlist handler
   const handleAddToWishlist = async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error('Please login to manage your wishlist');
+      setTimeout(() => {
+        router.push('/signin');
+      }, 2000);
+      return;
+    }
+
     if (product && !isWishlistLoading) {
       try {
         if (isInWishlist) {

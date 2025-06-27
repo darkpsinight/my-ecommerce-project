@@ -5,14 +5,18 @@ import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
 import { addItemToCartAsync, selectCartAddingItem, selectCartItems, selectIsItemBeingAdded } from "@/redux/features/cart-slice";
 import { addItemToWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
+import { selectIsAuthenticated } from "@/redux/features/auth-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
 import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const SingleGridItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const isAddingToCart = useAppSelector(selectCartAddingItem);
   const cartItems = useAppSelector(selectCartItems);
   const isItemBeingAdded = useAppSelector(state => selectIsItemBeingAdded(state, item.id));
@@ -79,6 +83,15 @@ const SingleGridItem = ({ item }: { item: Product }) => {
   };
 
   const handleItemToWishList = async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error('Please login to add items to wishlist');
+      setTimeout(() => {
+        router.push('/signin');
+      }, 2000);
+      return;
+    }
+
     if (!isWishlistLoading) {
       try {
         await dispatch(

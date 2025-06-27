@@ -18,6 +18,9 @@ export const authSlice = createSlice({
         sessionStorage.setItem('verifyToken', action.payload.verifyToken);
       }
     },
+    updateToken: (state, action: PayloadAction<string>) => {
+      state.token = action.payload;
+    },
     clearTokens: (state) => {
       state.token = null;
       if (typeof window !== 'undefined') {
@@ -31,5 +34,5 @@ export const authSlice = createSlice({
 export const selectAuthToken = (state: any) => state.authReducer.token;
 export const selectIsAuthenticated = (state: any) => !!state.authReducer.token;
 
-export const { setTokens, clearTokens } = authSlice.actions;
+export const { setTokens, updateToken, clearTokens } = authSlice.actions;
 export default authSlice.reducer;

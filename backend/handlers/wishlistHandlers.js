@@ -22,7 +22,7 @@ const getUserWishlist = async (request, reply) => {
 		// Populate with current listing data
 		await wishlist.populate({
 			path: 'items.listingId',
-			select: 'title price discountedPrice imgs categoryName platform region sellerId sellerMarketName quantityOfActiveCodes status'
+			select: 'externalId title price discountedPrice imgs categoryName platform region sellerId sellerMarketName quantityOfActiveCodes status'
 		});
 
 		// Filter out items where listing no longer exists or is inactive
@@ -33,7 +33,7 @@ const getUserWishlist = async (request, reply) => {
 
 		// Format response
 		const formattedItems = activeItems.map(item => ({
-			id: item.listingId._id.toString(),
+			id: item.listingId.externalId, // Use externalId for frontend
 			title: item.listingId.title,
 			price: item.listingId.price,
 			discountedPrice: item.listingId.discountedPrice,
@@ -80,8 +80,16 @@ const addItemToWishlist = async (request, reply) => {
 			});
 		}
 
-		// Check if listing exists and is active
-		const listing = await Listing.findById(listingId);
+		// Check if listing exists and is active (find by externalId or _id)
+		let listing;
+		if (listingId.length === 24 && /^[0-9a-fA-F]{24}$/.test(listingId)) {
+			// It's a MongoDB ObjectId
+			listing = await Listing.findById(listingId);
+		} else {
+			// It's a UUID (externalId)
+			listing = await Listing.findOne({ externalId: listingId });
+		}
+		
 		if (!listing || listing.status !== 'active') {
 			return reply.status(404).send({
 				error: true,
@@ -92,8 +100,8 @@ const addItemToWishlist = async (request, reply) => {
 		// Find or create wishlist for user
 		const wishlist = await Wishlist.findOrCreateForUser(user._id);
 
-		// Check if item already exists in wishlist
-		if (wishlist.hasItem(listingId)) {
+		// Check if item already exists in wishlist (using MongoDB _id)
+		if (wishlist.hasItem(listing._id)) {
 			return reply.status(400).send({
 				error: true,
 				message: "Item already in wishlist",
@@ -159,6 +167,23 @@ const removeItemFromWishlist = async (request, reply) => {
 			});
 		}
 
+		// Find the listing to get its MongoDB _id (find by externalId or _id)
+		let listing;
+		if (listingId.length === 24 && /^[0-9a-fA-F]{24}$/.test(listingId)) {
+			// It's a MongoDB ObjectId
+			listing = await Listing.findById(listingId);
+		} else {
+			// It's a UUID (externalId)
+			listing = await Listing.findOne({ externalId: listingId });
+		}
+		
+		if (!listing) {
+			return reply.status(404).send({
+				error: true,
+				message: "Listing not found",
+			});
+		}
+
 		// Find wishlist for user
 		const wishlist = await Wishlist.findOne({ userId: user._id });
 		if (!wishlist) {
@@ -168,16 +193,16 @@ const removeItemFromWishlist = async (request, reply) => {
 			});
 		}
 
-		// Check if item exists in wishlist
-		if (!wishlist.hasItem(listingId)) {
+		// Check if item exists in wishlist (using MongoDB _id)
+		if (!wishlist.hasItem(listing._id)) {
 			return reply.status(404).send({
 				error: true,
 				message: "Item not found in wishlist",
 			});
 		}
 
-		// Remove item from wishlist
-		wishlist.removeItem(listingId);
+		// Remove item from wishlist (using MongoDB _id)
+		wishlist.removeItem(listing._id);
 		await wishlist.save();
 
 		return reply.send({
@@ -297,6 +322,23 @@ const markWishlistItemAsPurchased = async (request, reply) => {
 			});
 		}
 
+		// Find the listing to get its MongoDB _id (find by externalId or _id)
+		let listing;
+		if (listingId.length === 24 && /^[0-9a-fA-F]{24}$/.test(listingId)) {
+			// It's a MongoDB ObjectId
+			listing = await Listing.findById(listingId);
+		} else {
+			// It's a UUID (externalId)
+			listing = await Listing.findOne({ externalId: listingId });
+		}
+		
+		if (!listing) {
+			return reply.status(404).send({
+				error: true,
+				message: "Listing not found",
+			});
+		}
+
 		// Find wishlist for user
 		const wishlist = await Wishlist.findOne({ userId: user._id });
 		if (!wishlist) {
@@ -306,8 +348,8 @@ const markWishlistItemAsPurchased = async (request, reply) => {
 			});
 		}
 
-		// Mark item as purchased
-		wishlist.markItemAsPurchased(listingId);
+		// Mark item as purchased (using MongoDB _id)
+		wishlist.markItemAsPurchased(listing._id);
 		await wishlist.save();
 
 		return reply.send({

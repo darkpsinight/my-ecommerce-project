@@ -7,7 +7,7 @@ const {
 	markWishlistItemAsPurchased,
 } = require("../handlers/wishlistHandlers");
 
-const { authVerify } = require("../plugins/authVerify");
+const { verifyAuth } = require("../plugins/authVerify");
 
 const wishlistRoutes = async (fastify, options) => {
 	// Schema definitions
@@ -17,9 +17,9 @@ const wishlistRoutes = async (fastify, options) => {
 		properties: {
 			listingId: {
 				type: "string",
-				minLength: 24,
-				maxLength: 24,
-				pattern: "^[0-9a-fA-F]{24}$",
+				minLength: 1,
+				maxLength: 50, // Allow for both UUIDs and MongoDB ObjectIds
+				pattern: "^[0-9a-fA-F-]+$", // Allow UUIDs with dashes and ObjectIds
 			},
 		},
 	};
@@ -30,9 +30,9 @@ const wishlistRoutes = async (fastify, options) => {
 		properties: {
 			listingId: {
 				type: "string",
-				minLength: 24,
-				maxLength: 24,
-				pattern: "^[0-9a-fA-F]{24}$",
+				minLength: 1,
+				maxLength: 50, // Allow for both UUIDs and MongoDB ObjectIds
+				pattern: "^[0-9a-fA-F-]+$", // Allow UUIDs with dashes and ObjectIds
 			},
 		},
 	};
@@ -41,7 +41,7 @@ const wishlistRoutes = async (fastify, options) => {
 	fastify.get(
 		"/",
 		{
-			preHandler: authVerify,
+			preHandler: verifyAuth(["buyer"]),
 		},
 		getUserWishlist
 	);
@@ -50,7 +50,7 @@ const wishlistRoutes = async (fastify, options) => {
 	fastify.post(
 		"/add",
 		{
-			preHandler: authVerify,
+			preHandler: verifyAuth(["buyer"]),
 			schema: {
 				body: addItemSchema,
 			},
@@ -62,7 +62,7 @@ const wishlistRoutes = async (fastify, options) => {
 	fastify.delete(
 		"/remove/:listingId",
 		{
-			preHandler: authVerify,
+			preHandler: verifyAuth(["buyer"]),
 			schema: {
 				params: removeItemSchema,
 			},
@@ -74,7 +74,7 @@ const wishlistRoutes = async (fastify, options) => {
 	fastify.delete(
 		"/clear",
 		{
-			preHandler: authVerify,
+			preHandler: verifyAuth(["buyer"]),
 		},
 		clearWishlist
 	);
@@ -83,7 +83,7 @@ const wishlistRoutes = async (fastify, options) => {
 	fastify.get(
 		"/analytics",
 		{
-			preHandler: authVerify,
+			preHandler: verifyAuth(["buyer"]),
 		},
 		getWishlistAnalytics
 	);
@@ -92,7 +92,7 @@ const wishlistRoutes = async (fastify, options) => {
 	fastify.post(
 		"/purchased",
 		{
-			preHandler: authVerify,
+			preHandler: verifyAuth(["buyer"]),
 			schema: {
 				body: addItemSchema, // Reuse the same schema since it requires listingId
 			},

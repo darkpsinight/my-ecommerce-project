@@ -93,6 +93,43 @@ const orderRoutes = async (fastify, opts) => {
     schema: orderSchema.decryptCode,
     handler: decryptCode
   });
+
+  // Check if user has purchased a specific product
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.read
+    },
+    method: "GET",
+    url: "/has-purchased/:productId",
+    preHandler: verifyAuth(["buyer"]),
+    schema: orderSchema.hasUserPurchasedProduct,
+    handler: async (request, reply) => {
+      try {
+        const { productId } = request.params;
+        const userId = request.user.id;
+
+        // Check if user has any completed orders containing this product
+        const Order = request.mongo.db.collection("orders");
+        
+        const hasPurchased = await Order.findOne({
+          buyerId: userId,
+          status: "completed",
+          "orderItems.listing": productId
+        });
+
+        return reply.send({
+          success: true,
+          hasPurchased: !!hasPurchased
+        });
+      } catch (error) {
+        console.error("Error checking user purchase:", error);
+        return reply.status(500).send({
+          success: false,
+          message: "Error checking purchase status"
+        });
+      }
+    }
+  });
 };
 
 module.exports = {

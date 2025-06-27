@@ -296,6 +296,16 @@ class OrdersService {
     const response = await axiosInstance.post<DecryptCodeResponse>(`${this.baseUrl}/decrypt-code`, data);
     return response.data;
   }
+
+  async hasUserPurchasedProduct(productId: string): Promise<boolean> {
+    try {
+      const response = await axiosInstance.get<{success: boolean, hasPurchased: boolean}>(`${this.baseUrl}/has-purchased/${productId}`);
+      return response.data.hasPurchased;
+    } catch (error) {
+      console.error('Error checking if user purchased product:', error);
+      return false;
+    }
+  }
 }
 
 export const ordersApi = new OrdersService();

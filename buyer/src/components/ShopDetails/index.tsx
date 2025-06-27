@@ -1,12 +1,14 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
 import RecentlyViewedItems from "./RecentlyViewed";
 import QuantityControl from "../Cart/QuantityControl";
+import ReviewModal from "./ReviewModal";
 
 import { useAppSelector } from "@/redux/store";
 import { getProductById } from "@/services/product";
+import { ordersApi } from "@/services/orders";
 import { Product } from "@/types/product";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -33,6 +35,9 @@ const ShopDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("tabOne");
   const [productData, setProductData] = useState<Product | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -199,6 +204,34 @@ const ShopDetails = () => {
     }
   }, [quantity, maxAddableQuantity]);
 
+  // Check if user has purchased this product
+  const checkUserPurchase = useCallback(async (productId: string) => {
+    if (!isAuthenticated) {
+      setHasPurchased(false);
+      return;
+    }
+
+    setCheckingPurchase(true);
+    try {
+      const purchased = await ordersApi.hasUserPurchasedProduct(productId);
+      setHasPurchased(purchased);
+    } catch (error) {
+      console.error('Error checking purchase status:', error);
+      setHasPurchased(false);
+    } finally {
+      setCheckingPurchase(false);
+    }
+  }, [isAuthenticated]);
+
+  // Check if user has purchased this product when product or authentication changes
+  useEffect(() => {
+    if (product?.id && isAuthenticated) {
+      checkUserPurchase(product.id.toString());
+    } else {
+      setHasPurchased(false);
+    }
+  }, [product?.id, isAuthenticated, checkUserPurchase]);
+
   // Add to cart handler
   const handleAddToCart = () => {
     if (!product) {
@@ -284,6 +317,24 @@ const ShopDetails = () => {
         toast.error(error || "Failed to update wishlist");
       }
     }
+  };
+
+  // Handle review button click
+  const handleLeaveReview = () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to leave a review');
+      setTimeout(() => {
+        router.push('/signin');
+      }, 2000);
+      return;
+    }
+
+    if (!hasPurchased) {
+      toast.error('You can only review products you have purchased');
+      return;
+    }
+
+    setIsReviewModalOpen(true);
   };
 
   // Calculate discount percentage
@@ -999,8 +1050,8 @@ const ShopDetails = () => {
 
       {/* Reviews Section - Prominently Displayed */}
       <PageContainer>
-        <section className="py-12 lg:py-16">
-          <div className="mb-8">
+        <section className="py-8 lg:py-12">
+          <div className="mb-6">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 text-center">
               Customer Reviews
             </h2>
@@ -1010,7 +1061,7 @@ const ShopDetails = () => {
           </div>
 
           {/* Review Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
             {/* Overall Rating Card */}
             <div className="bg-gradient-to-br from-blue-light-5 to-blue-light-4 rounded-2xl p-6 text-center">
               <div className="text-4xl font-bold text-blue mb-2">5.0</div>
@@ -1041,15 +1092,6 @@ const ShopDetails = () => {
               <p className="text-green-dark font-medium mb-1">Satisfaction Rate</p>
               <p className="text-green text-sm">
                 Customers love this product
-              </p>
-            </div>
-
-            {/* Delivery Success Card */}
-            <div className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-2xl p-6 text-center">
-              <div className="text-4xl font-bold text-purple mb-2">100%</div>
-              <p className="text-purple-dark font-medium mb-1">Delivery Success</p>
-              <p className="text-purple text-sm">
-                All codes delivered successfully
               </p>
             </div>
           </div>
@@ -1108,7 +1150,7 @@ const ShopDetails = () => {
                         </div>
                       </div>
                       <p className="text-gray-700 leading-relaxed mb-3">
-                        "Fast delivery and the code worked without any issues. The product description was accurate and I got exactly what I expected. The platform-specific instructions were very helpful. Would definitely recommend!"
+                        &ldquo;Fast delivery and the code worked without any issues. The product description was accurate and I got exactly what I expected. The platform-specific instructions were very helpful. Would definitely recommend!&rdquo;
                       </p>
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1 text-green-600">
@@ -1171,7 +1213,7 @@ const ShopDetails = () => {
                         </div>
                       </div>
                       <p className="text-gray-700 leading-relaxed mb-3">
-                        "I was hesitant at first, but this turned out to be a great purchase. The code was delivered instantly after payment, and activation was straightforward. The seller even followed up to make sure everything was working properly. Five stars!"
+                        &ldquo;I was hesitant at first, but this turned out to be a great purchase. The code was delivered instantly after payment, and activation was straightforward. The seller even followed up to make sure everything was working properly. Five stars!&rdquo;
                       </p>
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1 text-green-600">
@@ -1234,7 +1276,7 @@ const ShopDetails = () => {
                         </div>
                       </div>
                       <p className="text-gray-700 leading-relaxed mb-3">
-                        "Excellent service! The digital code was exactly what I needed and worked perfectly. The automatic delivery system is really convenient. I've bought from this seller multiple times now and never had any issues."
+                        &ldquo;Excellent service! The digital code was exactly what I needed and worked perfectly. The automatic delivery system is really convenient. I&apos;ve bought from this seller multiple times now and never had any issues.&rdquo;
                       </p>
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1 text-green-600">
@@ -1260,109 +1302,78 @@ const ShopDetails = () => {
               </div>
             </div>
 
-            {/* Write Review Form */}
+            {/* Leave Review Section */}
             <div>
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8 sticky top-8">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  Share Your Experience
+                  Customer Reviews
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Help other customers by sharing your experience with this product.
+                  {isAuthenticated 
+                    ? hasPurchased 
+                      ? "Share your experience with this product to help other customers."
+                      : "Purchase this product to leave a review and help other customers."
+                    : "Login and purchase this product to leave a review."
+                  }
                 </p>
 
-                <form className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-3">
-                      Your Rating*
-                    </label>
-                    <div className="flex items-center gap-2">
-                      {[...Array(5)].map((_, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${
-                            index < 4 
-                              ? "border-yellow-400 bg-yellow-50 text-yellow-400" 
-                              : "border-gray-300 hover:border-yellow-300 text-gray-300 hover:text-yellow-300"
-                          }`}
-                        >
-                          <svg
-                            className="w-5 h-5 fill-current mx-auto"
-                            viewBox="0 0 15 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                              fill=""
-                            />
-                          </svg>
-                        </button>
-                      ))}
-                      <span className="text-sm text-gray-600 ml-2">Excellent (4/5)</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="review"
-                      className="block text-sm font-semibold text-gray-900 mb-2"
-                    >
-                      Your Review*
-                    </label>
-                    <textarea
-                      name="review"
-                      id="review"
-                      rows={4}
-                      placeholder="Share your experience with this product..."
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/20 transition-all duration-200"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-sm font-semibold text-gray-900 mb-2"
-                      >
-                        Name*
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        placeholder="Your name"
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/20 transition-all duration-200"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className="block text-sm font-semibold text-gray-900 mb-2"
-                      >
-                        Email*
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        placeholder="Your email"
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/20 transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-
+                {/* Leave Review Button - Only for authenticated users who purchased */}
+                {isAuthenticated && hasPurchased && (
                   <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-green to-green-dark hover:from-green-dark hover:to-green-light text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                    onClick={handleLeaveReview}
+                    disabled={checkingPurchase}
+                    className="w-full bg-gradient-to-r from-green to-green-dark hover:from-green-dark hover:to-green-light disabled:from-gray-300 disabled:to-gray-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Submit Review
+                    {checkingPurchase ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Leave a Review
+                      </>
+                    )}
                   </button>
-                </form>
+                )}
+
+                {/* Purchase Required Message */}
+                {isAuthenticated && !hasPurchased && !checkingPurchase && (
+                  <div className="text-center">
+                    <div className="bg-blue-light-5 rounded-lg p-4">
+                      <svg className="w-8 h-8 text-blue mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <p className="text-blue font-medium">Purchase Required</p>
+                      <p className="text-blue text-sm mt-1">You need to purchase this product to leave a review</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Login Required Message */}
+                {!isAuthenticated && (
+                  <div className="text-center">
+                    <div className="bg-gray-100 rounded-lg p-4">
+                      <svg className="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <p className="text-gray-700 font-medium">Login Required</p>
+                      <p className="text-gray-600 text-sm mt-1">Please login to leave a review</p>
+                      <button
+                        onClick={() => router.push('/signin')}
+                        className="mt-3 bg-blue text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-dark transition-colors duration-200"
+                      >
+                        Login Now
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1625,6 +1636,13 @@ const ShopDetails = () => {
       <RecentlyViewedItems />
 
       <Newsletter />
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        productTitle={product?.title || "Product"}
+      />
     </>
   );
 };

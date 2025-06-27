@@ -634,6 +634,57 @@ const orderSchema = {
         }
       }
     }
+  },
+
+  hasUserPurchasedProduct: {
+    description: "Check if user has purchased a specific product",
+    tags: ["orders"],
+    summary: "Check user purchase status",
+    params: {
+      type: "object",
+      required: ["productId"],
+      properties: {
+        productId: {
+          type: "string",
+          description: "Product ID to check"
+        }
+      },
+      additionalProperties: false
+    },
+    response: {
+      200: {
+        description: "Purchase status retrieved successfully",
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          hasPurchased: { type: "boolean" }
+        }
+      },
+      401: {
+        description: "Unauthorized",
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          error: { type: "string" }
+        }
+      },
+      403: {
+        description: "Forbidden",
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          error: { type: "string" }
+        }
+      },
+      500: {
+        description: "Internal server error",
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          error: { type: "string" }
+        }
+      }
+    }
   }
 };
 

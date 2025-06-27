@@ -34,6 +34,7 @@ const { listingsRoutes } = require("./routes/listings");
 const { imageUploadRoutes } = require("./routes/imageUpload");
 const { walletRoutes } = require("./routes/wallet");
 const { orderRoutes } = require("./routes/orders");
+const { reviewRoutes } = require("./routes/reviews");
 const cartRoutes = require("./routes/cart");
 const wishlistRoutes = require("./routes/wishlist");
 const performanceRoutes = require("./routes/performanceRoutes");
@@ -131,6 +132,9 @@ fastify.register(walletRoutes, { prefix: "/api/v1/wallet" });
 
 // Register order routes
 fastify.register(orderRoutes, { prefix: "/api/v1/orders" });
+
+// Register review routes
+fastify.register(reviewRoutes, { prefix: "/api/v1/reviews" });
 
 // Register cart routes
 fastify.register(cartRoutes, { prefix: "/api/v1/cart" });

@@ -57,6 +57,11 @@ const Header = () => {
       if (response.ok) {
         // Clear tokens from Redux store
         dispatch(clearTokens());
+        
+        // Update viewed products service authentication status
+        const { updateAuthStatus } = await import('@/services/viewedProducts');
+        updateAuthStatus(false);
+        
         setAccountDropdownOpen(false);
       } else {
         console.error("Logout failed:", await response.json());

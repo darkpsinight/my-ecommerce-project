@@ -89,6 +89,10 @@ export const useSignin = (): UseSigninReturn => {
           token: response.data.token,
           verifyToken: response.data.verifyToken
         }));
+
+        // Update viewed products service authentication status
+        const { updateAuthStatus } = await import('@/services/viewedProducts');
+        updateAuthStatus(true);
       }
 
       // Get the redirect URL from search params or default to home

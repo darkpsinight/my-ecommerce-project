@@ -28,6 +28,7 @@ import { AppDispatch } from "@/redux/store";
 import PageContainer from "../Common/PageContainer";
 import ProductDetailSkeleton from "../Common/ProductDetailSkeleton";
 import toast from "react-hot-toast";
+import { useProductViewTracker } from "@/hooks/useViewedProducts";
 
 const ShopDetails = () => {
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,17 @@ const ShopDetails = () => {
   const searchParams = useSearchParams();
   const productId = searchParams.get("id");
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+
+  // Track product view with our new hybrid storage system
+  const { isTracking } = useProductViewTracker({
+    productId: productId || '',
+    metadata: {
+      source: 'direct',
+      referrer: typeof window !== 'undefined' ? document.referrer : undefined
+    },
+    trackOnMount: false, // We'll track manually after product is loaded
+    minViewDuration: 3000 // Track after 3 seconds
+  });
 
   const tabs = [
     {
@@ -138,8 +150,16 @@ const ShopDetails = () => {
             // Update Redux store with fresh data
             dispatch(updateproductDetails({ ...data }));
 
-            // Add to recently viewed products
+            // Add to recently viewed products (Redux - legacy)
             dispatch(addRecentlyViewedProduct({ ...data }));
+
+            // Add to our new hybrid viewed products system
+            // Import dynamically to avoid issues during SSR
+            const { addViewedProduct } = await import('@/services/viewedProducts');
+            await addViewedProduct(data.id, {
+              source: 'direct',
+              referrer: typeof window !== 'undefined' ? document.referrer : undefined
+            });
           } else {
             console.log("No product data found, using fallback");
             setProductData(fallbackProduct);

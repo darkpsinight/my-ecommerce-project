@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useAppSelector, useAppDispatch } from "@/redux/store";
-import { removeAllItemsFromCart, selectCartItems, selectCartTotalAmount, selectCartClearingCart, fetchCart } from "@/redux/features/cart-slice";
+import { clearCartAsync, selectCartItems, selectCartTotalAmount, selectCartClearingCart, fetchCart } from "@/redux/features/cart-slice";
 import SingleItem from "./SingleItem";
 import Link from "next/link";
 import PageContainer from "../Common/PageContainer";
@@ -16,7 +16,7 @@ const Cart = () => {
 
   const handleClearCart = () => {
     if (window.confirm("Are you sure you want to clear your cart?")) {
-      dispatch(removeAllItemsFromCart());
+      dispatch(clearCartAsync({}));
     }
   };
 

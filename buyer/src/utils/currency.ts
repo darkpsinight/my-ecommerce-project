@@ -84,7 +84,7 @@ export const roundCurrency = (amount: number, decimals: number = 2): number => {
  * @param decimals - Number of decimal places (default: 2)
  * @returns Formatted price string
  */
-export const formatPrice = (amount: number, decimals: number = 2): string => {
+export const formatPriceNumber = (amount: number, decimals: number = 2): string => {
   // Handle edge cases
   if (isNaN(amount) || amount === null || amount === undefined) {
     return '0.00';
@@ -94,4 +94,15 @@ export const formatPrice = (amount: number, decimals: number = 2): string => {
   const roundedAmount = Math.round(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
   
   return roundedAmount.toFixed(decimals);
+};
+
+/**
+ * Formats a price with currency symbol (for display purposes)
+ * @param amount - The amount to format
+ * @param currency - The currency symbol (default: '$')
+ * @param decimals - Number of decimal places (default: 2)
+ * @returns Formatted price string with currency
+ */
+export const formatPrice = (amount: number, currency: string = '$', decimals: number = 2): string => {
+  return formatCurrency(amount, currency, decimals);
 };

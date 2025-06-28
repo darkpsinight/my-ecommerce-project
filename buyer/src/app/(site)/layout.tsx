@@ -23,6 +23,7 @@ import ScrollToTop from "@/components/Common/ScrollToTop";
 import PreLoader from "@/components/Common/PreLoader";
 import CartInitializer from "@/components/Common/CartInitializer";
 import WishlistInitializer from "@/components/Common/WishlistInitializer";
+import { ViewedProductsProvider } from "@/components/ViewedProducts/ViewedProductsProvider";
 import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({
@@ -50,9 +51,10 @@ export default function RootLayout({
           <>
             <ReduxProvider>
               <AuthProvider>
-                <CartInitializer />
-                <WishlistInitializer />
-                <CartModalProvider>
+                <ViewedProductsProvider>
+                  <CartInitializer />
+                  <WishlistInitializer />
+                  <CartModalProvider>
                   <ModalProvider>
                     <PreviewSliderProvider>
                       {isAuthRoute ? <AuthHeader /> : <Header />}
@@ -63,7 +65,8 @@ export default function RootLayout({
                       <PreviewSliderModal />
                     </PreviewSliderProvider>
                   </ModalProvider>
-                </CartModalProvider>
+                  </CartModalProvider>
+                </ViewedProductsProvider>
               </AuthProvider>
             </ReduxProvider>
             <Toaster 

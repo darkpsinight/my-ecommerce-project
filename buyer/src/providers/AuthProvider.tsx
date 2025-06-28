@@ -51,5 +51,15 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, isRefreshing, hasAttemptedRefresh]);
 
+  // Update viewed products service authentication status when token changes
+  useEffect(() => {
+    const updateViewedProductsAuth = async () => {
+      const { updateAuthStatus } = await import('@/services/viewedProducts');
+      updateAuthStatus(); // Let it check the current auth status
+    };
+    
+    updateViewedProductsAuth();
+  }, [token]);
+
   return <>{children}</>;
 } 

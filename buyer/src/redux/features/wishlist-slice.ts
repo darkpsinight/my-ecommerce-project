@@ -44,12 +44,15 @@ export const fetchWishlistAsync = createAsyncThunk(
   'wishlist/fetchWishlist',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Fetching wishlist from API');
       const response = await getUserWishlist();
       if (response.error) {
         return rejectWithValue(response.message || 'Failed to fetch wishlist');
       }
+      console.log('Wishlist fetched successfully:', response.data?.items?.length || 0, 'items');
       return response.data?.items || [];
     } catch (error: any) {
+      console.error('Error in fetchWishlistAsync:', error);
       return rejectWithValue(error.message || 'Failed to fetch wishlist');
     }
   }

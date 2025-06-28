@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
+import { IoLibrary } from "react-icons/io5";
 import { ordersApi, PurchasedCode, GetPurchasedCodesParams } from "@/services/orders";
 import { toast } from "react-hot-toast";
 import { 
@@ -189,20 +190,7 @@ const Library = () => {
             {/* Header Section */}
             <div className="text-center mb-12">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-teal to-blue rounded-2xl mb-6 shadow-lg">
-                <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 6.5C13.4045 6.5 14.8979 6.89334 16.1623 7.59199C17.4267 8.29064 18.4071 9.27102 19.1058 10.5354C19.8044 11.7998 20.1978 13.2932 20.1978 14.6977C20.1978 16.1023 19.8044 17.5957 19.1058 18.8601M12 6.5C10.5955 6.5 9.10206 6.89334 7.83772 7.59199C6.57339 8.29064 5.59301 9.27102 4.89436 10.5354C4.19571 11.7998 3.80237 13.2932 3.80237 14.6977C3.80237 16.1023 4.19571 17.5957 4.89436 18.8601M12 6.5V2M12 6.5L12 22"
-                    stroke="currentColor" 
-                    strokeWidth="1.5" 
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M7 14H17M10 11H14M10 17H14"
-                    stroke="currentColor" 
-                    strokeWidth="1.5" 
-                    strokeLinecap="round"
-                  />
-                </svg>
+                <IoLibrary className="w-10 h-10 text-white" />
               </div>
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-teal to-blue-dark bg-clip-text text-transparent mb-4">
                 Digital Library

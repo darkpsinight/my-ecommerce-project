@@ -71,7 +71,7 @@ const SingleItem = ({ item, removeItemFromCart }) => {
           
           {/* Quantity Controls */}
           <div className="flex items-center gap-3">
-            <span className="text-sm text-dark-4 font-medium">Qty:</span>
+            <span className="text-sm text-dark-4 font-medium">Quantity:</span>
             <div className="flex items-center gap-2 bg-gray-1 rounded-lg p-1">
               <button
                 onClick={handleDecrement}

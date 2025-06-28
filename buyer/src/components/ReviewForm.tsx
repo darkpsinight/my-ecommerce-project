@@ -42,13 +42,15 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         comment: comment.trim() || undefined
       });
 
+      // Always show success message first
       setSuccess('Thank you for your review! Your feedback helps other buyers.');
-      setRating(0);
-      setComment('');
       
       if (onReviewSubmitted) {
+        // If there's a callback, call it after showing success message
         onReviewSubmitted();
       }
+      setRating(0);
+      setComment('');
     } catch (error: any) {
       console.error('Error submitting review:', error);
       setError(error.response?.data?.message || 'Failed to submit review. Please try again.');
@@ -139,43 +141,93 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Rating */}
-        <div>
-          <label className="block text-sm font-medium text-gray-7 mb-3">
+        <div className="text-center">
+          <label className="block text-sm font-medium text-gray-7 mb-6">
             Rating <span className="text-red">*</span>
           </label>
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
+          <div className="space-y-6">
+            {/* Centered Star Rating */}
+            <div className="flex flex-col items-center gap-4">
               <StarRating
                 rating={rating}
                 onRatingChange={setRating}
-                size="lg"
+                size="xl"
                 className="flex-shrink-0"
               />
               {rating > 0 && (
-                <span className="text-sm text-gray-6">
-                  {rating} out of 5 stars - {
-                    rating === 5 ? 'Excellent' :
-                    rating === 4 ? 'Very Good' :
-                    rating === 3 ? 'Good' :
-                    rating === 2 ? 'Fair' :
-                    'Poor'
-                  }
-                </span>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-gray-7 mb-1">
+                    {rating} out of 5 stars
+                  </div>
+                  <div className="text-sm text-gray-6 font-medium">
+                    {
+                      rating === 5 ? 'Excellent' :
+                      rating === 4 ? 'Very Good' :
+                      rating === 3 ? 'Good' :
+                      rating === 2 ? 'Fair' :
+                      'Poor'
+                    }
+                  </div>
+                </div>
               )}
             </div>
             
-            {rating === 0 ? (
-              <div className="text-xs text-gray-5">
-                <p className="mb-1">Click on stars to rate your experience:</p>
-                <div className="grid grid-cols-1 gap-1">
-                  <span>⭐ Poor - Major issues with product or service</span>
-                  <span>⭐⭐ Fair - Below expectations, some problems</span>
-                  <span>⭐⭐⭐ Good - Meets expectations, satisfactory</span>
-                  <span>⭐⭐⭐⭐ Very Good - Exceeds expectations</span>
-                  <span>⭐⭐⭐⭐⭐ Excellent - Outstanding quality and service</span>
+            {/* Rating Guide - Hidden by default, expandable */}
+            {rating === 0 && (
+              <div className="group relative">
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-xs text-blue hover:text-blue-dark underline focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 rounded transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const guide = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (guide) {
+                      guide.classList.toggle('hidden');
+                    }
+                  }}
+                >
+                  <svg
+                    className="w-3 h-3 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  View rating guide
+                </button>
+                <div className="hidden mt-3 p-4 bg-gray-1 rounded-lg border border-gray-3">
+                  <p className="text-xs text-gray-6 mb-2 font-medium">Click on stars to rate your experience:</p>
+                  <div className="grid grid-cols-1 gap-1.5 text-xs text-gray-5">
+                    <span className="flex items-center gap-2">
+                      <span className="text-yellow">⭐</span>
+                      <span className="font-medium">Poor</span> - Major issues with product or service
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-yellow">⭐⭐</span>
+                      <span className="font-medium">Fair</span> - Below expectations, some problems
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-yellow">⭐⭐⭐</span>
+                      <span className="font-medium">Good</span> - Meets expectations, satisfactory
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-yellow">⭐⭐⭐⭐</span>
+                      <span className="font-medium">Very Good</span> - Exceeds expectations
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-yellow">⭐⭐⭐⭐⭐</span>
+                      <span className="font-medium">Excellent</span> - Outstanding quality and service
+                    </span>
+                  </div>
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
 

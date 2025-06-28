@@ -60,7 +60,10 @@ const ReviewPageClient = () => {
 
   const handleReviewSubmitted = () => {
     // Redirect to orders page after successful review submission
-    router.push("/orders?reviewSubmitted=true");
+    // Use setTimeout to allow the success message to show briefly before redirect
+    setTimeout(() => {
+      router.push("/orders?reviewSubmitted=true");
+    }, 1500);
   };
 
   // Loading state

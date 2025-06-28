@@ -203,7 +203,7 @@ const OrderSuccessClient = () => {
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-semibold text-blue-dark mb-3">
-                      💡 Important Information
+                      Important Information
                     </h3>
                     <div className="space-y-2">
                       <div className="flex items-center text-sm text-blue">

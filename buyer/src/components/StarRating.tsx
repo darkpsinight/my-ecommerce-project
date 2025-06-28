@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 interface StarRatingProps {
   rating: number;
   onRatingChange?: (rating: number) => void;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   readonly?: boolean;
   showValue?: boolean;
   className?: string;
@@ -22,7 +22,8 @@ const StarRating: React.FC<StarRatingProps> = ({
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-5 h-5',
-    lg: 'w-6 h-6'
+    lg: 'w-6 h-6',
+    xl: 'w-10 h-10'
   };
 
   const handleStarClick = (starIndex: number) => {
@@ -43,9 +44,11 @@ const StarRating: React.FC<StarRatingProps> = ({
     }
   };
 
+  const gapClass = size === 'xl' ? 'gap-1' : 'gap-0.5';
+  
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      <div className="flex items-center gap-0.5" onMouseLeave={handleMouseLeave}>
+      <div className={`flex items-center ${gapClass}`} onMouseLeave={handleMouseLeave}>
         {[0, 1, 2, 3, 4].map((starIndex) => {
           const currentRating = hoverRating || rating;
           const isFilled = starIndex < Math.floor(currentRating);

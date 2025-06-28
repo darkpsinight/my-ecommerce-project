@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Order } from "@/services/orders";
 import OrdersHeader from "./OrdersHeader";
 import OrderCard from "./OrderCard";
@@ -24,6 +24,23 @@ const OrdersList: React.FC<OrdersListProps> = ({
   formatDate,
 }) => {
   const { reviewStatuses, checkReviewEligibility } = useOrderReviews();
+  const [showInfoMessage, setShowInfoMessage] = useState(true);
+
+  // Check if user has expanded an order before
+  useEffect(() => {
+    const hasExpandedOrder = localStorage.getItem('hasExpandedOrder');
+    if (hasExpandedOrder === 'true') {
+      setShowInfoMessage(false);
+    }
+  }, []);
+
+  // Handle first order expansion
+  const handleFirstExpansion = () => {
+    if (showInfoMessage) {
+      localStorage.setItem('hasExpandedOrder', 'true');
+      setShowInfoMessage(false);
+    }
+  };
 
   // Check review eligibility for all completed orders when orders change
   useEffect(() => {
@@ -42,7 +59,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
           totalOrders={totalOrders}
         />
         
-        {orders.length > 0 && (
+        {orders.length > 0 && showInfoMessage && (
           <div className="mb-6 sm:mb-8 lg:mb-10">
             <div className="bg-blue-light-5 border border-blue-light-3 rounded-xl p-4 sm:p-5 lg:p-6">
               <div className="flex items-start gap-3">
@@ -72,6 +89,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
                 hasExistingReview: false,
                 isChecking: order.status === 'completed'
               }}
+              onFirstExpansion={handleFirstExpansion}
             />
           ))}
         </div>

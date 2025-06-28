@@ -19,7 +19,8 @@ const ReviewButton: React.FC<ReviewButtonProps> = ({
 }) => {
   const router = useRouter();
 
-  const handleReviewClick = () => {
+  const handleReviewClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling to parent components
     router.push(`/review/${orderId}`);
   };
 

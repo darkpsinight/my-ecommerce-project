@@ -14,13 +14,20 @@ interface OrderCardProps {
   order: Order;
   formatDate: (dateString: string) => string;
   reviewStatus: ReviewStatus;
+  onFirstExpansion?: () => void;
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, formatDate, reviewStatus }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order, formatDate, reviewStatus, onFirstExpansion }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleExpanded = () => {
-    setIsExpanded(!isExpanded);
+    const newExpandedState = !isExpanded;
+    setIsExpanded(newExpandedState);
+    
+    // Call onFirstExpansion callback when expanding for the first time
+    if (newExpandedState && onFirstExpansion) {
+      onFirstExpansion();
+    }
   };
 
   return (

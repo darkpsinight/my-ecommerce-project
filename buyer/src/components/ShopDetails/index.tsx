@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
 import RecentlyViewedItems from "./RecentlyViewed";
@@ -8,7 +8,6 @@ import ReviewModal from "./ReviewModal";
 
 import { useAppSelector } from "@/redux/store";
 import { getProductById } from "@/services/product";
-import { ordersApi } from "@/services/orders";
 import { Product } from "@/types/product";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -36,8 +35,6 @@ const ShopDetails = () => {
   const [activeTab, setActiveTab] = useState("tabOne");
   const [productData, setProductData] = useState<Product | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [hasPurchased, setHasPurchased] = useState(false);
-  const [checkingPurchase, setCheckingPurchase] = useState(false);
   const [showReviewsInfo, setShowReviewsInfo] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -213,33 +210,7 @@ const ShopDetails = () => {
     }
   }, [quantity, maxAddableQuantity]);
 
-  // Check if user has purchased this product
-  const checkUserPurchase = useCallback(async (productId: string) => {
-    if (!isAuthenticated) {
-      setHasPurchased(false);
-      return;
-    }
 
-    setCheckingPurchase(true);
-    try {
-      const purchased = await ordersApi.hasUserPurchasedProduct(productId);
-      setHasPurchased(purchased);
-    } catch (error) {
-      console.error('Error checking purchase status:', error);
-      setHasPurchased(false);
-    } finally {
-      setCheckingPurchase(false);
-    }
-  }, [isAuthenticated]);
-
-  // Check if user has purchased this product when product or authentication changes
-  useEffect(() => {
-    if (product?.id && isAuthenticated) {
-      checkUserPurchase(product.id.toString());
-    } else {
-      setHasPurchased(false);
-    }
-  }, [product?.id, isAuthenticated, checkUserPurchase]);
 
   // Add to cart handler
   const handleAddToCart = () => {
@@ -335,11 +306,6 @@ const ShopDetails = () => {
       setTimeout(() => {
         router.push('/signin');
       }, 2000);
-      return;
-    }
-
-    if (!hasPurchased) {
-      toast.error('You can only review products you have purchased');
       return;
     }
 

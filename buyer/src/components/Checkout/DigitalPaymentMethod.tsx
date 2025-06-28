@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
-import { resetCartState } from "@/redux/features/cart-slice";
+import { clearCartAsync } from "@/redux/features/cart-slice";
+import { useAppDispatch } from "@/redux/store";
 import { ordersApi } from "@/services/orders";
 import { walletApi } from "@/services/wallet";
 import toast from "react-hot-toast";
@@ -41,7 +41,7 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
 }) => {
   const [paymentMethod, setPaymentMethod] = useState("wallet");
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
@@ -92,8 +92,13 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
       });
 
       if (orderResponse.success) {
-        // Clear cart silently (no toast message)
-        dispatch(resetCartState());
+        // Clear cart both frontend and backend silently (this ensures consistency)
+        try {
+          await dispatch(clearCartAsync({ silent: true })).unwrap();
+        } catch (cartError) {
+          console.error("Failed to clear cart:", cartError);
+          // Don't fail the checkout process if cart clearing fails
+        }
 
         if (paymentMethod === "wallet") {
           // Wallet payment is processed immediately

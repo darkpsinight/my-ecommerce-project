@@ -17,6 +17,7 @@ const { User } = require("../models/user");
 const { Wallet } = require("../models/wallet");
 const { Transaction } = require("../models/transaction");
 const { Wishlist } = require("../models/wishlist");
+const { Cart } = require("../models/cart");
 const { configs } = require("../configs");
 const { sendSuccessResponse, sendErrorResponse } = require("../utils/responseHelpers");
 const { decryptData, simpleDecrypt } = require("../utils/encryption");
@@ -181,6 +182,8 @@ const createOrder = async (request, reply) => {
       // Log error but don't fail the order if wishlist update fails
       request.log.warn(`Failed to update wishlist after purchase: ${wishlistError.message}`);
     }
+
+
 
     return sendSuccessResponse(reply, {
       statusCode: 201,

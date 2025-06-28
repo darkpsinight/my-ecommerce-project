@@ -151,14 +151,18 @@ export const removeItemFromCartAsync = createAsyncThunk(
 
 export const clearCartAsync = createAsyncThunk(
   'cart/clearCart',
-  async (_, { rejectWithValue }) => {
+  async (options: { silent?: boolean } = {}, { rejectWithValue }) => {
     try {
       const cart = await cartApi.clearCart();
-      toast.success('Cart cleared');
+      if (!options.silent) {
+        toast.success('Cart cleared');
+      }
       return cart;
     } catch (error: any) {
       const message = getErrorMessage(error, 'Failed to clear cart');
-      toast.error(message);
+      if (!options.silent) {
+        toast.error(message);
+      }
       
       // Handle redirect for authentication errors
       if (isAuthError(error)) {

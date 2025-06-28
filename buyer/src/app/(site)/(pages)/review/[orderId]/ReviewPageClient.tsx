@@ -66,7 +66,7 @@ const ReviewPageClient = () => {
   // Loading state
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gray-1 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-gray-1 pt-56 sm:pt-44 md:pt-32 lg:pt-48 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg shadow-1 p-8">
             <div className="animate-pulse">
@@ -96,7 +96,7 @@ const ReviewPageClient = () => {
   // Error state
   if (error) {
     return (
-      <main className="min-h-screen bg-gray-1 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-gray-1 pt-56 sm:pt-44 md:pt-32 lg:pt-48 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg shadow-1 p-8 text-center">
             {/* Error Icon */}
@@ -146,7 +146,7 @@ const ReviewPageClient = () => {
   // No review eligibility data
   if (!reviewEligibility) {
     return (
-      <main className="min-h-screen bg-gray-1 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-gray-1 pt-56 sm:pt-44 md:pt-32 lg:pt-48 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg shadow-1 p-8 text-center">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-3 mb-6">
@@ -185,7 +185,7 @@ const ReviewPageClient = () => {
   // Already reviewed
   if (!reviewEligibility.canReview && reviewEligibility.existingReview) {
     return (
-      <main className="min-h-screen bg-gray-1 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-gray-1 pt-56 sm:pt-44 md:pt-32 lg:pt-48 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg shadow-1 p-8">
             {/* Header */}
@@ -286,7 +286,7 @@ const ReviewPageClient = () => {
   // Cannot review (not eligible)
   if (!reviewEligibility.canReview) {
     return (
-      <main className="min-h-screen bg-gray-1 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-gray-1 pt-56 sm:pt-44 md:pt-32 lg:pt-48 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg shadow-1 p-8 text-center">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-light-6 mb-6">
@@ -326,7 +326,7 @@ const ReviewPageClient = () => {
 
   // Can review - show the form
   return (
-    <main className="min-h-screen bg-gray-1 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gray-1 pt-56 sm:pt-44 md:pt-32 lg:pt-48 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto space-y-8">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-1 p-6">

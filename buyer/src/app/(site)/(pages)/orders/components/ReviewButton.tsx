@@ -1,36 +1,23 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
-import { reviewService } from "@/services/reviews";
 
 interface ReviewButtonProps {
   orderId: string;
+  canReview: boolean | null;
+  isChecking: boolean;
+  hasExistingReview: boolean;
   className?: string;
 }
 
-const ReviewButton: React.FC<ReviewButtonProps> = ({ orderId, className = "" }) => {
+const ReviewButton: React.FC<ReviewButtonProps> = ({ 
+  orderId, 
+  canReview, 
+  isChecking, 
+  hasExistingReview, 
+  className = "" 
+}) => {
   const router = useRouter();
-  const [canReview, setCanReview] = useState<boolean | null>(null);
-  const [isChecking, setIsChecking] = useState(true);
-  const [hasExistingReview, setHasExistingReview] = useState(false);
-
-  useEffect(() => {
-    checkReviewEligibility();
-  }, [orderId]);
-
-  const checkReviewEligibility = async () => {
-    try {
-      setIsChecking(true);
-      const response = await reviewService.canUserReviewOrder(orderId);
-      setCanReview(response.canReview);
-      setHasExistingReview(!!response.existingReview);
-    } catch (error) {
-      console.error("Error checking review eligibility:", error);
-      setCanReview(false);
-    } finally {
-      setIsChecking(false);
-    }
-  };
 
   const handleReviewClick = () => {
     router.push(`/review/${orderId}`);

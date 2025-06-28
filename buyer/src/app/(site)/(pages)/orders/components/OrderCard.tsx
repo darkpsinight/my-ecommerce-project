@@ -4,12 +4,19 @@ import { Order } from "@/services/orders";
 import OrderCardHeader from "./OrderCardHeader";
 import OrderItemsList from "./OrderItemsList";
 
+interface ReviewStatus {
+  canReview: boolean;
+  hasExistingReview: boolean;
+  isChecking: boolean;
+}
+
 interface OrderCardProps {
   order: Order;
   formatDate: (dateString: string) => string;
+  reviewStatus: ReviewStatus;
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, formatDate }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order, formatDate, reviewStatus }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleExpanded = () => {
@@ -40,6 +47,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, formatDate }) => {
           order={order} 
           formatDate={formatDate} 
           isExpanded={isExpanded}
+          reviewStatus={reviewStatus}
         />
       </div>
       

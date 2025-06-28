@@ -1,9 +1,10 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { Order } from "@/services/orders";
 import OrdersHeader from "./OrdersHeader";
 import OrderCard from "./OrderCard";
 import OrdersPagination from "./OrdersPagination";
+import { useOrderReviews } from "../hooks/useOrderReviews";
 
 interface OrdersListProps {
   orders: Order[];
@@ -22,6 +23,15 @@ const OrdersList: React.FC<OrdersListProps> = ({
   onPageChange,
   formatDate,
 }) => {
+  const { reviewStatuses, checkReviewEligibility } = useOrderReviews();
+
+  // Check review eligibility for all completed orders when orders change
+  useEffect(() => {
+    const completedOrders = orders.filter(order => order.status === 'completed');
+    completedOrders.forEach(order => {
+      checkReviewEligibility(order.externalId);
+    });
+  }, [orders, checkReviewEligibility]);
   return (
     <div className="pt-20 sm:pt-20 pb-12 min-h-screen bg-gray-1">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-0">
@@ -57,6 +67,11 @@ const OrdersList: React.FC<OrdersListProps> = ({
               key={order.externalId}
               order={order}
               formatDate={formatDate}
+              reviewStatus={reviewStatuses[order.externalId] || {
+                canReview: false,
+                hasExistingReview: false,
+                isChecking: order.status === 'completed'
+              }}
             />
           ))}
         </div>

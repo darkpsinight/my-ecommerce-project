@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -7,12 +7,25 @@ import { reviewService, CanReviewOrderResponse } from "@/services/reviews";
 import ReviewForm from "@/components/ReviewForm";
 import Link from "next/link";
 
+// Cache to store review eligibility results to prevent duplicate API calls
+const reviewEligibilityCache = new Map<string, {
+  data: CanReviewOrderResponse;
+  timestamp: number;
+}>();
+
+// Cache expiry time (5 minutes)
+const CACHE_EXPIRY_TIME = 5 * 60 * 1000;
+
+// Track ongoing requests to prevent duplicate calls
+const ongoingRequests = new Set<string>();
+
 const ReviewPageClient = () => {
   const params = useParams();
   const router = useRouter();
   const orderId = params.orderId as string;
   const { token } = useSelector((state: RootState) => state.authReducer);
   const isAuthenticated = !!token;
+  const hasFetchedRef = useRef(false);
   
   const [reviewEligibility, setReviewEligibility] = useState<CanReviewOrderResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +38,10 @@ const ReviewPageClient = () => {
       return;
     }
 
-    checkReviewEligibility();
+    // Only check if we haven't fetched yet and not already loading
+    if (!hasFetchedRef.current) {
+      checkReviewEligibility();
+    }
   }, [isAuthenticated, orderId, router]);
 
   const checkReviewEligibility = async () => {
@@ -35,11 +51,39 @@ const ReviewPageClient = () => {
       return;
     }
 
+    // Check if request is already ongoing
+    if (ongoingRequests.has(orderId)) {
+      return;
+    }
+
+    // Check cache first
+    const cached = reviewEligibilityCache.get(orderId);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < CACHE_EXPIRY_TIME) {
+      // Use cached data
+      setReviewEligibility(cached.data);
+      setIsLoading(false);
+      hasFetchedRef.current = true;
+      return;
+    }
+
+    // Mark request as ongoing
+    ongoingRequests.add(orderId);
+
     try {
       setIsLoading(true);
       setError("");
       const response = await reviewService.canUserReviewOrder(orderId);
+      
+      // Cache the result
+      reviewEligibilityCache.set(orderId, {
+        data: response,
+        timestamp: now
+      });
+      
       setReviewEligibility(response);
+      hasFetchedRef.current = true;
     } catch (error: any) {
       console.error("Error checking review eligibility:", error);
       
@@ -53,8 +97,11 @@ const ReviewPageClient = () => {
       } else {
         setError("Unable to verify review eligibility. Please try again later.");
       }
+      hasFetchedRef.current = true;
     } finally {
       setIsLoading(false);
+      // Remove from ongoing requests
+      ongoingRequests.delete(orderId);
     }
   };
 

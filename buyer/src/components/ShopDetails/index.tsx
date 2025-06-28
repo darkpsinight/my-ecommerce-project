@@ -70,9 +70,8 @@ const ShopDetails = () => {
   // Initialize fallback product
   const [fallbackProduct, setFallbackProduct] = useState<Product | null>(null);
 
-  // Set fallback product when component mounts or productId changes
+  // Initialize fallback product from localStorage or Redux store only once on mount
   useEffect(() => {
-    // Only use localStorage as fallback if no product ID is provided
     if (!productId && typeof window !== "undefined") {
       const storedProduct = localStorage.getItem("productDetails");
       if (storedProduct) {
@@ -86,11 +85,16 @@ const ShopDetails = () => {
       } else {
         setFallbackProduct(productFromStorage);
       }
-    } else {
-      // If we have a productId, don't use fallback
+    }
+  }, []); // Only run on mount
+
+  // Reset fallback product when productId changes
+  useEffect(() => {
+    if (productId) {
+      // If we have a productId, clear fallback to prevent conflicts
       setFallbackProduct(null);
     }
-  }, [productId, productFromStorage]);
+  }, [productId]);
 
   // Clear product details when component unmounts
   useEffect(() => {
@@ -118,12 +122,10 @@ const ShopDetails = () => {
         try {
           console.log("Fetching product with ID:", productId);
 
-          // Check if the product ID matches what's already in Redux
-          const currentProductId = productFromStorage.id?.toString();
-          // Force bypass cache to ensure fresh data with seller market names
-          const shouldBypassCache = true;
+          // Only bypass cache on first load, not on re-renders
+          const shouldBypassCache = false;
 
-          // Force a fresh fetch to get updated seller market names
+          // Fetch product data
           const data = await getProductById(productId, shouldBypassCache);
 
           // Only update state if component is still mounted
@@ -136,10 +138,8 @@ const ShopDetails = () => {
             // Save to localStorage for persistence
             localStorage.setItem("productDetails", JSON.stringify(data));
 
-            // Only update Redux store if the product ID has changed
-            if (currentProductId !== productId) {
-              dispatch(updateproductDetails({ ...data }));
-            }
+            // Update Redux store with fresh data
+            dispatch(updateproductDetails({ ...data }));
 
             // Add to recently viewed products
             dispatch(addRecentlyViewedProduct({ ...data }));
@@ -173,7 +173,15 @@ const ShopDetails = () => {
     return () => {
       isMounted = false;
     };
-  }, [productId, dispatch, productFromStorage.id, fallbackProduct]);
+  }, [productId, dispatch]); // Removed productFromStorage.id and fallbackProduct to prevent circular updates
+
+  // Handle fallback product when no productId is provided
+  useEffect(() => {
+    if (!productId && !productData) {
+      console.log("No product ID and no product data, using fallback");
+      setProductData(fallbackProduct);
+    }
+  }, [productId, productData, fallbackProduct]);
 
   // Use the fetched product data or fallback
   const product = productData || fallbackProduct;

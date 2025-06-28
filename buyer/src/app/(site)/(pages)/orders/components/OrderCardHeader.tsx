@@ -52,20 +52,40 @@ const OrderCardHeader: React.FC<OrderCardHeaderProps> = ({ order, formatDate, is
             </div>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex flex-col gap-3">
+          {/* Status Badge */}
+          <div className="flex items-center">
             <span className={`inline-flex items-center px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold shadow-1 ${getStatusColor(order.status)} w-fit`}>
               <div className={`w-2 h-2 rounded-full mr-2 ${getStatusDotColor(order.status)}`}></div>
               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
             </span>
-            {order.status === 'completed' && (
-              <ReviewButton orderId={order.externalId} />
-            )}
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-2 w-fit">
-            <span className="text-xl sm:text-2xl font-bold text-white">
-              ${order.totalAmount.toFixed(2)}
-            </span>
+          
+          {/* Review Button and Price - Different layouts for small vs large screens */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Small screens: Review button and price on same line */}
+            <div className="flex sm:hidden items-center justify-between w-full">
+              {order.status === 'completed' && (
+                <ReviewButton orderId={order.externalId} />
+              )}
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-3 py-2 w-fit ml-auto">
+                <span className="text-xl font-bold text-white">
+                  ${order.totalAmount.toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {/* Large screens: Original layout */}
+            <div className="hidden sm:flex sm:items-center gap-3">
+              {order.status === 'completed' && (
+                <ReviewButton orderId={order.externalId} />
+              )}
+            </div>
+            <div className="hidden sm:block bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 w-fit">
+              <span className="text-2xl font-bold text-white">
+                ${order.totalAmount.toFixed(2)}
+              </span>
+            </div>
           </div>
         </div>
       </div>

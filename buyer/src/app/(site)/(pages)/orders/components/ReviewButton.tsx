@@ -69,7 +69,7 @@ const ReviewButton: React.FC<ReviewButtonProps> = ({ orderId, className = "" }) 
     <div className={`flex items-center ${className}`}>
       <button
         onClick={handleReviewClick}
-        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue bg-blue-light-6 hover:bg-blue-light-5 border border-blue-light-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2"
+        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue bg-white hover:bg-gray-1 border border-white/30 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue shadow-1 hover:shadow-2 transform hover:scale-105"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path

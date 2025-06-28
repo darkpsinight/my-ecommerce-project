@@ -1,13 +1,24 @@
 const { Review } = require("../models/review");
 const { Order } = require("../models/order");
 const { Listing } = require("../models/listing");
+const { User } = require("../models/user");
 const mongoose = require("mongoose");
 
 // Create a new review
 const createReview = async (request, reply) => {
   try {
     const { orderId, rating, comment } = request.body;
-    const reviewerId = request.user.id;
+    
+    // Get user by uid from JWT token
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      return reply.status(404).send({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    const reviewerId = user._id;
 
     // Enhanced input validation
     if (!orderId) {
@@ -205,7 +216,16 @@ const getListingReviews = async (request, reply) => {
 // Get reviews by seller
 const getSellerReviews = async (request, reply) => {
   try {
-    const sellerId = request.user.id;
+    // Get user by uid from JWT token
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      return reply.status(404).send({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    const sellerId = user._id;
     const {
       page = 1,
       limit = 10,
@@ -240,7 +260,20 @@ const getSellerReviews = async (request, reply) => {
 const canUserReviewOrder = async (request, reply) => {
   try {
     const { orderId } = request.params;
-    const userId = request.user.id;
+    
+    // Get user by uid from JWT token
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      return reply.send({
+        success: true,
+        data: {
+          canReview: false,
+          reason: "User not found"
+        }
+      });
+    }
+    
+    const userId = user._id;
 
     // Enhanced input validation
     if (!orderId) {
@@ -373,7 +406,17 @@ const canUserReviewOrder = async (request, reply) => {
 const markReviewAsHelpful = async (request, reply) => {
   try {
     const { reviewId } = request.params;
-    const userId = request.user.id;
+    
+    // Get user by uid from JWT token
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      return reply.status(404).send({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    const userId = user._id;
 
     const review = await Review.findById(reviewId);
     if (!review) {
@@ -422,7 +465,17 @@ const markReviewAsHelpful = async (request, reply) => {
 const removeHelpfulMark = async (request, reply) => {
   try {
     const { reviewId } = request.params;
-    const userId = request.user.id;
+    
+    // Get user by uid from JWT token
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      return reply.status(404).send({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    const userId = user._id;
 
     const review = await Review.findById(reviewId);
     if (!review) {

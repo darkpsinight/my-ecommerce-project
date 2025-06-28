@@ -13,7 +13,7 @@ const {
 const reviewSecurityMiddleware = async (request, reply) => {
   try {
     // Ensure user is properly authenticated
-    if (!request.user || !request.user.id) {
+    if (!request.user || !request.user.uid) {
       return reply.status(401).send({
         success: false,
         message: "Authentication required"
@@ -29,7 +29,7 @@ const reviewSecurityMiddleware = async (request, reply) => {
     }
 
     // Log security-sensitive operations
-    console.log(`Review operation attempted by user ${request.user.id} at ${new Date().toISOString()}`);
+    console.log(`Review operation attempted by user ${request.user.uid} at ${new Date().toISOString()}`);
     
     return;
   } catch (error) {

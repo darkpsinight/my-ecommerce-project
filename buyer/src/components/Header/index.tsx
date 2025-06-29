@@ -11,7 +11,7 @@ import { decodeToken, hasRole } from "@/utils/jwt";
 // Import subcomponents
 import Logo from "./components/Logo";
 import SearchBar from "./components/SearchBar";
-import WalletButton from "./components/SupportContact";
+import WalletButton from "./components/MyWallet";
 import CartButton from "./components/CartButton";
 import AccountDropdown from "./components/AccountDropdown";
 import SellerDashboardButton from "./components/SellerDashboardButton";

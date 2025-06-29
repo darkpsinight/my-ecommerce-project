@@ -14,8 +14,6 @@ export interface UserInfo {
   name: string;
   role: string;
   isEmailConfirmed: boolean;
-  displayName?: string;
-  username?: string;
   bio?: string;
   phone?: string;
   dateOfBirth?: string;
@@ -30,8 +28,6 @@ interface UserInfoResponse {
   email: string;
   name: string;
   isEmailConfirmed: boolean;
-  displayName?: string;
-  username?: string;
   bio?: string;
   phone?: string;
   dateOfBirth?: string;
@@ -56,8 +52,6 @@ export const userApi = {
         name: response.data.name,
         role: response.data.role,
         isEmailConfirmed: response.data.isEmailConfirmed,
-        displayName: response.data.displayName,
-        username: response.data.username,
         bio: response.data.bio,
         phone: response.data.phone,
         dateOfBirth: response.data.dateOfBirth,
@@ -70,8 +64,7 @@ export const userApi = {
   },
 
   updateProfile: async (token: string, profileData: {
-    displayName?: string;
-    username?: string;
+    name?: string;
     bio?: string;
     phone?: string;
     dateOfBirth?: string;

@@ -8,6 +8,8 @@ const userSchema = new mongoose.Schema({
 	name: {
 		type: String,
 		required: [true, "Please submit the name"],
+		maxlength: 50,
+		trim: true,
 	},
 	uid: {
 		type: String,
@@ -22,21 +24,6 @@ const userSchema = new mongoose.Schema({
 		required: [true, "Please submit an email"],
 	},
 	// Profile Information Fields
-	displayName: {
-		type: String,
-		maxlength: 50,
-		trim: true,
-	},
-	username: {
-		type: String,
-		unique: true,
-		sparse: true, // Allows multiple null values
-		lowercase: true,
-		trim: true,
-		minlength: 3,
-		maxlength: 30,
-		match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores']
-	},
 	bio: {
 		type: String,
 		maxlength: 500,

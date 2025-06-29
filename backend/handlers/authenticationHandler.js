@@ -704,14 +704,12 @@ const getAccount = async (request, reply) => {
   return sendSuccessResponse(reply, {
     statusCode: 200,
     message: "User Found",
-    name: user.name,
+    name: userModel.name,
     email: userModel.email,
     roles: user.roles,
     isEmailConfirmed: user.isEmailConfirmed,
     isDeactivated: user.isDeactivated,
     // Profile fields
-    displayName: userModel.displayName,
-    username: userModel.username,
     bio: userModel.bio,
     phone: userModel.phone,
     dateOfBirth: userModel.dateOfBirth,
@@ -1342,45 +1340,19 @@ const updateProfile = async (request, reply) => {
 
   try {
     const user = request.userModel;
-    const { displayName, username, bio, phone, dateOfBirth } = request.body;
+    const { name, bio, phone, dateOfBirth } = request.body;
 
     // Validate and sanitize inputs
     const updates = {};
 
-    if (displayName !== undefined) {
-      if (displayName && displayName.trim().length > 50) {
-        return sendErrorResponse(reply, 400, "Display name must be 50 characters or less");
+    if (name !== undefined) {
+      if (!name || name.trim().length === 0) {
+        return sendErrorResponse(reply, 400, "Name is required");
       }
-      updates.displayName = displayName ? displayName.trim() : null;
-    }
-
-    if (username !== undefined) {
-      if (username) {
-        const trimmedUsername = username.toLowerCase().trim();
-        
-        // Validate username format
-        if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
-          return sendErrorResponse(reply, 400, "Username can only contain letters, numbers, and underscores");
-        }
-        
-        if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
-          return sendErrorResponse(reply, 400, "Username must be between 3 and 30 characters");
-        }
-
-        // Check if username is already taken (excluding current user)
-        const existingUser = await User.findOne({ 
-          username: trimmedUsername,
-          _id: { $ne: user._id }
-        });
-        
-        if (existingUser) {
-          return sendErrorResponse(reply, 400, "Username is already taken");
-        }
-        
-        updates.username = trimmedUsername;
-      } else {
-        updates.username = null;
+      if (name.trim().length > 50) {
+        return sendErrorResponse(reply, 400, "Name must be 50 characters or less");
       }
+      updates.name = name.trim();
     }
 
     if (bio !== undefined) {
@@ -1438,13 +1410,11 @@ const updateProfile = async (request, reply) => {
       statusCode: 200,
       message: "Profile updated successfully",
       profile: {
-        displayName: user.displayName,
-        username: user.username,
+        name: user.name,
         bio: user.bio,
         phone: user.phone,
         dateOfBirth: user.dateOfBirth,
-        email: user.email,
-        name: user.name
+        email: user.email
       }
     });
 
@@ -1463,10 +1433,8 @@ const updateProfile = async (request, reply) => {
     }
 
     if (error.code === 11000) {
-      // Duplicate key error
-      if (error.keyPattern?.username) {
-        return sendErrorResponse(reply, 400, "Username is already taken");
-      }
+      // Duplicate key error - though name shouldn't have unique constraint
+      return sendErrorResponse(reply, 400, "A duplicate value was detected");
     }
 
     return sendErrorResponse(reply, 500, "An error occurred while updating your profile");

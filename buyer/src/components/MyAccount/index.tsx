@@ -20,8 +20,7 @@ const MyAccount = () => {
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [profileData, setProfileData] = useState({
-    displayName: "",
-    username: "",
+    name: "",
     email: "",
     bio: "",
     phone: "",
@@ -43,8 +42,7 @@ const MyAccount = () => {
       const profile = await userApi.getUserInfo(token);
       setUserProfile(profile);
       setProfileData({
-        displayName: profile.displayName || "",
-        username: profile.username || "",
+        name: profile.name || "",
         email: profile.email || "",
         bio: profile.bio || "",
         phone: profile.phone || "",
@@ -86,20 +84,13 @@ const MyAccount = () => {
     const errors = { ...validationErrors };
     
     switch (field) {
-      case 'username':
-        if (value && !/^[a-zA-Z0-9_]+$/.test(value)) {
-          errors.username = 'Username can only contain letters, numbers, and underscores';
-        } else if (value && (value.length < 3 || value.length > 30)) {
-          errors.username = 'Username must be between 3 and 30 characters';
+      case 'name':
+        if (!value || value.trim().length === 0) {
+          errors.name = 'Name is required';
+        } else if (value.length > 50) {
+          errors.name = 'Name must be 50 characters or less';
         } else {
-          delete errors.username;
-        }
-        break;
-      case 'displayName':
-        if (value && value.length > 50) {
-          errors.displayName = 'Display name must be 50 characters or less';
-        } else {
-          delete errors.displayName;
+          delete errors.name;
         }
         break;
       case 'bio':
@@ -127,8 +118,7 @@ const MyAccount = () => {
     if (!userProfile) return false;
     
     return (
-      newData.displayName !== (userProfile.displayName || "") ||
-      newData.username !== (userProfile.username || "") ||
+      newData.name !== (userProfile.name || "") ||
       newData.bio !== (userProfile.bio || "") ||
       newData.phone !== (userProfile.phone || "") ||
       newData.dateOfBirth !== (userProfile.dateOfBirth || "")
@@ -154,8 +144,7 @@ const MyAccount = () => {
     // Reset profile data to original values
     if (userProfile) {
       setProfileData({
-        displayName: userProfile.displayName || "",
-        username: userProfile.username || "",
+        name: userProfile.name || "",
         email: userProfile.email || "",
         bio: userProfile.bio || "",
         phone: userProfile.phone || "",
@@ -185,13 +174,13 @@ const MyAccount = () => {
       setIsSaving(true);
       
       // Validate required fields
-      if (profileData.username && profileData.username.length < 3) {
-        toast.error("Username must be at least 3 characters");
+      if (!profileData.name || profileData.name.trim().length === 0) {
+        toast.error("Name is required");
         return;
       }
       
-      if (profileData.displayName && profileData.displayName.length > 50) {
-        toast.error("Display name must be 50 characters or less");
+      if (profileData.name && profileData.name.length > 50) {
+        toast.error("Name must be 50 characters or less");
         return;
       }
       
@@ -202,11 +191,8 @@ const MyAccount = () => {
 
       // Prepare data for API call (only send non-empty values)
       const updateData: any = {};
-      if (profileData.displayName !== userProfile?.displayName) {
-        updateData.displayName = profileData.displayName || null;
-      }
-      if (profileData.username !== userProfile?.username) {
-        updateData.username = profileData.username || null;
+      if (profileData.name !== userProfile?.name) {
+        updateData.name = profileData.name.trim();
       }
       if (profileData.bio !== userProfile?.bio) {
         updateData.bio = profileData.bio || null;
@@ -233,8 +219,7 @@ const MyAccount = () => {
       // Create a more specific success message
       const updatedFields = Object.keys(updateData);
       const fieldNames = {
-        displayName: 'Display Name',
-        username: 'Username',
+        name: 'Name',
         bio: 'Bio',
         phone: 'Phone Number',
         dateOfBirth: 'Date of Birth'
@@ -276,8 +261,6 @@ const MyAccount = () => {
     const fields = [
       userProfile.name,
       userProfile.email,
-      userProfile.displayName,
-      userProfile.username,
       userProfile.bio,
       userProfile.phone,
       userProfile.dateOfBirth,
@@ -408,10 +391,10 @@ const MyAccount = () => {
                         </div>
                         <div>
                           <h3 className="font-semibold text-lg">
-                            {userProfile?.displayName || userProfile?.name || "Loading..."}
+                            {userProfile?.name || "Loading..."}
                           </h3>
                           <p className="text-white/80 text-sm">
-                            {userProfile?.username ? `@${userProfile.username}` : "Member since " + new Date().getFullYear()}
+                            {"Member since " + new Date().getFullYear()}
                           </p>
                         </div>
                       </div>
@@ -575,10 +558,10 @@ const MyAccount = () => {
                               )}
                             </div>
                             <h3 className="text-lg font-semibold text-gray-7 mb-1">
-                              {userProfile?.displayName || userProfile?.name || "Loading..."}
+                              {userProfile?.name || "Loading..."}
                             </h3>
                             <p className="text-sm text-gray-5">
-                              {userProfile?.username ? `@${userProfile.username}` : "No username set"}
+                              {userProfile?.email || "No email"}
                             </p>
                             {isEditingProfile && (
                               <button className="mt-4 w-full bg-white text-blue border border-blue rounded-lg py-2 hover:bg-blue hover:text-white transition-colors">
@@ -598,7 +581,7 @@ const MyAccount = () => {
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
-                                  <span>All fields are optional</span>
+                                  <span>Display name is required. Other fields are optional</span>
                                 </div>
                               )}
                             </div>
@@ -607,38 +590,21 @@ const MyAccount = () => {
                                 <label className="block text-sm font-medium text-gray-6 mb-2">Display Name</label>
                                 <input
                                   type="text"
-                                  value={profileData.displayName}
-                                  onChange={(e) => handleProfileUpdate("displayName", e.target.value)}
+                                  value={profileData.name}
+                                  onChange={(e) => handleProfileUpdate("name", e.target.value)}
                                   disabled={!isEditingProfile}
                                   className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 ${
-                                    validationErrors.displayName ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
+                                    validationErrors.name ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
                                   }`}
                                   placeholder="Enter your display name"
+                                  required
                                 />
-                                {validationErrors.displayName && (
-                                  <p className="text-red text-sm mt-1">{validationErrors.displayName}</p>
+                                {validationErrors.name && (
+                                  <p className="text-red text-sm mt-1">{validationErrors.name}</p>
                                 )}
+                                <p className="text-gray-5 text-sm mt-1">This is how your name will appear on the marketplace</p>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-gray-6 mb-2">Username</label>
-                                <input
-                                  type="text"
-                                  value={profileData.username}
-                                  onChange={(e) => handleProfileUpdate("username", e.target.value.toLowerCase())}
-                                  disabled={!isEditingProfile}
-                                  className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 ${
-                                    validationErrors.username ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
-                                  }`}
-                                  placeholder="Choose a unique username"
-                                />
-                                {validationErrors.username && (
-                                  <p className="text-red text-sm mt-1">{validationErrors.username}</p>
-                                )}
-                                {!validationErrors.username && profileData.username && isEditingProfile && (
-                                  <p className="text-gray-5 text-sm mt-1">This will be your public username</p>
-                                )}
-                              </div>
-                              <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-6 mb-2">Email Address</label>
                                 <input
                                   type="email"

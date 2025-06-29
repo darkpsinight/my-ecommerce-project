@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import NewHero from "./NewHero";
 import CategoryGrid from "./CategoryGrid";

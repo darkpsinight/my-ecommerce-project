@@ -55,7 +55,7 @@ const CartButton: React.FC = () => {
           cart
         </span>
         <p className="font-medium text-custom-sm text-dark">
-          ${formatPrice(totalPrice)}
+          {formatPrice(totalPrice)}
         </p>
       </div>
     </button>

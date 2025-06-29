@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, 
@@ -375,11 +376,13 @@ const ViewedProductsPage: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex gap-6">
-                        <div className="flex-shrink-0 w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                          <img
+                        <div className="flex-shrink-0 w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden relative">
+                          <Image
                             src={product.thumbnailUrl || '/images/products/placeholder.png'}
                             alt={product.title}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="96px"
                           />
                         </div>
                         

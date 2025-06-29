@@ -21,6 +21,49 @@ const userSchema = new mongoose.Schema({
 		unique: true,
 		required: [true, "Please submit an email"],
 	},
+	// Profile Information Fields
+	displayName: {
+		type: String,
+		maxlength: 50,
+		trim: true,
+	},
+	username: {
+		type: String,
+		unique: true,
+		sparse: true, // Allows multiple null values
+		lowercase: true,
+		trim: true,
+		minlength: 3,
+		maxlength: 30,
+		match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores']
+	},
+	bio: {
+		type: String,
+		maxlength: 500,
+		trim: true,
+	},
+	phone: {
+		type: String,
+		trim: true,
+		match: [/^\+?[\d\s\-\(\)]+$/, 'Please enter a valid phone number']
+	},
+	dateOfBirth: {
+		type: Date,
+		validate: {
+			validator: function(value) {
+				// Must be at least 13 years old
+				if (!value) return true; // Allow null/undefined
+				const thirteenYearsAgo = new Date();
+				thirteenYearsAgo.setFullYear(thirteenYearsAgo.getFullYear() - 13);
+				return value <= thirteenYearsAgo;
+			},
+			message: 'You must be at least 13 years old'
+		}
+	},
+	profilePicture: {
+		type: String,
+		trim: true,
+	},
 	provider: {
 		// Provider used during sign up
 		// This is not updated if the user uses a different

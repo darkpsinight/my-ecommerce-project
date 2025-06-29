@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAppSelector } from "@/redux/store";
+import { userApi, UserInfo } from "@/services/user";
+import { toast } from "react-hot-toast";
 
 import PageContainer from "../Common/PageContainer";
 import ProtectedRoute from "../Common/ProtectedRoute";
@@ -12,6 +14,11 @@ const MyAccount = () => {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("profile");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserInfo | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [profileData, setProfileData] = useState({
     displayName: "",
     username: "",
@@ -25,21 +32,36 @@ const MyAccount = () => {
     newPassword: "",
     confirmPassword: "",
   });
-  const { user } = useAppSelector((state: any) => state.authReducer);
+  const { user, token } = useAppSelector((state: any) => state.authReducer);
+
+  // Fetch user profile data
+  const fetchUserProfile = async () => {
+    if (!token) return;
+    
+    try {
+      setIsLoading(true);
+      const profile = await userApi.getUserInfo(token);
+      setUserProfile(profile);
+      setProfileData({
+        displayName: profile.displayName || "",
+        username: profile.username || "",
+        email: profile.email || "",
+        bio: profile.bio || "",
+        phone: profile.phone || "",
+        dateOfBirth: profile.dateOfBirth || "",
+      });
+    } catch (error: any) {
+      console.error("Failed to fetch user profile:", error);
+      toast.error("Failed to load profile information");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Initialize profile data
   useEffect(() => {
-    if (user) {
-      setProfileData({
-        displayName: user.displayName || "",
-        username: user.username || "",
-        email: user.email || "",
-        bio: user.bio || "",
-        phone: user.phone || "",
-        dateOfBirth: user.dateOfBirth || "",
-      });
-    }
-  }, [user]);
+    fetchUserProfile();
+  }, [token]);
 
   // Check for section parameter in URL
   useEffect(() => {
@@ -60,11 +82,90 @@ const MyAccount = () => {
     router.push(`/my-account?${params.toString()}`, { scroll: false });
   };
 
+  const validateField = (field: string, value: string) => {
+    const errors = { ...validationErrors };
+    
+    switch (field) {
+      case 'username':
+        if (value && !/^[a-zA-Z0-9_]+$/.test(value)) {
+          errors.username = 'Username can only contain letters, numbers, and underscores';
+        } else if (value && (value.length < 3 || value.length > 30)) {
+          errors.username = 'Username must be between 3 and 30 characters';
+        } else {
+          delete errors.username;
+        }
+        break;
+      case 'displayName':
+        if (value && value.length > 50) {
+          errors.displayName = 'Display name must be 50 characters or less';
+        } else {
+          delete errors.displayName;
+        }
+        break;
+      case 'bio':
+        if (value && value.length > 500) {
+          errors.bio = 'Bio must be 500 characters or less';
+        } else {
+          delete errors.bio;
+        }
+        break;
+      case 'phone':
+        if (value && !/^\+?[\d\s\-\(\)]+$/.test(value)) {
+          errors.phone = 'Please enter a valid phone number';
+        } else {
+          delete errors.phone;
+        }
+        break;
+      default:
+        break;
+    }
+    
+    setValidationErrors(errors);
+  };
+
+  const checkForUnsavedChanges = (newData: typeof profileData) => {
+    if (!userProfile) return false;
+    
+    return (
+      newData.displayName !== (userProfile.displayName || "") ||
+      newData.username !== (userProfile.username || "") ||
+      newData.bio !== (userProfile.bio || "") ||
+      newData.phone !== (userProfile.phone || "") ||
+      newData.dateOfBirth !== (userProfile.dateOfBirth || "")
+    );
+  };
+
   const handleProfileUpdate = (field: string, value: string) => {
-    setProfileData(prev => ({
-      ...prev,
+    const newData = {
+      ...profileData,
       [field]: value
-    }));
+    };
+    
+    setProfileData(newData);
+    
+    // Check for unsaved changes
+    setHasUnsavedChanges(checkForUnsavedChanges(newData));
+    
+    // Validate the field in real-time
+    validateField(field, value);
+  };
+
+  const handleCancelEdit = () => {
+    // Reset profile data to original values
+    if (userProfile) {
+      setProfileData({
+        displayName: userProfile.displayName || "",
+        username: userProfile.username || "",
+        email: userProfile.email || "",
+        bio: userProfile.bio || "",
+        phone: userProfile.phone || "",
+        dateOfBirth: userProfile.dateOfBirth || "",
+      });
+    }
+    // Clear validation errors and unsaved changes flag
+    setValidationErrors({});
+    setHasUnsavedChanges(false);
+    setIsEditingProfile(false);
   };
 
   const handlePasswordUpdate = (field: string, value: string) => {
@@ -74,10 +175,83 @@ const MyAccount = () => {
     }));
   };
 
-  const handleSaveProfile = () => {
-    // Add API call to save profile data
-    console.log("Saving profile:", profileData);
-    setIsEditingProfile(false);
+  const handleSaveProfile = async () => {
+    if (!token) {
+      toast.error("Authentication required");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      // Validate required fields
+      if (profileData.username && profileData.username.length < 3) {
+        toast.error("Username must be at least 3 characters");
+        return;
+      }
+      
+      if (profileData.displayName && profileData.displayName.length > 50) {
+        toast.error("Display name must be 50 characters or less");
+        return;
+      }
+      
+      if (profileData.bio && profileData.bio.length > 500) {
+        toast.error("Bio must be 500 characters or less");
+        return;
+      }
+
+      // Prepare data for API call (only send non-empty values)
+      const updateData: any = {};
+      if (profileData.displayName !== userProfile?.displayName) {
+        updateData.displayName = profileData.displayName || null;
+      }
+      if (profileData.username !== userProfile?.username) {
+        updateData.username = profileData.username || null;
+      }
+      if (profileData.bio !== userProfile?.bio) {
+        updateData.bio = profileData.bio || null;
+      }
+      if (profileData.phone !== userProfile?.phone) {
+        updateData.phone = profileData.phone || null;
+      }
+      if (profileData.dateOfBirth !== userProfile?.dateOfBirth) {
+        updateData.dateOfBirth = profileData.dateOfBirth || null;
+      }
+
+      // Only make API call if there are changes
+      if (Object.keys(updateData).length === 0) {
+        toast.success("No changes to save");
+        setIsEditingProfile(false);
+        return;
+      }
+
+      const updatedProfile = await userApi.updateProfile(token, updateData);
+      setUserProfile(updatedProfile);
+      setHasUnsavedChanges(false);
+      setIsEditingProfile(false);
+      
+      // Create a more specific success message
+      const updatedFields = Object.keys(updateData);
+      const fieldNames = {
+        displayName: 'Display Name',
+        username: 'Username',
+        bio: 'Bio',
+        phone: 'Phone Number',
+        dateOfBirth: 'Date of Birth'
+      };
+      
+      if (updatedFields.length === 1) {
+        toast.success(`${fieldNames[updatedFields[0] as keyof typeof fieldNames]} updated successfully!`);
+      } else {
+        toast.success(`Profile updated successfully! (${updatedFields.length} fields changed)`);
+      }
+      
+    } catch (error: any) {
+      console.error("Failed to update profile:", error);
+      toast.error(error.message || "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleChangePassword = () => {
@@ -94,6 +268,23 @@ const MyAccount = () => {
     // Add logout logic here
     console.log("Logout clicked");
     // You can implement logout functionality here
+  };
+
+  const calculateProfileCompletion = () => {
+    if (!userProfile) return 0;
+    
+    const fields = [
+      userProfile.name,
+      userProfile.email,
+      userProfile.displayName,
+      userProfile.username,
+      userProfile.bio,
+      userProfile.phone,
+      userProfile.dateOfBirth,
+    ];
+    
+    const completedFields = fields.filter(field => field && field.trim() !== '').length;
+    return Math.round((completedFields / fields.length) * 100);
   };
 
   const sections = [
@@ -217,10 +408,10 @@ const MyAccount = () => {
                         </div>
                         <div>
                           <h3 className="font-semibold text-lg">
-                            {user?.displayName || "John Doe"}
+                            {userProfile?.displayName || userProfile?.name || "Loading..."}
                           </h3>
                           <p className="text-white/80 text-sm">
-                            Member since {new Date().getFullYear()}
+                            {userProfile?.username ? `@${userProfile.username}` : "Member since " + new Date().getFullYear()}
                           </p>
                         </div>
                       </div>
@@ -229,11 +420,33 @@ const MyAccount = () => {
                       <div className="bg-white/20 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm text-white/90">Profile Completion</span>
-                          <span className="text-sm font-semibold">75%</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold">{calculateProfileCompletion()}%</span>
+                            {calculateProfileCompletion() === 100 && (
+                              <svg className="w-4 h-4 text-green-light" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
                         </div>
                         <div className="w-full bg-white/20 rounded-full h-2">
-                          <div className="bg-white rounded-full h-2 w-3/4"></div>
+                          <div 
+                            className={`rounded-full h-2 transition-all duration-500 ${
+                              calculateProfileCompletion() === 100 ? 'bg-green-light' : 'bg-white'
+                            }`}
+                            style={{ width: `${calculateProfileCompletion()}%` }}
+                          ></div>
                         </div>
+                        {calculateProfileCompletion() < 100 && (
+                          <p className="text-xs text-white/70 mt-2">
+                            Complete your profile to unlock all features and improve your marketplace experience
+                          </p>
+                        )}
+                        {calculateProfileCompletion() === 100 && (
+                          <p className="text-xs text-green-light mt-2 font-medium">
+                            Profile complete! You&apos;re ready to explore the marketplace
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -288,8 +501,26 @@ const MyAccount = () => {
               <div className="flex-1">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2 border border-white/20 min-h-[700px]">
                   
+                  {/* Loading State */}
+                  {isLoading && (
+                    <div className="flex items-center justify-center h-[700px]">
+                      <div className="text-center">
+                        <div className="relative">
+                          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-light border-t-blue mx-auto mb-6"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-blue" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-7 mb-2">Loading your profile</h3>
+                        <p className="text-gray-5">Please wait while we fetch your information...</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Profile Information Section */}
-                  {activeSection === "profile" && (
+                  {!isLoading && activeSection === "profile" && (
                     <div className="p-6">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -304,12 +535,19 @@ const MyAccount = () => {
                             </svg>
                           </div>
                           <div>
-                            <h2 className="text-2xl font-bold text-gray-7">Profile Information</h2>
+                            <div className="flex items-center gap-3">
+                              <h2 className="text-2xl font-bold text-gray-7">Profile Information</h2>
+                              {hasUnsavedChanges && (
+                                <span className="px-2 py-1 bg-yellow-light text-yellow-dark text-xs font-medium rounded-full animate-pulse">
+                                  Unsaved Changes
+                                </span>
+                              )}
+                            </div>
                             <p className="text-gray-5">Manage your personal details and profile picture</p>
                           </div>
                         </div>
                         <button
-                          onClick={() => setIsEditingProfile(!isEditingProfile)}
+                          onClick={() => isEditingProfile ? handleCancelEdit() : setIsEditingProfile(true)}
                           className="bg-gradient-to-r from-blue to-blue-light text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all duration-300"
                         >
                           {isEditingProfile ? "Cancel" : "Edit Profile"}
@@ -337,9 +575,11 @@ const MyAccount = () => {
                               )}
                             </div>
                             <h3 className="text-lg font-semibold text-gray-7 mb-1">
-                              {profileData.displayName || "John Doe"}
+                              {userProfile?.displayName || userProfile?.name || "Loading..."}
                             </h3>
-                            <p className="text-sm text-gray-5">@{profileData.username || "johndoe"}</p>
+                            <p className="text-sm text-gray-5">
+                              {userProfile?.username ? `@${userProfile.username}` : "No username set"}
+                            </p>
                             {isEditingProfile && (
                               <button className="mt-4 w-full bg-white text-blue border border-blue rounded-lg py-2 hover:bg-blue hover:text-white transition-colors">
                                 Change Picture
@@ -351,7 +591,17 @@ const MyAccount = () => {
                         {/* Profile Form */}
                         <div className="lg:col-span-2 space-y-6">
                           <div className="bg-gradient-to-r from-green-light-6 to-teal-light rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Personal Information</h3>
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-semibold text-gray-7">Personal Information</h3>
+                              {isEditingProfile && (
+                                <div className="flex items-center gap-2 text-sm text-gray-5">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <span>All fields are optional</span>
+                                </div>
+                              )}
+                            </div>
                             <div className="grid md:grid-cols-2 gap-4">
                               <div>
                                 <label className="block text-sm font-medium text-gray-6 mb-2">Display Name</label>
@@ -360,18 +610,33 @@ const MyAccount = () => {
                                   value={profileData.displayName}
                                   onChange={(e) => handleProfileUpdate("displayName", e.target.value)}
                                   disabled={!isEditingProfile}
-                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1"
+                                  className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 ${
+                                    validationErrors.displayName ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
+                                  }`}
+                                  placeholder="Enter your display name"
                                 />
+                                {validationErrors.displayName && (
+                                  <p className="text-red text-sm mt-1">{validationErrors.displayName}</p>
+                                )}
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-6 mb-2">Username</label>
                                 <input
                                   type="text"
                                   value={profileData.username}
-                                  onChange={(e) => handleProfileUpdate("username", e.target.value)}
+                                  onChange={(e) => handleProfileUpdate("username", e.target.value.toLowerCase())}
                                   disabled={!isEditingProfile}
-                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1"
+                                  className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 ${
+                                    validationErrors.username ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
+                                  }`}
+                                  placeholder="Choose a unique username"
                                 />
+                                {validationErrors.username && (
+                                  <p className="text-red text-sm mt-1">{validationErrors.username}</p>
+                                )}
+                                {!validationErrors.username && profileData.username && isEditingProfile && (
+                                  <p className="text-gray-5 text-sm mt-1">This will be your public username</p>
+                                )}
                               </div>
                               <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-6 mb-2">Email Address</label>
@@ -390,9 +655,14 @@ const MyAccount = () => {
                                   value={profileData.phone}
                                   onChange={(e) => handleProfileUpdate("phone", e.target.value)}
                                   disabled={!isEditingProfile}
-                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1"
+                                  className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 ${
+                                    validationErrors.phone ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
+                                  }`}
                                   placeholder="+1 (555) 123-4567"
                                 />
+                                {validationErrors.phone && (
+                                  <p className="text-red text-sm mt-1">{validationErrors.phone}</p>
+                                )}
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-6 mb-2">Date of Birth</label>
@@ -405,28 +675,51 @@ const MyAccount = () => {
                                 />
                               </div>
                               <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-6 mb-2">Bio</label>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="block text-sm font-medium text-gray-6">Bio</label>
+                                  <span className={`text-xs ${profileData.bio.length > 450 ? 'text-yellow' : 'text-gray-5'}`}>
+                                    {profileData.bio.length}/500
+                                  </span>
+                                </div>
                                 <textarea
                                   value={profileData.bio}
                                   onChange={(e) => handleProfileUpdate("bio", e.target.value)}
                                   disabled={!isEditingProfile}
                                   rows={3}
-                                  className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1 resize-none"
+                                  maxLength={500}
+                                  className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 resize-none ${
+                                    validationErrors.bio ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
+                                  }`}
                                   placeholder="Tell us about yourself..."
                                 />
+                                {validationErrors.bio && (
+                                  <p className="text-red text-sm mt-1">{validationErrors.bio}</p>
+                                )}
                               </div>
                             </div>
                             {isEditingProfile && (
                               <div className="flex gap-3 mt-6">
                                 <button
                                   onClick={handleSaveProfile}
-                                  className="flex-1 bg-gradient-to-r from-blue to-blue-light text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all duration-300"
+                                  disabled={isSaving || Object.keys(validationErrors).length > 0}
+                                  className="flex-1 bg-gradient-to-r from-blue to-blue-light text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                                 >
-                                  Save Changes
+                                  {isSaving ? (
+                                    <>
+                                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                      </svg>
+                                      Saving...
+                                    </>
+                                  ) : (
+                                    "Save Changes"
+                                  )}
                                 </button>
                                 <button
-                                  onClick={() => setIsEditingProfile(false)}
-                                  className="px-6 py-3 border border-gray-3 text-gray-6 rounded-lg hover:bg-gray-1 transition-colors"
+                                  onClick={handleCancelEdit}
+                                  disabled={isSaving}
+                                  className="px-6 py-3 border border-gray-3 text-gray-6 rounded-lg hover:bg-gray-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   Cancel
                                 </button>

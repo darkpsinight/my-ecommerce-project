@@ -14,6 +14,12 @@ export interface UserInfo {
   name: string;
   role: string;
   isEmailConfirmed: boolean;
+  displayName?: string;
+  username?: string;
+  bio?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  profilePicture?: string;
 }
 
 interface UserInfoResponse {
@@ -24,6 +30,12 @@ interface UserInfoResponse {
   email: string;
   name: string;
   isEmailConfirmed: boolean;
+  displayName?: string;
+  username?: string;
+  bio?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  profilePicture?: string;
 }
 
 export const userApi = {
@@ -44,9 +56,45 @@ export const userApi = {
         name: response.data.name,
         role: response.data.role,
         isEmailConfirmed: response.data.isEmailConfirmed,
+        displayName: response.data.displayName,
+        username: response.data.username,
+        bio: response.data.bio,
+        phone: response.data.phone,
+        dateOfBirth: response.data.dateOfBirth,
+        profilePicture: response.data.profilePicture,
       };
     } catch (error: any) {
       const message = error.response?.data?.message || error.message || 'Failed to fetch user info';
+      throw new Error(message);
+    }
+  },
+
+  updateProfile: async (token: string, profileData: {
+    displayName?: string;
+    username?: string;
+    bio?: string;
+    phone?: string;
+    dateOfBirth?: string;
+  }): Promise<UserInfo> => {
+    try {
+      const response = await axiosInstance.put<{
+        statusCode: number;
+        message: string;
+        success: boolean;
+        profile: UserInfo;
+      }>(AUTH_API.UPDATE_PROFILE, profileData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to update profile');
+      }
+
+      return response.data.profile;
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message || 'Failed to update profile';
       throw new Error(message);
     }
   },

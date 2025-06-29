@@ -11,6 +11,7 @@ export const AUTH_API = {
     EMAIL_LOGIN: `${API_URL}/auth/emailLogin`,
     REQUEST_EMAIL_LOGIN: `${API_URL}/auth/emailLogin`,
     ACCOUNT: `${API_URL}/auth/account`,
+    UPDATE_PROFILE: `${API_URL}/auth/profile`,
     REACTIVATE: `${API_URL}/auth/reactivate`,
     REFRESH_TOKEN: `${API_URL}/auth/refresh`,
     GENERATE_SELLER_TOKEN: `${API_URL}/auth/generate-seller-token`,

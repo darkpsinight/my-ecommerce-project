@@ -469,6 +469,60 @@ const authenticationSchema = {
 			500: errors[500]
 		}
 	},
+	updateProfile: {
+		description: "Update user profile information",
+		tags: ["Authentication"],
+		security: [{ JWTToken: [] }],
+		body: {
+			type: "object",
+			properties: {
+				displayName: { 
+					type: "string", 
+					maxLength: 50,
+					example: "John Doe"
+				},
+				username: { 
+					type: "string", 
+					minLength: 3,
+					maxLength: 30,
+					pattern: "^[a-zA-Z0-9_]+$",
+					example: "john_doe123"
+				},
+				bio: { 
+					type: "string", 
+					maxLength: 500,
+					example: "I'm a passionate developer who loves creating amazing digital experiences."
+				},
+				phone: { 
+					type: "string", 
+					pattern: "^\\+?[\\d\\s\\-\\(\\)]+$",
+					example: "+1 (555) 123-4567"
+				},
+				dateOfBirth: { 
+					type: "string", 
+					format: "date",
+					example: "1990-01-15"
+				}
+			},
+			additionalProperties: false
+		},
+		response: {
+			200: getSuccessObject(200, true, "Profile updated successfully", {
+				displayName: { type: ["string", "null"] },
+				username: { type: ["string", "null"] },
+				bio: { type: ["string", "null"] },
+				phone: { type: ["string", "null"] },
+				dateOfBirth: { type: ["string", "null"] },
+				email: { type: "string", format: "email" },
+				name: { type: "string" }
+			}),
+			400: errors[400],
+			401: errors[401],
+			403: errors[403],
+			429: errors[429],
+			500: errors[500]
+		}
+	},
 };
 
 module.exports = {

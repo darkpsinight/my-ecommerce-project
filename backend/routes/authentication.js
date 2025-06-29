@@ -20,6 +20,7 @@ const {
   sellerSignin,
   generateSellerToken,
   validateSellerToken,
+  updateProfile,
 } = require("../handlers/authenticationHandler");
 const { verifyAuth } = require("../plugins/authVerify");
 const {
@@ -226,6 +227,21 @@ const authenticationRoutes = async (fastify, opts) => {
     ],
     schema: authenticationSchema.getAccount,
     handler: getAccount,
+  });
+
+  // Route to update profile information
+  fastify.route({
+    method: "PUT",
+    url: "/profile",
+    preHandler: [
+      rateLimiter(rateLimits.standardWrite),
+      verifyAuth(["admin", "seller", "buyer", "support"]),
+      attachUser(false),
+      checkEmailConfirmed,
+      checkDeactivated,
+    ],
+    // schema: authenticationSchema.updateProfile,
+    handler: updateProfile,
   });
 
   // Route to delete account

@@ -82,12 +82,6 @@ const ShopWithoutSidebar = () => {
         <div className="relative overflow-hidden bg-gradient-to-br from-green-light-5 via-white to-blue-light-6 pt-20 lg:pt-20 pb-10 lg:pb-12">
           <div className="absolute inset-0 bg-gradient-to-r from-green/5 to-blue/5"></div>
           <div className="relative max-w-[1400px] mx-auto px-4 sm:px-8 text-center">
-            <div className="inline-flex items-center gap-2 bg-green-light-5 text-green-dark px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-              </svg>
-              Trusted Sellers Marketplace
-            </div>
             <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-dark mb-6">
               Verified Digital{" "}
               <span className="bg-gradient-to-r from-green to-blue bg-clip-text text-transparent">

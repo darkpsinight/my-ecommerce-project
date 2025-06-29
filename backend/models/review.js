@@ -129,10 +129,22 @@ reviewSchema.statics.getListingReviews = async function(listingId, options = {})
     maxRating
   } = options;
 
+  // Ensure listingId is ObjectId
+  const listingObjectId = mongoose.Types.ObjectId.isValid(listingId) ? 
+    (typeof listingId === 'string' ? new mongoose.Types.ObjectId(listingId) : listingId) : 
+    listingId;
+
   const query = { 
-    listingId, 
+    listingId: listingObjectId, 
     status: "published" 
   };
+
+  // Debug logging
+  console.log('Review query debug:', {
+    listingId: listingObjectId,
+    listingIdType: typeof listingObjectId,
+    query: query
+  });
 
   if (minRating) {
     query.rating = { $gte: minRating };
@@ -150,6 +162,10 @@ reviewSchema.statics.getListingReviews = async function(listingId, options = {})
 
   const skip = (page - 1) * limit;
 
+  // Debug: Check all reviews for this listing without status filter
+  const allReviewsForListing = await this.find({ listingId: listingObjectId });
+  console.log('All reviews for listing (no status filter):', allReviewsForListing.length);
+
   const reviews = await this.find(query)
     .sort(sort)
     .skip(skip)
@@ -158,10 +174,12 @@ reviewSchema.statics.getListingReviews = async function(listingId, options = {})
     .select("-helpfulBy -metadata");
 
   const total = await this.countDocuments(query);
+  
+  console.log('Reviews found with status filter:', total);
 
   // Calculate rating statistics
   const ratingStats = await this.aggregate([
-    { $match: { listingId: new mongoose.Types.ObjectId(listingId), status: "published" } },
+    { $match: { listingId: listingObjectId, status: "published" } },
     {
       $group: {
         _id: null,

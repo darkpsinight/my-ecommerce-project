@@ -179,14 +179,21 @@ const getListingReviews = async (request, reply) => {
       maxRating
     } = request.query;
 
-    // Verify listing exists
-    const listing = await Listing.findById(listingId);
+    // Verify listing exists using external ID
+    const listing = await Listing.findOne({ externalId: listingId });
     if (!listing) {
       return reply.status(404).send({
         success: false,
         message: "Listing not found"
       });
     }
+
+    // Debug logging
+    console.log('getListingReviews debug:', {
+      externalId: listingId,
+      listingMongoId: listing._id,
+      listingTitle: listing.title
+    });
 
     const options = {
       page: parseInt(page),
@@ -197,7 +204,13 @@ const getListingReviews = async (request, reply) => {
       maxRating: maxRating ? parseInt(maxRating) : undefined
     };
 
-    const result = await Review.getListingReviews(listingId, options);
+    const result = await Review.getListingReviews(listing._id, options);
+    
+    // Debug logging
+    console.log('Review query result:', {
+      reviewsCount: result.reviews.length,
+      totalReviews: result.statistics.totalReviews
+    });
 
     return reply.send({
       success: true,

@@ -51,6 +51,7 @@ const ShopDetails = () => {
     null
   );
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [currentReviewPage, setCurrentReviewPage] = useState(1);
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -248,12 +249,12 @@ const ShopDetails = () => {
   }, [quantity, maxAddableQuantity]);
 
   // Fetch reviews when product data is available
-  const fetchReviews = async (listingId: string) => {
+  const fetchReviews = async (listingId: string, page: number = 1) => {
     try {
       setReviewsLoading(true);
       const reviews = await reviewService.getListingReviews(listingId, {
-        page: 1,
-        limit: 10,
+        page,
+        limit: 5,
         sortBy: "createdAt",
         sortOrder: "desc",
       });
@@ -263,7 +264,7 @@ const ShopDetails = () => {
       // Set empty reviews data on error
       setReviewsData({
         reviews: [],
-        pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+        pagination: { page: 1, limit: 5, total: 0, pages: 0 },
         statistics: {
           averageRating: 0,
           totalReviews: 0,
@@ -275,10 +276,17 @@ const ShopDetails = () => {
     }
   };
 
-  // Fetch reviews when product is loaded
+  // Fetch reviews when product is loaded or page changes
   useEffect(() => {
     if (product?.id) {
-      fetchReviews(product.id);
+      fetchReviews(product.id, currentReviewPage);
+    }
+  }, [product?.id, currentReviewPage]);
+
+  // Reset page to 1 when product changes
+  useEffect(() => {
+    if (product?.id) {
+      setCurrentReviewPage(1);
     }
   }, [product?.id]);
 
@@ -380,6 +388,44 @@ const ShopDetails = () => {
     }
 
     setIsReviewModalOpen(true);
+  };
+
+  // Pagination handlers
+  const handleNextPage = () => {
+    if (reviewsData && currentReviewPage < reviewsData.pagination.pages) {
+      setCurrentReviewPage(currentReviewPage + 1);
+      // Scroll to reviews section
+      setTimeout(() => {
+        const reviewsSection = document.getElementById("customer-reviews");
+        if (reviewsSection) {
+          reviewsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentReviewPage > 1) {
+      setCurrentReviewPage(currentReviewPage - 1);
+      // Scroll to reviews section
+      setTimeout(() => {
+        const reviewsSection = document.getElementById("customer-reviews");
+        if (reviewsSection) {
+          reviewsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }
+  };
+
+  const handlePageClick = (page: number) => {
+    setCurrentReviewPage(page);
+    // Scroll to reviews section
+    setTimeout(() => {
+      const reviewsSection = document.getElementById("customer-reviews");
+      if (reviewsSection) {
+        reviewsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
   };
 
   // Calculate discount percentage
@@ -1159,7 +1205,7 @@ const ShopDetails = () => {
 
       {/* Customer Reviews Section */}
       <PageContainer>
-        <section className="py-8 lg:py-12">
+        <section id="customer-reviews" className="-mt-16 lg:-mt-18">
           <div className="mb-8">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 text-center">
               Customer Reviews
@@ -1406,7 +1452,7 @@ const ShopDetails = () => {
                         </div>
                       </div>
                       {review.comment && (
-                        <p className="text-gray-700 leading-relaxed mb-4">
+                        <p className="text-dark leading-relaxed mb-4">
                           {review.comment}
                         </p>
                       )}
@@ -1496,14 +1542,106 @@ const ShopDetails = () => {
                 </p>
               </div>
             )}
+
+            {/* Pagination Controls */}
+            {reviewsData && reviewsData.pagination.pages > 1 && (
+              <div className="flex justify-center items-center mt-8 gap-2">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={currentReviewPage === 1}
+                  className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  aria-label="Previous page"
+                >
+                  <svg
+                    className="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex gap-1">
+                  {Array.from({ length: reviewsData.pagination.pages }, (_, i) => i + 1).map((page) => {
+                    // Show first page, last page, current page, and pages around current page
+                    const showPage = 
+                      page === 1 || 
+                      page === reviewsData.pagination.pages ||
+                      Math.abs(page - currentReviewPage) <= 1;
+                    
+                    const showEllipsis = 
+                      (page === 2 && currentReviewPage > 4) ||
+                      (page === reviewsData.pagination.pages - 1 && currentReviewPage < reviewsData.pagination.pages - 3);
+
+                    if (!showPage && !showEllipsis) return null;
+
+                    if (showEllipsis) {
+                      return (
+                        <span key={`ellipsis-${page}`} className="flex items-center justify-center w-10 h-10 text-gray-500">
+                          ...
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageClick(page)}
+                        className={`flex items-center justify-center w-10 h-10 rounded-lg border transition-colors duration-200 ${
+                          currentReviewPage === page
+                            ? "bg-blue text-white border-blue shadow-md"
+                            : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentReviewPage === reviewsData.pagination.pages}
+                  className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  aria-label="Next page"
+                >
+                  <svg
+                    className="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+
+                {/* Page Info */}
+                <div className="ml-4 text-sm text-gray-600">
+                  Page {currentReviewPage} of {reviewsData.pagination.pages}
+                  <span className="ml-2 text-gray-400">
+                    ({reviewsData.pagination.total} reviews)
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </PageContainer>
 
-      
-
       <PageContainer>
-        <section className="py-8">
+        <section className=" pb-8">
           {/* <!--== tab header start ==--> */}
           <div className="flex items-center bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-2xl shadow-lg gap-1 p-2 mb-8">
             {tabs.map((item, key) => (

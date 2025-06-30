@@ -24,7 +24,7 @@ interface UserInfoResponse {
   statusCode: number;
   message: string;
   success: boolean;
-  role: string;
+  role?: string;
   email: string;
   name: string;
   isEmailConfirmed: boolean;
@@ -50,12 +50,12 @@ export const userApi = {
       return {
         email: response.data.email,
         name: response.data.name,
-        role: response.data.role,
+        role: response.data.role || 'user',
         isEmailConfirmed: response.data.isEmailConfirmed,
-        bio: response.data.bio,
-        phone: response.data.phone,
-        dateOfBirth: response.data.dateOfBirth,
-        profilePicture: response.data.profilePicture,
+        bio: response.data.bio || '',
+        phone: response.data.phone || '',
+        dateOfBirth: response.data.dateOfBirth || '',
+        profilePicture: response.data.profilePicture || '',
       };
     } catch (error: any) {
       const message = error.response?.data?.message || error.message || 'Failed to fetch user info';

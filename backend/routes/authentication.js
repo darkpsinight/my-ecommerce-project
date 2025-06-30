@@ -225,7 +225,7 @@ const authenticationRoutes = async (fastify, opts) => {
       checkEmailConfirmed,
       checkDeactivated,
     ],
-    schema: authenticationSchema.getAccount,
+    // schema: authenticationSchema.getAccount, // Temporarily removed - schema doesn't exist
     handler: getAccount,
   });
 

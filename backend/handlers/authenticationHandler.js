@@ -30,6 +30,7 @@ const {
 } = require("../utils/passwordValidation");
 const { BlacklistedToken } = require("../models/blacklistedToken");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 // @route	POST /api/v1/auth/signup
 // @desc	handler for registering user to database, returns
@@ -698,23 +699,35 @@ const updatePassword = async (request, reply) => {
 const getAccount = async (request, reply) => {
   request.log.info("handlers/getAccount");
 
-  const user = request.user;
-  const userModel = request.userModel;
-  
-  return sendSuccessResponse(reply, {
-    statusCode: 200,
-    message: "User Found",
-    name: userModel.name,
-    email: userModel.email,
-    roles: user.roles,
-    isEmailConfirmed: user.isEmailConfirmed,
-    isDeactivated: user.isDeactivated,
-    // Profile fields
-    bio: userModel.bio,
-    phone: userModel.phone,
-    dateOfBirth: userModel.dateOfBirth,
-    profilePicture: userModel.profilePicture,
-  });
+  try {
+    const user = request.user;
+    const userModel = request.userModel;
+    
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "User Found",
+      success: true,
+      name: userModel.name,
+      email: userModel.email,
+      isEmailConfirmed: userModel.isEmailConfirmed,
+      isDeactivated: userModel.isDeactivated || false,
+      // Profile fields
+      bio: userModel.bio || '',
+      phone: userModel.phone || '',
+      dateOfBirth: userModel.dateOfBirth ? userModel.dateOfBirth.toISOString().split('T')[0] : '',
+      profilePicture: userModel.profilePicture || '',
+    });
+  } catch (error) {
+    request.log.error({
+      msg: "Error getting account information",
+      error: error.message,
+      stack: error.stack,
+      uid: userModel?.uid,
+      email: userModel?.email,
+    });
+
+    return sendErrorResponse(reply, 500, "An error occurred while fetching account information");
+  }
 };
 
 // @route 	DELETE /api/v1/auth/account

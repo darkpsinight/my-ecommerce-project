@@ -18,6 +18,7 @@ export interface UserInfo {
   phone?: string;
   dateOfBirth?: string;
   profilePicture?: string;
+  createdAt?: string;
 }
 
 interface UserInfoResponse {
@@ -32,6 +33,7 @@ interface UserInfoResponse {
   phone?: string;
   dateOfBirth?: string;
   profilePicture?: string;
+  createdAt?: string;
 }
 
 export const userApi = {
@@ -56,6 +58,7 @@ export const userApi = {
         phone: response.data.phone || '',
         dateOfBirth: response.data.dateOfBirth || '',
         profilePicture: response.data.profilePicture || '',
+        createdAt: response.data.createdAt || '',
       };
     } catch (error: any) {
       const message = error.response?.data?.message || error.message || 'Failed to fetch user info';

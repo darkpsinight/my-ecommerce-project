@@ -76,7 +76,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setPreviewUrl(null);
 
       onImageUploaded(imageUrl);
-      toast.success('Profile picture updated successfully!');
+      // Toast message is handled by the parent component
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error(error.message || 'Failed to upload image');
@@ -101,7 +101,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     fileInputRef.current?.click();
   };
 
-  const displayImageUrl = previewUrl || currentImageUrl || '/images/users/user-04.jpg';
+  const displayImageUrl = previewUrl || currentImageUrl || '/images/users/default-user-picture.webp';
 
   return (
     <div className={`relative ${sizeClasses[size]} ${className}`}>

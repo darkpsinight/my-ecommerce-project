@@ -716,6 +716,7 @@ const getAccount = async (request, reply) => {
       phone: userModel.phone || '',
       dateOfBirth: userModel.dateOfBirth ? userModel.dateOfBirth.toISOString().split('T')[0] : '',
       profilePicture: userModel.profilePicture || '',
+      createdAt: userModel.createdAt ? userModel.createdAt.toISOString() : '',
     });
   } catch (error) {
     request.log.error({

@@ -5,10 +5,13 @@ import Image from "next/image";
 import { useAppSelector } from "@/redux/store";
 import { userApi, UserInfo } from "@/services/user";
 import { toast } from "react-hot-toast";
-
 import PageContainer from "../Common/PageContainer";
 import ProtectedRoute from "../Common/ProtectedRoute";
 import ImageUpload from "../Common/ImageUpload";
+import { FaUserCog } from "react-icons/fa";
+import { FaBell } from "react-icons/fa";
+import { PiPassword } from "react-icons/pi";
+import { MdPrivacyTip } from "react-icons/md";
 
 const MyAccount = () => {
   const searchParams = useSearchParams();
@@ -19,7 +22,9 @@ const MyAccount = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [userProfile, setUserProfile] = useState<UserInfo | null>(null);
-  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+  const [validationErrors, setValidationErrors] = useState<{
+    [key: string]: string;
+  }>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [profileData, setProfileData] = useState({
     name: "",
@@ -38,7 +43,7 @@ const MyAccount = () => {
   // Fetch user profile data
   const fetchUserProfile = async () => {
     if (!token) return;
-    
+
     try {
       setIsLoading(true);
       const profile = await userApi.getUserInfo(token);
@@ -84,27 +89,27 @@ const MyAccount = () => {
 
   const validateField = (field: string, value: string) => {
     const errors = { ...validationErrors };
-    
+
     switch (field) {
-      case 'name':
+      case "name":
         if (!value || value.trim().length === 0) {
-          errors.name = 'Name is required';
+          errors.name = "Name is required";
         } else if (value.length > 50) {
-          errors.name = 'Name must be 50 characters or less';
+          errors.name = "Name must be 50 characters or less";
         } else {
           delete errors.name;
         }
         break;
-      case 'bio':
+      case "bio":
         if (value && value.length > 500) {
-          errors.bio = 'Bio must be 500 characters or less';
+          errors.bio = "Bio must be 500 characters or less";
         } else {
           delete errors.bio;
         }
         break;
-      case 'phone':
+      case "phone":
         if (value && !/^\+?[\d\s\-\(\)]+$/.test(value)) {
-          errors.phone = 'Please enter a valid phone number';
+          errors.phone = "Please enter a valid phone number";
         } else {
           delete errors.phone;
         }
@@ -112,13 +117,13 @@ const MyAccount = () => {
       default:
         break;
     }
-    
+
     setValidationErrors(errors);
   };
 
   const checkForUnsavedChanges = (newData: typeof profileData) => {
     if (!userProfile) return false;
-    
+
     return (
       newData.name !== (userProfile.name || "") ||
       newData.bio !== (userProfile.bio || "") ||
@@ -130,14 +135,14 @@ const MyAccount = () => {
   const handleProfileUpdate = (field: string, value: string) => {
     const newData = {
       ...profileData,
-      [field]: value
+      [field]: value,
     };
-    
+
     setProfileData(newData);
-    
+
     // Check for unsaved changes
     setHasUnsavedChanges(checkForUnsavedChanges(newData));
-    
+
     // Validate the field in real-time
     validateField(field, value);
   };
@@ -160,9 +165,9 @@ const MyAccount = () => {
   };
 
   const handlePasswordUpdate = (field: string, value: string) => {
-    setPasswordData(prev => ({
+    setPasswordData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -174,18 +179,18 @@ const MyAccount = () => {
 
     try {
       setIsSaving(true);
-      
+
       // Validate required fields
       if (!profileData.name || profileData.name.trim().length === 0) {
         toast.error("Name is required");
         return;
       }
-      
+
       if (profileData.name && profileData.name.length > 50) {
         toast.error("Name must be 50 characters or less");
         return;
       }
-      
+
       if (profileData.bio && profileData.bio.length > 500) {
         toast.error("Bio must be 500 characters or less");
         return;
@@ -217,22 +222,27 @@ const MyAccount = () => {
       setUserProfile(updatedProfile);
       setHasUnsavedChanges(false);
       setIsEditingProfile(false);
-      
+
       // Create a more specific success message
       const updatedFields = Object.keys(updateData);
       const fieldNames = {
-        name: 'Name',
-        bio: 'Bio',
-        phone: 'Phone Number',
-        dateOfBirth: 'Date of Birth'
+        name: "Name",
+        bio: "Bio",
+        phone: "Phone Number",
+        dateOfBirth: "Date of Birth",
       };
-      
+
       if (updatedFields.length === 1) {
-        toast.success(`${fieldNames[updatedFields[0] as keyof typeof fieldNames]} updated successfully!`);
+        toast.success(
+          `${
+            fieldNames[updatedFields[0] as keyof typeof fieldNames]
+          } updated successfully!`
+        );
       } else {
-        toast.success(`Profile updated successfully! (${updatedFields.length} fields changed)`);
+        toast.success(
+          `Profile updated successfully! (${updatedFields.length} fields changed)`
+        );
       }
-      
     } catch (error: any) {
       console.error("Failed to update profile:", error);
       toast.error(error.message || "Failed to update profile");
@@ -260,9 +270,9 @@ const MyAccount = () => {
     try {
       // Update the profile with the new image URL
       const updatedProfile = await userApi.updateProfile(token, {
-        profilePicture: imageUrl
+        profilePicture: imageUrl,
       });
-      
+
       setUserProfile(updatedProfile);
       toast.success("Profile picture updated successfully!");
     } catch (error: any) {
@@ -279,7 +289,7 @@ const MyAccount = () => {
 
   const calculateProfileCompletion = () => {
     if (!userProfile) return 0;
-    
+
     const fields = [
       userProfile.name,
       userProfile.email,
@@ -287,8 +297,10 @@ const MyAccount = () => {
       userProfile.phone,
       userProfile.dateOfBirth,
     ];
-    
-    const completedFields = fields.filter(field => field && field.trim() !== '').length;
+
+    const completedFields = fields.filter(
+      (field) => field && field.trim() !== ""
+    ).length;
     return Math.round((completedFields / fields.length) * 100);
   };
 
@@ -378,7 +390,11 @@ const MyAccount = () => {
             {/* Header Section */}
             <div className="text-center mb-12">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue to-blue-light rounded-2xl mb-6 shadow-lg">
-                <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none">
+                <svg
+                  className="w-10 h-10 text-white"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
                   <path
                     d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                     fill="currentColor"
@@ -389,7 +405,8 @@ const MyAccount = () => {
                 Profile Settings
               </h1>
               <p className="text-lg text-dark max-w-2xl mx-auto">
-                Manage your personal information, security settings, and account preferences in one secure place.
+                Manage your personal information, security settings, and account
+                preferences in one secure place.
               </p>
             </div>
 
@@ -404,7 +421,10 @@ const MyAccount = () => {
                       <div className="flex items-center gap-4 mb-4">
                         <div className="w-16 h-16 rounded-full overflow-hidden ring-4 ring-white/30 shadow-lg">
                           <Image
-                            src="/images/users/user-04.jpg"
+                            src={
+                              userProfile?.profilePicture ||
+                              "/images/users/default-user-picture.webp"
+                            }
                             alt="Profile"
                             width={64}
                             height={64}
@@ -416,40 +436,65 @@ const MyAccount = () => {
                             {userProfile?.name || "Loading..."}
                           </h3>
                           <p className="text-white/80 text-sm">
-                            {"Member since " + new Date().getFullYear()}
+                            {userProfile?.createdAt
+                              ? `Member since ${new Date(
+                                  userProfile.createdAt
+                                ).toLocaleDateString("en-US", {
+                                  month: "long",
+                                  year: "numeric",
+                                })}`
+                              : "Member since 2025"}
                           </p>
                         </div>
                       </div>
-                      
+
                       {/* Profile Completion */}
                       <div className="bg-white/20 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-white/90">Profile Completion</span>
+                          <span className="text-sm text-white/90">
+                            Profile Completion
+                          </span>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">{calculateProfileCompletion()}%</span>
+                            <span className="text-sm font-semibold">
+                              {calculateProfileCompletion()}%
+                            </span>
                             {calculateProfileCompletion() === 100 && (
-                              <svg className="w-4 h-4 text-green-light" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              <svg
+                                className="w-4 h-4 text-green-light"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
                               </svg>
                             )}
                           </div>
                         </div>
                         <div className="w-full bg-white/20 rounded-full h-2">
-                          <div 
+                          <div
                             className={`rounded-full h-2 transition-all duration-500 ${
-                              calculateProfileCompletion() === 100 ? 'bg-green-light' : 'bg-white'
+                              calculateProfileCompletion() === 100
+                                ? "bg-green-light"
+                                : "bg-white"
                             }`}
-                            style={{ width: `${calculateProfileCompletion()}%` }}
+                            style={{
+                              width: `${calculateProfileCompletion()}%`,
+                            }}
                           ></div>
                         </div>
                         {calculateProfileCompletion() < 100 && (
                           <p className="text-xs text-white/70 mt-2">
-                            Complete your profile to unlock all features and improve your marketplace experience
+                            Complete your profile to unlock all features and
+                            improve your marketplace experience
                           </p>
                         )}
                         {calculateProfileCompletion() === 100 && (
                           <p className="text-xs text-green-light mt-2 font-medium">
-                            Profile complete! You&apos;re ready to explore the marketplace
+                            Profile complete! You&apos;re ready to explore the
+                            marketplace
                           </p>
                         )}
                       </div>
@@ -469,10 +514,16 @@ const MyAccount = () => {
                               : "text-gray-6 hover:text-gray-7 hover:bg-gradient-to-r hover:from-gray-1 hover:to-gray-2 hover:shadow-md"
                           }`}
                         >
-                          <div className={`
+                          <div
+                            className={`
                             transition-transform duration-300 
-                            ${activeSection === section.id ? "scale-110" : "group-hover:scale-105"}
-                          `}>
+                            ${
+                              activeSection === section.id
+                                ? "scale-110"
+                                : "group-hover:scale-105"
+                            }
+                          `}
+                          >
                             {section.icon}
                           </div>
                           <span className="text-left">{section.label}</span>
@@ -483,13 +534,17 @@ const MyAccount = () => {
                           )}
                         </button>
                       ))}
-                      
+
                       {/* Logout Button */}
                       <button
                         onClick={handleLogout}
                         className="group w-full flex items-center gap-4 p-4 rounded-xl font-medium text-red hover:text-red-dark hover:bg-gradient-to-r hover:from-red-light-6 hover:to-red-light-5 transition-all duration-300 hover:shadow-md border-t border-gray-3 mt-6 pt-6"
                       >
-                        <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-105" viewBox="0 0 22 22" fill="none">
+                        <svg
+                          className="w-5 h-5 transition-transform duration-300 group-hover:scale-105"
+                          viewBox="0 0 22 22"
+                          fill="none"
+                        >
                           <path
                             d="M13.7507 10.3125C14.1303 10.3125 14.4382 10.6203 14.4382 11C14.4382 11.3797 14.1303 11.6875 13.7507 11.6875H3.69247L5.48974 13.228C5.77802 13.4751 5.81141 13.9091 5.56431 14.1974C5.3172 14.4857 4.88318 14.5191 4.5949 14.272L1.38657 11.522C1.23418 11.3914 1.14648 11.2007 1.14648 11C1.14648 10.7993 1.23418 10.6086 1.38657 10.478L4.5949 7.72799C4.88318 7.48089 5.3172 7.51428 5.56431 7.80256C5.81141 8.09085 5.77802 8.52487 5.48974 8.77197L3.69247 10.3125H13.7507Z"
                             fill="currentColor"
@@ -505,7 +560,6 @@ const MyAccount = () => {
               {/* Main Content Area */}
               <div className="flex-1">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2 border border-white/20 min-h-[700px]">
-                  
                   {/* Loading State */}
                   {isLoading && (
                     <div className="flex items-center justify-center h-[700px]">
@@ -513,49 +567,62 @@ const MyAccount = () => {
                         <div className="relative">
                           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-light border-t-blue mx-auto mb-6"></div>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-blue" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            <svg
+                              className="w-6 h-6 text-blue"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                           </div>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-7 mb-2">Loading your profile</h3>
-                        <p className="text-gray-5">Please wait while we fetch your information...</p>
+                        <h3 className="text-lg font-semibold text-gray-7 mb-2">
+                          Loading your profile
+                        </h3>
+                        <p className="text-gray-5">
+                          Please wait while we fetch your information...
+                        </p>
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Profile Information Section */}
                   {!isLoading && activeSection === "profile" && (
                     <div className="p-6">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-gradient-to-r from-blue to-blue-light rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
-                              <path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M10.9995 1.14581C8.59473 1.14581 6.64531 3.09524 6.64531 5.49998C6.64531 7.90472 8.59473 9.85415 10.9995 9.85415C13.4042 9.85415 15.3536 7.90472 15.3536 5.49998C15.3536 3.09524 13.4042 1.14581 10.9995 1.14581Z"
-                                fill="currentColor"
-                              />
-                            </svg>
+                            <FaUserCog className="text-2xl text-white" />
                           </div>
                           <div>
                             <div className="flex items-center gap-3">
-                              <h2 className="text-2xl font-bold text-gray-7">Profile Information</h2>
+                              <h2 className="text-2xl font-bold text-gray-7">
+                                Profile Information
+                              </h2>
                               {hasUnsavedChanges && (
                                 <span className="px-2 py-1 bg-yellow-light text-yellow-dark text-xs font-medium rounded-full animate-pulse">
                                   Unsaved Changes
                                 </span>
                               )}
                             </div>
-                            <p className="text-dark">Manage your personal details and profile picture</p>
+                            <p className="text-dark">
+                              Manage your personal details and profile picture
+                            </p>
                           </div>
                         </div>
                         <button
-                          onClick={() => isEditingProfile ? handleCancelEdit() : setIsEditingProfile(true)}
+                          onClick={() =>
+                            isEditingProfile
+                              ? handleCancelEdit()
+                              : setIsEditingProfile(true)
+                          }
                           className={`px-6 py-2 rounded-lg hover:shadow-lg transition-all duration-300 ${
-                            isEditingProfile 
-                              ? "bg-gradient-to-r from-red to-red-light text-white" 
+                            isEditingProfile
+                              ? "bg-gradient-to-r from-red to-red-light text-white"
                               : "bg-gradient-to-r from-blue to-blue-light text-white"
                           }`}
                         >
@@ -572,7 +639,9 @@ const MyAccount = () => {
                                 <ImageUpload
                                   currentImageUrl={userProfile?.profilePicture}
                                   onImageUploaded={handleProfilePictureUpload}
-                                  onUploadStart={() => setIsUploadingImage(true)}
+                                  onUploadStart={() =>
+                                    setIsUploadingImage(true)
+                                  }
                                   onUploadEnd={() => setIsUploadingImage(false)}
                                   token={token}
                                   size="medium"
@@ -580,7 +649,10 @@ const MyAccount = () => {
                               ) : (
                                 <div className="w-32 h-32 relative">
                                   <Image
-                                    src={userProfile?.profilePicture || "/images/users/user-04.jpg"}
+                                    src={
+                                      userProfile?.profilePicture ||
+                                      "/images/users/default-user-picture.webp"
+                                    }
                                     alt="Profile"
                                     width={128}
                                     height={128}
@@ -597,11 +669,29 @@ const MyAccount = () => {
                             </p>
                             {isUploadingImage && (
                               <div className="mt-4 flex items-center justify-center text-blue">
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <svg
+                                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
                                 </svg>
-                                <span className="text-sm font-medium">Uploading image...</span>
+                                <span className="text-sm font-medium">
+                                  Uploading image...
+                                </span>
                               </div>
                             )}
                           </div>
@@ -611,91 +701,151 @@ const MyAccount = () => {
                         <div className="lg:col-span-2 space-y-6">
                           <div className="bg-gradient-to-r from-green-light-6 to-teal-light rounded-xl p-6">
                             <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-semibold text-gray-7">Personal Information</h3>
+                              <h3 className="text-lg font-semibold text-gray-7">
+                                Personal Information
+                              </h3>
                               {isEditingProfile && (
                                 <div className="flex items-center gap-2 text-sm text-dark">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
                                   </svg>
-                                  <span>Display name is required. Other fields are optional</span>
+                                  <span>
+                                    Display name is required. Other fields are
+                                    optional
+                                  </span>
                                 </div>
                               )}
                             </div>
                             <div className="grid md:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium text-dark mb-2">Display Name</label>
+                                <label className="block text-sm font-medium text-dark mb-2">
+                                  Display Name
+                                </label>
                                 <input
                                   type="text"
                                   value={profileData.name}
-                                  onChange={(e) => handleProfileUpdate("name", e.target.value)}
+                                  onChange={(e) =>
+                                    handleProfileUpdate("name", e.target.value)
+                                  }
                                   disabled={!isEditingProfile}
                                   className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 ${
-                                    validationErrors.name ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
+                                    validationErrors.name
+                                      ? "border-red focus:ring-red"
+                                      : "border-gray-3 focus:ring-blue"
                                   }`}
                                   placeholder="Enter your display name"
                                   required
                                 />
                                 {validationErrors.name && (
-                                  <p className="text-red text-sm mt-1">{validationErrors.name}</p>
+                                  <p className="text-red text-sm mt-1">
+                                    {validationErrors.name}
+                                  </p>
                                 )}
-                                <p className="text-dark text-sm mt-1">This is how your name will appear on the marketplace</p>
+                                <p className="text-dark text-sm mt-1">
+                                  This is how your name will appear on the
+                                  marketplace
+                                </p>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-dark mb-2">Email Address</label>
+                                <label className="block text-sm font-medium text-dark mb-2">
+                                  Email Address
+                                </label>
                                 <input
                                   type="email"
                                   value={profileData.email}
                                   className="w-full px-4 py-3 bg-gray-1 rounded-lg border border-gray-3 cursor-not-allowed"
                                   readOnly
                                 />
-                                <p className="text-xs text-dark mt-1">Email cannot be changed directly. Contact support if needed.</p>
+                                <p className="text-xs text-dark mt-1">
+                                  Email cannot be changed directly. Contact
+                                  support if needed.
+                                </p>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-dark mb-2">Phone Number</label>
+                                <label className="block text-sm font-medium text-dark mb-2">
+                                  Phone Number
+                                </label>
                                 <input
                                   type="tel"
                                   value={profileData.phone}
-                                  onChange={(e) => handleProfileUpdate("phone", e.target.value)}
+                                  onChange={(e) =>
+                                    handleProfileUpdate("phone", e.target.value)
+                                  }
                                   disabled={!isEditingProfile}
                                   className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 ${
-                                    validationErrors.phone ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
+                                    validationErrors.phone
+                                      ? "border-red focus:ring-red"
+                                      : "border-gray-3 focus:ring-blue"
                                   }`}
                                   placeholder="+1 (555) 123-4567"
                                 />
                                 {validationErrors.phone && (
-                                  <p className="text-red text-sm mt-1">{validationErrors.phone}</p>
+                                  <p className="text-red text-sm mt-1">
+                                    {validationErrors.phone}
+                                  </p>
                                 )}
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-dark mb-2">Date of Birth</label>
+                                <label className="block text-sm font-medium text-dark mb-2">
+                                  Date of Birth
+                                </label>
                                 <input
                                   type="date"
                                   value={profileData.dateOfBirth}
-                                  onChange={(e) => handleProfileUpdate("dateOfBirth", e.target.value)}
+                                  onChange={(e) =>
+                                    handleProfileUpdate(
+                                      "dateOfBirth",
+                                      e.target.value
+                                    )
+                                  }
                                   disabled={!isEditingProfile}
                                   className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue focus:border-transparent disabled:bg-gray-1"
                                 />
                               </div>
                               <div className="md:col-span-2">
                                 <div className="flex items-center justify-between mb-2">
-                                  <label className="block text-sm font-medium text-dark">Bio</label>
-                                  <span className={`text-xs ${profileData.bio.length > 450 ? 'text-yellow' : 'text-dark'}`}>
+                                  <label className="block text-sm font-medium text-dark">
+                                    Bio
+                                  </label>
+                                  <span
+                                    className={`text-xs ${
+                                      profileData.bio.length > 450
+                                        ? "text-yellow"
+                                        : "text-dark"
+                                    }`}
+                                  >
                                     {profileData.bio.length}/500
                                   </span>
                                 </div>
                                 <textarea
                                   value={profileData.bio}
-                                  onChange={(e) => handleProfileUpdate("bio", e.target.value)}
+                                  onChange={(e) =>
+                                    handleProfileUpdate("bio", e.target.value)
+                                  }
                                   disabled={!isEditingProfile}
                                   rows={3}
                                   maxLength={500}
                                   className={`w-full px-4 py-3 bg-white rounded-lg border focus:ring-2 focus:border-transparent disabled:bg-gray-1 resize-none ${
-                                    validationErrors.bio ? 'border-red focus:ring-red' : 'border-gray-3 focus:ring-blue'
+                                    validationErrors.bio
+                                      ? "border-red focus:ring-red"
+                                      : "border-gray-3 focus:ring-blue"
                                   }`}
                                   placeholder="Tell us about yourself..."
                                 />
                                 {validationErrors.bio && (
-                                  <p className="text-red text-sm mt-1">{validationErrors.bio}</p>
+                                  <p className="text-red text-sm mt-1">
+                                    {validationErrors.bio}
+                                  </p>
                                 )}
                               </div>
                             </div>
@@ -703,14 +853,33 @@ const MyAccount = () => {
                               <div className="flex gap-3 mt-6">
                                 <button
                                   onClick={handleSaveProfile}
-                                  disabled={isSaving || Object.keys(validationErrors).length > 0}
+                                  disabled={
+                                    isSaving ||
+                                    Object.keys(validationErrors).length > 0
+                                  }
                                   className="flex-1 bg-gradient-to-r from-blue to-blue-light text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                                 >
                                   {isSaving ? (
                                     <>
-                                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                      <svg
+                                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
                                       </svg>
                                       Saving...
                                     </>
@@ -731,52 +900,72 @@ const MyAccount = () => {
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-6">
                         <div className="w-8 h-8 bg-gradient-to-r from-red to-red-light rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
-                            <path
-                              fillRule="evenodd"
-                              clipRule="evenodd"
-                              d="M11 1.83325C11.3866 1.83325 11.7492 2.02118 11.9756 2.33518L14.3089 5.49992H17.4166C18.1071 5.49992 18.7692 5.77424 19.2624 6.26738C19.7556 6.76052 20.0299 7.42258 20.0299 8.11325V16.4999C20.0299 17.1906 19.7556 17.8526 19.2624 18.3458C18.7692 18.8389 18.1071 19.1132 17.4166 19.1132H4.58325C3.89258 19.1132 3.23052 18.8389 2.73738 18.3458C2.24424 17.8526 1.96992 17.1906 1.96992 16.4999V8.11325C1.96992 7.42258 2.24424 6.76052 2.73738 6.26738C3.23052 5.77424 3.89258 5.49992 4.58325 5.49992H7.69087L10.0242 2.33518C10.2506 2.02118 10.6132 1.83325 11 1.83325Z"
-                              fill="currentColor"
-                            />
-                          </svg>
+                          <PiPassword className="text-2xl text-white" />
                         </div>
                         <div>
-                          <h2 className="text-2xl font-bold text-gray-7">Security & Password</h2>
-                          <p className="text-dark">Manage your password and security settings</p>
+                          <h2 className="text-2xl font-bold text-gray-7">
+                            Security & Password
+                          </h2>
+                          <p className="text-dark">
+                            Manage your password and security settings
+                          </p>
                         </div>
                       </div>
 
                       <div className="grid lg:grid-cols-2 gap-8">
                         {/* Change Password */}
                         <div className="bg-gradient-to-r from-red-light-6 to-red-light-5 rounded-xl p-6">
-                          <h3 className="text-lg font-semibold text-gray-7 mb-4">Change Password</h3>
+                          <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                            Change Password
+                          </h3>
                           <div className="space-y-4">
                             <div>
-                              <label className="block text-sm font-medium text-dark mb-2">Current Password</label>
+                              <label className="block text-sm font-medium text-dark mb-2">
+                                Current Password
+                              </label>
                               <input
                                 type="password"
                                 value={passwordData.currentPassword}
-                                onChange={(e) => handlePasswordUpdate("currentPassword", e.target.value)}
+                                onChange={(e) =>
+                                  handlePasswordUpdate(
+                                    "currentPassword",
+                                    e.target.value
+                                  )
+                                }
                                 className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-red focus:border-transparent"
                                 placeholder="Enter current password"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-dark mb-2">New Password</label>
+                              <label className="block text-sm font-medium text-dark mb-2">
+                                New Password
+                              </label>
                               <input
                                 type="password"
                                 value={passwordData.newPassword}
-                                onChange={(e) => handlePasswordUpdate("newPassword", e.target.value)}
+                                onChange={(e) =>
+                                  handlePasswordUpdate(
+                                    "newPassword",
+                                    e.target.value
+                                  )
+                                }
                                 className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-red focus:border-transparent"
                                 placeholder="Enter new password"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-dark mb-2">Confirm New Password</label>
+                              <label className="block text-sm font-medium text-dark mb-2">
+                                Confirm New Password
+                              </label>
                               <input
                                 type="password"
                                 value={passwordData.confirmPassword}
-                                onChange={(e) => handlePasswordUpdate("confirmPassword", e.target.value)}
+                                onChange={(e) =>
+                                  handlePasswordUpdate(
+                                    "confirmPassword",
+                                    e.target.value
+                                  )
+                                }
                                 className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-red focus:border-transparent"
                                 placeholder="Confirm new password"
                               />
@@ -793,11 +982,17 @@ const MyAccount = () => {
                         {/* Security Options */}
                         <div className="space-y-6">
                           <div className="bg-gradient-to-r from-yellow-light-4 to-amber-100 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Two-Factor Authentication</h3>
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                              Two-Factor Authentication
+                            </h3>
                             <div className="flex items-center justify-between mb-4">
                               <div>
-                                <p className="font-medium text-gray-7">SMS Authentication</p>
-                                <p className="text-sm text-gray-5">Receive codes via SMS</p>
+                                <p className="font-medium text-gray-7">
+                                  SMS Authentication
+                                </p>
+                                <p className="text-sm text-gray-5">
+                                  Receive codes via SMS
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
@@ -805,8 +1000,12 @@ const MyAccount = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-gray-7">App Authentication</p>
-                                <p className="text-sm text-gray-5">Use authenticator app</p>
+                                <p className="font-medium text-gray-7">
+                                  App Authentication
+                                </p>
+                                <p className="text-sm text-gray-5">
+                                  Use authenticator app
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-3 transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
@@ -815,28 +1014,48 @@ const MyAccount = () => {
                           </div>
 
                           <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Login History</h3>
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                              Login History
+                            </h3>
                             <div className="space-y-3">
                               <div className="flex items-center justify-between py-2 border-b border-gray-2">
                                 <div>
-                                  <p className="font-medium text-gray-7">Current Session</p>
-                                  <p className="text-sm text-gray-5">Chrome on Windows • Now</p>
+                                  <p className="font-medium text-gray-7">
+                                    Current Session
+                                  </p>
+                                  <p className="text-sm text-gray-5">
+                                    Chrome on Windows • Now
+                                  </p>
                                 </div>
-                                <span className="text-xs bg-green-light-5 text-green px-2 py-1 rounded-full">Active</span>
+                                <span className="text-xs bg-green-light-5 text-green px-2 py-1 rounded-full">
+                                  Active
+                                </span>
                               </div>
                               <div className="flex items-center justify-between py-2 border-b border-gray-2">
                                 <div>
-                                  <p className="font-medium text-gray-7">Mobile Device</p>
-                                  <p className="text-sm text-gray-5">Safari on iPhone • 2 hours ago</p>
+                                  <p className="font-medium text-gray-7">
+                                    Mobile Device
+                                  </p>
+                                  <p className="text-sm text-gray-5">
+                                    Safari on iPhone • 2 hours ago
+                                  </p>
                                 </div>
-                                <button className="text-xs text-red hover:underline">Revoke</button>
+                                <button className="text-xs text-red hover:underline">
+                                  Revoke
+                                </button>
                               </div>
                               <div className="flex items-center justify-between py-2">
                                 <div>
-                                  <p className="font-medium text-gray-7">Previous Session</p>
-                                  <p className="text-sm text-gray-5">Firefox on Mac • Yesterday</p>
+                                  <p className="font-medium text-gray-7">
+                                    Previous Session
+                                  </p>
+                                  <p className="text-sm text-gray-5">
+                                    Firefox on Mac • Yesterday
+                                  </p>
                                 </div>
-                                <span className="text-xs text-gray-5">Expired</span>
+                                <span className="text-xs text-gray-5">
+                                  Expired
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -850,28 +1069,33 @@ const MyAccount = () => {
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-6">
                         <div className="w-8 h-8 bg-gradient-to-r from-yellow to-yellow-light rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
-                            <path
-                              d="M11 2.0625C9.44036 2.0625 8.17708 3.32578 8.17708 4.88542V5.89062C6.75391 6.64063 5.77083 8.05078 5.77083 9.69792V14.4375C5.77083 15.1563 5.1875 15.7396 4.46875 15.7396C4.12357 15.7396 3.84375 16.0194 3.84375 16.3646C3.84375 16.7098 4.12357 16.9896 4.46875 16.9896H8.90625C8.90625 18.3438 10.0208 19.4583 11.375 19.4583C12.7292 19.4583 13.8438 18.3438 13.8438 16.9896H18.5312C18.8764 16.9896 19.1562 16.7098 19.1562 16.3646C19.1562 16.0194 18.8764 15.7396 18.5312 15.7396C17.8125 15.7396 17.2292 15.1563 17.2292 14.4375V9.69792C17.2292 8.05078 16.2461 6.64063 14.8229 5.89062V4.88542C14.8229 3.32578 13.5596 2.0625 12 2.0625H11Z"
-                              fill="currentColor"
-                            />
-                          </svg>
+                          <FaBell className="text-2xl text-white" />
                         </div>
                         <div>
-                          <h2 className="text-2xl font-bold text-gray-7">Notifications & Preferences</h2>
-                          <p className="text-dark">Control how you receive notifications and updates</p>
+                          <h2 className="text-2xl font-bold text-gray-7">
+                            Notifications & Preferences
+                          </h2>
+                          <p className="text-dark">
+                            Control how you receive notifications and updates
+                          </p>
                         </div>
                       </div>
 
                       <div className="grid lg:grid-cols-2 gap-8">
                         {/* Email Notifications */}
                         <div className="bg-gradient-to-r from-yellow-light-4 to-amber-100 rounded-xl p-6">
-                          <h3 className="text-lg font-semibold text-gray-7 mb-4">Email Notifications</h3>
+                          <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                            Email Notifications
+                          </h3>
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-gray-7">Order Updates</p>
-                                <p className="text-sm text-dark">Notifications about your orders</p>
+                                <p className="font-medium text-gray-7">
+                                  Order Updates
+                                </p>
+                                <p className="text-sm text-dark">
+                                  Notifications about your orders
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
@@ -879,8 +1103,12 @@ const MyAccount = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-gray-7">New Listings</p>
-                                <p className="text-sm text-dark">Updates about new digital codes</p>
+                                <p className="font-medium text-gray-7">
+                                  New Listings
+                                </p>
+                                <p className="text-sm text-dark">
+                                  Updates about new digital codes
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
@@ -888,8 +1116,12 @@ const MyAccount = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-gray-7">Marketing Emails</p>
-                                <p className="text-sm text-dark">Promotional offers and news</p>
+                                <p className="font-medium text-gray-7">
+                                  Marketing Emails
+                                </p>
+                                <p className="text-sm text-dark">
+                                  Promotional offers and news
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-3 transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
@@ -897,8 +1129,12 @@ const MyAccount = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-gray-7">Security Alerts</p>
-                                <p className="text-sm text-dark">Important security notifications</p>
+                                <p className="font-medium text-gray-7">
+                                  Security Alerts
+                                </p>
+                                <p className="text-sm text-dark">
+                                  Important security notifications
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-red transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
@@ -910,10 +1146,14 @@ const MyAccount = () => {
                         {/* Display Preferences */}
                         <div className="space-y-6">
                           <div className="bg-gradient-to-r from-green-light-6 to-teal-light rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Display Preferences</h3>
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                              Display Preferences
+                            </h3>
                             <div className="space-y-4">
                               <div>
-                                <label className="block text-sm font-medium text-dark mb-2">Language</label>
+                                <label className="block text-sm font-medium text-dark mb-2">
+                                  Language
+                                </label>
                                 <select className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-green focus:border-transparent">
                                   <option>English (US)</option>
                                   <option>English (UK)</option>
@@ -923,7 +1163,9 @@ const MyAccount = () => {
                                 </select>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-dark mb-2">Time Zone</label>
+                                <label className="block text-sm font-medium text-dark mb-2">
+                                  Time Zone
+                                </label>
                                 <select className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-green focus:border-transparent">
                                   <option>UTC-5 (Eastern Time)</option>
                                   <option>UTC-6 (Central Time)</option>
@@ -932,7 +1174,9 @@ const MyAccount = () => {
                                 </select>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-dark mb-2">Currency</label>
+                                <label className="block text-sm font-medium text-dark mb-2">
+                                  Currency
+                                </label>
                                 <select className="w-full px-4 py-3 bg-white rounded-lg border border-gray-3 focus:ring-2 focus:ring-green focus:border-transparent">
                                   <option>USD ($)</option>
                                   <option>EUR (€)</option>
@@ -944,12 +1188,18 @@ const MyAccount = () => {
                           </div>
 
                           <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Interface Settings</h3>
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                              Interface Settings
+                            </h3>
                             <div className="space-y-4">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="font-medium text-gray-7">Dark Mode</p>
-                                  <p className="text-sm text-dark">Use dark theme</p>
+                                  <p className="font-medium text-gray-7">
+                                    Dark Mode
+                                  </p>
+                                  <p className="text-sm text-dark">
+                                    Use dark theme
+                                  </p>
                                 </div>
                                 <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-3 transition-colors">
                                   <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
@@ -957,8 +1207,12 @@ const MyAccount = () => {
                               </div>
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="font-medium text-gray-7">Compact View</p>
-                                  <p className="text-sm text-dark">Show more items per page</p>
+                                  <p className="font-medium text-gray-7">
+                                    Compact View
+                                  </p>
+                                  <p className="text-sm text-dark">
+                                    Show more items per page
+                                  </p>
                                 </div>
                                 <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue transition-colors">
                                   <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
@@ -982,30 +1236,33 @@ const MyAccount = () => {
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-6">
                         <div className="w-8 h-8 bg-gradient-to-r from-green to-green-light rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" viewBox="0 0 22 22" fill="none">
-                            <path
-                              fillRule="evenodd"
-                              clipRule="evenodd"
-                              d="M11 2.75C11.2834 2.75 11.5518 2.88125 11.7287 3.10625L14.1954 6.38125C14.3079 6.52625 14.4871 6.65 14.6954 6.65H18.5625C19.1041 6.65 19.5625 7.10844 19.5625 7.65V17.25C19.5625 17.7916 19.1041 18.25 18.5625 18.25H3.4375C2.89594 18.25 2.4375 17.7916 2.4375 17.25V7.65C2.4375 7.10844 2.89594 6.65 3.4375 6.65H7.30462C7.51288 6.65 7.69206 6.52625 7.80456 6.38125L10.2712 3.10625C10.4482 2.88125 10.7166 2.75 11 2.75Z"
-                              fill="currentColor"
-                            />
-                          </svg>
+                          <MdPrivacyTip className="text-2xl text-white" />
                         </div>
                         <div>
-                          <h2 className="text-2xl font-bold text-gray-7">Privacy & Data</h2>
-                          <p className="text-dark">Control your privacy settings and data management</p>
+                          <h2 className="text-2xl font-bold text-gray-7">
+                            Privacy & Data
+                          </h2>
+                          <p className="text-dark">
+                            Control your privacy settings and data management
+                          </p>
                         </div>
                       </div>
 
                       <div className="grid lg:grid-cols-2 gap-8">
                         {/* Privacy Controls */}
                         <div className="bg-gradient-to-r from-green-light-6 to-teal-light rounded-xl p-6">
-                          <h3 className="text-lg font-semibold text-gray-7 mb-4">Privacy Controls</h3>
+                          <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                            Privacy Controls
+                          </h3>
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-gray-7">Profile Visibility</p>
-                                <p className="text-sm text-dark">Make profile visible to others</p>
+                                <p className="font-medium text-gray-7">
+                                  Profile Visibility
+                                </p>
+                                <p className="text-sm text-dark">
+                                  Make profile visible to others
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
@@ -1013,8 +1270,12 @@ const MyAccount = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-gray-7">Activity Status</p>
-                                <p className="text-sm text-dark">Show when you&apos;re online</p>
+                                <p className="font-medium text-gray-7">
+                                  Activity Status
+                                </p>
+                                <p className="text-sm text-dark">
+                                  Show when you&apos;re online
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-3 transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
@@ -1022,8 +1283,12 @@ const MyAccount = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-gray-7">Purchase History</p>
-                                <p className="text-sm text-dark">Allow analytics tracking</p>
+                                <p className="font-medium text-gray-7">
+                                  Purchase History
+                                </p>
+                                <p className="text-sm text-dark">
+                                  Allow analytics tracking
+                                </p>
                               </div>
                               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green transition-colors">
                                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
@@ -1035,27 +1300,57 @@ const MyAccount = () => {
                         {/* Data Management */}
                         <div className="space-y-6">
                           <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Data Management</h3>
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                              Data Management
+                            </h3>
                             <div className="space-y-3">
                               <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-gray-3 hover:shadow-md transition-shadow">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="font-medium text-gray-7">Download My Data</p>
-                                    <p className="text-sm text-dark">Get a copy of your account data</p>
+                                    <p className="font-medium text-gray-7">
+                                      Download My Data
+                                    </p>
+                                    <p className="text-sm text-dark">
+                                      Get a copy of your account data
+                                    </p>
                                   </div>
-                                  <svg className="w-4 h-4 text-gray-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  <svg
+                                    className="w-4 h-4 text-gray-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
                                   </svg>
                                 </div>
                               </button>
                               <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-gray-3 hover:shadow-md transition-shadow">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="font-medium text-gray-7">Data Portability</p>
-                                    <p className="text-sm text-dark">Transfer data to another service</p>
+                                    <p className="font-medium text-gray-7">
+                                      Data Portability
+                                    </p>
+                                    <p className="text-sm text-dark">
+                                      Transfer data to another service
+                                    </p>
                                   </div>
-                                  <svg className="w-4 h-4 text-gray-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                  <svg
+                                    className="w-4 h-4 text-gray-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                                    />
                                   </svg>
                                 </div>
                               </button>
@@ -1063,27 +1358,57 @@ const MyAccount = () => {
                           </div>
 
                           <div className="bg-gradient-to-r from-red-light-6 to-red-light-5 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-7 mb-4">Danger Zone</h3>
+                            <h3 className="text-lg font-semibold text-gray-7 mb-4">
+                              Danger Zone
+                            </h3>
                             <div className="space-y-3">
                               <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-red-light-2 hover:bg-red-light-6 transition-colors">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="font-medium text-red">Clear All Data</p>
-                                    <p className="text-sm text-dark">Remove all your data except account</p>
+                                    <p className="font-medium text-red">
+                                      Clear All Data
+                                    </p>
+                                    <p className="text-sm text-dark">
+                                      Remove all your data except account
+                                    </p>
                                   </div>
-                                  <svg className="w-4 h-4 text-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  <svg
+                                    className="w-4 h-4 text-red"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
                                   </svg>
                                 </div>
                               </button>
                               <button className="w-full text-left px-4 py-3 bg-white rounded-lg border border-red hover:bg-red-light-6 transition-colors">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="font-medium text-red">Delete Account</p>
-                                    <p className="text-sm text-dark">Permanently delete your account</p>
+                                    <p className="font-medium text-red">
+                                      Delete Account
+                                    </p>
+                                    <p className="text-sm text-dark">
+                                      Permanently delete your account
+                                    </p>
                                   </div>
-                                  <svg className="w-4 h-4 text-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  <svg
+                                    className="w-4 h-4 text-red"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
                                   </svg>
                                 </div>
                               </button>
@@ -1093,7 +1418,6 @@ const MyAccount = () => {
                       </div>
                     </div>
                   )}
-
                 </div>
               </div>
             </div>

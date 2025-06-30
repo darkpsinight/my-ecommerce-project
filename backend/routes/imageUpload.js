@@ -56,7 +56,7 @@ const imageUploadRoutes = async (fastify, options) => {
       }
     },
     preHandler: [
-      verifyAuth(["seller", "admin"]),
+      verifyAuth(["seller", "admin", "buyer"]),
       // Use the multipart content parser
       async (request, reply) => {
         try {
@@ -106,7 +106,7 @@ const imageUploadRoutes = async (fastify, options) => {
     },
     method: "GET",
     url: "/auth-params",
-    preHandler: verifyAuth(["seller", "admin"]),
+    preHandler: verifyAuth(["seller", "admin", "buyer"]),
     handler: getAuthParams
   });
 };

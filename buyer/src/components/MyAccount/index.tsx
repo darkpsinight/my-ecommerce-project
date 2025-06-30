@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 
 import PageContainer from "../Common/PageContainer";
 import ProtectedRoute from "../Common/ProtectedRoute";
+import ImageUpload from "../Common/ImageUpload";
 
 const MyAccount = () => {
   const searchParams = useSearchParams();
@@ -16,6 +17,7 @@ const MyAccount = () => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [userProfile, setUserProfile] = useState<UserInfo | null>(null);
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -247,6 +249,26 @@ const MyAccount = () => {
       newPassword: "",
       confirmPassword: "",
     });
+  };
+
+  const handleProfilePictureUpload = async (imageUrl: string) => {
+    if (!token) {
+      toast.error("Authentication required");
+      return;
+    }
+
+    try {
+      // Update the profile with the new image URL
+      const updatedProfile = await userApi.updateProfile(token, {
+        profilePicture: imageUrl
+      });
+      
+      setUserProfile(updatedProfile);
+      toast.success("Profile picture updated successfully!");
+    } catch (error: any) {
+      console.error("Failed to update profile picture:", error);
+      toast.error(error.message || "Failed to update profile picture");
+    }
   };
 
   const handleLogout = () => {
@@ -545,20 +567,26 @@ const MyAccount = () => {
                         {/* Profile Picture Section */}
                         <div className="lg:col-span-1">
                           <div className="bg-gradient-to-r from-blue-light-5 to-green-light-6 rounded-xl p-6 text-center">
-                            <div className="w-32 h-32 mx-auto mb-4 relative">
-                              <Image
-                                src="/images/users/user-04.jpg"
-                                alt="Profile"
-                                width={128}
-                                height={128}
-                                className="w-full h-full object-cover rounded-full ring-4 ring-white shadow-lg"
-                              />
-                              {isEditingProfile && (
-                                <button className="absolute bottom-2 right-2 w-8 h-8 bg-blue rounded-full flex items-center justify-center text-white hover:bg-blue-dark transition-colors">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                  </svg>
-                                </button>
+                            <div className="flex justify-center mb-4">
+                              {token ? (
+                                <ImageUpload
+                                  currentImageUrl={userProfile?.profilePicture}
+                                  onImageUploaded={handleProfilePictureUpload}
+                                  onUploadStart={() => setIsUploadingImage(true)}
+                                  onUploadEnd={() => setIsUploadingImage(false)}
+                                  token={token}
+                                  size="medium"
+                                />
+                              ) : (
+                                <div className="w-32 h-32 relative">
+                                  <Image
+                                    src={userProfile?.profilePicture || "/images/users/user-04.jpg"}
+                                    alt="Profile"
+                                    width={128}
+                                    height={128}
+                                    className="w-full h-full object-cover rounded-full ring-4 ring-white shadow-lg"
+                                  />
+                                </div>
                               )}
                             </div>
                             <h3 className="text-lg font-semibold text-gray-7 mb-1">
@@ -567,10 +595,14 @@ const MyAccount = () => {
                             <p className="text-sm text-gray-5">
                               {userProfile?.email || "No email"}
                             </p>
-                            {isEditingProfile && (
-                              <button className="mt-4 w-full bg-white text-blue border border-blue rounded-lg py-2 hover:bg-blue hover:text-white transition-colors">
-                                Change Picture
-                              </button>
+                            {isUploadingImage && (
+                              <div className="mt-4 flex items-center justify-center text-blue">
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span className="text-sm font-medium">Uploading image...</span>
+                              </div>
                             )}
                           </div>
                         </div>

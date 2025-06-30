@@ -1353,7 +1353,7 @@ const updateProfile = async (request, reply) => {
 
   try {
     const user = request.userModel;
-    const { name, bio, phone, dateOfBirth } = request.body;
+    const { name, bio, phone, dateOfBirth, profilePicture } = request.body;
 
     // Validate and sanitize inputs
     const updates = {};
@@ -1408,6 +1408,21 @@ const updateProfile = async (request, reply) => {
       }
     }
 
+    if (profilePicture !== undefined) {
+      if (profilePicture) {
+        const trimmedUrl = profilePicture.trim();
+        // Basic URL validation
+        try {
+          new URL(trimmedUrl);
+          updates.profilePicture = trimmedUrl;
+        } catch (error) {
+          return sendErrorResponse(reply, 400, "Please enter a valid profile picture URL");
+        }
+      } else {
+        updates.profilePicture = null;
+      }
+    }
+
     // Update the user with validated data
     Object.assign(user, updates);
     await user.save({ validateBeforeSave: true });
@@ -1427,6 +1442,7 @@ const updateProfile = async (request, reply) => {
         bio: user.bio,
         phone: user.phone,
         dateOfBirth: user.dateOfBirth,
+        profilePicture: user.profilePicture,
         email: user.email
       }
     });

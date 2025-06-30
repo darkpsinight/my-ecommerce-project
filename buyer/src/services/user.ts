@@ -68,6 +68,7 @@ export const userApi = {
     bio?: string;
     phone?: string;
     dateOfBirth?: string;
+    profilePicture?: string;
   }): Promise<UserInfo> => {
     try {
       const response = await axiosInstance.put<{

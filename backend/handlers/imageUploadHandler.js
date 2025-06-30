@@ -9,7 +9,8 @@ const ALLOWED_FOLDERS = {
   PRODUCT_THUMBNAILS: '/listing-thumbnails',
   CATEGORY_IMAGES: '/categories-placeholder-pictures',
   SELLER_PROFILE_IMAGES: '/seller-profile-pictures',
-  SELLER_BANNER_IMAGES: '/seller-profile-banners'
+  SELLER_BANNER_IMAGES: '/seller-profile-banners',
+  BUYER_PROFILE_IMAGES: '/buyer-profile-pictures'
 };
 
 /**

@@ -4,7 +4,6 @@ import React from "react";
 import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToCartAsync, selectCartAddingItem, selectCartItems, selectIsItemBeingAdded } from "@/redux/features/cart-slice";
 import { addItemToWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
 import Link from "next/link";
@@ -14,18 +13,6 @@ import toast from "react-hot-toast";
 const SingleListItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
   const dispatch = useAppDispatch();
-  const isAddingToCart = useAppSelector(selectCartAddingItem);
-  const cartItems = useAppSelector(selectCartItems);
-  const isItemBeingAdded = useAppSelector(state => selectIsItemBeingAdded(state, item.id));
-
-  // Check if item is already in cart and get current quantity
-  const cartItem = cartItems.find(cartItem => cartItem.listingId === item.id);
-  const quantityInCart = cartItem ? cartItem.quantity : 0;
-  
-  // Check available stock
-  const availableStock = item.quantityOfActiveCodes || 0;
-  const isOutOfStock = availableStock === 0;
-  const isMaxQuantityReached = quantityInCart >= availableStock;
 
 
 
@@ -34,48 +21,7 @@ const SingleListItem = ({ item }: { item: Product }) => {
     dispatch(updateQuickView({ ...item }));
   };
 
-  // add to cart
-  const handleAddToCart = () => {
-    if (!item.sellerId) {
-      console.error('Seller ID is required to add item to cart');
-      toast.error('Invalid product data');
-      return;
-    }
 
-    if (isOutOfStock) {
-      toast.error('This product is out of stock');
-      return;
-    }
-
-    if (isMaxQuantityReached) {
-      toast.error(`You already have the maximum available quantity (${availableStock}) in your cart`);
-      return;
-    }
-
-    if (isItemBeingAdded) {
-      toast.error('This item is already being added to cart');
-      return;
-    }
-
-    // Make the API call - the pending state will be tracked per item
-    dispatch(
-      addItemToCartAsync({
-        listingId: item.id,
-        title: item.title,
-        price: item.price,
-        discountedPrice: item.discountedPrice,
-        quantity: 1,
-        imgs: item.imgs,
-        sellerId: item.sellerId || "",
-        availableStock: availableStock,
-        listingSnapshot: {
-          category: item.categoryName,
-          platform: item.platform,
-          region: item.region,
-        },
-      })
-    );
-  };
 
   const handleItemToWishList = async () => {
     try {
@@ -138,37 +84,7 @@ const SingleListItem = ({ item }: { item: Product }) => {
               </svg>
             </button>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToCart();
-              }}
-              disabled={isItemBeingAdded || isOutOfStock || isMaxQuantityReached}
-              className={`inline-flex font-medium text-custom-sm py-[7px] px-5 rounded-[5px] ease-out duration-200 relative z-20 disabled:cursor-not-allowed ${
-                isOutOfStock || isMaxQuantityReached
-                  ? 'bg-gray-400 text-gray-600'
-                  : 'bg-blue text-white hover:bg-blue-dark disabled:opacity-50'
-              }`}
-              title={
-                isOutOfStock
-                  ? 'Out of stock'
-                  : isMaxQuantityReached
-                  ? `Maximum available quantity (${availableStock}) already in cart`
-                  : isItemBeingAdded
-                  ? 'Adding to cart...'
-                  : ''
-              }
-            >
-              {isItemBeingAdded
-                ? 'Adding...'
-                : isOutOfStock
-                ? 'Out of Stock'
-                : isMaxQuantityReached
-                ? 'Max Added'
-                : quantityInCart > 0
-                ? `Add More (${quantityInCart})`
-                : 'Add to cart'}
-            </button>
+
 
             <button
               onClick={(e) => {

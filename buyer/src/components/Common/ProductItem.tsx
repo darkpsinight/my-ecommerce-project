@@ -4,10 +4,8 @@ import Image from "next/image";
 import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToCartAsync } from "@/redux/features/cart-slice";
 import { addItemToWishlistAsync, removeItemFromWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
-import { selectCartItemById } from "@/redux/features/cart-slice";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import Link from "next/link";
@@ -16,11 +14,6 @@ const ProductItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
 
   const dispatch = useDispatch<AppDispatch>();
-  
-  // Get current cart item to check quantity
-  const cartItem = useSelector((state: RootState) => 
-    selectCartItemById(state, item.id)
-  );
   
   // Check if item is in wishlist
   const isInWishlist = useSelector((state: RootState) => 
@@ -35,38 +28,7 @@ const ProductItem = ({ item }: { item: Product }) => {
     dispatch(updateQuickView({ ...item }));
   };
 
-  // add to cart
-  const handleAddToCart = () => {
-    // Check if item has available stock
-    if (!item.quantityOfActiveCodes || item.quantityOfActiveCodes === 0) {
-      return; // Don't add if no stock available
-    }
 
-    // Check if adding another item would exceed stock
-    const currentQuantityInCart = cartItem?.quantity || 0;
-    if (currentQuantityInCart + 1 > item.quantityOfActiveCodes) {
-      console.log(`Cannot add more items. Cart: ${currentQuantityInCart}, Stock: ${item.quantityOfActiveCodes}`);
-      return; // Don't add if it would exceed available stock
-    }
-
-    dispatch(
-      addItemToCartAsync({
-        listingId: item.id,
-        title: item.title,
-        price: item.price,
-        discountedPrice: item.discountedPrice,
-        quantity: 1,
-        imgs: item.imgs,
-        sellerId: item.sellerId || "",
-        availableStock: item.quantityOfActiveCodes || 0,
-        listingSnapshot: {
-          category: item.categoryName,
-          platform: item.platform,
-          region: item.region,
-        },
-      })
-    );
-  };
 
   const handleToggleWishList = async () => {
     if (!isWishlistLoading) {
@@ -139,31 +101,7 @@ const ProductItem = ({ item }: { item: Product }) => {
             </svg>
           </button>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddToCart();
-            }}
-            disabled={
-              !item.quantityOfActiveCodes || 
-              item.quantityOfActiveCodes === 0 || 
-              (cartItem?.quantity || 0) >= item.quantityOfActiveCodes
-            }
-            className={`inline-flex font-medium text-custom-sm py-[7px] px-5 rounded-[5px] ease-out duration-200 relative z-20 ${
-              (!item.quantityOfActiveCodes || 
-               item.quantityOfActiveCodes === 0 || 
-               (cartItem?.quantity || 0) >= item.quantityOfActiveCodes)
-                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                : 'bg-blue text-white hover:bg-blue-dark'
-            }`}
-          >
-            {(!item.quantityOfActiveCodes || item.quantityOfActiveCodes === 0) 
-              ? 'Out of Stock' 
-              : (cartItem?.quantity || 0) >= item.quantityOfActiveCodes
-                ? 'Cart Full'
-                : 'Add to cart'
-            }
-          </button>
+
 
           <button
             onClick={(e) => {

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { AppDispatch, useAppSelector } from "@/redux/store";
-import { addItemToCartAsync, selectCartItems, selectIsItemBeingAdded } from "@/redux/features/cart-slice";
 import { addItemToWishlistAsync, removeItemFromWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
 import { useDispatch } from "react-redux";
 import Image from "next/image";
@@ -11,22 +10,18 @@ import Link from "next/link";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { resetQuickView } from "@/redux/features/quickView-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
-import QuantityControl from "../Cart/QuantityControl";
 import toast from "react-hot-toast";
 import { sanitizeHtml } from "@/utils/htmlSanitizer";
 
 const QuickViewModal = () => {
   const { isModalOpen, closeModal } = useModalContext();
   const { openPreviewModal } = usePreviewSlider();
-  const [quantity, setQuantity] = useState(1);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
 
   // get the product data
   const product = useAppSelector((state) => state.quickViewReducer.value);
-  const cartItems = useAppSelector(selectCartItems);
-  const isItemBeingAdded = useAppSelector(state => product ? selectIsItemBeingAdded(state, product.id) : false);
   const isInWishlist = useAppSelector(state => product ? selectIsItemInWishlist(state, product.id) : false);
   const isWishlistLoading = useAppSelector(selectWishlistLoading);
 
@@ -44,20 +39,8 @@ const QuickViewModal = () => {
 
   const [activePreview, setActivePreview] = useState(0);
 
-  // Stock validation logic
+  // Stock information for display
   const availableStock = product?.quantityOfActiveCodes || 0;
-  const cartItem = product ? cartItems.find((cartItem) => cartItem.listingId === product.id) : null;
-  const quantityInCart = cartItem ? cartItem.quantity : 0;
-  const isOutOfStock = availableStock === 0;
-  const wouldExceedStock = quantityInCart + quantity > availableStock;
-  const maxAddableQuantity = Math.max(1, availableStock - quantityInCart);
-
-  // Reset quantity if it exceeds the available stock considering cart items
-  useEffect(() => {
-    if (quantity > maxAddableQuantity) {
-      setQuantity(Math.max(1, maxAddableQuantity));
-    }
-  }, [quantity, maxAddableQuantity]);
 
   // preview modal
   const handlePreviewSlider = () => {
@@ -65,62 +48,7 @@ const QuickViewModal = () => {
     openPreviewModal();
   };
 
-  // add to cart
-  const handleAddToCart = () => {
-    if (!product) {
-      toast.error("Product not found");
-      return;
-    }
 
-    if (!product.sellerId) {
-      toast.error("Invalid product data");
-      return;
-    }
-
-    if (isOutOfStock) {
-      toast.error("This product is out of stock");
-      return;
-    }
-
-    if (wouldExceedStock) {
-      const availableToAdd = availableStock - quantityInCart;
-      if (availableToAdd <= 0) {
-        toast.error(
-          `You already have the maximum available quantity (${availableStock}) in your cart`
-        );
-      } else {
-        toast.error(
-          `Cannot add ${quantity} items. You can only add ${availableToAdd} more (${quantityInCart} already in cart, ${availableStock} available)`
-        );
-      }
-      return;
-    }
-
-    if (isItemBeingAdded) {
-      toast.error("This item is already being added to cart");
-      return;
-    }
-
-    dispatch(
-      addItemToCartAsync({
-        listingId: product.id,
-        title: product.title,
-        price: product.price,
-        discountedPrice: product.discountedPrice,
-        quantity,
-        imgs: product.imgs,
-        sellerId: product.sellerId,
-        availableStock: availableStock,
-        listingSnapshot: {
-          category: product.categoryName,
-          platform: product.platform,
-          region: product.region,
-        },
-      })
-    );
-
-    closeModal();
-  };
 
   // toggle wishlist
   const handleToggleWishlist = async () => {
@@ -160,29 +88,7 @@ const QuickViewModal = () => {
     return 0;
   };
 
-  // Quantity control handlers
-  const handleQuantityIncrease = () => {
-    if (quantity < maxAddableQuantity) {
-      setQuantity(quantity + 1);
-    } else {
-      const availableToAdd = availableStock - quantityInCart;
-      if (availableToAdd <= 0) {
-        toast.error(`Maximum available quantity (${availableStock}) already in cart`);
-      } else {
-        toast.error(`Cannot add more. Only ${availableToAdd} available (${quantityInCart} already in cart)`);
-      }
-    }
-  };
 
-  const handleQuantityDecrease = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
-  };
-
-  const handleQuantityChange = (newQuantity: number) => {
-    setQuantity(newQuantity);
-  };
 
   useEffect(() => {
     // closing modal while clicking outside
@@ -201,10 +107,9 @@ const QuickViewModal = () => {
     };
   }, [isModalOpen, closeModal]);
 
-  // Reset quantity when modal opens/closes or product changes
+  // Reset preview when modal opens/closes or product changes
   useEffect(() => {
     if (isModalOpen && product) {
-      setQuantity(1);
       setActivePreview(0);
       setIsDescriptionExpanded(false); // Reset description state
     }
@@ -500,7 +405,7 @@ const QuickViewModal = () => {
                 )}
               </div>
 
-              <div className="flex flex-wrap justify-between gap-5 mt-6 mb-7.5">
+              <div className="flex flex-col gap-4 mt-6 mb-7.5">
                 <div>
                   <h4 className="font-semibold text-lg text-dark mb-3.5">
                     Price
@@ -516,86 +421,24 @@ const QuickViewModal = () => {
                   </span>
                 </div>
 
-                <div>
-                  <h4 className="font-semibold text-lg text-dark mb-3.5">
-                    Quantity
-                  </h4>
-
-                  <QuantityControl
-                    quantity={quantity}
-                    onIncrease={handleQuantityIncrease}
-                    onDecrease={handleQuantityDecrease}
-                    min={1}
-                    max={maxAddableQuantity}
-                    disabled={isOutOfStock}
-                    handleQuantityChange={handleQuantityChange}
-                    showMaximumPulse={true}
-                  />
-
-                  {/* Stock Information */}
-                  <div className="mt-3 text-sm">
-                    {quantityInCart > 0 && (
-                      <p className="text-blue mb-1">
-                        <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 1a1 1 0 100 2h2a1 1 0 100-2h-2z" clipRule="evenodd"/>
-                        </svg>
-                        {quantityInCart} already in cart
-                      </p>
-                    )}
-                    {isOutOfStock && (
-                      <p className="text-red font-medium">
-                        <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-                        </svg>
-                        Out of stock
-                      </p>
-                    )}
+                {/* Stock Information */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${availableStock > 0 ? 'bg-green animate-pulse' : 'bg-red'}`}></div>
+                    <span className="text-sm font-medium text-gray-6">
+                      {availableStock > 0 ? `${availableStock} codes available` : 'Out of stock'}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                {/* Add to Cart Button - Primary Action */}
-                <button
-                  disabled={isItemBeingAdded || isOutOfStock || wouldExceedStock || quantity === 0}
-                  onClick={handleAddToCart}
-                  className={`inline-flex items-center justify-center gap-2 font-semibold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 transform disabled:cursor-not-allowed ${
-                    isOutOfStock || wouldExceedStock
-                      ? 'bg-gray-200 text-gray-500 shadow-none'
-                      : isItemBeingAdded
-                      ? 'bg-blue-light text-blue shadow-blue/20'
-                      : 'text-white bg-gradient-to-r from-blue to-blue-dark hover:from-blue-dark hover:to-blue shadow-blue/30 hover:shadow-blue/50 hover:scale-105 active:scale-95'
-                  }`}
-                >
-                  {isItemBeingAdded && (
-                    <svg className="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  )}
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                  </svg>
-                  <span className="truncate">
-                    {isItemBeingAdded
-                      ? 'Adding...'
-                      : isOutOfStock
-                      ? 'Out of Stock'
-                      : wouldExceedStock
-                      ? 'Max Reached'
-                      : quantityInCart > 0
-                      ? `Add ${quantity} More`
-                      : `Add ${quantity} to Cart`
-                    }
-                  </span>
-                </button>
-
+              <div className="flex justify-center w-full">
                 {/* Wishlist Button */}
                 <button
                   onClick={handleToggleWishlist}
                   disabled={isWishlistLoading}
-                  className={`inline-flex items-center justify-center w-16 h-16 rounded-xl border-2 shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 ${
+                  className={`inline-flex items-center justify-center gap-2 font-semibold py-4 px-8 rounded-xl border-2 shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 ${
                     isInWishlist
                       ? 'border-red bg-red text-white hover:border-red-dark hover:bg-red-dark hover:shadow-red/30'
                       : 'border-gray-3 bg-white text-dark hover:border-red hover:text-red hover:shadow-red/20'
@@ -619,6 +462,9 @@ const QuickViewModal = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   )}
+                  <span className="font-medium">
+                    {isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+                  </span>
                 </button>
               </div>
             </div>

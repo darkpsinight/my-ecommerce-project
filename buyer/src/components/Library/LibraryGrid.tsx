@@ -242,7 +242,7 @@ const CodeCard: React.FC<{
               </span>
             )}
             {isExpiring && (
-              <span className="bg-yellow text-yellow-dark text-xs px-2 py-1 rounded-full">
+              <span className="bg-white text-yellow-dark text-xs px-2 py-1 rounded-full">
                 Expiring Soon
               </span>
             )}

@@ -93,7 +93,7 @@ const getCart = async (request, reply) => {
 const addToCart = async (request, reply) => {
   try {
     const userId = request.user.uid;
-    const { listingId, title, price, discountedPrice, quantity = 1, imgs, sellerId, listingSnapshot, availableStock } = request.body;
+    let { listingId, title, price, discountedPrice, quantity = 1, imgs, sellerId, listingSnapshot, availableStock, expirationGroups } = request.body;
 
     // Verify listing exists and is active (need to select codes to check availability)
     const listing = await Listing.findOne({ externalId: listingId }).select("+codes");
@@ -105,12 +105,125 @@ const addToCart = async (request, reply) => {
       });
     }
 
-    // Check if listing has available codes for the requested quantity
-    if (!listing.hasAvailableCodes(quantity)) {
-      return reply.code(400).send({
-        success: false,
-        message: "Insufficient stock available"
-      });
+    // Validate quantity based on expiration groups or total availability
+    if (expirationGroups && expirationGroups.length > 0) {
+      // Validate each expiration group
+      try {
+        const listingGroups = listing.getExpirationGroups();
+        
+        const groupsMap = new Map();
+        
+        // Create map with simplified approach - use the group object directly for matching
+        listingGroups.forEach((g, index) => {
+          // For never_expires, use type as key
+          if (g.type === "never_expires") {
+            groupsMap.set(g.type, g);
+          } else if (g.type === "expires") {
+            // For expires, use the exact date string as received from database
+            const dateKey = g.date ? new Date(g.date).toISOString() : 'no-date';
+            groupsMap.set(`expires_${dateKey}`, g);
+          }
+
+        });
+        
+        let totalRequestedQuantity = 0;
+        
+        for (const requestedGroup of expirationGroups) {
+          if (!requestedGroup.type || !requestedGroup.count || requestedGroup.count <= 0) {
+            return reply.code(400).send({
+              success: false,
+              message: "Invalid expiration group format. Each group must have 'type' and positive 'count'"
+            });
+          }
+          
+          // Create groupKey to match the internal grouping
+          let groupKey;
+          if (requestedGroup.type === "expires" && requestedGroup.date) {
+            const dateObj = typeof requestedGroup.date === 'string' ? new Date(requestedGroup.date) : requestedGroup.date;
+            groupKey = `expires_${dateObj.toISOString()}`;
+          } else {
+            groupKey = requestedGroup.type;
+          }
+          
+          console.log(`Looking for group key: ${groupKey} for requested group:`, requestedGroup);
+          console.log('Available group keys:', Array.from(groupsMap.keys()));
+          
+          const availableGroup = groupsMap.get(groupKey);
+          
+          if (!availableGroup) {
+            // Try alternative matching approach for expires groups
+            if (requestedGroup.type === "expires" && requestedGroup.date) {
+              // Find a matching expires group by comparing dates
+              let foundGroup = null;
+              for (const [key, group] of groupsMap.entries()) {
+                if (key.startsWith("expires_") && group.date) {
+                  const groupDate = new Date(group.date).toISOString();
+                  const requestedDate = new Date(requestedGroup.date).toISOString();
+                  if (groupDate === requestedDate) {
+                    foundGroup = group;
+                    break;
+                  }
+                }
+              }
+              
+              if (foundGroup) {
+                console.log('Found matching group through alternative method:', foundGroup);
+                // Use the found group for validation
+                if (requestedGroup.count > foundGroup.quantity) {
+                  return reply.code(400).send({
+                    success: false,
+                    message: `Insufficient stock in ${requestedGroup.type} group. Available: ${foundGroup.quantity}, Requested: ${requestedGroup.count}`
+                  });
+                }
+                totalRequestedQuantity += requestedGroup.count;
+                continue; // Skip the normal validation for this group
+              }
+            }
+            
+            return reply.code(400).send({
+              success: false,
+              message: `Expiration group ${requestedGroup.type}${requestedGroup.date ? ` (${requestedGroup.date})` : ''} not found`
+            });
+          }
+          
+          if (requestedGroup.count > availableGroup.quantity) {
+            console.log(`Stock check failed: Requested ${requestedGroup.count}, Available ${availableGroup.quantity}`);
+            return reply.code(400).send({
+              success: false,
+              message: `Insufficient stock in ${requestedGroup.type} group. Available: ${availableGroup.quantity}, Requested: ${requestedGroup.count}`
+            });
+          }
+          
+          console.log(`Stock check passed for group: ${requestedGroup.type}, requested: ${requestedGroup.count}, available: ${availableGroup.quantity}`);
+          totalRequestedQuantity += requestedGroup.count;
+        }
+        
+        // Update quantity to match expiration groups total
+        quantity = totalRequestedQuantity;
+        
+        if (totalRequestedQuantity === 0) {
+          console.log('Total requested quantity is 0');
+          return reply.code(400).send({
+            success: false,
+            message: "Total quantity from expiration groups must be greater than 0"
+          });
+        }
+        
+        console.log(`Total requested quantity: ${totalRequestedQuantity}, proceeding with cart addition`);
+      } catch (error) {
+        return reply.code(400).send({
+          success: false,
+          message: `Error validating expiration groups: ${error.message}`
+        });
+      }
+    } else {
+      // Traditional quantity validation
+      if (!listing.hasAvailableCodes(quantity)) {
+        return reply.code(400).send({
+          success: false,
+          message: "Insufficient stock available"
+        });
+      }
     }
 
     // Verify seller exists
@@ -131,7 +244,7 @@ const addToCart = async (request, reply) => {
     }
 
     // Add item to cart
-    const cart = await Cart.createOrUpdate(userId, 'add', {
+    const cartItemData = {
       listingId, // This is the external UUID
       listingObjectId: listing._id, // This is the MongoDB ObjectId for joins
       title,
@@ -147,7 +260,14 @@ const addToCart = async (request, reply) => {
         platform: listing.platform,
         region: listing.region
       }
-    });
+    };
+
+    // Add expiration groups if provided
+    if (expirationGroups && expirationGroups.length > 0) {
+      cartItemData.expirationGroups = expirationGroups;
+    }
+
+    const cart = await Cart.createOrUpdate(userId, 'add', cartItemData);
 
     // Populate the updated cart for response
     await cart.populate({

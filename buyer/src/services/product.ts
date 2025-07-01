@@ -326,3 +326,43 @@ export const getProducts = async (params?: {
     return null;
   }
 };
+
+// Expiration group types
+export interface ExpirationGroup {
+  type: "never_expires" | "expires";
+  quantity: number;
+  date?: string;
+}
+
+interface ExpirationGroupsResponse {
+  listingId: string;
+  expirationGroups: ExpirationGroup[];
+}
+
+/**
+ * Get expiration groups for a product/listing
+ * @param productId - The external ID of the product
+ * @returns Promise<ExpirationGroup[] | null>
+ */
+export const getProductExpirationGroups = async (productId: string): Promise<ExpirationGroup[] | null> => {
+  try {
+    console.log('Fetching expiration groups for product:', productId);
+    
+    const response = await axios.get<ApiResponse<ExpirationGroupsResponse>>(`${API_URL}/listings/${productId}/expiration-groups`);
+    
+    if (response.data.success && response.data.data) {
+      console.log('Expiration groups fetched successfully:', response.data.data.expirationGroups);
+      return response.data.data.expirationGroups;
+    } else {
+      console.error('API response unsuccessful:', response.data);
+      return null;
+    }
+  } catch (error: any) {
+    console.error('Error fetching expiration groups:', error);
+    if (error.response) {
+      console.error('Error response:', error.response.data);
+      console.error('Status code:', error.response.status);
+    }
+    return null;
+  }
+};

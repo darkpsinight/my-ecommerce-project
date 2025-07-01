@@ -7,7 +7,7 @@ import QuantityControl from "../Cart/QuantityControl";
 import ReviewModal from "./ReviewModal";
 
 import { useAppSelector } from "@/redux/store";
-import { getProductById } from "@/services/product";
+import { getProductById, getProductExpirationGroups, type ExpirationGroup } from "@/services/product";
 import {
   reviewService,
   type ListingReviewsResponse,
@@ -39,6 +39,7 @@ import PageContainer from "../Common/PageContainer";
 import ProductDetailSkeleton from "../Common/ProductDetailSkeleton";
 import toast from "react-hot-toast";
 import { useProductViewTracker } from "@/hooks/useViewedProducts";
+import ExpirationGroupSelector from "./ExpirationGroupSelector";
 
 const ShopDetails = () => {
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,14 @@ const ShopDetails = () => {
   );
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [currentReviewPage, setCurrentReviewPage] = useState(1);
+  
+  // Expiration groups state
+  const [expirationGroups, setExpirationGroups] = useState<ExpirationGroup[]>([]);
+  const [selectedExpirationGroups, setSelectedExpirationGroups] = useState<
+    Array<{ type: "never_expires" | "expires"; count: number; date?: string }>
+  >([]);
+  const [expirationGroupsLoading, setExpirationGroupsLoading] = useState(false);
+  const [useExpirationGroups, setUseExpirationGroups] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -283,6 +292,34 @@ const ShopDetails = () => {
     }
   }, [product?.id, currentReviewPage]);
 
+  // Fetch expiration groups when product is loaded
+  useEffect(() => {
+    const fetchExpirationGroups = async () => {
+      if (!product?.id) return;
+      
+      try {
+        setExpirationGroupsLoading(true);
+        const groups = await getProductExpirationGroups(product.id);
+        
+        if (groups && groups.length > 0) {
+          setExpirationGroups(groups);
+          setUseExpirationGroups(groups.length > 1); // Only use groups if multiple exist
+        } else {
+          setExpirationGroups([]);
+          setUseExpirationGroups(false);
+        }
+      } catch (error) {
+        console.error("Error fetching expiration groups:", error);
+        setExpirationGroups([]);
+        setUseExpirationGroups(false);
+      } finally {
+        setExpirationGroupsLoading(false);
+      }
+    };
+
+    fetchExpirationGroups();
+  }, [product?.id]);
+
   // Reset page to 1 when product changes
   useEffect(() => {
     if (product?.id) {
@@ -307,18 +344,38 @@ const ShopDetails = () => {
       return;
     }
 
-    if (wouldExceedStock) {
-      const availableToAdd = availableStock - quantityInCart;
-      if (availableToAdd <= 0) {
-        toast.error(
-          `You already have the maximum available quantity (${availableStock}) in your cart`
-        );
-      } else {
-        toast.error(
-          `Cannot add ${quantity} items. You can only add ${availableToAdd} more (${quantityInCart} already in cart, ${availableStock} available)`
-        );
+    // Determine the effective quantity and expiration groups
+    let effectiveQuantity = quantity;
+    let expirationGroupsToAdd = undefined;
+    
+    if (useExpirationGroups && selectedExpirationGroups.length > 0) {
+      // Use expiration group selections
+      effectiveQuantity = selectedExpirationGroups.reduce((sum, group) => sum + group.count, 0);
+      expirationGroupsToAdd = selectedExpirationGroups.map(group => ({
+        type: group.type,
+        count: group.count,
+        date: group.date
+      }));
+      
+      if (effectiveQuantity === 0) {
+        toast.error("Please select at least one item from the expiration groups");
+        return;
       }
-      return;
+    } else {
+      // Traditional quantity validation
+      if (wouldExceedStock) {
+        const availableToAdd = availableStock - quantityInCart;
+        if (availableToAdd <= 0) {
+          toast.error(
+            `You already have the maximum available quantity (${availableStock}) in your cart`
+          );
+        } else {
+          toast.error(
+            `Cannot add ${quantity} items. You can only add ${availableToAdd} more (${quantityInCart} already in cart, ${availableStock} available)`
+          );
+        }
+        return;
+      }
     }
 
     if (isItemBeingAdded) {
@@ -326,23 +383,24 @@ const ShopDetails = () => {
       return;
     }
 
-    dispatch(
-      addItemToCartAsync({
-        listingId: product.id,
-        title: product.title,
-        price: product.price,
-        discountedPrice: product.discountedPrice,
-        quantity: quantity,
-        imgs: product.imgs,
-        sellerId: product.sellerId,
-        availableStock: availableStock,
-        listingSnapshot: {
-          category: product.categoryName,
-          platform: product.platform,
-          region: product.region,
-        },
-      })
-    );
+    const cartItem = {
+      listingId: product.id,
+      title: product.title,
+      price: product.price,
+      discountedPrice: product.discountedPrice,
+      quantity: effectiveQuantity,
+      imgs: product.imgs,
+      sellerId: product.sellerId,
+      availableStock: availableStock,
+      listingSnapshot: {
+        category: product.categoryName,
+        platform: product.platform,
+        region: product.region,
+      },
+      ...(expirationGroupsToAdd && { expirationGroups: expirationGroupsToAdd })
+    };
+
+    dispatch(addItemToCartAsync(cartItem));
   };
 
   // Add to wishlist handler
@@ -1042,14 +1100,30 @@ const ShopDetails = () => {
                 </div>
               </div>
 
+              {/* Expiration Group Selector */}
+              {useExpirationGroups && (
+                <div className="border-t pt-8 pb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Select Expiration Types
+                  </h3>
+                  <ExpirationGroupSelector
+                    expirationGroups={expirationGroups}
+                    onSelectionChange={setSelectedExpirationGroups}
+                    disabled={isItemBeingAdded || expirationGroupsLoading}
+                    maxTotalQuantity={Math.max(1, availableStock - quantityInCart)}
+                  />
+                </div>
+              )}
+
               {/* Quantity and Actions */}
-              <div className="border-t pt-8">
-                <div className="flex flex-wrap items-center gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-semibold text-gray-900">
-                      Quantity:
-                    </label>
-                    <QuantityControl
+              <div className={`${useExpirationGroups ? 'border-t' : 'border-t'} pt-8`}>
+                {!useExpirationGroups && (
+                  <div className="flex flex-wrap items-center gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-semibold text-gray-900">
+                        Quantity:
+                      </label>
+                      <QuantityControl
                       quantity={quantity}
                       onIncrease={() => {
                         const maxAddable = availableStock - quantityInCart;
@@ -1082,6 +1156,27 @@ const ShopDetails = () => {
                     </span>
                   </div>
                 </div>
+                )}
+
+                {/* Total display for expiration groups */}
+                {useExpirationGroups && (
+                  <div className="mb-6">
+                    <div className="text-sm text-gray-500">
+                      Total:{" "}
+                      <span className="font-semibold text-gray-900">
+                        ${(
+                          product.discountedPrice * 
+                          selectedExpirationGroups.reduce((sum, group) => sum + group.count, 0)
+                        ).toFixed(2)}
+                      </span>
+                      {selectedExpirationGroups.length > 0 && (
+                        <span className="ml-2 text-blue-600">
+                          ({selectedExpirationGroups.reduce((sum, group) => sum + group.count, 0)} items)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap gap-4">
                   <button
@@ -1089,7 +1184,8 @@ const ShopDetails = () => {
                     disabled={
                       isItemBeingAdded ||
                       isOutOfStock ||
-                      wouldExceedStock ||
+                      (useExpirationGroups && selectedExpirationGroups.reduce((sum, group) => sum + group.count, 0) === 0) ||
+                      (!useExpirationGroups && wouldExceedStock) ||
                       (product.status &&
                         product.status.toLowerCase() === "inactive")
                     }

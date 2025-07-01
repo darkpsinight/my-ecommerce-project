@@ -16,7 +16,8 @@ const {
   getListings,
   getListingById,
   getSellerListings,
-  getListingsSummary
+  getListingsSummary,
+  getListingExpirationGroups
 } = require("../handlers/listingQueryHandlers");
 const {
   auditAndFixListings,
@@ -146,6 +147,16 @@ const listingsRoutes = async (fastify, opts) => {
     url: "/:id",
     schema: listingSchema.getListing,
     handler: getListingById
+  });
+
+  // Get expiration groups for a listing
+  fastify.route({
+    config: {
+      rateLimit: readRateLimit
+    },
+    method: "GET",
+    url: "/:id/expiration-groups",
+    handler: getListingExpirationGroups
   });
 
   // Get seller listings with masked codes

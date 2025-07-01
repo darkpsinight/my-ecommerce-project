@@ -73,8 +73,21 @@ const createOrder = async (request, reply) => {
         return sendErrorResponse(reply, 400, `Not enough codes available for ${listing.title}. Available: ${availableCount}, Requested: ${quantity}`);
       }
 
-      // Select codes to purchase with expiration date priority
-      const codesToPurchase = listing.getCodesForPurchase(quantity);
+      // Select codes to purchase - either from expiration groups or with expiration date priority
+      let codesToPurchase;
+      
+      if (cartItem.expirationGroups && cartItem.expirationGroups.length > 0) {
+        // Use expiration group-based code selection
+        try {
+          codesToPurchase = listing.getCodesFromExpirationGroups(cartItem.expirationGroups);
+        } catch (error) {
+          request.log.error(`handlers/createOrder - Error selecting codes from expiration groups: ${error.message}`);
+          return sendErrorResponse(reply, 400, `Error selecting codes: ${error.message}`);
+        }
+      } else {
+        // Use traditional FEFO (First Expired, First Out) code selection
+        codesToPurchase = listing.getCodesForPurchase(quantity);
+      }
       const unitPrice = listing.discountedPrice || listing.price;
       const itemTotal = unitPrice * quantity;
       totalAmount += itemTotal;

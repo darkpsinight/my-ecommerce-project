@@ -75,6 +75,13 @@ const listingSchema = new mongoose.Schema({
     },
     expirationDate: {
       type: Date
+    },
+    expirationGroup: {
+      type: String,
+      enum: ["never_expires", "expires"],
+      default: function() {
+        return this.expirationDate ? "expires" : "never_expires";
+      }
     }
   }],
   supportedLanguages: {
@@ -377,6 +384,9 @@ listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate 
     // Only add expirationDate if it's defined
     if (expirationDate !== undefined && expirationDate !== null) {
       codeObj.expirationDate = expirationDate;
+      codeObj.expirationGroup = "expires";
+    } else {
+      codeObj.expirationGroup = "never_expires";
     }
 
     // Add the code to the listing
@@ -485,6 +495,156 @@ listingSchema.methods.purchaseCode = function() {
   this.save();
 
   return decryptedCode;
+};
+
+// Method to get expiration groups for a listing
+listingSchema.methods.getExpirationGroups = function() {
+  if (!this.codes || this.codes.length === 0) {
+    return [];
+  }
+
+  // Filter active codes and group by expiration type
+  const activeCodes = this.codes.filter(code => code.soldStatus === "active");
+  
+  if (activeCodes.length === 0) {
+    return [];
+  }
+
+  // Group codes by expiration type and date
+  const groups = {};
+  
+  activeCodes.forEach(code => {
+    const groupType = code.expirationGroup || (code.expirationDate ? "expires" : "never_expires");
+    
+    // Create a unique key for each group (including date for expires)
+    let groupKey;
+    if (groupType === "expires" && code.expirationDate) {
+      groupKey = `${groupType}_${code.expirationDate.toISOString()}`;
+    } else {
+      groupKey = groupType;
+    }
+    
+    if (!groups[groupKey]) {
+      groups[groupKey] = {
+        type: groupType,
+        quantity: 0,
+        codes: []
+      };
+      
+      // Add date for expires group
+      if (groupType === "expires" && code.expirationDate) {
+        groups[groupKey].date = code.expirationDate;
+      }
+    }
+    
+    groups[groupKey].quantity++;
+    groups[groupKey].codes.push(code);
+  });
+
+  // Convert to array and format for API response
+  const result = Object.values(groups).map(group => {
+    const formatted = {
+      type: group.type,
+      quantity: group.quantity
+    };
+    
+    if (group.type === "expires" && group.date) {
+      formatted.date = group.date;
+    }
+    
+    return formatted;
+  });
+
+  // Sort: never_expires first, then expires groups by date
+  result.sort((a, b) => {
+    if (a.type === "never_expires" && b.type === "expires") return -1;
+    if (a.type === "expires" && b.type === "never_expires") return 1;
+    if (a.type === "expires" && b.type === "expires") {
+      return new Date(a.date || 0) - new Date(b.date || 0);
+    }
+    return 0;
+  });
+
+  return result;
+};
+
+// Method to get codes for purchase from specific expiration groups
+listingSchema.methods.getCodesFromExpirationGroups = function(groupQuantities) {
+  if (!this.codes || this.codes.length === 0) {
+    throw new Error("No codes available");
+  }
+
+  // Filter active codes
+  const activeCodes = this.codes.filter(code => code.soldStatus === "active");
+  
+  if (activeCodes.length === 0) {
+    throw new Error("No active codes available");
+  }
+
+  // Group codes by expiration type and date
+  const codeGroups = {};
+  
+  activeCodes.forEach(code => {
+    const groupType = code.expirationGroup || (code.expirationDate ? "expires" : "never_expires");
+    
+    // Create a unique key for each group (including date for expires)
+    let groupKey;
+    if (groupType === "expires" && code.expirationDate) {
+      groupKey = `${groupType}_${code.expirationDate.toISOString()}`;
+    } else {
+      groupKey = groupType;
+    }
+    
+    if (!codeGroups[groupKey]) {
+      codeGroups[groupKey] = [];
+    }
+    
+    codeGroups[groupKey].push(code);
+  });
+
+  // Sort codes within each group (FEFO for expires, FIFO for never_expires)
+  Object.keys(codeGroups).forEach(groupKey => {
+    if (groupKey.startsWith("expires")) {
+      // Sort by expiration date (earliest first)
+      codeGroups[groupKey].sort((a, b) => {
+        const aDate = a.expirationDate ? new Date(a.expirationDate) : new Date(0);
+        const bDate = b.expirationDate ? new Date(b.expirationDate) : new Date(0);
+        return aDate - bDate;
+      });
+    } else {
+      // Sort by codeId for consistent ordering (FIFO)
+      codeGroups[groupKey].sort((a, b) => a.codeId.localeCompare(b.codeId));
+    }
+  });
+
+  // Select codes based on requested group quantities
+  const selectedCodes = [];
+  
+  groupQuantities.forEach(groupRequest => {
+    const { type, count, date } = groupRequest;
+    
+    // Create the groupKey to match the internal grouping
+    let groupKey;
+    if (type === "expires" && date) {
+      // Convert date to ISO string if it's not already
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      groupKey = `${type}_${dateObj.toISOString()}`;
+    } else {
+      groupKey = type;
+    }
+    
+    const availableCodes = codeGroups[groupKey] || [];
+    
+    if (availableCodes.length < count) {
+      throw new Error(`Not enough codes available in ${type} group${date ? ` (${date})` : ''}. Available: ${availableCodes.length}, Requested: ${count}`);
+    }
+    
+    // Take the required number of codes from this group
+    const selectedFromGroup = availableCodes.slice(0, count);
+    selectedCodes.push(...selectedFromGroup);
+  });
+
+  return selectedCodes;
 };
 
 /**

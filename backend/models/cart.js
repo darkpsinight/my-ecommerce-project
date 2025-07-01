@@ -60,6 +60,23 @@ const cartItemSchema = new mongoose.Schema({
     region: String,
     // Add other critical listing fields that might affect pricing
   },
+  // Expiration group-based quantities
+  expirationGroups: [{
+    type: {
+      type: String,
+      enum: ["never_expires", "expires"],
+      required: true
+    },
+    count: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+    date: {
+      type: Date
+      // Only present for "expires" type
+    }
+  }],
 });
 
 const cartSchema = new mongoose.Schema({
@@ -108,15 +125,44 @@ cartSchema.methods.addItem = function(itemData) {
   );
 
   if (existingItemIndex > -1) {
-    // Update existing item quantity and refresh stock info
-    this.items[existingItemIndex].quantity += itemData.quantity || 1;
+    // Update existing item
+    const existingItem = this.items[existingItemIndex];
+    
+    if (itemData.expirationGroups && itemData.expirationGroups.length > 0) {
+      // Handle expiration group-based addition
+      if (!existingItem.expirationGroups) {
+        existingItem.expirationGroups = [];
+      }
+      
+      // Merge expiration groups
+      itemData.expirationGroups.forEach(newGroup => {
+        const existingGroupIndex = existingItem.expirationGroups.findIndex(
+          g => g.type === newGroup.type && 
+               (g.type === "never_expires" || 
+                (g.date && newGroup.date && new Date(g.date).getTime() === new Date(newGroup.date).getTime()))
+        );
+        
+        if (existingGroupIndex > -1) {
+          existingItem.expirationGroups[existingGroupIndex].count += newGroup.count;
+        } else {
+          existingItem.expirationGroups.push({ ...newGroup });
+        }
+      });
+      
+      // Recalculate total quantity
+      existingItem.quantity = existingItem.expirationGroups.reduce((sum, group) => sum + group.count, 0);
+    } else {
+      // Traditional quantity-based addition
+      existingItem.quantity += itemData.quantity || 1;
+    }
+    
     // Update available stock info when adding more of existing item
     if (itemData.availableStock !== undefined) {
-      this.items[existingItemIndex].availableStock = itemData.availableStock;
+      existingItem.availableStock = itemData.availableStock;
     }
   } else {
     // Add new item
-    this.items.push({
+    const newItem = {
       listingId: itemData.listingId, // External UUID
       listingObjectId: itemData.listingObjectId, // MongoDB ObjectId
       title: itemData.title,
@@ -127,7 +173,16 @@ cartSchema.methods.addItem = function(itemData) {
       sellerId: itemData.sellerId,
       availableStock: itemData.availableStock || 0,
       listingSnapshot: itemData.listingSnapshot || {},
-    });
+    };
+    
+    // Add expiration groups if provided
+    if (itemData.expirationGroups && itemData.expirationGroups.length > 0) {
+      newItem.expirationGroups = itemData.expirationGroups.map(group => ({ ...group }));
+      // Ensure quantity matches total from groups
+      newItem.quantity = newItem.expirationGroups.reduce((sum, group) => sum + group.count, 0);
+    }
+    
+    this.items.push(newItem);
   }
 };
 

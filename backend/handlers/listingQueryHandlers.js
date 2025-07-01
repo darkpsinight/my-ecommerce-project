@@ -425,9 +425,61 @@ const getListingsSummary = async (request, reply) => {
   }
 };
 
+// Get expiration groups for a listing
+const getListingExpirationGroups = async (request, reply) => {
+  try {
+    const { id } = request.params;
+
+    if (!id) {
+      return reply.code(400).send({
+        success: false,
+        error: "Listing ID is required"
+      });
+    }
+
+    // Find the listing by external ID and include codes
+    const listing = await Listing.findOne({ externalId: id }).select("+codes");
+
+    if (!listing) {
+      return reply.code(404).send({
+        success: false,
+        error: "Listing not found"
+      });
+    }
+
+    // Check if listing is active
+    if (listing.status !== 'active') {
+      return reply.code(400).send({
+        success: false,
+        error: "Listing is not active"
+      });
+    }
+
+    // Get expiration groups
+    const expirationGroups = listing.getExpirationGroups();
+
+    return reply.code(200).send({
+      success: true,
+      data: {
+        listingId: listing.externalId,
+        expirationGroups: expirationGroups
+      }
+    });
+
+  } catch (error) {
+    request.log.error(`Error fetching expiration groups: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to fetch expiration groups",
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   getListings,
   getListingById,
   getSellerListings,
-  getListingsSummary
+  getListingsSummary,
+  getListingExpirationGroups
 };

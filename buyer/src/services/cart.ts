@@ -145,6 +145,12 @@ export interface CartSummary {
   itemCount: number;
 }
 
+export interface ExpirationGroupRequest {
+  type: "never_expires" | "expires";
+  count: number;
+  date?: string;
+}
+
 export interface AddToCartRequest {
   listingId: string;
   title: string;
@@ -163,6 +169,7 @@ export interface AddToCartRequest {
     platform?: string;
     region?: string;
   };
+  expirationGroups?: ExpirationGroupRequest[];
 }
 
 export interface UpdateCartItemRequest {

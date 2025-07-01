@@ -4,15 +4,21 @@ import React from "react";
 import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
+import { addItemToWishlistAsync, removeItemFromWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
+import { selectIsAuthenticated } from "@/redux/features/auth-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
 import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const SingleListItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const isInWishlist = useAppSelector(state => selectIsItemInWishlist(state, item.id));
+  const isWishlistLoading = useAppSelector(selectWishlistLoading);
 
 
 
@@ -24,16 +30,36 @@ const SingleListItem = ({ item }: { item: Product }) => {
 
 
   const handleItemToWishList = async () => {
-    try {
-      await dispatch(
-        addItemToWishlistAsync({
-          ...item,
-          status: "available",
-          quantity: 1,
-        })
-      ).unwrap();
-    } catch (error) {
-      console.error('Error updating wishlist:', error);
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error('Please login to add items to wishlist');
+      setTimeout(() => {
+        // Get current URL for redirect after login
+        const currentUrl = window.location.pathname + window.location.search;
+        const encodedRedirect = encodeURIComponent(currentUrl);
+        router.push(`/signin?redirect=${encodedRedirect}`);
+      }, 2000);
+      return;
+    }
+
+    if (!isWishlistLoading) {
+      try {
+        if (isInWishlist) {
+          await dispatch(removeItemFromWishlistAsync(item.id)).unwrap();
+          toast.success("Removed from wishlist!");
+        } else {
+          await dispatch(
+            addItemToWishlistAsync({
+              ...item,
+              status: "available",
+              quantity: 1,
+            })
+          ).unwrap();
+          toast.success("Added to wishlist!");
+        }
+      } catch (error: any) {
+        toast.error(error || "Failed to update wishlist");
+      }
     }
   };
 

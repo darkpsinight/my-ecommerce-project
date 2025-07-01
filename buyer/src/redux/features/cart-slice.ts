@@ -62,8 +62,11 @@ const getErrorMessage = (error: any, defaultMessage: string): string => {
 // Helper function to handle redirect after authentication error
 const handleAuthRedirect = () => {
   setTimeout(() => {
+    // Get current URL for redirect after login
+    const currentUrl = window.location.pathname + window.location.search;
+    const encodedRedirect = encodeURIComponent(currentUrl);
     // Use window.location for redirect since we're in a Redux slice
-    window.location.href = '/signin';
+    window.location.href = `/signin?redirect=${encodedRedirect}`;
   }, 2000);
 };
 

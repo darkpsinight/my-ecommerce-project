@@ -3,7 +3,7 @@ import React from "react";
 import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
+import { addItemToWishlistAsync, removeItemFromWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
 import { selectIsAuthenticated } from "@/redux/features/auth-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
 import Link from "next/link";
@@ -36,22 +36,31 @@ const SingleGridItem = ({ item }: { item: Product }) => {
     if (!isAuthenticated) {
       toast.error('Please login to add items to wishlist');
       setTimeout(() => {
-        router.push('/signin');
+        // Get current URL for redirect after login
+        const currentUrl = window.location.pathname + window.location.search;
+        const encodedRedirect = encodeURIComponent(currentUrl);
+        router.push(`/signin?redirect=${encodedRedirect}`);
       }, 2000);
       return;
     }
 
     if (!isWishlistLoading) {
       try {
-        await dispatch(
-          addItemToWishlistAsync({
-            ...item,
-            status: "available",
-            quantity: 1,
-          })
-        ).unwrap();
-      } catch (error) {
-        console.error('Error updating wishlist:', error);
+        if (isInWishlist) {
+          await dispatch(removeItemFromWishlistAsync(item.id)).unwrap();
+          toast.success("Removed from wishlist!");
+        } else {
+          await dispatch(
+            addItemToWishlistAsync({
+              ...item,
+              status: "available",
+              quantity: 1,
+            })
+          ).unwrap();
+          toast.success("Added to wishlist!");
+        }
+      } catch (error: any) {
+        toast.error(error || "Failed to update wishlist");
       }
     }
   };

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { AppDispatch, useAppSelector } from "@/redux/store";
 import { addItemToWishlistAsync, removeItemFromWishlistAsync, selectIsItemInWishlist, selectWishlistLoading } from "@/redux/features/wishlist-slice";
+import { selectIsAuthenticated } from "@/redux/features/auth-slice";
 import { useDispatch } from "react-redux";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,16 +13,19 @@ import { resetQuickView } from "@/redux/features/quickView-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
 import toast from "react-hot-toast";
 import { sanitizeHtml } from "@/utils/htmlSanitizer";
+import { useRouter } from "next/navigation";
 
 const QuickViewModal = () => {
   const { isModalOpen, closeModal } = useModalContext();
   const { openPreviewModal } = usePreviewSlider();
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const router = useRouter();
 
   const dispatch = useDispatch<AppDispatch>();
 
   // get the product data
   const product = useAppSelector((state) => state.quickViewReducer.value);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const isInWishlist = useAppSelector(state => product ? selectIsItemInWishlist(state, product.id) : false);
   const isWishlistLoading = useAppSelector(selectWishlistLoading);
 
@@ -52,6 +56,19 @@ const QuickViewModal = () => {
 
   // toggle wishlist
   const handleToggleWishlist = async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error('Please login to manage your wishlist');
+      setTimeout(() => {
+        closeModal(); // Close the modal first
+        // Get current URL for redirect after login
+        const currentUrl = window.location.pathname + window.location.search;
+        const encodedRedirect = encodeURIComponent(currentUrl);
+        router.push(`/signin?redirect=${encodedRedirect}`);
+      }, 2000);
+      return;
+    }
+
     if (product && !isWishlistLoading) {
       try {
         if (isInWishlist) {

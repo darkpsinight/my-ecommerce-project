@@ -334,6 +334,18 @@ const ShopDetails = () => {
       return;
     }
 
+    // Check if user is authenticated before proceeding
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to your cart");
+      setTimeout(() => {
+        // Get current URL for redirect after login
+        const currentUrl = window.location.pathname + window.location.search;
+        const encodedRedirect = encodeURIComponent(currentUrl);
+        router.push(`/signin?redirect=${encodedRedirect}`);
+      }, 2000);
+      return;
+    }
+
     if (!product.sellerId) {
       toast.error("Invalid product data");
       return;

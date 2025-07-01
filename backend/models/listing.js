@@ -400,17 +400,74 @@ listingSchema.methods.hasAvailableCodes = function(requestedQuantity = 1) {
   return availableCount >= requestedQuantity;
 };
 
+// Method to get active codes sorted by expiration date priority
+listingSchema.methods.getActiveCodesSortedByExpiration = function() {
+  if (!this.codes || this.codes.length === 0) {
+    return [];
+  }
+
+  // Filter active codes
+  const activeCodes = this.codes.filter(code => code.soldStatus === "active");
+
+  // Sort by expiration date priority
+  // 1. Codes with expiration dates first (closest to expiration first)
+  // 2. Codes without expiration dates last (by creation order)
+  return activeCodes.sort((a, b) => {
+    const aHasExpiration = a.expirationDate && a.expirationDate !== null;
+    const bHasExpiration = b.expirationDate && b.expirationDate !== null;
+
+    // If both have expiration dates, sort by closest expiration first
+    if (aHasExpiration && bHasExpiration) {
+      return new Date(a.expirationDate) - new Date(b.expirationDate);
+    }
+
+    // If only 'a' has expiration date, it gets priority
+    if (aHasExpiration && !bHasExpiration) {
+      return -1;
+    }
+
+    // If only 'b' has expiration date, it gets priority
+    if (!aHasExpiration && bHasExpiration) {
+      return 1;
+    }
+
+    // If neither has expiration date, maintain original order (stable sort)
+    // We can't rely on array index here, so we'll use codeId as tie-breaker
+    return a.codeId.localeCompare(b.codeId);
+  });
+};
+
+// Method to get codes for purchase with expiration date priority
+listingSchema.methods.getCodesForPurchase = function(quantity = 1) {
+  // Get active codes sorted by expiration date priority
+  const activeCodes = this.getActiveCodesSortedByExpiration();
+
+  if (activeCodes.length < quantity) {
+    throw new Error(`Not enough active codes available. Available: ${activeCodes.length}, Requested: ${quantity}`);
+  }
+
+  // Return the top N codes with highest priority
+  return activeCodes.slice(0, quantity);
+};
+
 // Method to purchase a code - marks one active code as sold and returns the decrypted code
 listingSchema.methods.purchaseCode = function() {
-  // Find the first active code
-  const activeCodeIndex = this.codes.findIndex(code => code.soldStatus === "active");
+  // Get active codes sorted by expiration date priority
+  const activeCodes = this.getActiveCodesSortedByExpiration();
 
-  if (activeCodeIndex === -1) {
+  if (activeCodes.length === 0) {
     throw new Error("No active codes available for purchase");
   }
 
-  // Get the active code
-  const codeObj = this.codes[activeCodeIndex];
+  // Get the first code (highest priority)
+  const codeObj = activeCodes[0];
+  
+  // Find the index in the original codes array
+  const activeCodeIndex = this.codes.findIndex(code => code.codeId === codeObj.codeId);
+
+  if (activeCodeIndex === -1) {
+    throw new Error("Code not found in listing");
+  }
 
   // Decrypt the code
   const decryptedCode = this.decryptCode(codeObj.code, codeObj.iv);

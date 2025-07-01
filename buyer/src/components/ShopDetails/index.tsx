@@ -514,7 +514,7 @@ const ShopDetails = () => {
       />
 
       <PageContainer>
-        <section className="overflow-hidden pt-[50px] sm:pt-[90px] lg:pt-[80px] pb-1 sm:pb-2 bg-gradient-to-br from-blue-light-5 via-white to-purple-50">
+        <section className="overflow-hidden pt-[50px] sm:pt-[90px] lg:pt-[80px] pb-1 sm:pb-2 bg-gradient-to-br via-white to-purple-50">
           {/* Page Title - Hidden but accessible for SEO */}
           <h1 className="sr-only">
             {product?.title} - Digital Product Details

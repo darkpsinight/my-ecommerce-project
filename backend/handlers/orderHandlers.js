@@ -67,14 +67,14 @@ const createOrder = async (request, reply) => {
       }
 
       // Check if listing has enough active codes
-      const activeCodes = listing.codes.filter(code => code.soldStatus === "active");
-      if (activeCodes.length < quantity) {
-        request.log.error(`handlers/createOrder - Not enough codes available for ${listing.title}. Available: ${activeCodes.length}, Requested: ${quantity}`);
-        return sendErrorResponse(reply, 400, `Not enough codes available for ${listing.title}. Available: ${activeCodes.length}, Requested: ${quantity}`);
+      if (!listing.hasAvailableCodes(quantity)) {
+        const availableCount = listing.getAvailableCodesCount();
+        request.log.error(`handlers/createOrder - Not enough codes available for ${listing.title}. Available: ${availableCount}, Requested: ${quantity}`);
+        return sendErrorResponse(reply, 400, `Not enough codes available for ${listing.title}. Available: ${availableCount}, Requested: ${quantity}`);
       }
 
-      // Select codes to purchase
-      const codesToPurchase = activeCodes.slice(0, quantity);
+      // Select codes to purchase with expiration date priority
+      const codesToPurchase = listing.getCodesForPurchase(quantity);
       const unitPrice = listing.discountedPrice || listing.price;
       const itemTotal = unitPrice * quantity;
       totalAmount += itemTotal;
@@ -101,7 +101,7 @@ const createOrder = async (request, reply) => {
         externalId: listing.externalId,
         sellerId: listing.sellerId,
         title: listing.title,
-        activeCodes: activeCodes.length
+        activeCodes: listing.getAvailableCodesCount()
       });
 
       orderItems.push(orderItem);

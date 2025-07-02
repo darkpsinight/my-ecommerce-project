@@ -28,16 +28,7 @@ export const ViewedProductsProvider: React.FC<ViewedProductsProviderProps> = ({ 
   // Show migration notifications
   useEffect(() => {
     if (migrationStatus === 'completed' && migrationResult) {
-      if (migrationResult.successful > 0) {
-        toast.success(
-          `Successfully synced ${migrationResult.successful} recently viewed products to your account!`,
-          {
-            duration: 5000,
-            position: 'bottom-right',
-            icon: '✅'
-          }
-        );
-      }
+      // Success toast removed as per user request - no need to show sync notification
       
       if (migrationResult.failed > 0) {
         toast.error(

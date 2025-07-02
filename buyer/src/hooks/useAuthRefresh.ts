@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setTokens } from '@/redux/features/auth-slice';
 import { AUTH_API } from '@/config/api';
+import { getCrossTabAuth } from '@/services/crossTabAuth';
+import { useTabVisibility } from '@/hooks/useTabVisibility';
 
 // Create a debounce mechanism to prevent multiple refreshes
 let globalRefreshInProgress = false;
@@ -10,10 +12,19 @@ const MIN_REFRESH_INTERVAL = 5000; // 5 seconds minimum between refreshes
 
 export const useAuthRefresh = () => {
   const dispatch = useDispatch();
-  const { token } = useSelector((state: any) => state.authReducer);
+  const { token, isAuthenticated } = useSelector((state: any) => state.authReducer);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const getVerifyToken = (): string | null => {
+    // Try cross-tab service first, then fallback to sessionStorage
+    const crossTabAuth = getCrossTabAuth();
+    const verifyToken = crossTabAuth.getVerifyToken();
+    
+    if (verifyToken) {
+      return verifyToken;
+    }
+    
+    // Fallback to direct sessionStorage access
     if (typeof window !== 'undefined') {
       return sessionStorage.getItem('verifyToken');
     }
@@ -143,6 +154,29 @@ export const useAuthRefresh = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // Add tab visibility detection for proactive token refresh
+  useTabVisibility({
+    onVisible: () => {
+      // When tab becomes visible, check if we need to refresh token
+      const verifyToken = getVerifyToken();
+      if (token && verifyToken && isRefreshAllowed()) {
+        // Small delay to ensure everything is ready
+        setTimeout(() => {
+          refreshToken();
+        }, 500);
+      }
+    },
+    onFocus: () => {
+      // When window gets focus, also check for token refresh
+      const verifyToken = getVerifyToken();
+      if (token && verifyToken && isRefreshAllowed()) {
+        setTimeout(() => {
+          refreshToken();
+        }, 300);
+      }
+    }
+  });
 
   return { refreshToken, isRefreshing };
 }; 

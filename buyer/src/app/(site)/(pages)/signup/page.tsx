@@ -1,4 +1,5 @@
 import Signup from "@/components/Auth/Signup";
+import AuthGuard from "@/components/Auth/AuthGuard";
 import React from "react";
 import { Metadata } from "next";
 import { getPublicConfigs } from "@/services/config";
@@ -23,7 +24,9 @@ async function SignupPage() {
   
   return (
     <main>
-      <Signup appName={configs.APP_NAME} />
+      <AuthGuard redirectIfAuthenticated={true} redirectTo="/">
+        <Signup appName={configs.APP_NAME} />
+      </AuthGuard>
     </main>
   );
 }

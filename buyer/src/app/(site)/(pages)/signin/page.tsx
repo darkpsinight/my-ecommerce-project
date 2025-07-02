@@ -1,4 +1,5 @@
 import Signin from "@/components/Auth/Signin";
+import AuthGuard from "@/components/Auth/AuthGuard";
 import React from "react";
 import { Metadata } from "next";
 import { getPublicConfigs } from "@/services/config";
@@ -23,7 +24,9 @@ async function SigninPage() {
   
   return (
     <main>
-      <Signin appName={configs.APP_NAME} />
+      <AuthGuard redirectIfAuthenticated={true} redirectTo="/">
+        <Signin appName={configs.APP_NAME} />
+      </AuthGuard>
     </main>
   );
 }

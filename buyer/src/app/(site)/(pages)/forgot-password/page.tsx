@@ -1,4 +1,5 @@
 import ForgotPassword from "@/components/Auth/ForgotPassword";
+import AuthGuard from "@/components/Auth/AuthGuard";
 import React from "react";
 import { Metadata } from "next";
 import { getPublicConfigs } from "@/services/config";
@@ -23,7 +24,9 @@ async function ForgotPasswordPage() {
   
   return (
     <main>
-      <ForgotPassword appName={configs.APP_NAME} />
+      <AuthGuard redirectIfAuthenticated={true} redirectTo="/">
+        <ForgotPassword appName={configs.APP_NAME} />
+      </AuthGuard>
     </main>
   );
 }

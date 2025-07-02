@@ -13,7 +13,6 @@ import DigitalPromoBanner from "./PromoBanner/DigitalPromoBannerFixed";
 import FeatureHighlights from "./FeatureHighlights";
 import FloatingActions from "./FloatingActions";
 import ScrollIndicator from "./ScrollIndicator";
-import RecentlyViewedProducts from "../ViewedProducts/RecentlyViewedProducts";
 
 import PricingShowcase from "./PricingShowcase";
 
@@ -31,17 +30,6 @@ const Home = () => {
       <CategoryGrid />
       <FeaturedCarousel />
       <DigitalPromoBanner />
-      <RecentlyViewedProducts 
-        className="my-12 mx-4 lg:mx-8" 
-        maxItems={6}
-        compact={false}
-        onProductClick={(product) => {
-          // Track homepage clicks
-          if (typeof window !== 'undefined') {
-            window.location.href = `/shop-details?id=${product.id}`;
-          }
-        }}
-      />
       <PricingShowcase />
       <FeatureHighlights />
       <DynamicInventory totalProducts={totalProducts} />

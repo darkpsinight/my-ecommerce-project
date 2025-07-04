@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useAuthRefresh } from '@/hooks/useAuthRefresh';
 import { getCrossTabAuth } from '@/services/crossTabAuth';
 import { syncAuthState } from '@/redux/features/auth-slice';
+import { authRefreshManager } from '@/services/authRefreshManager';
+import { useAuthRefresh } from '@/hooks/useAuthRefresh';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -12,9 +13,11 @@ interface AuthProviderProps {
 
 export default function AuthProvider({ children }: AuthProviderProps) {
   const dispatch = useDispatch();
-  const { refreshToken, isRefreshing } = useAuthRefresh();
   const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
   const { token, isAuthenticated } = useSelector((state: any) => state.authReducer);
+  
+  // Initialize the auth refresh hook (this will handle the periodic refresh and tab visibility)
+  useAuthRefresh();
 
   const getVerifyToken = (): string | null => {
     const crossTabAuth = getCrossTabAuth();
@@ -39,33 +42,32 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // Only attempt to refresh if we have verifyToken but no token
-    if (!token && getVerifyToken() && !isRefreshing) {
+    if (!token && getVerifyToken() && !authRefreshManager.isCurrentlyRefreshing()) {
       setHasAttemptedRefresh(true);
       
-      // Small delay to ensure everything is loaded
       const timer = setTimeout(() => {
-        refreshToken();
-      }, 300);
+        authRefreshManager.refreshToken({ source: 'AuthProvider' });
+      }, 2500);
       
       return () => clearTimeout(timer);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, isRefreshing, hasAttemptedRefresh]);
+  }, [token, hasAttemptedRefresh]);
 
   // Set up cross-tab authentication synchronization
   useEffect(() => {
     const crossTabAuth = getCrossTabAuth();
     
     const unsubscribe = crossTabAuth.subscribe((authState) => {
-      // Sync authentication state from other tabs
-      dispatch(syncAuthState({
-        token: authState.token,
-        isAuthenticated: authState.isAuthenticated,
-        lastUpdate: authState.lastUpdate
-      }));
+      if (authState.lastUpdate !== Date.now()) {
+        dispatch(syncAuthState({
+          token: authState.token,
+          isAuthenticated: authState.isAuthenticated,
+          lastUpdate: authState.lastUpdate
+        }));
+      }
     });
 
-    // Cleanup subscription on unmount
     return () => {
       unsubscribe();
     };

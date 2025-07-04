@@ -17,14 +17,14 @@ export const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setTokens: (state, action: PayloadAction<{ token: string; verifyToken: string }>) => {
+    setTokens: (state, action: PayloadAction<{ token: string; verifyToken: string; skipCrossTab?: boolean }>) => {
       const timestamp = Date.now();
       state.token = action.payload.token;
       state.isAuthenticated = true;
       state.lastUpdate = timestamp;
       
-      // Update cross-tab service
-      if (typeof window !== 'undefined') {
+      // Only update cross-tab service if not explicitly skipped (to prevent circular updates)
+      if (typeof window !== 'undefined' && !action.payload.skipCrossTab) {
         const crossTabAuth = getCrossTabAuth();
         crossTabAuth.setTokens(action.payload.token, action.payload.verifyToken);
       }

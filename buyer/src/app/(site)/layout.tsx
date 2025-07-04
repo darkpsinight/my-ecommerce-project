@@ -25,6 +25,8 @@ import CartInitializer from "@/components/Common/CartInitializer";
 import WishlistInitializer from "@/components/Common/WishlistInitializer";
 import { ViewedProductsProvider } from "@/components/ViewedProducts/ViewedProductsProvider";
 import { Toaster } from "react-hot-toast";
+import { AuthRefreshMonitor } from "@/components/Common/AuthRefreshMonitor";
+import { SimpleAuthMonitor } from "@/components/Common/SimpleAuthMonitor";
 
 export default function RootLayout({
   children,
@@ -67,6 +69,7 @@ export default function RootLayout({
                   </ModalProvider>
                   </CartModalProvider>
                 </ViewedProductsProvider>
+                <AuthRefreshMonitor />
               </AuthProvider>
             </ReduxProvider>
             <Toaster 

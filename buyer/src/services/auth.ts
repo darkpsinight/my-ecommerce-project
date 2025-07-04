@@ -36,41 +36,12 @@ const getVerifyToken = (): string | null => {
   return null;
 };
 
-// Function to refresh token
+// Function to refresh token using centralized manager
 const refreshAuthToken = async (): Promise<boolean> => {
   try {
-    const verifyToken = getVerifyToken();
-    if (!verifyToken) {
-      console.log('No verifyToken available for refresh');
-      return false;
-    }
-
-    console.log('Attempting to refresh token...');
-    const response = await fetch(AUTH_API.REFRESH_TOKEN, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': verifyToken,
-      },
-      body: JSON.stringify({}),
-      credentials: 'include',
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.token && data.verifyToken) {
-        // Update Redux store
-        const { store } = require('@/redux/store');
-        const { setTokens } = require('@/redux/features/auth-slice');
-        store.dispatch(setTokens({
-          token: data.token,
-          verifyToken: data.verifyToken
-        }));
-        console.log('Token refreshed successfully in auth service');
-        return true;
-      }
-    }
-    return false;
+    // Use the centralized refresh manager
+    const { authRefreshManager } = await import('./authRefreshManager');
+    return await authRefreshManager.refreshToken({ source: 'auth-service-interceptor' });
   } catch (error) {
     console.error('Token refresh failed in auth service:', error);
     return false;

@@ -7,6 +7,10 @@ const {
   updateExtendedSellerProfile,
   getSellerProfileById
 } = require("../handlers/sellerProfileHandler");
+const {
+  getSellerAnalyticsOverview,
+  getRevenueChartData
+} = require("../handlers/sellerAnalyticsHandler");
 
 const sellerRoutes = async (fastify, opts) => {
   // Get seller profile (basic user info + extended profile)
@@ -349,6 +353,88 @@ const sellerRoutes = async (fastify, opts) => {
         });
       }
     }
+  });
+
+  // VIP Analytics Routes
+  
+  // Get seller analytics overview (VIP feature)
+  fastify.route({
+    method: "GET",
+    url: "/analytics/overview",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      querystring: {
+        type: "object",
+        properties: {
+          timeRange: { 
+            type: "string", 
+            enum: ["7d", "30d", "90d", "1y"],
+            default: "30d" 
+          }
+        }
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                timeRange: { type: "string" },
+                revenue: { type: "object" },
+                sales: { type: "object" },
+                inventory: { type: "object" },
+                customers: { type: "object" },
+                generatedAt: { type: "string", format: "date-time" }
+              }
+            }
+          }
+        }
+      }
+    },
+    handler: getSellerAnalyticsOverview
+  });
+
+  // Get revenue chart data (VIP feature)
+  fastify.route({
+    method: "GET",
+    url: "/analytics/revenue-chart",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      querystring: {
+        type: "object",
+        properties: {
+          period: { 
+            type: "string", 
+            enum: ["daily", "weekly", "monthly"],
+            default: "daily" 
+          },
+          timeRange: { 
+            type: "string", 
+            enum: ["7d", "30d", "90d", "1y"],
+            default: "30d" 
+          }
+        }
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                chartData: { type: "array" },
+                period: { type: "string" },
+                timeRange: { type: "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    handler: getRevenueChartData
   });
 };
 

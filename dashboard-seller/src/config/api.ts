@@ -1,5 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
+export const API_BASE_URL = API_URL;
+
 export const AUTH_API = {
     SIGNUP: `${API_URL}/auth/signup`,
     SIGNIN: `${API_URL}/seller/signin`,

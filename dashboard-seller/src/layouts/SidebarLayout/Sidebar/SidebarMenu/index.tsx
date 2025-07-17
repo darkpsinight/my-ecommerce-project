@@ -32,24 +32,25 @@ import WorkspacePremiumTwoToneIcon from '@mui/icons-material/WorkspacePremiumTwo
 import CameraFrontTwoToneIcon from '@mui/icons-material/CameraFrontTwoTone';
 import DisplaySettingsTwoToneIcon from '@mui/icons-material/DisplaySettingsTwoTone';
 import ListAltTwoToneIcon from '@mui/icons-material/ListAltTwoTone';
+import AnalyticsTwoToneIcon from '@mui/icons-material/AnalyticsTwoTone';
 
 const MenuWrapper = styled(Box)(
   ({ theme }) => `
   .MuiList-root {
-    padding: ${theme.spacing(1)};
+    padding: ${theme.spacing(0.5)};
 
     & > .MuiList-root {
-      padding: 0 ${theme.spacing(0)} ${theme.spacing(1)};
+      padding: 0 ${theme.spacing(0)} ${theme.spacing(0.5)};
     }
   }
 
     .MuiListSubheader-root {
       text-transform: uppercase;
       font-weight: bold;
-      font-size: ${theme.typography.pxToRem(12)};
+      font-size: ${theme.typography.pxToRem(11)};
       color: ${theme.colors.alpha.trueWhite[50]};
-      padding: ${theme.spacing(0, 2.5)};
-      line-height: 1.4;
+      padding: ${theme.spacing(1, 2.5, 0.5, 2.5)};
+      line-height: 1.3;
     }
 `
 );
@@ -80,7 +81,7 @@ const SubMenuWrapper = styled(Box)(
           background-color: transparent;
           width: 100%;
           justify-content: flex-start;
-          padding: ${theme.spacing(1.2, 3)};
+          padding: ${theme.spacing(0.8, 3)};
 
           .MuiButton-startIcon,
           .MuiButton-endIcon {
@@ -217,6 +218,17 @@ function SidebarMenu() {
                   startIcon={<ListAltTwoToneIcon />}
                 >
                   Listings
+                </Button>
+              </ListItem>
+              <ListItem component="div">
+                <Button
+                  disableRipple
+                  component={RouterLink}
+                  onClick={closeSidebar}
+                  to="/dashboards/analytics"
+                  startIcon={<AnalyticsTwoToneIcon />}
+                >
+                  VIP Analytics
                 </Button>
               </ListItem>
               <ListItem component="div">

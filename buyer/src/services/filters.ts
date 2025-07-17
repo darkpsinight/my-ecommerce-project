@@ -45,6 +45,9 @@ const FILTER_OPTIONS_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 const priceRangeCache: Record<string, { data: PriceRange; timestamp: number }> = {};
 const PRICE_RANGE_CACHE_EXPIRY = 1 * 60 * 1000; // 1 minute
 
+// Prevent concurrent requests
+let filterOptionsPromise: Promise<FilterOptions | null> | null = null;
+
 /**
  * Get dynamic filter options based on active listings
  */
@@ -55,52 +58,66 @@ export const getFilterOptions = async (): Promise<FilterOptions | null> => {
     return filterOptionsCache.data;
   }
 
-  try {
-    console.log('Fetching filter options from API');
-    const response = await api.get<ApiResponse<FilterOptions>>('/public/filter-options');
-
-    if (response.data && response.data.success) {
-      const rawData = response.data.data;
-      
-      // Transform backend data to match frontend interface
-      const data: FilterOptions = {
-        categories: rawData.categories.map((cat: any) => ({
-          value: cat._id,
-          label: cat.name,
-          count: cat.count
-        })),
-        platforms: rawData.platforms.map((platform: any) => ({
-          value: platform.name,
-          label: platform.name,
-          count: platform.count
-        })),
-        regions: rawData.regions.map((region: any) => ({
-          value: region.name,
-          label: region.name,
-          count: region.count
-        })),
-        priceRange: rawData.priceRange
-      };
-      
-      // Cache the result
-      filterOptionsCache = {
-        data,
-        timestamp: Date.now()
-      };
-
-      return data;
-    } else {
-      console.error('Failed to fetch filter options:', response.data);
-      return null;
-    }
-  } catch (error: any) {
-    console.error('Error fetching filter options:', error);
-    if (error.response) {
-      console.error('Error response:', error.response.data);
-      console.error('Status code:', error.response.status);
-    }
-    return null;
+  // If there's already a request in progress, wait for it
+  if (filterOptionsPromise) {
+    console.log('Waiting for existing filter options request');
+    return filterOptionsPromise;
   }
+
+  // Create new request promise
+  filterOptionsPromise = (async () => {
+    try {
+      console.log('Fetching filter options from API');
+      const response = await api.get<ApiResponse<FilterOptions>>('/public/filter-options');
+
+      if (response.data && response.data.success) {
+        const rawData = response.data.data;
+        
+        // Transform backend data to match frontend interface
+        const data: FilterOptions = {
+          categories: rawData.categories.map((cat: any) => ({
+            value: cat._id,
+            label: cat.name,
+            count: cat.count
+          })),
+          platforms: rawData.platforms.map((platform: any) => ({
+            value: platform.name,
+            label: platform.name,
+            count: platform.count
+          })),
+          regions: rawData.regions.map((region: any) => ({
+            value: region.name,
+            label: region.name,
+            count: region.count
+          })),
+          priceRange: rawData.priceRange
+        };
+        
+        // Cache the result
+        filterOptionsCache = {
+          data,
+          timestamp: Date.now()
+        };
+
+        return data;
+      } else {
+        console.error('Failed to fetch filter options:', response.data);
+        return null;
+      }
+    } catch (error: any) {
+      console.error('Error fetching filter options:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Status code:', error.response.status);
+      }
+      return null;
+    } finally {
+      // Clear the promise so future requests can be made
+      filterOptionsPromise = null;
+    }
+  })();
+
+  return filterOptionsPromise;
 };
 
 /**

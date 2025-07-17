@@ -183,29 +183,72 @@ const getPriceRange = async (request, reply) => {
       filter.region = region;
     }
 
-    // Add search functionality
+    // Get price range with filters
+    let priceRangePipeline = [{ $match: filter }];
+    
+    // Add search functionality if search term is provided
     if (search) {
-      const searchRegex = { $regex: search, $options: 'i' };
-      filter.$or = [
-        { title: searchRegex },
-        { description: searchRegex },
-        { platform: searchRegex },
-        { region: searchRegex },
-        { tags: { $in: [searchRegex] } }
+      priceRangePipeline = [
+        { $match: filter },
+        
+        // Lookup user data
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'sellerId',
+            foreignField: 'uid',
+            as: 'user'
+          }
+        },
+        
+        // Lookup seller profile data
+        {
+          $lookup: {
+            from: 'sellerprofiles',
+            localField: 'user._id',
+            foreignField: 'userId',
+            as: 'sellerProfile'
+          }
+        },
+        
+        // Add computed fields
+        {
+          $addFields: {
+            sellerMarketName: {
+              $ifNull: [
+                { $arrayElemAt: ['$sellerProfile.marketName', 0] },
+                { $arrayElemAt: ['$sellerProfile.nickname', 0] }
+              ]
+            }
+          }
+        },
+        
+        // Apply search filter
+        {
+          $match: {
+            $or: [
+              { title: { $regex: search, $options: 'i' } },
+              { description: { $regex: search, $options: 'i' } },
+              { platform: { $regex: search, $options: 'i' } },
+              { region: { $regex: search, $options: 'i' } },
+              { tags: { $elemMatch: { $regex: search, $options: 'i' } } },
+              { sellerMarketName: { $regex: search, $options: 'i' } }
+            ]
+          }
+        }
       ];
     }
-
-    // Get price range with filters
-    const priceRange = await Listing.aggregate([
-      { $match: filter },
-      {
-        $group: {
-          _id: null,
-          min: { $min: "$price" },
-          max: { $max: "$price" }
-        }
+    
+    // Add the group stage for price range calculation
+    priceRangePipeline.push({
+      $group: {
+        _id: null,
+        min: { $min: "$price" },
+        max: { $max: "$price" }
       }
-    ]);
+    });
+
+    const priceRange = await Listing.aggregate(priceRangePipeline);
 
     const result = priceRange.length > 0 ? {
       min: priceRange[0].min,

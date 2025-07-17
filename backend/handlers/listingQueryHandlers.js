@@ -20,16 +20,10 @@ const getListings = async (request, reply) => {
     if (region && region !== 'all') filter.region = region;
     if (status) filter.status = status;
 
-    // Add search functionality
+    // Add search functionality - will be handled in aggregation pipeline if search is present
+    let hasSearch = false;
     if (search) {
-      const searchRegex = { $regex: search, $options: 'i' };
-      filter.$or = [
-        { title: searchRegex },
-        { description: searchRegex },
-        { platform: searchRegex },
-        { region: searchRegex },
-        { tags: { $in: [searchRegex] } }
-      ];
+      hasSearch = true;
     }
 
     // Handle sellerId - could be user UID or seller profile externalId
@@ -96,46 +90,145 @@ const getListings = async (request, reply) => {
         break;
     }
 
-    // Find listings with filters and pagination
-    const listings = await Listing.find(filter)
-      .select("+codes") // Include codes for virtual field calculations
-      .populate('categoryId', 'name')
-      .skip(skip)
-      .limit(limit)
-      .sort(sort);
+    let listings, total;
 
-    // Perform real-time expiration check on the results
-    processListingsExpiration(listings, request.server);
-
-    // Count total listings matching the filter
-    const total = await Listing.countDocuments(filter);
-
-    // Transform listings to use externalId as primary identifier and add market name
-    const transformedListings = await Promise.all(listings.map(async (listing) => {
-      const listingObj = listing.toObject();
-      const { _id, codes, ...cleanedListing } = listingObj;
-      
-      // Add category name from the populated field
-      if (listingObj.categoryId && listingObj.categoryId.name) {
-        cleanedListing.categoryName = listingObj.categoryId.name;
-        cleanedListing.categoryId = listingObj.categoryId._id;
-      }
-      
-      // Get seller profile to add market name
-      try {
-        const user = await User.findOne({ uid: listing.sellerId });
-        if (user) {
-          const sellerProfile = await SellerProfile.findOne({ userId: user._id });
-          if (sellerProfile) {
-            cleanedListing.sellerMarketName = sellerProfile.marketName || sellerProfile.nickname || 'Unknown Seller';
+    if (hasSearch) {
+      // Use aggregation pipeline for search functionality
+      const pipeline = [
+        // Match basic filters first
+        { $match: filter },
+        
+        // Lookup user data
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'sellerId',
+            foreignField: 'uid',
+            as: 'user'
+          }
+        },
+        
+        // Lookup seller profile data
+        {
+          $lookup: {
+            from: 'sellerprofiles',
+            localField: 'user._id',
+            foreignField: 'userId',
+            as: 'sellerProfile'
+          }
+        },
+        
+        // Lookup category data
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'categoryId',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        
+        // Add computed fields
+        {
+          $addFields: {
+            sellerMarketName: {
+              $ifNull: [
+                { $arrayElemAt: ['$sellerProfile.marketName', 0] },
+                { $arrayElemAt: ['$sellerProfile.nickname', 0] }
+              ]
+            },
+            categoryName: { $arrayElemAt: ['$category.name', 0] }
+          }
+        },
+        
+        // Apply search filter
+        {
+          $match: {
+            $or: [
+              { title: { $regex: search, $options: 'i' } },
+              { description: { $regex: search, $options: 'i' } },
+              { platform: { $regex: search, $options: 'i' } },
+              { region: { $regex: search, $options: 'i' } },
+              { tags: { $elemMatch: { $regex: search, $options: 'i' } } },
+              { sellerMarketName: { $regex: search, $options: 'i' } }
+            ]
+          }
+        },
+        
+        // Sort
+        { $sort: sort },
+        
+        // Facet for pagination and count
+        {
+          $facet: {
+            listings: [
+              { $skip: skip },
+              { $limit: limit }
+            ],
+            totalCount: [
+              { $count: "count" }
+            ]
           }
         }
-      } catch (error) {
-        request.log.error(`Error fetching seller profile for listing ${listing.externalId}: ${error.message}`);
-      }
+      ];
+
+      const result = await Listing.aggregate(pipeline);
+      listings = result[0].listings || [];
+      total = result[0].totalCount[0]?.count || 0;
+
+      // Convert aggregation results to Mongoose documents for expiration processing
+      const listingDocs = listings.map(doc => new Listing(doc));
+      processListingsExpiration(listingDocs, request.server);
       
+      // Transform back to plain objects
+      listings = listingDocs.map(doc => doc.toObject());
+    } else {
+      // Use regular find for non-search queries
+      listings = await Listing.find(filter)
+        .select("+codes") // Include codes for virtual field calculations
+        .populate('categoryId', 'name')
+        .skip(skip)
+        .limit(limit)
+        .sort(sort);
+
+      // Perform real-time expiration check on the results
+      processListingsExpiration(listings, request.server);
+
+      // Count total listings matching the filter
+      total = await Listing.countDocuments(filter);
+
+      // Transform to plain objects and add seller market name
+      listings = await Promise.all(listings.map(async (listing) => {
+        const listingObj = listing.toObject();
+        
+        // Add category name from the populated field
+        if (listingObj.categoryId && listingObj.categoryId.name) {
+          listingObj.categoryName = listingObj.categoryId.name;
+          listingObj.categoryId = listingObj.categoryId._id;
+        }
+        
+        // Get seller profile to add market name
+        try {
+          const user = await User.findOne({ uid: listing.sellerId });
+          if (user) {
+            const sellerProfile = await SellerProfile.findOne({ userId: user._id });
+            if (sellerProfile) {
+              listingObj.sellerMarketName = sellerProfile.marketName || sellerProfile.nickname || 'Unknown Seller';
+            }
+          }
+        } catch (error) {
+          request.log.error(`Error fetching seller profile for listing ${listing.externalId}: ${error.message}`);
+        }
+        
+        return listingObj;
+      }));
+    }
+
+    // Clean up the listings data
+    const transformedListings = listings.map(listingObj => {
+      const { _id, codes, user, sellerProfile, category, ...cleanedListing } = listingObj;
       return cleanedListing;
-    }));
+    });
 
     return reply.code(200).send({
       success: true,

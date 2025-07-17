@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { PriceRange } from "@/services/filters";
 
 interface DynamicPriceRangeFilterProps {
@@ -18,10 +18,12 @@ const DynamicPriceRangeFilter = ({
   const [isOpen, setIsOpen] = useState(true);
   const [localRange, setLocalRange] = useState<[number, number]>(selectedRange);
   const [isDragging, setIsDragging] = useState(false);
+  const [inputValue, setInputValue] = useState<string>(selectedRange[1].toString());
 
   // Update local range when props change
   useEffect(() => {
     setLocalRange(selectedRange);
+    setInputValue(selectedRange[1].toString());
   }, [selectedRange]);
 
   // Apply changes only when Apply button is clicked
@@ -118,6 +120,7 @@ const DynamicPriceRangeFilter = ({
                     onChange={(e) => {
                       const newMaxValue = Number(e.target.value);
                       setLocalRange([priceRange.min, newMaxValue]);
+                      setInputValue(newMaxValue.toString());
                       // Don't auto-apply changes, wait for Apply button
                     }}
                     onMouseDown={() => setIsDragging(true)}
@@ -145,17 +148,54 @@ const DynamicPriceRangeFilter = ({
                     $
                   </span>
                   <input
-                    type="number"
-                    min={priceRange.min}
-                    max={priceRange.max}
-                    value={localRange[1]}
+                    type="text"
+                    value={inputValue}
                     onChange={(e) => {
-                      const newMaxValue = Number(e.target.value);
-                      setLocalRange([priceRange.min, newMaxValue]);
-                      // Don't auto-apply changes, wait for Apply button
+                      const value = e.target.value;
+                      setInputValue(value);
+                      
+                      // Parse the value and update localRange if it's a valid number
+                      const numValue = parseFloat(value);
+                      if (!isNaN(numValue) && numValue >= priceRange.min && numValue <= priceRange.max) {
+                        setLocalRange([priceRange.min, numValue]);
+                      }
                     }}
-                    className="w-full pl-6 pr-3 py-2 border border-gray-3 rounded-lg focus:ring-2 focus:ring-orange focus:border-orange text-sm"
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      const numValue = parseFloat(value);
+                      
+                      // If invalid or out of range, reset to current localRange value
+                      if (isNaN(numValue) || numValue < priceRange.min || numValue > priceRange.max) {
+                        setInputValue(localRange[1].toString());
+                      } else {
+                        // Update both states to ensure consistency
+                        setLocalRange([priceRange.min, numValue]);
+                        setInputValue(numValue.toString());
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      // Allow: backspace, delete, tab, escape, enter, period, and numbers
+                      if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
+                          // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                          (e.keyCode === 65 && e.ctrlKey === true) ||
+                          (e.keyCode === 67 && e.ctrlKey === true) ||
+                          (e.keyCode === 86 && e.ctrlKey === true) ||
+                          (e.keyCode === 88 && e.ctrlKey === true) ||
+                          // Allow home, end, left, right
+                          (e.keyCode >= 35 && e.keyCode <= 39)) {
+                        return;
+                      }
+                      // Ensure that it is a number and stop the keypress
+                      if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className="w-full pl-6 pr-3 py-2 border-0 rounded-lg focus:ring-2 focus:ring-orange focus:outline-none text-sm bg-gray-1 shadow-sm"
+                    placeholder={`${priceRange.min} - ${priceRange.max}`}
                   />
+                </div>
+                <div className="mt-1 text-xs text-dark-4">
+                  Range: ${priceRange.min.toFixed(2)} - ${priceRange.max.toFixed(2)}
                 </div>
               </div>
 

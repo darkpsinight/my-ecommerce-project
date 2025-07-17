@@ -2,7 +2,7 @@
  * Utility functions for exporting data to CSV format
  */
 
-import { Listing, ListingCode } from '../content/dashboards/Listings/types';
+import { Listing, ListingCode } from '../content/Dashboards/Listings/types';
 
 /**
  * Convert an array of listings to CSV format

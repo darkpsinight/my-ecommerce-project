@@ -20,27 +20,27 @@ const Loader = (Component) => (props) =>
 
 // Pages
 
-const Overview = Loader(lazy(() => import('src/content/overview')));
+const Overview = Loader(lazy(() => import('src/content/Overview')));
 const Login = Loader(lazy(() => import('src/content/pages/Auth/Login')));
 
 // Dashboards
 
-const Crypto = Loader(lazy(() => import('src/content/dashboards/Crypto')));
-const Listings = Loader(lazy(() => import('src/content/dashboards/Listings')));
+const Crypto = Loader(lazy(() => import('src/content/Dashboards/Crypto')));
+const Listings = Loader(lazy(() => import('src/content/Dashboards/Listings')));
 
 // Applications
 
 const Messenger = Loader(
-  lazy(() => import('src/content/applications/Messenger'))
+  lazy(() => import('src/content/Applications/Messenger'))
 );
 const Transactions = Loader(
-  lazy(() => import('src/content/applications/Transactions'))
+  lazy(() => import('src/content/Applications/Transactions'))
 );
 const UserProfile = Loader(
-  lazy(() => import('src/content/applications/Users/profile'))
+  lazy(() => import('src/content/Applications/Users/profile'))
 );
 const UserSettings = Loader(
-  lazy(() => import('src/content/applications/Users/settings'))
+  lazy(() => import('src/content/Applications/Users/settings'))
 );
 
 // Components

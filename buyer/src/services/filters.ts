@@ -60,7 +60,27 @@ export const getFilterOptions = async (): Promise<FilterOptions | null> => {
     const response = await api.get<ApiResponse<FilterOptions>>('/public/filter-options');
 
     if (response.data && response.data.success) {
-      const data: FilterOptions = response.data.data;
+      const rawData = response.data.data;
+      
+      // Transform backend data to match frontend interface
+      const data: FilterOptions = {
+        categories: rawData.categories.map((cat: any) => ({
+          value: cat._id,
+          label: cat.name,
+          count: cat.count
+        })),
+        platforms: rawData.platforms.map((platform: any) => ({
+          value: platform.name,
+          label: platform.name,
+          count: platform.count
+        })),
+        regions: rawData.regions.map((region: any) => ({
+          value: region.name,
+          label: region.name,
+          count: region.count
+        })),
+        priceRange: rawData.priceRange
+      };
       
       // Cache the result
       filterOptionsCache = {

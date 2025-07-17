@@ -69,7 +69,7 @@ const DynamicRegionFilter = ({
                     onChange={() => onRegionChange(null)}
                     className="w-4 h-4 text-purple border-gray-3 focus:ring-purple focus:ring-2"
                   />
-                  <span className="text-dark group-hover:text-dark font-medium">
+                  <span className="text-gray-700 group-hover:text-purple font-medium">
                     All Regions
                   </span>
                 </div>
@@ -92,7 +92,7 @@ const DynamicRegionFilter = ({
                       onChange={() => onRegionChange(region.value)}
                       className="w-4 h-4 text-purple border-gray-3 focus:ring-purple focus:ring-2"
                     />
-                    <span className="text-dark group-hover:text-purple font-medium">
+                    <span className="text-gray-700 group-hover:text-purple font-medium">
                       {region.label}
                     </span>
                   </div>

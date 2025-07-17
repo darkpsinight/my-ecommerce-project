@@ -24,28 +24,9 @@ const DynamicPriceRangeFilter = ({
     setLocalRange(selectedRange);
   }, [selectedRange]);
 
-  // Debounced update function
-  const debouncedUpdate = useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout;
-      return (range: [number, number]) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          onRangeChange(range);
-        }, 300); // 300ms debounce
-      };
-    })(),
-    [onRangeChange]
-  );
-
-  const handleRangeChange = (newRange: [number, number]) => {
-    setLocalRange(newRange);
-    debouncedUpdate(newRange);
-  };
-
-  const handleMaxChange = (value: number) => {
-    const newRange: [number, number] = [priceRange.min, Math.max(value, priceRange.min)];
-    handleRangeChange(newRange);
+  // Apply changes only when Apply button is clicked
+  const applyPriceRange = () => {
+    onRangeChange(localRange);
   };
 
   const resetRange = () => {
@@ -54,7 +35,7 @@ const DynamicPriceRangeFilter = ({
     onRangeChange(resetRange);
   };
 
-  const isRangeModified = localRange[1] !== priceRange.max;
+  const isRangeModified = localRange[1] !== selectedRange[1];
 
   return (
     <div className="bg-white rounded-xl shadow-2 border border-gray-3/30 p-5">
@@ -117,10 +98,10 @@ const DynamicPriceRangeFilter = ({
 
               {/* Single Range Slider for Max Price */}
               <div className="relative">
-                <div className="relative h-2 bg-gray-2 rounded-full">
+                <div className="relative h-3 bg-gray-2 rounded-full">
                   {/* Active range track */}
                   <div
-                    className="absolute h-2 bg-gradient-to-r from-orange to-orange-dark rounded-full"
+                    className="absolute h-3 bg-gradient-to-r from-orange to-orange-dark rounded-full transition-all duration-200"
                     style={{
                       left: `0%`,
                       width: `${((localRange[1] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`
@@ -132,15 +113,18 @@ const DynamicPriceRangeFilter = ({
                     type="range"
                     min={priceRange.min}
                     max={priceRange.max}
+                    step="0.01"
                     value={localRange[1]}
                     onChange={(e) => {
                       const newMaxValue = Number(e.target.value);
-                      const newRange: [number, number] = [priceRange.min, newMaxValue];
-                      handleRangeChange(newRange);
+                      setLocalRange([priceRange.min, newMaxValue]);
+                      // Don't auto-apply changes, wait for Apply button
                     }}
                     onMouseDown={() => setIsDragging(true)}
                     onMouseUp={() => setIsDragging(false)}
-                    className="absolute inset-0 w-full h-2 bg-transparent appearance-none cursor-pointer range-slider"
+                    onTouchStart={() => setIsDragging(true)}
+                    onTouchEnd={() => setIsDragging(false)}
+                    className="absolute inset-0 w-full h-3 bg-transparent appearance-none cursor-pointer range-slider-orange"
                   />
                 </div>
 
@@ -167,8 +151,8 @@ const DynamicPriceRangeFilter = ({
                     value={localRange[1]}
                     onChange={(e) => {
                       const newMaxValue = Number(e.target.value);
-                      const newRange: [number, number] = [priceRange.min, newMaxValue];
-                      handleRangeChange(newRange);
+                      setLocalRange([priceRange.min, newMaxValue]);
+                      // Don't auto-apply changes, wait for Apply button
                     }}
                     className="w-full pl-6 pr-3 py-2 border border-gray-3 rounded-lg focus:ring-2 focus:ring-orange focus:border-orange text-sm"
                   />
@@ -177,7 +161,7 @@ const DynamicPriceRangeFilter = ({
 
               {/* Apply Button */}
               <button
-                onClick={() => onRangeChange(localRange)}
+                onClick={applyPriceRange}
                 disabled={!isRangeModified}
                 className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isRangeModified
@@ -193,25 +177,56 @@ const DynamicPriceRangeFilter = ({
       )}
 
       <style jsx>{`
-        .range-slider::-webkit-slider-thumb {
+        .range-slider-orange {
+          -webkit-appearance: none;
           appearance: none;
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #F27430, #E1580E);
-          cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          background: transparent;
+          outline: none;
         }
 
-        .range-slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
+        .range-slider-orange::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 24px;
+          width: 24px;
           border-radius: 50%;
           background: linear-gradient(135deg, #F27430, #E1580E);
           cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          border: 3px solid white;
+          box-shadow: 0 2px 12px rgba(242, 116, 48, 0.3), 0 1px 4px rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
+        }
+
+        .range-slider-orange::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 16px rgba(242, 116, 48, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .range-slider-orange::-moz-range-thumb {
+          height: 24px;
+          width: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #F27430, #E1580E);
+          cursor: pointer;
+          border: 3px solid white;
+          box-shadow: 0 2px 12px rgba(242, 116, 48, 0.3), 0 1px 4px rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
+          -moz-appearance: none;
+        }
+
+        .range-slider-orange::-moz-range-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 16px rgba(242, 116, 48, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .range-slider-orange::-moz-range-track {
+          background: transparent;
+          border: none;
+        }
+
+        .range-slider-orange::-webkit-slider-track {
+          background: transparent;
+          border: none;
         }
       `}</style>
     </div>

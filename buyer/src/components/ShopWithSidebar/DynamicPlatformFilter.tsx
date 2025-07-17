@@ -70,7 +70,7 @@ const DynamicPlatformFilter = ({
                     onChange={() => onPlatformChange(null)}
                     className="w-4 h-4 text-green border-gray-3 focus:ring-green focus:ring-2"
                   />
-                  <span className="text-dark group-hover:text-dark font-medium">
+                  <span className="text-gray-700 group-hover:text-green font-medium">
                     All Platforms
                   </span>
                 </div>
@@ -93,7 +93,7 @@ const DynamicPlatformFilter = ({
                       onChange={() => onPlatformChange(platform.value)}
                       className="w-4 h-4 text-green border-gray-3 focus:ring-green focus:ring-2"
                     />
-                    <span className="text-dark group-hover:text-green font-medium">
+                    <span className="text-gray-700 group-hover:text-green font-medium">
                       {platform.label}
                     </span>
                   </div>

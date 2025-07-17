@@ -47,7 +47,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(searchParams.get("region"));
   const [priceRange, setPriceRange] = useState<[number, number]>([
     0, // Always start with 0 as minimum
-    Number(searchParams.get("maxPrice")) || 100
+    Number(searchParams.get("maxPrice")) || 0 // Will be set when filter options load
   ]);
   const [selectedSeller, setSelectedSeller] = useState<string | null>(sellerId || searchParams.get("seller"));
   const [sellerInfo, setSellerInfo] = useState<Seller | null>(null);
@@ -98,14 +98,14 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
     }
   }, [sellerId, searchParams]);
 
-  // Fetch products from API
+  // Fetch products from API (debounced to prevent excessive calls)
   useEffect(() => {
     // Don't fetch products until seller is resolved
     if (!sellerResolved) {
       return;
     }
 
-    const fetchProductsData = async () => {
+    const timeoutId = setTimeout(async () => {
       setLoading(true);
       try {
         // Prepare filter parameters
@@ -132,11 +132,8 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
         }
 
         // Add price range filter if set and different from default
-        if (dynamicPriceRange) {
-          // Only add maxPrice filter if it's different from the maximum available price
-          if (priceRange[1] < dynamicPriceRange.max) {
-            params.maxPrice = priceRange[1];
-          }
+        if (filterOptions && priceRange[1] < filterOptions.priceRange.max) {
+          params.maxPrice = priceRange[1];
         }
 
         // Add seller filter if selected
@@ -159,16 +156,20 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
         } else {
           console.error("Failed to fetch products");
           setProducts([]);
+          setTotalProducts(0);
+          setTotalPages(1);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
         setProducts([]);
+        setTotalProducts(0);
+        setTotalPages(1);
       } finally {
         setLoading(false);
       }
-    };
+    }, 200); // 200ms debounce to prevent excessive API calls
 
-    fetchProductsData();
+    return () => clearTimeout(timeoutId);
   }, [
     currentPage,
     selectedCategory,
@@ -179,7 +180,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
     sellerResolved,
     searchQuery,
     sortBy,
-    dynamicPriceRange,
+    filterOptions,
   ]);
 
   const sortOptions: SortOption[] = [
@@ -189,35 +190,45 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
     { label: "Price: High to Low", value: "price_high" },
   ];
 
-  // Load filter options on component mount
+  // Load filter options on component mount (only once)
   useEffect(() => {
+    let isMounted = true; // Flag to prevent double execution in StrictMode
+
     const loadFilterOptions = async () => {
+      if (!isMounted) return; // Prevent execution if component unmounted
+      
       setFilterLoading(true);
       setFilterError(null);
       try {
         const options = await getFilterOptions();
-        if (options) {
+        if (options && isMounted) {
           setFilterOptions(options);
           // Initialize price range with dynamic values, considering URL parameters
           const maxPriceFromUrl = Number(searchParams.get("maxPrice"));
-          setPriceRange([
+          const initialPriceRange: [number, number] = [
             options.priceRange.min, 
-            maxPriceFromUrl || options.priceRange.max
-          ]);
+            maxPriceFromUrl && maxPriceFromUrl > 0 ? maxPriceFromUrl : options.priceRange.max
+          ];
+          setPriceRange(initialPriceRange);
+          console.log("Setting initial price range:", initialPriceRange, "from options:", options.priceRange);
           setDynamicPriceRange(options.priceRange);
         } else {
-          setFilterError("Failed to load filter options. Please try again.");
+          if (isMounted) setFilterError("Failed to load filter options. Please try again.");
         }
       } catch (error) {
         console.error("Failed to load filter options:", error);
-        setFilterError("Unable to connect to the server. Please check your connection.");
+        if (isMounted) setFilterError("Unable to connect to the server. Please check your connection.");
       } finally {
-        setFilterLoading(false);
+        if (isMounted) setFilterLoading(false);
       }
     };
 
     loadFilterOptions();
-  }, []);
+
+    return () => {
+      isMounted = false; // Cleanup flag
+    };
+  }, []); // Only run once on mount
 
   // Update URL parameters when filters change
   const updateUrlParams = (filters: Record<string, any>) => {
@@ -244,34 +255,8 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
     router.replace(newUrl, { scroll: false });
   };
 
-  // Load dynamic price range when filters change
-  useEffect(() => {
-    const loadPriceRange = async () => {
-      if (!filterOptions) return;
-
-      try {
-        const filters = {
-          ...(selectedCategory && { categoryId: selectedCategory }),
-          ...(selectedPlatform && { platform: selectedPlatform }),
-          ...(selectedRegion && { region: selectedRegion }),
-          ...(searchQuery.trim() && { search: searchQuery.trim() })
-        };
-
-        const priceRangeData = await getPriceRange(filters);
-        if (priceRangeData) {
-          setDynamicPriceRange(priceRangeData);
-          // Only update price range if it's not been manually set by user
-          if (priceRange[0] === filterOptions.priceRange.min && priceRange[1] === filterOptions.priceRange.max) {
-            setPriceRange([priceRangeData.min, priceRangeData.max]);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load dynamic price range:", error);
-      }
-    };
-
-    loadPriceRange();
-  }, [selectedCategory, selectedPlatform, selectedRegion, searchQuery, filterOptions]);
+  // Load dynamic price range when filters change (debounced) - REMOVED TO PREVENT DOUBLE API CALLS
+  // The price range will be updated only when filter options are loaded initially
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -287,20 +272,36 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
     
     // Clear URL parameters
     router.replace('/products', { scroll: false });
+    
+    // Prevent focus on price input after clearing filters
+    setTimeout(() => {
+      if (document.activeElement && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }, 100);
   };
 
-  // Update URL when filters change
+  // Reset page to 1 when filters change
   useEffect(() => {
-    const filters = {
-      category: selectedCategory,
-      platform: selectedPlatform,
-      region: selectedRegion,
-      search: searchQuery.trim(),
-      sort: sortBy,
-      priceRange: priceRange
-    };
-    
-    updateUrlParams(filters);
+    setCurrentPage(1);
+  }, [selectedCategory, selectedPlatform, selectedRegion, searchQuery, priceRange]);
+
+  // Update URL when filters change (debounced to prevent excessive updates)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const filters = {
+        category: selectedCategory,
+        platform: selectedPlatform,
+        region: selectedRegion,
+        search: searchQuery.trim(),
+        sort: sortBy,
+        priceRange: priceRange
+      };
+      
+      updateUrlParams(filters);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [selectedCategory, selectedPlatform, selectedRegion, searchQuery, sortBy, priceRange, filterOptions]);
 
   useEffect(() => {

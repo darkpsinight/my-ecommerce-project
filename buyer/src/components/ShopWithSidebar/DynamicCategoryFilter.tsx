@@ -69,7 +69,7 @@ const DynamicCategoryFilter = ({
                     onChange={() => onCategoryChange(null)}
                     className="w-4 h-4 text-blue border-gray-3 focus:ring-blue focus:ring-2"
                   />
-                  <span className="text-dark group-hover:text-dark font-medium">
+                  <span className="text-gray-700 group-hover:text-blue font-medium">
                     All Categories
                   </span>
                 </div>
@@ -92,7 +92,7 @@ const DynamicCategoryFilter = ({
                       onChange={() => onCategoryChange(category.value)}
                       className="w-4 h-4 text-blue border-gray-3 focus:ring-blue focus:ring-2"
                     />
-                    <span className="text-dark group-hover:text-blue font-medium">
+                    <span className="text-gray-700 group-hover:text-blue font-medium">
                       {category.label}
                     </span>
                   </div>

@@ -129,8 +129,35 @@ const listingSchema = new mongoose.Schema({
   }
 });
 
-// Add compound index for status to optimize queries
+// Add compound indexes for efficient filtering and querying
 listingSchema.index({ status: 1 });
+listingSchema.index({ status: 1, categoryId: 1 });
+listingSchema.index({ status: 1, platform: 1 });
+listingSchema.index({ status: 1, region: 1 });
+listingSchema.index({ status: 1, price: 1 });
+listingSchema.index({ status: 1, categoryId: 1, price: 1 });
+listingSchema.index({ status: 1, platform: 1, price: 1 });
+listingSchema.index({ status: 1, createdAt: -1 });
+listingSchema.index({ price: 1 });
+listingSchema.index({ price: -1 });
+
+// Text index for search functionality
+listingSchema.index({
+  title: 'text',
+  description: 'text', 
+  platform: 'text',
+  region: 'text',
+  tags: 'text'
+}, {
+  name: 'search_text_index',
+  weights: {
+    title: 10,
+    platform: 5,
+    description: 3,
+    region: 2,
+    tags: 1
+  }
+});
 
 // Virtual field for quantity of active codes
 listingSchema.virtual('quantityOfActiveCodes').get(function() {

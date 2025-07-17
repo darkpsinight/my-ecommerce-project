@@ -1,21 +1,31 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
-import CustomSelect from "./CustomSelect";
-import CategoryDropdown from "./CategoryDropdown";
-import GenderDropdown from "./GenderDropdown";
-import SizeDropdown from "./SizeDropdown";
-import ColorsDropdwon from "./ColorsDropdwon";
-import PriceDropdown from "./PriceDropdown";
+import { useSearchParams, useRouter } from "next/navigation";
 import SingleGridItem from "../Shop/SingleGridItem";
 import SingleListItem from "../Shop/SingleListItem";
 import PageContainer from "../Common/PageContainer";
 import ProductCardSkeleton from "../Common/ProductCardSkeleton";
 import { getProducts } from "@/services/product";
 import { getSellerById } from "@/services/seller";
+import { getFilterOptions, getPriceRange, FilterOptions, PriceRange } from "@/services/filters";
 import { Product } from "@/types/product";
 import { Seller } from "@/types/seller";
+import DynamicCategoryFilter from "./DynamicCategoryFilter";
+import DynamicPlatformFilter from "./DynamicPlatformFilter";
+import DynamicRegionFilter from "./DynamicRegionFilter";
+import DynamicPriceRangeFilter from "./DynamicPriceRangeFilter";
+import SortingSelect, { SortOption } from "./SortingSelect";
+import SearchInput from "./SearchInput";
+import ActiveFilters from "./ActiveFilters";
+import FilterSkeleton from "./FilterSkeleton";
+import ErrorBoundary from "./ErrorBoundary";
+import { generateShareableUrl, hasActiveFilters, validateFilters } from "@/utils/filterHelpers";
+
+// Import test utilities for development
+if (process.env.NODE_ENV === 'development') {
+  import('@/utils/testFilters');
+}
 
 interface ShopWithSidebarProps {
   sellerId?: string;
@@ -23,6 +33,7 @@ interface ShopWithSidebarProps {
 
 const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [productStyle, setProductStyle] = useState("grid");
   const [productSidebar, setProductSidebar] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
@@ -31,13 +42,24 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
-  const [selectedSeller, setSelectedSeller] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category"));
+  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(searchParams.get("platform"));
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(searchParams.get("region"));
+  const [priceRange, setPriceRange] = useState<[number, number]>([
+    0, // Always start with 0 as minimum
+    Number(searchParams.get("maxPrice")) || 100
+  ]);
+  const [selectedSeller, setSelectedSeller] = useState<string | null>(sellerId || searchParams.get("seller"));
   const [sellerInfo, setSellerInfo] = useState<Seller | null>(null);
   const [sellerResolved, setSellerResolved] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
+  const [sortBy, setSortBy] = useState<string>(searchParams.get("sort") || "newest");
+  
+  // Filter data states
+  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
+  const [dynamicPriceRange, setDynamicPriceRange] = useState<PriceRange | null>(null);
+  const [filterLoading, setFilterLoading] = useState(true);
+  const [filterError, setFilterError] = useState<string | null>(null);
 
   const handleStickyMenu = () => {
     if (window.scrollY >= 80) {
@@ -91,6 +113,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
           page: currentPage,
           limit: 12,
           status: "active", // Only show active listings
+          sortBy: sortBy, // Add sorting
         };
 
         // Add category filter if selected
@@ -103,12 +126,17 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
           params.platform = selectedPlatform;
         }
 
-        // Add price range filter if set
-        if (priceRange[0] > 0) {
-          params.minPrice = priceRange[0];
+        // Add region filter if selected
+        if (selectedRegion) {
+          params.region = selectedRegion;
         }
-        if (priceRange[1] < 100) {
-          params.maxPrice = priceRange[1];
+
+        // Add price range filter if set and different from default
+        if (dynamicPriceRange) {
+          // Only add maxPrice filter if it's different from the maximum available price
+          if (priceRange[1] < dynamicPriceRange.max) {
+            params.maxPrice = priceRange[1];
+          }
         }
 
         // Add seller filter if selected
@@ -145,65 +173,135 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
     currentPage,
     selectedCategory,
     selectedPlatform,
+    selectedRegion,
     priceRange,
     selectedSeller,
     sellerResolved,
     searchQuery,
+    sortBy,
+    dynamicPriceRange,
   ]);
 
-  const options = [
-    { label: "Latest Products", value: "0" },
-    { label: "Best Selling", value: "1" },
-    { label: "Old Products", value: "2" },
+  const sortOptions: SortOption[] = [
+    { label: "Newest First", value: "newest" },
+    { label: "Oldest First", value: "oldest" },
+    { label: "Price: Low to High", value: "price_low" },
+    { label: "Price: High to Low", value: "price_high" },
   ];
 
-  const categories = [
-    {
-      name: "Desktop",
-      products: 10,
-      isRefined: true,
-    },
-    {
-      name: "Laptop",
-      products: 12,
-      isRefined: false,
-    },
-    {
-      name: "Monitor",
-      products: 30,
-      isRefined: false,
-    },
-    {
-      name: "UPS",
-      products: 23,
-      isRefined: false,
-    },
-    {
-      name: "Phone",
-      products: 10,
-      isRefined: false,
-    },
-    {
-      name: "Watch",
-      products: 13,
-      isRefined: false,
-    },
-  ];
+  // Load filter options on component mount
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      setFilterLoading(true);
+      setFilterError(null);
+      try {
+        const options = await getFilterOptions();
+        if (options) {
+          setFilterOptions(options);
+          // Initialize price range with dynamic values, considering URL parameters
+          const maxPriceFromUrl = Number(searchParams.get("maxPrice"));
+          setPriceRange([
+            options.priceRange.min, 
+            maxPriceFromUrl || options.priceRange.max
+          ]);
+          setDynamicPriceRange(options.priceRange);
+        } else {
+          setFilterError("Failed to load filter options. Please try again.");
+        }
+      } catch (error) {
+        console.error("Failed to load filter options:", error);
+        setFilterError("Unable to connect to the server. Please check your connection.");
+      } finally {
+        setFilterLoading(false);
+      }
+    };
 
-  const genders = [
-    {
-      name: "Men",
-      products: 10,
-    },
-    {
-      name: "Women",
-      products: 23,
-    },
-    {
-      name: "Unisex",
-      products: 8,
-    },
-  ];
+    loadFilterOptions();
+  }, []);
+
+  // Update URL parameters when filters change
+  const updateUrlParams = (filters: Record<string, any>) => {
+    const params = new URLSearchParams();
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "" && value !== "newest") {
+        if (Array.isArray(value)) {
+          // Handle price range
+          if (key === "priceRange" && filterOptions) {
+            // Only set maxPrice if it's different from the maximum available price
+            if (value[1] !== filterOptions.priceRange.max) params.set("maxPrice", value[1].toString());
+          }
+        } else {
+          params.set(key, value.toString());
+        }
+      }
+    });
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `?${queryString}` : '/products';
+    
+    // Use replace to avoid creating browser history entries for every filter change
+    router.replace(newUrl, { scroll: false });
+  };
+
+  // Load dynamic price range when filters change
+  useEffect(() => {
+    const loadPriceRange = async () => {
+      if (!filterOptions) return;
+
+      try {
+        const filters = {
+          ...(selectedCategory && { categoryId: selectedCategory }),
+          ...(selectedPlatform && { platform: selectedPlatform }),
+          ...(selectedRegion && { region: selectedRegion }),
+          ...(searchQuery.trim() && { search: searchQuery.trim() })
+        };
+
+        const priceRangeData = await getPriceRange(filters);
+        if (priceRangeData) {
+          setDynamicPriceRange(priceRangeData);
+          // Only update price range if it's not been manually set by user
+          if (priceRange[0] === filterOptions.priceRange.min && priceRange[1] === filterOptions.priceRange.max) {
+            setPriceRange([priceRangeData.min, priceRangeData.max]);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load dynamic price range:", error);
+      }
+    };
+
+    loadPriceRange();
+  }, [selectedCategory, selectedPlatform, selectedRegion, searchQuery, filterOptions]);
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSelectedCategory(null);
+    setSelectedPlatform(null);
+    setSelectedRegion(null);
+    setSearchQuery("");
+    setSortBy("newest");
+    if (filterOptions) {
+      setPriceRange([filterOptions.priceRange.min, filterOptions.priceRange.max]);
+    }
+    setCurrentPage(1);
+    
+    // Clear URL parameters
+    router.replace('/products', { scroll: false });
+  };
+
+  // Update URL when filters change
+  useEffect(() => {
+    const filters = {
+      category: selectedCategory,
+      platform: selectedPlatform,
+      region: selectedRegion,
+      search: searchQuery.trim(),
+      sort: sortBy,
+      priceRange: priceRange
+    };
+    
+    updateUrlParams(filters);
+  }, [selectedCategory, selectedPlatform, selectedRegion, searchQuery, sortBy, priceRange, filterOptions]);
 
   useEffect(() => {
     window.addEventListener("scroll", handleStickyMenu);
@@ -465,26 +563,105 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
                             Smart Filters
                           </p>
                         </div>
-                        <button className="text-blue-dark hover:text-blue font-medium px-3 py-1.5 rounded-lg hover:bg-white/50 transition-all duration-200">
+                        <button 
+                          onClick={clearAllFilters}
+                          className="text-blue-dark hover:text-blue font-medium px-3 py-1.5 rounded-lg hover:bg-white/50 transition-all duration-200"
+                        >
                           Clear All
                         </button>
                       </div>
                     </div>
 
-                    {/* <!-- category box --> */}
-                    <CategoryDropdown categories={categories} />
+                    {/* <!-- Search Box --> */}
+                    <SearchInput 
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      loading={loading}
+                    />
 
-                    {/* <!-- gender box --> */}
-                    <GenderDropdown genders={genders} />
+                    {/* <!-- Category Filter --> */}
+                    {filterLoading ? (
+                      <FilterSkeleton title="Categories" itemCount={6} />
+                    ) : filterError ? (
+                      <ErrorBoundary 
+                        title="Categories" 
+                        error={filterError}
+                        onRetry={() => window.location.reload()}
+                      />
+                    ) : (
+                      <DynamicCategoryFilter 
+                        categories={filterOptions?.categories || []}
+                        selectedCategory={selectedCategory}
+                        onCategoryChange={setSelectedCategory}
+                        loading={filterLoading}
+                      />
+                    )}
 
-                    {/* // <!-- size box --> */}
-                    <SizeDropdown />
+                    {/* <!-- Platform Filter --> */}
+                    {filterLoading ? (
+                      <FilterSkeleton title="Platforms" itemCount={5} />
+                    ) : filterError ? (
+                      <ErrorBoundary 
+                        title="Platforms" 
+                        error={filterError}
+                        onRetry={() => window.location.reload()}
+                      />
+                    ) : (
+                      <DynamicPlatformFilter 
+                        platforms={filterOptions?.platforms || []}
+                        selectedPlatform={selectedPlatform}
+                        onPlatformChange={setSelectedPlatform}
+                        loading={filterLoading}
+                      />
+                    )}
 
-                    {/* // <!-- color box --> */}
-                    <ColorsDropdwon />
+                    {/* <!-- Region Filter --> */}
+                    {filterLoading ? (
+                      <FilterSkeleton title="Regions" itemCount={4} />
+                    ) : filterError ? (
+                      <ErrorBoundary 
+                        title="Regions" 
+                        error={filterError}
+                        onRetry={() => window.location.reload()}
+                      />
+                    ) : (
+                      <DynamicRegionFilter 
+                        regions={filterOptions?.regions || []}
+                        selectedRegion={selectedRegion}
+                        onRegionChange={setSelectedRegion}
+                        loading={filterLoading}
+                      />
+                    )}
 
-                    {/* // <!-- price range box --> */}
-                    <PriceDropdown />
+                    {/* <!-- Price Range Filter --> */}
+                    {filterLoading ? (
+                      <div className="bg-white rounded-xl shadow-2 border border-gray-3/30 p-5">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-2 rounded-lg animate-pulse"></div>
+                            <div className="h-4 bg-gray-2 rounded w-24 animate-pulse"></div>
+                          </div>
+                          <div className="w-5 h-5 bg-gray-2 rounded animate-pulse"></div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="h-6 bg-gray-2 rounded animate-pulse"></div>
+                          <div className="h-4 bg-gray-2 rounded animate-pulse"></div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="h-10 bg-gray-2 rounded animate-pulse"></div>
+                            <div className="h-10 bg-gray-2 rounded animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      dynamicPriceRange && (
+                        <DynamicPriceRangeFilter 
+                          priceRange={dynamicPriceRange}
+                          selectedRange={priceRange}
+                          onRangeChange={setPriceRange}
+                          loading={filterLoading}
+                        />
+                      )
+                    )}
                   </div>
                 </form>
               </div>
@@ -492,11 +669,70 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
 
               {/* <!-- Enhanced Content Start --> */}
               <div className="xl:max-w-[calc(100%-320px)] w-full">
+                {/* Active Filters Display */}
+                <ActiveFilters 
+                  filterOptions={filterOptions}
+                  selectedCategory={selectedCategory}
+                  selectedPlatform={selectedPlatform}
+                  selectedRegion={selectedRegion}
+                  priceRange={priceRange}
+                  searchQuery={searchQuery}
+                  onClearCategory={() => setSelectedCategory(null)}
+                  onClearPlatform={() => setSelectedPlatform(null)}
+                  onClearRegion={() => setSelectedRegion(null)}
+                  onClearPriceRange={() => {
+                    if (filterOptions) {
+                      setPriceRange([filterOptions.priceRange.min, filterOptions.priceRange.max]);
+                    }
+                  }}
+                  onClearSearch={() => setSearchQuery("")}
+                  onClearAll={clearAllFilters}
+                />
+
                 <div className="rounded-xl bg-white shadow-2 p-4 lg:p-6 mb-8 border border-gray-3/30">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     {/* <!-- Enhanced top bar left --> */}
                     <div className="flex flex-wrap items-center gap-4">
-                      <CustomSelect options={options} />
+                      <SortingSelect 
+                        options={sortOptions}
+                        selectedValue={sortBy}
+                        onSortChange={setSortBy}
+                        loading={loading}
+                      />
+                      
+                      {/* Results Summary */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-gradient-to-br from-blue-light-4 to-green-light-5 rounded-lg flex items-center justify-center">
+                          <svg
+                            className="w-3 h-3 text-blue"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <span className="text-dark-2 text-sm font-medium">
+                          {loading ? (
+                            <div className="h-4 bg-gray-2 rounded w-32 animate-pulse"></div>
+                          ) : (
+                            <>
+                              Showing {Math.min((currentPage - 1) * 12 + 1, totalProducts)} to{" "}
+                              {Math.min(currentPage * 12, totalProducts)} of{" "}
+                              <span className="font-semibold text-blue">{totalProducts}</span> products
+                              {hasActiveFilters({
+                                category: selectedCategory,
+                                platform: selectedPlatform,
+                                region: selectedRegion,
+                                search: searchQuery,
+                                sort: sortBy,
+                                priceRange: priceRange
+                              }, filterOptions ? [filterOptions.priceRange.min, filterOptions.priceRange.max] : undefined) && (
+                                <span className="text-blue-dark ml-1">(filtered)</span>
+                              )}
+                            </>
+                          )}
+                        </span>
+                      </div>
 
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-green rounded-full"></div>
@@ -657,7 +893,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
                         criteria. Try adjusting your filters or search terms.
                       </p>
                       <button
-                        onClick={() => window.location.reload()}
+                        onClick={clearAllFilters}
                         className="inline-flex items-center gap-2 bg-gradient-to-r from-blue to-blue-dark text-white px-6 py-3 rounded-lg hover:shadow-2 transition-all duration-200"
                       >
                         <svg

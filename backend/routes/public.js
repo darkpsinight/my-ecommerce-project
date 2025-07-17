@@ -1,6 +1,7 @@
 const { configCache } = require("../services/configCache");
 const { Category } = require("../models/category");
 const { getPublicSellerProfileById, getAllPublicSellerProfiles } = require("../handlers/publicSellerProfileHandler");
+const { getFilterOptions, getPriceRange } = require("../handlers/publicFilterHandler");
 
 async function publicRoutes(fastify, options) {
   // Get all public configs
@@ -263,6 +264,123 @@ async function publicRoutes(fastify, options) {
       }
     },
     handler: getPublicSellerProfileById
+  });
+
+  // Get dynamic filter options for products
+  fastify.get("/filter-options", {
+    config: {
+      rateLimit: {
+        max: 30,
+        timeWindow: '1 minute',
+        errorResponseBuilder: function (req, context) {
+          return {
+            success: false,
+            error: 'Too many filter requests',
+            message: `Rate limit exceeded: maximum of 30 requests per minute. Please try again in ${context.after}`,
+            retryAfter: context.after
+          };
+        }
+      }
+    },
+    schema: {
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                categories: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      _id: { type: "string" },
+                      name: { type: "string" },
+                      count: { type: "integer" }
+                    }
+                  }
+                },
+                platforms: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      count: { type: "integer" }
+                    }
+                  }
+                },
+                regions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      count: { type: "integer" }
+                    }
+                  }
+                },
+                priceRange: {
+                  type: "object",
+                  properties: {
+                    min: { type: "number" },
+                    max: { type: "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    handler: getFilterOptions
+  });
+
+  // Get price range (separate endpoint for debounced requests)
+  fastify.get("/price-range", {
+    config: {
+      rateLimit: {
+        max: 60,
+        timeWindow: '1 minute',
+        errorResponseBuilder: function (req, context) {
+          return {
+            success: false,
+            error: 'Too many price range requests',
+            message: `Rate limit exceeded: maximum of 60 requests per minute. Please try again in ${context.after}`,
+            retryAfter: context.after
+          };
+        }
+      }
+    },
+    schema: {
+      querystring: {
+        type: "object",
+        properties: {
+          categoryId: { type: "string" },
+          platform: { type: "string" },
+          region: { type: "string" },
+          search: { type: "string" }
+        }
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                min: { type: "number" },
+                max: { type: "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    handler: getPriceRange
   });
 }
 

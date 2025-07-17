@@ -252,9 +252,10 @@ const listingSchema = {
         startDate: { type: "string", format: "date-time" },
         endDate: { type: "string", format: "date-time" },
         title: { type: "string" },
+        search: { type: "string" },
         sortBy: {
           type: "string",
-          enum: ["title", "platform", "quantity", "price", "status", "createdAt"],
+          enum: ["title", "platform", "quantity", "price", "status", "createdAt", "newest", "oldest", "price_low", "price_high"],
           default: "createdAt"
         },
         sortOrder: {

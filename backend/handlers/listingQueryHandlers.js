@@ -8,16 +8,16 @@ const { maskCode } = require("./listingHandlers");
 const getListings = async (request, reply) => {
   try {
     const {
-      category, platform, region, minPrice, maxPrice,
-      sellerId, status, page = 1, limit = 10, search
+      categoryId, platform, region, minPrice, maxPrice,
+      sellerId, status, page = 1, limit = 10, search, sortBy = "createdAt", sortOrder = "desc"
     } = request.query;
 
     // Build filter object
     const filter = {};
 
-    if (category) filter.category = category;
-    if (platform) filter.platform = platform;
-    if (region) filter.region = region;
+    if (categoryId && categoryId !== 'all') filter.categoryId = categoryId;
+    if (platform && platform !== 'all') filter.platform = platform;
+    if (region && region !== 'all') filter.region = region;
     if (status) filter.status = status;
 
     // Add search functionality
@@ -26,9 +26,9 @@ const getListings = async (request, reply) => {
       filter.$or = [
         { title: searchRegex },
         { description: searchRegex },
-        { category: searchRegex },
         { platform: searchRegex },
-        { region: searchRegex }
+        { region: searchRegex },
+        { tags: { $in: [searchRegex] } }
       ];
     }
 
@@ -67,12 +67,42 @@ const getListings = async (request, reply) => {
     // Calculate pagination
     const skip = (page - 1) * limit;
 
+    // Build sort object
+    let sort = {};
+    switch (sortBy) {
+      case 'newest':
+        sort = { createdAt: -1 };
+        break;
+      case 'oldest':
+        sort = { createdAt: 1 };
+        break;
+      case 'price_low':
+        sort = { price: 1 };
+        break;
+      case 'price_high':
+        sort = { price: -1 };
+        break;
+      case 'title':
+        sort = { title: sortOrder === 'asc' ? 1 : -1 };
+        break;
+      case 'platform':
+        sort = { platform: sortOrder === 'asc' ? 1 : -1 };
+        break;
+      case 'price':
+        sort = { price: sortOrder === 'asc' ? 1 : -1 };
+        break;
+      default:
+        sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+        break;
+    }
+
     // Find listings with filters and pagination
     const listings = await Listing.find(filter)
       .select("+codes") // Include codes for virtual field calculations
+      .populate('categoryId', 'name')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort(sort);
 
     // Perform real-time expiration check on the results
     processListingsExpiration(listings, request.server);
@@ -84,6 +114,12 @@ const getListings = async (request, reply) => {
     const transformedListings = await Promise.all(listings.map(async (listing) => {
       const listingObj = listing.toObject();
       const { _id, codes, ...cleanedListing } = listingObj;
+      
+      // Add category name from the populated field
+      if (listingObj.categoryId && listingObj.categoryId.name) {
+        cleanedListing.categoryName = listingObj.categoryId.name;
+        cleanedListing.categoryId = listingObj.categoryId._id;
+      }
       
       // Get seller profile to add market name
       try {

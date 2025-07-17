@@ -123,7 +123,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
   // Handle seller ID and search query from props or URL search parameters
   useEffect(() => {
     const seller = sellerId || searchParams.get("seller");
-    const query = searchParams.get("q");
+    const query = searchParams.get("search") || searchParams.get("q"); // Check both 'search' and 'q' parameters
 
     // Handle seller
     if (seller) {
@@ -450,16 +450,12 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
               </>
             ) : (
               <>
-                <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-dark mb-6">
+                <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-dark">
                   Find Your Perfect{" "}
                   <span className="bg-gradient-to-r from-blue to-green bg-clip-text text-transparent">
                     Digital Code
                   </span>
                 </h1>
-                <p className="text-lg lg:text-xl text-dark-3 max-w-2xl mx-auto">
-                  Use our advanced filters to discover exactly what you need
-                  from thousands of digital codes, game keys, and gift cards
-                </p>
               </>
             )}
           </div>
@@ -739,6 +735,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
                       />
 
                       {/* Results Summary */}
+                      {/* Results Summary */}
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 bg-gradient-to-br from-blue-light-4 to-green-light-5 rounded-lg flex items-center justify-center">
                           <FiCheckCircle className="w-3 h-3 text-blue" />
@@ -749,11 +746,6 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
                           ) : (
                             <>
                               Showing{" "}
-                              {Math.min(
-                                (currentPage - 1) * 12 + 1,
-                                totalProducts
-                              )}{" "}
-                              to {Math.min(currentPage * 12, totalProducts)} of{" "}
                               <span className="font-semibold text-blue">
                                 {totalProducts}
                               </span>{" "}
@@ -781,21 +773,6 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
                             </>
                           )}
                         </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green rounded-full"></div>
-                        <p className="text-dark-3">
-                          Showing{" "}
-                          <span className="font-semibold text-dark">
-                            {products.length}
-                          </span>{" "}
-                          of{" "}
-                          <span className="font-semibold text-dark">
-                            {totalProducts}
-                          </span>{" "}
-                          products
-                        </p>
                       </div>
                     </div>
 

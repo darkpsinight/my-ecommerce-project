@@ -12,12 +12,16 @@ const axiosInstance = axios.create({
   },
 });
 
-// Function to get token from localStorage
+// Function to get token from Redux store
 const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('authToken');
+  // Use dynamic import to avoid circular dependency
+  try {
+    const { store } = require('src/redux/store');
+    return store.getState().auth.token;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
   }
-  return null;
 };
 
 // Add request interceptor to include auth token

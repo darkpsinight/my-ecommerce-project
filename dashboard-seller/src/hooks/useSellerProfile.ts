@@ -55,8 +55,14 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
       
       const updatedProfile = await updateSellerProfile(data);
       
-      // Refresh the profile data after successful update
-      await refreshProfile();
+      // Update the profile data by merging with existing data
+      if (profileData) {
+        setProfileData({
+          ...profileData,
+          profile: updatedProfile,
+          hasProfile: true
+        });
+      }
       
       toast.success('Seller profile updated successfully!');
       setShowProfileSetup(false);
@@ -70,7 +76,7 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     } finally {
       setLoading(false);
     }
-  }, [refreshProfile]);
+  }, [profileData]);
 
   // Function to explicitly open profile setup (e.g., when user clicks "Set Up Profile" button)
   const openProfileSetup = useCallback(() => {

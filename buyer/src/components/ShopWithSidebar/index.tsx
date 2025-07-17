@@ -551,7 +551,7 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
           </div>
         )}
 
-        <section className="overflow-hidden py-12 lg:py-20 bg-gradient-to-b from-gray-1 to-white">
+        <section className="overflow-hidden py-2 lg:py-2 bg-gradient-to-b from-gray-1 to-white">
           <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-8 xl:px-6">
             <div className="flex gap-6 xl:gap-7">
               {/* <!-- Enhanced Sidebar Start --> */}

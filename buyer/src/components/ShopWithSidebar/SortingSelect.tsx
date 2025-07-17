@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import { FiFilter, FiChevronDown, FiCheck } from "react-icons/fi";
 
 export interface SortOption {
   label: string;
@@ -51,28 +52,15 @@ const SortingSelect = ({
       >
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 bg-gradient-to-br from-blue to-blue-dark rounded-lg flex items-center justify-center">
-            <svg
-              className="w-3 h-3 text-white"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
-            </svg>
+            <FiFilter className="w-3 h-3 text-white" />
           </div>
           <span className="text-dark font-medium">
             {loading ? "Loading..." : selectedOption?.label}
           </span>
         </div>
-        <svg
-          className={`w-5 h-5 text-dark-3 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <FiChevronDown className={`w-5 h-5 text-dark-3 transition-transform duration-200 ${
+          isOpen ? "rotate-180" : ""
+        }`} />
       </button>
 
       {isOpen && !loading && (
@@ -88,13 +76,7 @@ const SortingSelect = ({
               >
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center">
                   {selectedValue === option.value ? (
-                    <svg
-                      className="w-4 h-4 text-blue"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
+                    <FiCheck className="w-4 h-4 text-blue" />
                   ) : (
                     <div className="w-3 h-3 border border-gray-4 rounded-full"></div>
                   )}

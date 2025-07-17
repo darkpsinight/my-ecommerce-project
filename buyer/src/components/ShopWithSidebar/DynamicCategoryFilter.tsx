@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { FilterOption } from "@/services/filters";
+import { FiTag, FiChevronDown, FiPackage } from "react-icons/fi";
 
 interface DynamicCategoryFilterProps {
   categories: FilterOption[];
@@ -25,26 +26,13 @@ const DynamicCategoryFilter = ({
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-blue to-blue-dark rounded-lg flex items-center justify-center">
-            <svg
-              className="w-4 h-4 text-white"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
-            </svg>
+            <FiTag className="w-4 h-4 text-white" />
           </div>
           <h3 className="text-dark font-semibold">Categories</h3>
         </div>
-        <svg
-          className={`w-5 h-5 text-dark-3 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <FiChevronDown className={`w-5 h-5 text-dark-3 transition-transform duration-200 ${
+          isOpen ? "rotate-180" : ""
+        }`} />
       </button>
 
       {isOpen && (
@@ -104,14 +92,7 @@ const DynamicCategoryFilter = ({
             </>
           ) : (
             <div className="text-center py-6">
-              <svg
-                className="w-12 h-12 text-gray-4 mx-auto mb-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
+              <FiPackage className="w-12 h-12 text-gray-4 mx-auto mb-3" />
               <p className="text-dark-4 text-sm">No categories available</p>
             </div>
           )}

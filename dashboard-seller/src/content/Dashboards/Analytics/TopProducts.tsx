@@ -16,7 +16,7 @@ import {
 import { Star, SportsEsports } from '@mui/icons-material';
 
 interface BestSeller {
-  _id: string;
+  listingId: string;
   title: string;
   platform: string;
   totalSold: number;
@@ -80,7 +80,7 @@ function TopProducts({ data, loading }: TopProductsProps) {
               const progressValue = maxSold > 0 ? (product.totalSold / maxSold) * 100 : 0;
               
               return (
-                <ListItem key={product._id} sx={{ px: 0, py: 1 }}>
+                <ListItem key={product.listingId} sx={{ px: 0, py: 1 }}>
                   <ListItemAvatar>
                     <Avatar 
                       sx={{ 

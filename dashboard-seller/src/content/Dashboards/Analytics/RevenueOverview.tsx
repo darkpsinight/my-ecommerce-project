@@ -20,7 +20,7 @@ interface RevenueData {
   orderCount: number;
   avgOrderValue: number;
   revenueByPlatform: Array<{
-    _id: string;
+    platform: string;
     revenue: number;
     orders: number;
   }>;
@@ -138,7 +138,7 @@ function RevenueOverview({ data, loading, timeRange }: RevenueOverviewProps) {
           <Grid item xs={12} sm={6} md={3}>
             <MetricCard
               title="Top Platform"
-              value={loading ? '-' : (data?.revenueByPlatform?.[0]?._id || 'N/A')}
+              value={loading ? '-' : (data?.revenueByPlatform?.[0]?.platform || 'N/A')}
               icon={<Assessment color="warning" />}
               color="warning"
               loading={loading}
@@ -154,7 +154,7 @@ function RevenueOverview({ data, loading, timeRange }: RevenueOverviewProps) {
             </Typography>
             <Grid container spacing={2}>
               {data.revenueByPlatform.slice(0, 4).map((platform, index) => (
-                <Grid item xs={12} sm={6} md={3} key={platform._id}>
+                <Grid item xs={12} sm={6} md={3} key={platform.platform || index}>
                   <Box
                     sx={{
                       p: 2,
@@ -165,7 +165,7 @@ function RevenueOverview({ data, loading, timeRange }: RevenueOverviewProps) {
                     }}
                   >
                     <Typography variant="subtitle2" color="textSecondary">
-                      {platform._id}
+                      {platform.platform}
                     </Typography>
                     <Typography variant="h6" color="primary">
                       {formatCurrency(platform.revenue)}

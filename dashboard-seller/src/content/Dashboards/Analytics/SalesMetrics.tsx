@@ -81,12 +81,12 @@ function SalesMetrics({ data, loading }: SalesMetricsProps) {
                 : '0';
               
               return (
-                <ListItem key={region._id} sx={{ px: 0 }}>
+                <ListItem key={region.region || index} sx={{ px: 0 }}>
                   <ListItemText
                     primary={
                       <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography variant="body2">
-                          {region._id}
+                          {region.region}
                         </Typography>
                         <Chip 
                           label={`${percentage}%`} 
@@ -130,7 +130,7 @@ function SalesMetrics({ data, loading }: SalesMetricsProps) {
             <Box display="flex" alignItems="center" gap={1}>
               <TrendingUp color="success" fontSize="small" />
               <Typography variant="caption" color="success.main">
-                Top Region: {data.salesByRegion[0]._id}
+                Top Region: {data.salesByRegion[0].region}
               </Typography>
             </Box>
             <Typography variant="caption" color="textSecondary" display="block">

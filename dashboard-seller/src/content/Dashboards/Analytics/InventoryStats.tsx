@@ -26,6 +26,7 @@ interface InventoryStatsProps {
 
 function InventoryStats({ data, loading }: InventoryStatsProps) {
   const getStatusIcon = (status: string) => {
+    if (!status) return <Inventory color="disabled" />;
     switch (status.toLowerCase()) {
       case 'active':
         return <CheckCircle color="success" />;
@@ -43,6 +44,7 @@ function InventoryStats({ data, loading }: InventoryStatsProps) {
   };
 
   const getStatusColor = (status: string): 'success' | 'primary' | 'warning' | 'info' | 'secondary' => {
+    if (!status) return 'secondary';
     switch (status.toLowerCase()) {
       case 'active':
         return 'success';
@@ -78,9 +80,9 @@ function InventoryStats({ data, loading }: InventoryStatsProps) {
   const totalActiveCodes = inventoryStats.reduce((sum, stat) => sum + stat.activeCodes, 0);
 
   // Calculate health metrics
-  const activeListings = inventoryStats.find(stat => stat._id === 'active')?.count || 0;
-  const soldListings = inventoryStats.find(stat => stat._id === 'sold')?.count || 0;
-  const expiredListings = inventoryStats.find(stat => stat._id === 'expired')?.count || 0;
+  const activeListings = inventoryStats.find(stat => stat.status === 'active')?.count || 0;
+  const soldListings = inventoryStats.find(stat => stat.status === 'sold')?.count || 0;
+  const expiredListings = inventoryStats.find(stat => stat.status === 'expired')?.count || 0;
   
   const healthScore = totalListings > 0 ? ((activeListings / totalListings) * 100) : 0;
   const codeUtilization = totalCodes > 0 ? (((totalCodes - totalActiveCodes) / totalCodes) * 100) : 0;
@@ -164,12 +166,12 @@ function InventoryStats({ data, loading }: InventoryStatsProps) {
               const percentage = totalListings > 0 ? ((stat.count / totalListings) * 100) : 0;
               
               return (
-                <Box key={stat._id} mb={2}>
+                <Box key={stat.status} mb={2}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                     <Box display="flex" alignItems="center" gap={1}>
-                      {getStatusIcon(stat._id)}
+                      {getStatusIcon(stat.status)}
                       <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                        {stat._id}
+                        {stat.status}
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center" gap={1}>
@@ -179,7 +181,7 @@ function InventoryStats({ data, loading }: InventoryStatsProps) {
                       <Chip 
                         label={`${percentage.toFixed(1)}%`}
                         size="small"
-                        color={getStatusColor(stat._id)}
+                        color={getStatusColor(stat.status)}
                       />
                     </Box>
                   </Box>
@@ -194,7 +196,7 @@ function InventoryStats({ data, loading }: InventoryStatsProps) {
                   <LinearProgress 
                     variant="determinate" 
                     value={percentage}
-                    color={getStatusColor(stat._id)}
+                    color={getStatusColor(stat.status)}
                     sx={{ height: 4, borderRadius: 2 }}
                   />
                 </Box>

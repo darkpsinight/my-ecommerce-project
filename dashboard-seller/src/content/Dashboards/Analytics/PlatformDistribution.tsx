@@ -22,7 +22,7 @@ import {
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface PlatformData {
-  _id: string;
+  platform: string;
   listings: number;
   totalCodes: number;
 }
@@ -54,7 +54,7 @@ function PlatformDistribution({ data, loading }: PlatformDistributionProps) {
     if (!data || data.length === 0) return null;
 
     const colors = getPlatformColors();
-    const labels = data.map(item => item._id);
+    const labels = data.map(item => item.platform);
     const listingsData = data.map(item => item.listings);
     const codesData = data.map(item => item.totalCodes);
 
@@ -162,7 +162,7 @@ function PlatformDistribution({ data, loading }: PlatformDistributionProps) {
                 const colors = getPlatformColors();
                 
                 return (
-                  <ListItem key={platform._id} sx={{ px: 0 }}>
+                  <ListItem key={platform.platform} sx={{ px: 0 }}>
                     <Box
                       sx={{
                         width: 12,
@@ -177,7 +177,7 @@ function PlatformDistribution({ data, loading }: PlatformDistributionProps) {
                       primary={
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                           <Typography variant="body2">
-                            {platform._id}
+                            {platform.platform}
                           </Typography>
                           <Chip 
                             label={`${percentage}%`} 

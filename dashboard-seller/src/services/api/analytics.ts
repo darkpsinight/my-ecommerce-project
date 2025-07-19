@@ -44,12 +44,12 @@ export interface RevenueData {
   orderCount: number;
   avgOrderValue: number;
   revenueByPlatform: Array<{
-    _id: string;
+    platform: string;
     revenue: number;
     orders: number;
   }>;
   dailyTrend: Array<{
-    _id: {
+    date: {
       year: number;
       month: number;
       day: number;
@@ -61,14 +61,14 @@ export interface RevenueData {
 
 export interface SalesData {
   bestSellers: Array<{
-    _id: string;
+    listingId: string;
     title: string;
     platform: string;
     totalSold: number;
     revenue: number;
   }>;
   salesByRegion: Array<{
-    _id: string;
+    region: string;
     sales: number;
     revenue: number;
   }>;
@@ -76,13 +76,13 @@ export interface SalesData {
 
 export interface InventoryData {
   inventoryStats: Array<{
-    _id: string;
+    status: string;
     count: number;
     totalCodes: number;
     activeCodes: number;
   }>;
   platformDistribution: Array<{
-    _id: string;
+    platform: string;
     listings: number;
     totalCodes: number;
   }>;

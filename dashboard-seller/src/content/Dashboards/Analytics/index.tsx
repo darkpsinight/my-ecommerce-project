@@ -54,7 +54,12 @@ function DashboardAnalytics() {
         <title>VIP Analytics Dashboard</title>
       </Helmet>
       <PageTitleWrapper>
-        <PageHeader />
+        <PageHeader 
+          analyticsData={analyticsData}
+          chartData={chartData}
+          timeRange={timeRange}
+          loading={analyticsLoading}
+        />
       </PageTitleWrapper>
       <Container maxWidth="lg">
         {/* Seller Profile Status Banner */}

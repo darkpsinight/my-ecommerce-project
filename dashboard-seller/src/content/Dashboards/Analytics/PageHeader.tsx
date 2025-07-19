@@ -1,7 +1,29 @@
-import { Typography, Button, Grid, Chip } from '@mui/material';
-import { TrendingUp, Assessment, Star } from '@mui/icons-material';
+import { Typography, Button, Grid, Chip, CircularProgress } from '@mui/material';
+import { TrendingUp, Assessment, Star, FileDownload } from '@mui/icons-material';
+import { exportAnalyticsToCSV } from '../../../utils/analyticsExport';
+import { AnalyticsOverviewData, RevenueChartData } from '../../../services/api/analytics';
 
-function PageHeader() {
+interface PageHeaderProps {
+  analyticsData?: AnalyticsOverviewData | null;
+  chartData?: RevenueChartData | null;
+  timeRange?: string;
+  loading?: boolean;
+}
+
+function PageHeader({ analyticsData, chartData, timeRange = '30d', loading = false }: PageHeaderProps) {
+  const handleExportReport = () => {
+    if (!analyticsData) {
+      console.warn('No analytics data available for export');
+      return;
+    }
+
+    try {
+      exportAnalyticsToCSV(analyticsData, chartData, timeRange);
+    } catch (error) {
+      console.error('Error exporting analytics report:', error);
+    }
+  };
+
   return (
     <Grid container justifyContent="space-between" alignItems="center">
       <Grid item xs={12} sm={6}>
@@ -24,10 +46,12 @@ function PageHeader() {
       <Grid item xs={12} sm={6} sx={{ textAlign: { xs: 'left', sm: 'right' }, mt: { xs: 2, sm: 0 } }}>
         <Button
           variant="contained"
-          startIcon={<TrendingUp />}
+          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <FileDownload />}
           size="medium"
+          onClick={handleExportReport}
+          disabled={loading || !analyticsData}
         >
-          Export Report
+          {loading ? 'Loading...' : 'Export Report'}
         </Button>
       </Grid>
     </Grid>

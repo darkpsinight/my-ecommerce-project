@@ -65,6 +65,7 @@ const sendSuccessResponse = (reply, response, options = {}) => {
     if (options.clearCookie) {
       reply.clearCookie("refreshToken", getRefreshTokenOptns());
     }
+
     reply.code(response.statusCode).send({
       ...response,
       success: true,
@@ -79,21 +80,20 @@ const sendSuccessResponse = (reply, response, options = {}) => {
 };
 
 const redirectWithoutToken = (reply, token, options) => {
-  reply
-    .code(302)
-    .redirect(`${options.redirectURL}/confirmation?success=true`);
+  reply.code(302).redirect(`${options.redirectURL}/confirmation?success=true`);
 };
 
 const redirectWithToken = (reply, token, options) => {
   reply
     .code(302)
-    .redirect(`${options.redirectURL}/change-password?token=${token}&success=true`);
+    .redirect(
+      `${options.redirectURL}/change-password?token=${token}&success=true`
+    );
 };
 
 module.exports = {
   sendErrorResponse,
   sendSuccessResponse,
   redirectWithToken,
-  redirectWithoutToken
+  redirectWithoutToken,
 };
-  

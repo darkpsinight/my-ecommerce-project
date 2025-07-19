@@ -3,7 +3,10 @@ const { Listing } = require("../models/listing");
 const { User } = require("../models/user");
 const { Transaction } = require("../models/transaction");
 const { ViewedProduct } = require("../models/viewedProduct");
-const { sendSuccessResponse, sendErrorResponse } = require("../utils/responseHelpers");
+const {
+  sendSuccessResponse,
+  sendErrorResponse,
+} = require("../utils/responseHelpers");
 
 // @route   GET /api/v1/seller/analytics/overview
 // @desc    Get seller analytics overview for VIP sellers
@@ -28,7 +31,7 @@ const getSellerAnalyticsOverview = async (request, reply) => {
     // Calculate date range
     const now = new Date();
     let startDate;
-    
+
     switch (timeRange) {
       case "7d":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -58,19 +61,20 @@ const getSellerAnalyticsOverview = async (request, reply) => {
     // Get customer analytics
     const customerData = await getCustomerAnalytics(sellerId, startDate, now);
 
+    const responseData = {
+      timeRange,
+      revenue: revenueData,
+      sales: salesData,
+      inventory: inventoryData,
+      customers: customerData,
+      generatedAt: new Date(),
+    };
+
     return sendSuccessResponse(reply, {
       statusCode: 200,
       message: "Seller analytics retrieved successfully",
-      data: {
-        timeRange,
-        revenue: revenueData,
-        sales: salesData,
-        inventory: inventoryData,
-        customers: customerData,
-        generatedAt: new Date()
-      }
+      data: responseData,
     });
-
   } catch (error) {
     request.log.error(`Error getting seller analytics: ${error.message}`);
     return sendErrorResponse(reply, 500, "Failed to retrieve analytics");
@@ -85,17 +89,17 @@ const getRevenueAnalytics = async (sellerId, startDate, endDate) => {
       $match: {
         sellerId: sellerId,
         status: "completed",
-        createdAt: { $gte: startDate, $lte: endDate }
-      }
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
     },
     {
       $group: {
         _id: null,
         totalRevenue: { $sum: "$totalAmount" },
         orderCount: { $sum: 1 },
-        avgOrderValue: { $avg: "$totalAmount" }
-      }
-    }
+        avgOrderValue: { $avg: "$totalAmount" },
+      },
+    },
   ]);
 
   // Revenue by platform
@@ -104,18 +108,18 @@ const getRevenueAnalytics = async (sellerId, startDate, endDate) => {
       $match: {
         sellerId: sellerId,
         status: "completed",
-        createdAt: { $gte: startDate, $lte: endDate }
-      }
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
     },
     { $unwind: "$orderItems" },
     {
       $group: {
         _id: "$orderItems.platform",
         revenue: { $sum: "$orderItems.totalPrice" },
-        orders: { $sum: 1 }
-      }
+        orders: { $sum: 1 },
+      },
     },
-    { $sort: { revenue: -1 } }
+    { $sort: { revenue: -1 } },
   ]);
 
   // Daily revenue trend
@@ -124,31 +128,48 @@ const getRevenueAnalytics = async (sellerId, startDate, endDate) => {
       $match: {
         sellerId: sellerId,
         status: "completed",
-        createdAt: { $gte: startDate, $lte: endDate }
-      }
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
     },
     {
       $group: {
         _id: {
           year: { $year: "$createdAt" },
           month: { $month: "$createdAt" },
-          day: { $dayOfMonth: "$createdAt" }
+          day: { $dayOfMonth: "$createdAt" },
         },
         revenue: { $sum: "$totalAmount" },
-        orders: { $sum: 1 }
-      }
+        orders: { $sum: 1 },
+      },
     },
-    { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
+    { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
   ]);
 
-  const baseStats = revenueAggregation[0] || { totalRevenue: 0, orderCount: 0, avgOrderValue: 0 };
+  const baseStats = revenueAggregation[0] || {
+    totalRevenue: 0,
+    orderCount: 0,
+    avgOrderValue: 0,
+  };
 
+  // Convert MongoDB objects to plain JavaScript objects
   return {
-    totalRevenue: baseStats.totalRevenue,
-    orderCount: baseStats.orderCount,
-    avgOrderValue: baseStats.avgOrderValue,
-    revenueByPlatform,
-    dailyTrend: dailyRevenue
+    totalRevenue: Number(baseStats.totalRevenue || 0),
+    orderCount: Number(baseStats.orderCount || 0),
+    avgOrderValue: Number(baseStats.avgOrderValue || 0),
+    revenueByPlatform: revenueByPlatform.map((item) => ({
+      platform: String(item._id),
+      revenue: Number(item.revenue),
+      orders: Number(item.orders),
+    })),
+    dailyTrend: dailyRevenue.map((item) => ({
+      date: {
+        year: Number(item._id.year),
+        month: Number(item._id.month),
+        day: Number(item._id.day),
+      },
+      revenue: Number(item.revenue),
+      orders: Number(item.orders),
+    })),
   };
 };
 
@@ -160,8 +181,8 @@ const getSalesAnalytics = async (sellerId, startDate, endDate) => {
       $match: {
         sellerId: sellerId,
         status: "completed",
-        createdAt: { $gte: startDate, $lte: endDate }
-      }
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
     },
     { $unwind: "$orderItems" },
     {
@@ -170,11 +191,11 @@ const getSalesAnalytics = async (sellerId, startDate, endDate) => {
         title: { $first: "$orderItems.title" },
         platform: { $first: "$orderItems.platform" },
         totalSold: { $sum: "$orderItems.quantity" },
-        revenue: { $sum: "$orderItems.totalPrice" }
-      }
+        revenue: { $sum: "$orderItems.totalPrice" },
+      },
     },
     { $sort: { totalSold: -1 } },
-    { $limit: 10 }
+    { $limit: 10 },
   ]);
 
   // Sales by region
@@ -183,23 +204,34 @@ const getSalesAnalytics = async (sellerId, startDate, endDate) => {
       $match: {
         sellerId: sellerId,
         status: "completed",
-        createdAt: { $gte: startDate, $lte: endDate }
-      }
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
     },
     { $unwind: "$orderItems" },
     {
       $group: {
         _id: "$orderItems.region",
         sales: { $sum: "$orderItems.quantity" },
-        revenue: { $sum: "$orderItems.totalPrice" }
-      }
+        revenue: { $sum: "$orderItems.totalPrice" },
+      },
     },
-    { $sort: { sales: -1 } }
+    { $sort: { sales: -1 } },
   ]);
 
+  // Convert MongoDB objects to plain JavaScript objects
   return {
-    bestSellers,
-    salesByRegion
+    bestSellers: bestSellers.map((item) => ({
+      listingId: String(item._id),
+      title: String(item.title),
+      platform: String(item.platform),
+      totalSold: Number(item.totalSold),
+      revenue: Number(item.revenue),
+    })),
+    salesByRegion: salesByRegion.map((item) => ({
+      region: String(item._id),
+      sales: Number(item.sales),
+      revenue: Number(item.revenue),
+    })),
   };
 };
 
@@ -215,8 +247,8 @@ const getInventoryAnalytics = async (sellerId) => {
   const inventoryStats = await Listing.aggregate([
     {
       $match: {
-        sellerId: seller.uid
-      }
+        sellerId: seller.uid,
+      },
     },
     {
       $group: {
@@ -225,22 +257,22 @@ const getInventoryAnalytics = async (sellerId) => {
         totalCodes: {
           $sum: {
             $size: {
-              $ifNull: ["$codes", []]
-            }
-          }
+              $ifNull: ["$codes", []],
+            },
+          },
         },
         activeCodes: {
           $sum: {
             $size: {
               $filter: {
                 input: { $ifNull: ["$codes", []] },
-                cond: { $eq: ["$$this.soldStatus", "active"] }
-              }
-            }
-          }
-        }
-      }
-    }
+                cond: { $eq: ["$$this.soldStatus", "active"] },
+              },
+            },
+          },
+        },
+      },
+    },
   ]);
 
   // Platform distribution
@@ -248,8 +280,8 @@ const getInventoryAnalytics = async (sellerId) => {
     {
       $match: {
         sellerId: seller.uid,
-        status: { $in: ["active", "sold"] }
-      }
+        status: { $in: ["active", "sold"] },
+      },
     },
     {
       $group: {
@@ -258,18 +290,28 @@ const getInventoryAnalytics = async (sellerId) => {
         totalCodes: {
           $sum: {
             $size: {
-              $ifNull: ["$codes", []]
-            }
-          }
-        }
-      }
+              $ifNull: ["$codes", []],
+            },
+          },
+        },
+      },
     },
-    { $sort: { listings: -1 } }
+    { $sort: { listings: -1 } },
   ]);
 
+  // Convert MongoDB objects to plain JavaScript objects
   return {
-    inventoryStats,
-    platformDistribution
+    inventoryStats: inventoryStats.map((item) => ({
+      status: String(item._id),
+      count: Number(item.count),
+      totalCodes: Number(item.totalCodes),
+      activeCodes: Number(item.activeCodes),
+    })),
+    platformDistribution: platformDistribution.map((item) => ({
+      platform: String(item._id),
+      listings: Number(item.listings),
+      totalCodes: Number(item.totalCodes),
+    })),
   };
 };
 
@@ -281,8 +323,8 @@ const getCustomerAnalytics = async (sellerId, startDate, endDate) => {
       $match: {
         sellerId: sellerId,
         status: "completed",
-        createdAt: { $gte: startDate, $lte: endDate }
-      }
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
     },
     {
       $group: {
@@ -290,9 +332,9 @@ const getCustomerAnalytics = async (sellerId, startDate, endDate) => {
         orderCount: { $sum: 1 },
         totalSpent: { $sum: "$totalAmount" },
         firstOrder: { $min: "$createdAt" },
-        lastOrder: { $max: "$createdAt" }
-      }
-    }
+        lastOrder: { $max: "$createdAt" },
+      },
+    },
   ]);
 
   // Top customers
@@ -300,15 +342,16 @@ const getCustomerAnalytics = async (sellerId, startDate, endDate) => {
     .sort((a, b) => b.totalSpent - a.totalSpent)
     .slice(0, 10);
 
+  // Convert MongoDB objects to plain JavaScript objects
   return {
-    uniqueCustomerCount: uniqueCustomers.length,
-    topCustomers: topCustomers.map(customer => ({
-      customerId: customer._id,
-      orderCount: customer.orderCount,
-      totalSpent: customer.totalSpent,
-      firstOrder: customer.firstOrder,
-      lastOrder: customer.lastOrder
-    }))
+    uniqueCustomerCount: Number(uniqueCustomers.length),
+    topCustomers: topCustomers.map((customer) => ({
+      customerId: String(customer._id),
+      orderCount: Number(customer.orderCount),
+      totalSpent: Number(customer.totalSpent),
+      firstOrder: new Date(customer.firstOrder),
+      lastOrder: new Date(customer.lastOrder),
+    })),
   };
 };
 
@@ -335,23 +378,42 @@ const getRevenueChartData = async (request, reply) => {
     switch (timeRange) {
       case "7d":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        groupBy = { year: { $year: "$createdAt" }, month: { $month: "$createdAt" }, day: { $dayOfMonth: "$createdAt" } };
+        groupBy = {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+          day: { $dayOfMonth: "$createdAt" },
+        };
         break;
       case "30d":
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        groupBy = { year: { $year: "$createdAt" }, month: { $month: "$createdAt" }, day: { $dayOfMonth: "$createdAt" } };
+        groupBy = {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+          day: { $dayOfMonth: "$createdAt" },
+        };
         break;
       case "90d":
         startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        groupBy = { year: { $year: "$createdAt" }, month: { $month: "$createdAt" }, week: { $week: "$createdAt" } };
+        groupBy = {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+          week: { $week: "$createdAt" },
+        };
         break;
       case "1y":
         startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        groupBy = { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } };
+        groupBy = {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+        };
         break;
       default:
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        groupBy = { year: { $year: "$createdAt" }, month: { $month: "$createdAt" }, day: { $dayOfMonth: "$createdAt" } };
+        groupBy = {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+          day: { $dayOfMonth: "$createdAt" },
+        };
     }
 
     const chartData = await Order.aggregate([
@@ -359,17 +421,17 @@ const getRevenueChartData = async (request, reply) => {
         $match: {
           sellerId: sellerId,
           status: "completed",
-          createdAt: { $gte: startDate, $lte: now }
-        }
+          createdAt: { $gte: startDate, $lte: now },
+        },
       },
       {
         $group: {
           _id: groupBy,
           revenue: { $sum: "$totalAmount" },
-          orders: { $sum: 1 }
-        }
+          orders: { $sum: 1 },
+        },
       },
-      { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1, "_id.week": 1 } }
+      { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1, "_id.week": 1 } },
     ]);
 
     return sendSuccessResponse(reply, {
@@ -378,10 +440,9 @@ const getRevenueChartData = async (request, reply) => {
       data: {
         chartData,
         period,
-        timeRange
-      }
+        timeRange,
+      },
     });
-
   } catch (error) {
     request.log.error(`Error getting revenue chart data: ${error.message}`);
     return sendErrorResponse(reply, 500, "Failed to retrieve chart data");
@@ -390,5 +451,5 @@ const getRevenueChartData = async (request, reply) => {
 
 module.exports = {
   getSellerAnalyticsOverview,
-  getRevenueChartData
+  getRevenueChartData,
 };

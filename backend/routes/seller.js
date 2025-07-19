@@ -5,11 +5,11 @@ const {
   getSellerProfile,
   updateBasicSellerInfo,
   updateExtendedSellerProfile,
-  getSellerProfileById
+  getSellerProfileById,
 } = require("../handlers/sellerProfileHandler");
 const {
   getSellerAnalyticsOverview,
-  getRevenueChartData
+  getRevenueChartData,
 } = require("../handlers/sellerAnalyticsHandler");
 
 const sellerRoutes = async (fastify, opts) => {
@@ -18,7 +18,7 @@ const sellerRoutes = async (fastify, opts) => {
     method: "GET",
     url: "/profile",
     preHandler: verifyAuth(["seller", "admin"]),
-    handler: getSellerProfile
+    handler: getSellerProfile,
   });
 
   // Update basic seller info
@@ -35,7 +35,7 @@ const sellerRoutes = async (fastify, opts) => {
         },
       },
     },
-    handler: updateBasicSellerInfo
+    handler: updateBasicSellerInfo,
   });
 
   // Create or update seller profile
@@ -60,10 +60,10 @@ const sellerRoutes = async (fastify, opts) => {
                 name: { type: "string" },
                 description: { type: "string" },
                 icon: { type: "string" },
-                earnedAt: { type: "string", format: "date-time" }
+                earnedAt: { type: "string", format: "date-time" },
               },
-              required: ["name", "description", "icon"]
-            }
+              required: ["name", "description", "icon"],
+            },
           },
           enterpriseDetails: {
             type: "object",
@@ -76,18 +76,18 @@ const sellerRoutes = async (fastify, opts) => {
                   type: "object",
                   properties: {
                     platform: { type: "string" },
-                    url: { type: "string" }
+                    url: { type: "string" },
                   },
-                  required: ["platform", "url"]
-                }
-              }
-            }
-          }
+                  required: ["platform", "url"],
+                },
+              },
+            },
+          },
         },
-        required: ["nickname"]
+        required: ["nickname"],
       },
     },
-    handler: updateExtendedSellerProfile
+    handler: updateExtendedSellerProfile,
   });
 
   // Get seller profile by ID (authenticated endpoint)
@@ -99,8 +99,8 @@ const sellerRoutes = async (fastify, opts) => {
         type: "object",
         required: ["id"],
         properties: {
-          id: { type: "string" }
-        }
+          id: { type: "string" },
+        },
       },
       response: {
         200: {
@@ -123,9 +123,9 @@ const sellerRoutes = async (fastify, opts) => {
                       name: { type: "string" },
                       description: { type: "string" },
                       icon: { type: "string" },
-                      earnedAt: { type: "string", format: "date-time" }
-                    }
-                  }
+                      earnedAt: { type: "string", format: "date-time" },
+                    },
+                  },
                 },
                 enterpriseDetails: {
                   type: "object",
@@ -138,27 +138,27 @@ const sellerRoutes = async (fastify, opts) => {
                         type: "object",
                         properties: {
                           platform: { type: "string" },
-                          url: { type: "string" }
-                        }
-                      }
-                    }
-                  }
+                          url: { type: "string" },
+                        },
+                      },
+                    },
+                  },
                 },
-                externalId: { type: "string" }
-              }
-            }
-          }
+                externalId: { type: "string" },
+              },
+            },
+          },
         },
         404: {
           type: "object",
           properties: {
             success: { type: "boolean" },
-            error: { type: "string" }
-          }
-        }
-      }
+            error: { type: "string" },
+          },
+        },
+      },
     },
-    handler: getSellerProfileById
+    handler: getSellerProfileById,
   });
 
   // Get seller's products
@@ -216,8 +216,8 @@ const sellerRoutes = async (fastify, opts) => {
         required: ["categoryId", "platformName"],
         properties: {
           categoryId: { type: "string" },
-          platformName: { type: "string" }
-        }
+          platformName: { type: "string" },
+        },
       },
       response: {
         200: {
@@ -235,27 +235,31 @@ const sellerRoutes = async (fastify, opts) => {
                       regex: { type: "string" },
                       description: { type: "string" },
                       example: { type: "string" },
-                      isActive: { type: "boolean" }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                      isActive: { type: "boolean" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     handler: async (request, reply) => {
       try {
         const { categoryId, platformName } = request.params;
 
         // Get patterns using the existing utility function
-        const result = await getPatternsForPlatform(categoryId, platformName, Category);
+        const result = await getPatternsForPlatform(
+          categoryId,
+          platformName,
+          Category
+        );
 
         if (result.error) {
           return reply.code(404).send({
             success: false,
-            error: result.error
+            error: result.error,
           });
         }
 
@@ -265,17 +269,19 @@ const sellerRoutes = async (fastify, opts) => {
           data: {
             patterns: result.patterns || [],
             categoryId,
-            platformName
-          }
+            platformName,
+          },
         });
       } catch (error) {
-        request.log.error(`Error fetching validation patterns: ${error.message}`);
+        request.log.error(
+          `Error fetching validation patterns: ${error.message}`
+        );
         return reply.code(500).send({
           success: false,
-          error: "Internal server error"
+          error: "Internal server error",
         });
       }
-    }
+    },
   });
 
   // Get active categories (for sellers to use in listings)
@@ -288,8 +294,8 @@ const sellerRoutes = async (fastify, opts) => {
         type: "object",
         properties: {
           isActive: { type: "boolean", default: true },
-          search: { type: "string" }
-        }
+          search: { type: "string" },
+        },
       },
       response: {
         200: {
@@ -313,17 +319,17 @@ const sellerRoutes = async (fastify, opts) => {
                         name: { type: "string" },
                         description: { type: "string" },
                         imageUrl: { type: "string" },
-                        isActive: { type: "boolean" }
-                      }
-                    }
+                        isActive: { type: "boolean" },
+                      },
+                    },
                   },
-                  isActive: { type: "boolean" }
-                }
-              }
-            }
-          }
-        }
-      }
+                  isActive: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     handler: async (request, reply) => {
       try {
@@ -334,29 +340,31 @@ const sellerRoutes = async (fastify, opts) => {
 
         // Add search functionality if provided
         if (search) {
-          query.name = { $regex: search, $options: 'i' };
+          query.name = { $regex: search, $options: "i" };
         }
 
         // Find categories matching the query and include platforms information
-        const categories = await Category.find(query).select('name description imageUrl platforms isActive');
+        const categories = await Category.find(query).select(
+          "name description imageUrl platforms isActive"
+        );
 
         return reply.code(200).send({
           success: true,
-          data: categories
+          data: categories,
         });
       } catch (error) {
         request.log.error(`Error fetching categories: ${error.message}`);
         return reply.code(500).send({
           success: false,
           error: "Failed to fetch categories",
-          message: error.message
+          message: error.message,
         });
       }
-    }
+    },
   });
 
   // VIP Analytics Routes
-  
+
   // Get seller analytics overview (VIP feature)
   fastify.route({
     method: "GET",
@@ -366,34 +374,16 @@ const sellerRoutes = async (fastify, opts) => {
       querystring: {
         type: "object",
         properties: {
-          timeRange: { 
-            type: "string", 
+          timeRange: {
+            type: "string",
             enum: ["7d", "30d", "90d", "1y"],
-            default: "30d" 
-          }
-        }
+            default: "30d",
+          },
+        },
       },
-      response: {
-        200: {
-          type: "object",
-          properties: {
-            success: { type: "boolean" },
-            data: {
-              type: "object",
-              properties: {
-                timeRange: { type: "string" },
-                revenue: { type: "object" },
-                sales: { type: "object" },
-                inventory: { type: "object" },
-                customers: { type: "object" },
-                generatedAt: { type: "string", format: "date-time" }
-              }
-            }
-          }
-        }
-      }
+      // Removed restrictive response schema that was filtering out data
     },
-    handler: getSellerAnalyticsOverview
+    handler: getSellerAnalyticsOverview,
   });
 
   // Get revenue chart data (VIP feature)
@@ -405,17 +395,17 @@ const sellerRoutes = async (fastify, opts) => {
       querystring: {
         type: "object",
         properties: {
-          period: { 
-            type: "string", 
+          period: {
+            type: "string",
             enum: ["daily", "weekly", "monthly"],
-            default: "daily" 
+            default: "daily",
           },
-          timeRange: { 
-            type: "string", 
+          timeRange: {
+            type: "string",
             enum: ["7d", "30d", "90d", "1y"],
-            default: "30d" 
-          }
-        }
+            default: "30d",
+          },
+        },
       },
       response: {
         200: {
@@ -427,14 +417,14 @@ const sellerRoutes = async (fastify, opts) => {
               properties: {
                 chartData: { type: "array" },
                 period: { type: "string" },
-                timeRange: { type: "string" }
-              }
-            }
-          }
-        }
-      }
+                timeRange: { type: "string" },
+              },
+            },
+          },
+        },
+      },
     },
-    handler: getRevenueChartData
+    handler: getRevenueChartData,
   });
 };
 

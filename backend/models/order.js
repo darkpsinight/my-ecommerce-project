@@ -98,6 +98,42 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Transaction"
   },
+  
+  // Customer Geographic Data
+  customerLocation: {
+    ipAddress: {
+      type: String,
+      required: false
+    },
+    country: {
+      type: String,
+      required: false
+    },
+    countryCode: {
+      type: String,
+      required: false
+    },
+    region: {
+      type: String,
+      required: false
+    },
+    city: {
+      type: String,
+      required: false
+    },
+    latitude: {
+      type: Number,
+      required: false
+    },
+    longitude: {
+      type: Number,
+      required: false
+    },
+    timezone: {
+      type: String,
+      required: false
+    }
+  },
   // Order status
   status: {
     type: String,
@@ -159,7 +195,8 @@ orderSchema.statics.createOrder = async function(orderData) {
     currency = "USD",
     paymentMethod,
     paymentIntentId,
-    transactionId
+    transactionId,
+    customerLocation
   } = orderData;
 
   const order = new this({
@@ -171,6 +208,7 @@ orderSchema.statics.createOrder = async function(orderData) {
     paymentMethod,
     paymentIntentId,
     transactionId,
+    customerLocation,
     status: "pending",
     deliveryStatus: "pending",
     externalId: uuidv4()

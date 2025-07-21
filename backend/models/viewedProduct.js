@@ -70,6 +70,42 @@ const viewedProductSchema = new mongoose.Schema({
     viewDuration: {
       type: Number, // in milliseconds
       min: 0
+    },
+    
+    // Customer Geographic Data
+    customerLocation: {
+      ipAddress: {
+        type: String,
+        required: false
+      },
+      country: {
+        type: String,
+        required: false
+      },
+      countryCode: {
+        type: String,
+        required: false
+      },
+      region: {
+        type: String,
+        required: false
+      },
+      city: {
+        type: String,
+        required: false
+      },
+      latitude: {
+        type: Number,
+        required: false
+      },
+      longitude: {
+        type: Number,
+        required: false
+      },
+      timezone: {
+        type: String,
+        required: false
+      }
     }
   },
   

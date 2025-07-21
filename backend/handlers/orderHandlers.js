@@ -21,6 +21,7 @@ const { Cart } = require("../models/cart");
 const { configs } = require("../configs");
 const { sendSuccessResponse, sendErrorResponse } = require("../utils/responseHelpers");
 const { decryptData, simpleDecrypt } = require("../utils/encryption");
+const { getDetailedLocationFromIP } = require("../utils/services/ipGeolocation");
 
 // @route   POST /api/v1/orders/create
 // @desc    Create a new order for digital codes
@@ -135,6 +136,10 @@ const createOrder = async (request, reply) => {
       return sendErrorResponse(reply, 404, "Seller not found");
     }
 
+    // Get customer location from IP address
+    const customerLocation = await getDetailedLocationFromIP(request.ipAddress);
+    request.log.info(`Customer location captured: ${customerLocation.locationString}`);
+
     // Create order
     const order = await Order.createOrder({
       buyerId,
@@ -142,7 +147,8 @@ const createOrder = async (request, reply) => {
       orderItems,
       totalAmount,
       currency: "USD",
-      paymentMethod
+      paymentMethod,
+      customerLocation
     });
 
     // Process payment based on method - Only wallet payments allowed

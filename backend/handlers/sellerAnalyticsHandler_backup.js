@@ -1223,7 +1223,6 @@ const getRevenueChartData = async (request, reply) => {
   }
 };
 
-
 // Helper function to get customer geographic analytics (real customer locations)
 const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
   // Get seller's UID to match listings
@@ -1239,7 +1238,7 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
         sellerId: sellerId,
         status: "completed",
         createdAt: { $gte: startDate, $lte: endDate },
-        "customerLocation.country": { $exists: true, $ne: null }
+        "customerLocation.country": { $exists: true, $ne: null },
       },
     },
     { $unwind: "$orderItems" },
@@ -1249,7 +1248,7 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
           country: "$customerLocation.country",
           countryCode: "$customerLocation.countryCode",
           region: "$customerLocation.region",
-          city: "$customerLocation.city"
+          city: "$customerLocation.city",
         },
         sales: { $sum: "$orderItems.quantity" },
         revenue: { $sum: "$orderItems.totalPrice" },
@@ -1258,21 +1257,23 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
         coordinates: {
           $first: {
             lat: "$customerLocation.latitude",
-            lng: "$customerLocation.longitude"
-          }
-        }
+            lng: "$customerLocation.longitude",
+          },
+        },
       },
     },
     { $sort: { sales: -1 } },
   ]);
 
   // Customer Views Heatmap - Real customer locations from product views
-  const sellerListings = await Listing.find({ 
+  const sellerListings = await Listing.find({
     sellerId: seller.uid,
-    status: { $ne: 'deleted' }
-  }).select('externalId').lean();
+    status: { $ne: "deleted" },
+  })
+    .select("externalId")
+    .lean();
 
-  const listingIds = sellerListings.map(listing => listing.externalId);
+  const listingIds = sellerListings.map((listing) => listing.externalId);
 
   const customerViewsHeatmap = await ViewedProduct.aggregate([
     {
@@ -1280,8 +1281,8 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
         productId: { $in: listingIds },
         viewedAt: { $gte: startDate, $lte: endDate },
         isDeleted: false,
-        "metadata.customerLocation.country": { $exists: true, $ne: null }
-      }
+        "metadata.customerLocation.country": { $exists: true, $ne: null },
+      },
     },
     {
       $group: {
@@ -1289,32 +1290,28 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
           country: "$metadata.customerLocation.country",
           countryCode: "$metadata.customerLocation.countryCode",
           region: "$metadata.customerLocation.region",
-          city: "$metadata.customerLocation.city"
+          city: "$metadata.customerLocation.city",
         },
         views: { $sum: 1 },
-        uniqueViewers: { 
+        uniqueViewers: {
           $addToSet: {
-            $cond: [
-              { $ne: ["$userUid", null] }, 
-              "$userUid", 
-              "$anonymousId"
-            ]
-          }
+            $cond: [{ $ne: ["$userUid", null] }, "$userUid", "$anonymousId"],
+          },
         },
         coordinates: {
           $first: {
             lat: "$metadata.customerLocation.latitude",
-            lng: "$metadata.customerLocation.longitude"
-          }
-        }
-      }
+            lng: "$metadata.customerLocation.longitude",
+          },
+        },
+      },
     },
     {
       $addFields: {
-        uniqueViewerCount: { $size: "$uniqueViewers" }
-      }
+        uniqueViewerCount: { $size: "$uniqueViewers" },
+      },
     },
-    { $sort: { views: -1 } }
+    { $sort: { views: -1 } },
   ]);
 
   // Regional Customer Analysis - Purchasing behavior by region
@@ -1324,7 +1321,7 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
         sellerId: sellerId,
         status: "completed",
         createdAt: { $gte: startDate, $lte: endDate },
-        "customerLocation.country": { $exists: true, $ne: null }
+        "customerLocation.country": { $exists: true, $ne: null },
       },
     },
     { $unwind: "$orderItems" },
@@ -1335,19 +1332,31 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
           priceRange: {
             $switch: {
               branches: [
-                { case: { $lt: ["$orderItems.unitPrice", 10] }, then: "Under $10" },
-                { case: { $lt: ["$orderItems.unitPrice", 25] }, then: "$10-$25" },
-                { case: { $lt: ["$orderItems.unitPrice", 50] }, then: "$25-$50" },
-                { case: { $lt: ["$orderItems.unitPrice", 100] }, then: "$50-$100" },
+                {
+                  case: { $lt: ["$orderItems.unitPrice", 10] },
+                  then: "Under $10",
+                },
+                {
+                  case: { $lt: ["$orderItems.unitPrice", 25] },
+                  then: "$10-$25",
+                },
+                {
+                  case: { $lt: ["$orderItems.unitPrice", 50] },
+                  then: "$25-$50",
+                },
+                {
+                  case: { $lt: ["$orderItems.unitPrice", 100] },
+                  then: "$50-$100",
+                },
               ],
-              default: "Over $100"
-            }
-          }
+              default: "Over $100",
+            },
+          },
         },
         sales: { $sum: "$orderItems.quantity" },
         revenue: { $sum: "$orderItems.totalPrice" },
         avgPrice: { $avg: "$orderItems.unitPrice" },
-        orders: { $sum: 1 }
+        orders: { $sum: 1 },
       },
     },
     { $sort: { "_id.country": 1, sales: -1 } },
@@ -1360,7 +1369,7 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
         sellerId: sellerId,
         status: "completed",
         createdAt: { $gte: startDate, $lte: endDate },
-        "customerLocation.country": { $exists: true, $ne: null }
+        "customerLocation.country": { $exists: true, $ne: null },
       },
     },
     {
@@ -1375,86 +1384,326 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
         coordinates: {
           $first: {
             lat: "$customerLocation.latitude",
-            lng: "$customerLocation.longitude"
-          }
-        }
-      }
+            lng: "$customerLocation.longitude",
+          },
+        },
+      },
     },
     {
       $addFields: {
-        customerCount: { $size: "$totalCustomers" }
-      }
+        customerCount: { $size: "$totalCustomers" },
+      },
     },
-    { $sort: { totalSales: -1 } }
+    { $sort: { totalSales: -1 } },
   ]);
 
   // Calculate totals for percentages
-  const totalCustomerSales = customerSalesHeatmap.reduce((sum, item) => sum + item.sales, 0);
-  const totalCustomerRevenue = customerSalesHeatmap.reduce((sum, item) => sum + item.revenue, 0);
-  const totalCustomerViews = customerViewsHeatmap.reduce((sum, item) => sum + item.views, 0);
+  const totalCustomerSales = customerSalesHeatmap.reduce(
+    (sum, item) => sum + item.sales,
+    0
+  );
+  const totalCustomerRevenue = customerSalesHeatmap.reduce(
+    (sum, item) => sum + item.revenue,
+    0
+  );
+  const totalCustomerViews = customerViewsHeatmap.reduce(
+    (sum, item) => sum + item.views,
+    0
+  );
 
   return {
     // Customer Sales Heatmap - Real customer locations
     customerSalesHeatmap: {
-      countries: customerSalesHeatmap.map(item => ({
+      countries: customerSalesHeatmap.map((item) => ({
         country: String(item._id.country),
-        countryCode: String(item._id.countryCode || 'XX'),
-        region: String(item._id.region || 'Unknown'),
-        city: String(item._id.city || 'Unknown'),
+        countryCode: String(item._id.countryCode || "XX"),
+        region: String(item._id.region || "Unknown"),
+        city: String(item._id.city || "Unknown"),
         sales: Number(item.sales),
         revenue: Number(item.revenue),
         orders: Number(item.orders),
         avgOrderValue: Number(item.avgOrderValue.toFixed(2)),
-        salesPercentage: totalCustomerSales > 0 ? Number(((item.sales / totalCustomerSales) * 100).toFixed(2)) : 0,
-        revenuePercentage: totalCustomerRevenue > 0 ? Number(((item.revenue / totalCustomerRevenue) * 100).toFixed(2)) : 0,
-        coordinates: item.coordinates || { lat: null, lng: null }
+        salesPercentage:
+          totalCustomerSales > 0
+            ? Number(((item.sales / totalCustomerSales) * 100).toFixed(2))
+            : 0,
+        revenuePercentage:
+          totalCustomerRevenue > 0
+            ? Number(((item.revenue / totalCustomerRevenue) * 100).toFixed(2))
+            : 0,
+        coordinates: item.coordinates || { lat: null, lng: null },
       })),
       totalSales: Number(totalCustomerSales),
       totalRevenue: Number(totalCustomerRevenue),
-      totalCountries: customerSalesHeatmap.length
+      totalCountries: customerSalesHeatmap.length,
     },
 
     // Customer Views Heatmap - Real customer locations
     customerViewsHeatmap: {
-      countries: customerViewsHeatmap.map(item => ({
+      countries: customerViewsHeatmap.map((item) => ({
         country: String(item._id.country),
-        countryCode: String(item._id.countryCode || 'XX'),
-        region: String(item._id.region || 'Unknown'),
-        city: String(item._id.city || 'Unknown'),
+        countryCode: String(item._id.countryCode || "XX"),
+        region: String(item._id.region || "Unknown"),
+        city: String(item._id.city || "Unknown"),
         views: Number(item.views),
         uniqueViewers: Number(item.uniqueViewerCount),
-        viewsPercentage: totalCustomerViews > 0 ? Number(((item.views / totalCustomerViews) * 100).toFixed(2)) : 0,
-        coordinates: item.coordinates || { lat: null, lng: null }
+        viewsPercentage:
+          totalCustomerViews > 0
+            ? Number(((item.views / totalCustomerViews) * 100).toFixed(2))
+            : 0,
+        coordinates: item.coordinates || { lat: null, lng: null },
       })),
       totalViews: Number(totalCustomerViews),
-      totalCountries: customerViewsHeatmap.length
+      totalCountries: customerViewsHeatmap.length,
+    },
+  };
+
+  // Customer Sales Heatmap - Real customer locations from orders
+  const customerSalesHeatmap = await Order.aggregate([
+    {
+      $match: {
+        sellerId: sellerId,
+        status: "completed",
+        createdAt: { $gte: startDate, $lte: endDate },
+        "customerLocation.country": { $exists: true, $ne: null },
+      },
+    },
+    { $unwind: "$orderItems" },
+    {
+      $group: {
+        _id: {
+          country: "$customerLocation.country",
+          countryCode: "$customerLocation.countryCode",
+          region: "$customerLocation.region",
+          city: "$customerLocation.city",
+        },
+        sales: { $sum: "$orderItems.quantity" },
+        revenue: { $sum: "$orderItems.totalPrice" },
+        orders: { $sum: 1 },
+        avgOrderValue: { $avg: "$orderItems.totalPrice" },
+        coordinates: {
+          $first: {
+            lat: "$customerLocation.latitude",
+            lng: "$customerLocation.longitude",
+          },
+        },
+      },
+    },
+    { $sort: { sales: -1 } },
+  ]);
+
+  // Customer Views Heatmap - Real customer locations from product views
+  const sellerListings = await Listing.find({
+    sellerId: seller.uid,
+    status: { $ne: "deleted" },
+  })
+    .select("externalId")
+    .lean();
+
+  const listingIds = sellerListings.map((listing) => listing.externalId);
+
+  const customerViewsHeatmap = await ViewedProduct.aggregate([
+    {
+      $match: {
+        productId: { $in: listingIds },
+        viewedAt: { $gte: startDate, $lte: endDate },
+        isDeleted: false,
+        "metadata.customerLocation.country": { $exists: true, $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          country: "$metadata.customerLocation.country",
+          countryCode: "$metadata.customerLocation.countryCode",
+          region: "$metadata.customerLocation.region",
+          city: "$metadata.customerLocation.city",
+        },
+        views: { $sum: 1 },
+        uniqueViewers: {
+          $addToSet: {
+            $cond: [{ $ne: ["$userUid", null] }, "$userUid", "$anonymousId"],
+          },
+        },
+        coordinates: {
+          $first: {
+            lat: "$metadata.customerLocation.latitude",
+            lng: "$metadata.customerLocation.longitude",
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        uniqueViewerCount: { $size: "$uniqueViewers" },
+      },
+    },
+    { $sort: { views: -1 } },
+  ]);
+
+  // Regional Customer Analysis - Purchasing behavior by region
+  const regionalCustomerAnalysis = await Order.aggregate([
+    {
+      $match: {
+        sellerId: sellerId,
+        status: "completed",
+        createdAt: { $gte: startDate, $lte: endDate },
+        "customerLocation.country": { $exists: true, $ne: null },
+      },
+    },
+    { $unwind: "$orderItems" },
+    {
+      $group: {
+        _id: {
+          country: "$customerLocation.country",
+          priceRange: {
+            $switch: {
+              branches: [
+                {
+                  case: { $lt: ["$orderItems.unitPrice", 10] },
+                  then: "Under $10",
+                },
+                {
+                  case: { $lt: ["$orderItems.unitPrice", 25] },
+                  then: "$10-$25",
+                },
+                {
+                  case: { $lt: ["$orderItems.unitPrice", 50] },
+                  then: "$25-$50",
+                },
+                {
+                  case: { $lt: ["$orderItems.unitPrice", 100] },
+                  then: "$50-$100",
+                },
+              ],
+              default: "Over $100",
+            },
+          },
+        },
+        sales: { $sum: "$orderItems.quantity" },
+        revenue: { $sum: "$orderItems.totalPrice" },
+        avgPrice: { $avg: "$orderItems.unitPrice" },
+        orders: { $sum: 1 },
+      },
+    },
+    { $sort: { "_id.country": 1, sales: -1 } },
+  ]);
+
+  // Customer Market Penetration - Countries where you have customers
+  const customerMarketPenetration = await Order.aggregate([
+    {
+      $match: {
+        sellerId: sellerId,
+        status: "completed",
+        createdAt: { $gte: startDate, $lte: endDate },
+        "customerLocation.country": { $exists: true, $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: "$customerLocation.country",
+        countryCode: { $first: "$customerLocation.countryCode" },
+        totalCustomers: { $addToSet: "$buyerId" },
+        totalSales: { $sum: { $sum: "$orderItems.quantity" } },
+        totalRevenue: { $sum: "$totalAmount" },
+        totalOrders: { $sum: 1 },
+        avgOrderValue: { $avg: "$totalAmount" },
+        coordinates: {
+          $first: {
+            lat: "$customerLocation.latitude",
+            lng: "$customerLocation.longitude",
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        customerCount: { $size: "$totalCustomers" },
+      },
+    },
+    { $sort: { totalSales: -1 } },
+  ]);
+
+  // Calculate totals for percentages
+  const totalCustomerSales = customerSalesHeatmap.reduce(
+    (sum, item) => sum + item.sales,
+    0
+  );
+  const totalCustomerRevenue = customerSalesHeatmap.reduce(
+    (sum, item) => sum + item.revenue,
+    0
+  );
+  const totalCustomerViews = customerViewsHeatmap.reduce(
+    (sum, item) => sum + item.views,
+    0
+  );
+
+  return {
+    // Customer Sales Heatmap - Real customer locations
+    customerSalesHeatmap: {
+      countries: customerSalesHeatmap.map((item) => ({
+        country: String(item._id.country),
+        countryCode: String(item._id.Code || "XX"),
+        region: String(item._id.region || "Unknown"),
+        city: String(item._id.city || "Unknown"),
+        sales: Number(item.sales),
+        revenue: Number(item.revenue),
+        orders: Number(item.orders),
+        avgOrderValue: Number(item.avgOrderValue.toFixed(2)),
+        salesPercentage:
+          totalCustomerSales > 0
+            ? Number(((item.sales / totalCustomerSales) * 100).toFixed(2))
+            : 0,
+        revenuePercentage:
+          totalCustomerRevenue > 0
+            ? Number(((item.revenue / totalCustomerRevenue) * 100).toFixed(2))
+            : 0,
+        coordinates: item.coordinates || { lat: null, lng: null },
+      })),
+      totalSales: Number(totalCustomerSales),
+      totalRevenue: Number(totalCustomerRevenue),
+      totalCountries: customerSalesHeatmap.length,
+    },
+
+    // Customer Views Heatmap - Real customer locations
+    customerViewsHeatmap: {
+      countries: customerViewsHeatmap.map((item) => ({
+        country: String(item._id.country),
+        countryCode: String(item._id.countryCode || "XX"),
+        region: String(item._id.region || "Unknown"),
+        city: String(item._id.city || "Unknown"),
+        views: Number(item.views),
+        uniqueViewers: Number(item.uniqueViewerCount),
+        viewsPercentage:
+          totalCustomerViews > 0
+            ? Number(((item.views / totalCustomerViews) * 100).toFixed(2))
+            : 0,
+        coordinates: item.coordinates || { lat: null, lng: null },
+      })),
+      totalViews: Number(totalCustomerViews),
+      totalCountries: customerViewsHeatmap.length,
     },
 
     // Regional Customer Analysis - Price sensitivity by country
-    regionalCustomerAnalysis: regionalCustomerAnalysis.map(item => ({
+    regionalCustomerAnalysis: regionalCustomerAnalysis.map((item) => ({
       country: String(item._id.country),
       priceRange: String(item._id.priceRange),
       sales: Number(item.sales),
       revenue: Number(item.revenue),
       avgPrice: Number(item.avgPrice.toFixed(2)),
-      orders: Number(item.orders)
+      orders: Number(item.orders),
     })),
 
     // Customer Market Penetration - Countries with customers
-    customerMarketPenetration: customerMarketPenetration.map(item => ({
+    customerMarketPenetration: customerMarketPenetration.map((item) => ({
       country: String(item._id),
-      countryCode: String(item.countryCode || 'XX'),
+      countryCode: String(item.countryCode || "XX"),
       customerCount: Number(item.customerCount),
       totalSales: Number(item.totalSales),
       totalRevenue: Number(item.totalRevenue),
       totalOrders: Number(item.totalOrders),
       avgOrderValue: Number(item.avgOrderValue.toFixed(2)),
-      coordinates: item.coordinates || { lat: null, lng: null }
-    }))
+      coordinates: item.coordinates || { lat: null, lng: null },
+    })),
   };
-};
-
-module.exports = {
-  getSellerAnalyticsOverview,
-  getRevenueChartData,
 };

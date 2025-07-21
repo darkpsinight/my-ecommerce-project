@@ -13,6 +13,8 @@ import TopProducts from './TopProducts';
 import PlatformDistribution from './PlatformDistribution';
 import EngagementMetrics from './EngagementMetrics';
 import WishlistAnalytics from './WishlistAnalytics';
+import GeographicAnalytics from './GeographicAnalytics';
+import CustomerGeographicAnalytics from './CustomerGeographicAnalytics';
 import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
 import { useSellerProfile } from 'src/hooks/useSellerProfile';
 import { useAnalytics } from './hooks/useAnalytics';
@@ -166,6 +168,22 @@ function DashboardAnalytics() {
           <Grid item xs={12}>
             <WishlistAnalytics 
               data={analyticsData?.wishlist} 
+              loading={analyticsLoading}
+            />
+          </Grid>
+
+          {/* Geographic & Market Analytics */}
+          <Grid item xs={12}>
+            <GeographicAnalytics 
+              data={analyticsData?.geographic} 
+              loading={analyticsLoading}
+            />
+          </Grid>
+
+          {/* Customer Geographic Analytics */}
+          <Grid item xs={12}>
+            <CustomerGeographicAnalytics 
+              data={analyticsData?.customerGeographic} 
               loading={analyticsLoading}
             />
           </Grid>

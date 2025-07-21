@@ -2,6 +2,7 @@ const ViewedProduct = require("../models/viewedProduct");
 const { User } = require("../models/user");
 const { Listing } = require("../models/listing");
 const { sendErrorResponse, sendSuccessResponse } = require("../utils/responseHelpers");
+const { getDetailedLocationFromIP } = require("../utils/services/ipGeolocation");
 
 // Helper functions to match expected interface
 const errorResponse = (reply, message, statusCode = 500, options = {}) => {
@@ -59,6 +60,10 @@ const addViewedProduct = async (request, reply) => {
 
     console.log('✅ Product found:', product.title);
 
+    // Get customer location from IP address
+    const customerLocation = await getDetailedLocationFromIP(request.ipAddress);
+    console.log('📍 Customer location captured:', customerLocation.locationString);
+
     // Add or update the view record
     const viewRecord = await ViewedProduct.addOrUpdateView({
       userUid,
@@ -69,7 +74,8 @@ const addViewedProduct = async (request, reply) => {
         deviceType: metadata.deviceType || 'other',
         sessionId: metadata.sessionId,
         referrer: metadata.referrer,
-        viewDuration: metadata.viewDuration
+        viewDuration: metadata.viewDuration,
+        customerLocation
       }
     });
 

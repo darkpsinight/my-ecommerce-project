@@ -148,6 +148,142 @@ export interface WishlistData {
   }>;
 }
 
+export interface GeographicData {
+  salesHeatmap: {
+    regions: Array<{
+      region: string;
+      sales: number;
+      revenue: number;
+      orders: number;
+      avgOrderValue: number;
+      salesPercentage: number;
+      revenuePercentage: number;
+      coordinates: {
+        lat: number;
+        lng: number;
+        name: string;
+      };
+    }>;
+    totalSales: number;
+    totalRevenue: number;
+    totalRegions: number;
+  };
+  pricingOptimization: Array<{
+    region: string;
+    priceRange: string;
+    sales: number;
+    revenue: number;
+    avgPrice: number;
+    conversionRate: number;
+  }>;
+  marketPenetration: Array<{
+    region: string;
+    platforms: Array<{
+      platform: string;
+      sales: number;
+      revenue: number;
+      uniqueProducts: number;
+      orders: number;
+    }>;
+    totalSales: number;
+    totalRevenue: number;
+    totalOrders: number;
+    marketShare: number;
+  }>;
+  currencyAnalysis: {
+    currency: string;
+    regionalPerformance: Array<{
+      region: string;
+      period: {
+        year: number;
+        month: number;
+      };
+      sales: number;
+      revenue: number;
+      avgPrice: number;
+      orders: number;
+    }>;
+    priceImpact: Array<{
+      region: string;
+      avgOrderValue: number;
+      priceElasticity: number;
+    }>;
+  };
+  regionalTrends: Array<{
+    region: string;
+    date: {
+      year: number;
+      month: number;
+      day: number;
+    };
+    sales: number;
+    revenue: number;
+    orders: number;
+  }>;
+}
+
+export interface CustomerGeographicData {
+  customerSalesHeatmap: {
+    countries: Array<{
+      country: string;
+      countryCode: string;
+      region: string;
+      city: string;
+      sales: number;
+      revenue: number;
+      orders: number;
+      avgOrderValue: number;
+      salesPercentage: number;
+      revenuePercentage: number;
+      coordinates: {
+        lat: number | null;
+        lng: number | null;
+      };
+    }>;
+    totalSales: number;
+    totalRevenue: number;
+    totalCountries: number;
+  };
+  customerViewsHeatmap: {
+    countries: Array<{
+      country: string;
+      countryCode: string;
+      region: string;
+      city: string;
+      views: number;
+      uniqueViewers: number;
+      viewsPercentage: number;
+      coordinates: {
+        lat: number | null;
+        lng: number | null;
+      };
+    }>;
+    totalViews: number;
+    totalCountries: number;
+  };
+  regionalCustomerAnalysis: Array<{
+    country: string;
+    priceRange: string;
+    sales: number;
+    revenue: number;
+    avgPrice: number;
+    orders: number;
+  }>;
+  customerMarketPenetration: Array<{
+    country: string;
+    countryCode: string;
+    customerCount: number;
+    totalSales: number;
+    totalRevenue: number;
+    totalOrders: number;
+    avgOrderValue: number;
+    coordinates: {
+      lat: number | null;
+      lng: number | null;
+    };
+  }>;
+}
+
 export interface AnalyticsOverviewData {
   timeRange: string;
   revenue: RevenueData;
@@ -156,6 +292,8 @@ export interface AnalyticsOverviewData {
   customers: CustomerData;
   engagement: EngagementData;
   wishlist: WishlistData;
+  geographic: GeographicData;
+  customerGeographic: CustomerGeographicData;
   generatedAt: string;
 }
 

@@ -126,6 +126,28 @@ export interface EngagementData {
   conversionRate: number;
 }
 
+export interface WishlistData {
+  totalWishlistAdditions: number;
+  uniqueWishlisters: number;
+  wishlistConversionRate: number;
+  mostWishlistedProducts: Array<{
+    listingId: string;
+    title: string;
+    platform: string;
+    wishlistCount: number;
+  }>;
+  wishlistAbandonmentRate: number;
+  dailyWishlistActivity: Array<{
+    date: {
+      year: number;
+      month: number;
+      day: number;
+    };
+    additions: number;
+    removals: number;
+  }>;
+}
+
 export interface AnalyticsOverviewData {
   timeRange: string;
   revenue: RevenueData;
@@ -133,6 +155,7 @@ export interface AnalyticsOverviewData {
   inventory: InventoryData;
   customers: CustomerData;
   engagement: EngagementData;
+  wishlist: WishlistData;
   generatedAt: string;
 }
 

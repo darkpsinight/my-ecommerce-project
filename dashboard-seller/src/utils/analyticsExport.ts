@@ -120,6 +120,42 @@ export const analyticsToCSV = (
     }
   }
 
+  // Wishlist Analytics
+  if (analyticsData.wishlist) {
+    csv += 'WISHLIST ANALYTICS SUMMARY\n';
+    csv += 'Metric,Value,Notes\n';
+    csv += `Total Wishlist Additions,${analyticsData.wishlist.totalWishlistAdditions},Items added to wishlists\n`;
+    csv += `Unique Wishlisters,${analyticsData.wishlist.uniqueWishlisters},Distinct users who wishlisted items\n`;
+    csv += `Wishlist Conversion Rate,${analyticsData.wishlist.wishlistConversionRate}%,Wishlist to purchase conversion\n`;
+    csv += `Wishlist Abandonment Rate,${analyticsData.wishlist.wishlistAbandonmentRate}%,Items removed from wishlists\n`;
+    csv += '\n';
+
+    // Most Wishlisted Products
+    if (analyticsData.wishlist.mostWishlistedProducts?.length > 0) {
+      csv += 'MOST WISHLISTED PRODUCTS\n';
+      csv += 'Rank,Product Title,Platform,Wishlist Count,Market Interest\n';
+      analyticsData.wishlist.mostWishlistedProducts.forEach((product, index) => {
+        const cleanTitle = product.title.replace(/"/g, '""');
+        const interestLevel = product.wishlistCount > 10 ? 'High' : product.wishlistCount > 5 ? 'Medium' : 'Low';
+        csv += `${index + 1},"${cleanTitle}",${product.platform},${product.wishlistCount},${interestLevel}\n`;
+      });
+      csv += '\n';
+    }
+
+    // Daily Wishlist Activity
+    if (analyticsData.wishlist.dailyWishlistActivity?.length > 0) {
+      csv += 'DAILY WISHLIST ACTIVITY\n';
+      csv += 'Date,Additions,Removals,Net Change,Day of Week\n';
+      analyticsData.wishlist.dailyWishlistActivity.forEach(activity => {
+        const date = `${activity.date.year}-${String(activity.date.month).padStart(2, '0')}-${String(activity.date.day).padStart(2, '0')}`;
+        const netChange = activity.additions - activity.removals;
+        const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+        csv += `${date},${activity.additions},${activity.removals},${netChange >= 0 ? '+' : ''}${netChange},${dayOfWeek}\n`;
+      });
+      csv += '\n';
+    }
+  }
+
   // Customer Insights
   if (analyticsData.customers) {
     csv += 'CUSTOMER INSIGHTS SUMMARY\n';

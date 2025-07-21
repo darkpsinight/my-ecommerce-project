@@ -3,6 +3,7 @@ const { Listing } = require("../models/listing");
 const { User } = require("../models/user");
 const { Transaction } = require("../models/transaction");
 const ViewedProduct = require("../models/viewedProduct");
+const { Wishlist } = require("../models/wishlist");
 const {
   sendSuccessResponse,
   sendErrorResponse,
@@ -63,6 +64,9 @@ const getSellerAnalyticsOverview = async (request, reply) => {
     
     // Get engagement analytics (listing views)
     const engagementData = await getEngagementAnalytics(sellerId, startDate, now);
+    
+    // Get wishlist analytics
+    const wishlistData = await getWishlistAnalytics(sellerId, startDate, now);
 
     const responseData = {
       timeRange,
@@ -71,6 +75,7 @@ const getSellerAnalyticsOverview = async (request, reply) => {
       inventory: inventoryData,
       customers: customerData,
       engagement: engagementData,
+      wishlist: wishlistData,
       generatedAt: new Date(),
     };
 
@@ -614,6 +619,172 @@ const getEngagementAnalytics = async (sellerId, startDate, endDate) => {
       uniqueViewers: Number(item.uniqueViewerCount)
     })),
     conversionRate: Number(conversionRate.toFixed(2))
+  };
+};
+
+// Helper function to get wishlist analytics
+const getWishlistAnalytics = async (sellerId, startDate, endDate) => {
+  // Get seller's UID to match listings
+  const seller = await User.findById(sellerId);
+  if (!seller) {
+    throw new Error("Seller not found");
+  }
+
+  // Get seller's listing IDs
+  const sellerListings = await Listing.find({ 
+    sellerId: seller.uid,
+    status: { $ne: 'deleted' }
+  }).select('_id externalId title platform').lean();
+
+  const listingObjectIds = sellerListings.map(listing => listing._id);
+
+  if (listingObjectIds.length === 0) {
+    return {
+      totalWishlistAdditions: 0,
+      uniqueWishlisters: 0,
+      wishlistConversionRate: 0,
+      mostWishlistedProducts: [],
+      wishlistAbandonmentRate: 0,
+      dailyWishlistActivity: []
+    };
+  }
+
+  // Get all wishlists that contain seller's products
+  const wishlistsWithSellerProducts = await Wishlist.find({
+    'items.listingId': { $in: listingObjectIds }
+  }).lean();
+
+  // Calculate total wishlist additions for seller's products in time range
+  let totalAdditions = 0;
+  let totalRemovals = 0;
+  let totalConversions = 0;
+  const uniqueWishlisters = new Set();
+  const productWishlistCounts = {};
+  const dailyActivity = {};
+
+  // Process each wishlist
+  for (const wishlist of wishlistsWithSellerProducts) {
+    uniqueWishlisters.add(wishlist.userId.toString());
+    
+    // Count current items from seller
+    const sellerItems = wishlist.items.filter(item => 
+      listingObjectIds.some(id => id.toString() === item.listingId.toString()) &&
+      item.addedAt >= startDate && item.addedAt <= endDate
+    );
+
+    totalAdditions += sellerItems.length;
+
+    // Count wishlist additions by product
+    sellerItems.forEach(item => {
+      const listingId = item.listingId.toString();
+      if (!productWishlistCounts[listingId]) {
+        productWishlistCounts[listingId] = 0;
+      }
+      productWishlistCounts[listingId]++;
+
+      // Track daily activity
+      const dateKey = item.addedAt.toISOString().split('T')[0];
+      if (!dailyActivity[dateKey]) {
+        dailyActivity[dateKey] = { additions: 0, removals: 0 };
+      }
+      dailyActivity[dateKey].additions++;
+    });
+
+    // Add analytics data from wishlist model
+    if (wishlist.analytics) {
+      // Note: These are total analytics, not filtered by time range or seller
+      // We'll use them as approximations
+      totalConversions += wishlist.analytics.itemsConvertedToPurchase || 0;
+    }
+  }
+
+  // Get most wishlisted products
+  const mostWishlistedProducts = Object.entries(productWishlistCounts)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10)
+    .map(([listingId, count]) => {
+      const listing = sellerListings.find(l => l._id.toString() === listingId);
+      return {
+        listingId: listing ? listing.externalId : listingId,
+        title: listing ? listing.title : 'Unknown',
+        platform: listing ? listing.platform : 'Unknown',
+        wishlistCount: count
+      };
+    });
+
+  // Calculate conversion rate (wishlist additions to purchases)
+  // Get actual purchases from wishlisted items
+  const purchasedWishlistItems = await Order.aggregate([
+    {
+      $match: {
+        sellerId: sellerId,
+        status: "completed",
+        createdAt: { $gte: startDate, $lte: endDate }
+      }
+    },
+    { $unwind: "$orderItems" },
+    {
+      $lookup: {
+        from: "listings",
+        let: { listingExternalId: "$orderItems.listingId" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$externalId", "$$listingExternalId"] }
+            }
+          }
+        ],
+        as: "listingData"
+      }
+    },
+    { $unwind: "$listingData" },
+    {
+      $match: {
+        "listingData._id": { $in: listingObjectIds }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalPurchases: { $sum: "$orderItems.quantity" }
+      }
+    }
+  ]);
+
+  const actualConversions = purchasedWishlistItems[0]?.totalPurchases || 0;
+  const conversionRate = totalAdditions > 0 ? (actualConversions / totalAdditions) * 100 : 0;
+
+  // Calculate abandonment rate (items removed vs added)
+  // This is an approximation since we don't track historical removals by time range
+  const abandonmentRate = totalAdditions > 0 ? (totalRemovals / totalAdditions) * 100 : 0;
+
+  // Format daily activity
+  const dailyWishlistActivity = Object.entries(dailyActivity)
+    .map(([date, activity]) => {
+      const dateObj = new Date(date);
+      return {
+        date: {
+          year: dateObj.getFullYear(),
+          month: dateObj.getMonth() + 1,
+          day: dateObj.getDate()
+        },
+        additions: activity.additions,
+        removals: activity.removals
+      };
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date.year, a.date.month - 1, a.date.day);
+      const dateB = new Date(b.date.year, b.date.month - 1, b.date.day);
+      return dateA - dateB;
+    });
+
+  return {
+    totalWishlistAdditions: Number(totalAdditions),
+    uniqueWishlisters: Number(uniqueWishlisters.size),
+    wishlistConversionRate: Number(conversionRate.toFixed(2)),
+    mostWishlistedProducts: mostWishlistedProducts,
+    wishlistAbandonmentRate: Number(abandonmentRate.toFixed(2)),
+    dailyWishlistActivity: dailyWishlistActivity
   };
 };
 

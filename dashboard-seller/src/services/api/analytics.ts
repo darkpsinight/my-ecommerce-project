@@ -99,12 +99,40 @@ export interface CustomerData {
   }>;
 }
 
+export interface EngagementData {
+  totalViews: number;
+  uniqueViewers: number;
+  avgViewsPerListing: number;
+  topViewedListings: Array<{
+    listingId: string;
+    title: string;
+    platform: string;
+    viewCount: number;
+    uniqueViewers: number;
+  }>;
+  viewsBySource: Array<{
+    source: string;
+    count: number;
+  }>;
+  dailyViews: Array<{
+    date: {
+      year: number;
+      month: number;
+      day: number;
+    };
+    views: number;
+    uniqueViewers: number;
+  }>;
+  conversionRate: number;
+}
+
 export interface AnalyticsOverviewData {
   timeRange: string;
   revenue: RevenueData;
   sales: SalesData;
   inventory: InventoryData;
   customers: CustomerData;
+  engagement: EngagementData;
   generatedAt: string;
 }
 

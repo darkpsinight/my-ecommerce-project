@@ -69,14 +69,14 @@ const ShopDetails = () => {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   // Track product view with our new hybrid storage system
-  const { isTracking } = useProductViewTracker({
+  const { isTracking, trackView } = useProductViewTracker({
     productId: productId || "",
     metadata: {
       source: "direct",
       referrer: typeof window !== "undefined" ? document.referrer : undefined,
     },
     trackOnMount: false, // We'll track manually after product is loaded
-    minViewDuration: 3000, // Track after 3 seconds
+    minViewDuration: 0, // Track immediately (no delay)
   });
 
   const tabs = [
@@ -177,16 +177,14 @@ const ShopDetails = () => {
             // Add to recently viewed products (Redux - legacy)
             dispatch(addRecentlyViewedProduct({ ...data }));
 
-            // Add to our new hybrid viewed products system
-            // Import dynamically to avoid issues during SSR
-            const { addViewedProduct } = await import(
-              "@/services/viewedProducts"
-            );
-            await addViewedProduct(data.id, {
-              source: "direct",
-              referrer:
-                typeof window !== "undefined" ? document.referrer : undefined,
-            });
+            // Track the product view using our new hybrid system
+            console.log('🎯 About to call trackView() for product:', data.id);
+            try {
+              trackView();
+              console.log('✅ trackView() called successfully');
+            } catch (error) {
+              console.error('❌ Error calling trackView():', error);
+            }
           } else {
             console.log("No product data found, using fallback");
             setProductData(fallbackProduct);

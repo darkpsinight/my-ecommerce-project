@@ -11,6 +11,7 @@ import CustomerInsights from './CustomerInsights';
 import RevenueChart from './RevenueChart';
 import TopProducts from './TopProducts';
 import PlatformDistribution from './PlatformDistribution';
+import EngagementMetrics from './EngagementMetrics';
 import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
 import { useSellerProfile } from 'src/hooks/useSellerProfile';
 import { useAnalytics } from './hooks/useAnalytics';
@@ -148,6 +149,14 @@ function DashboardAnalytics() {
           <Grid item xs={12} lg={6}>
             <CustomerInsights 
               data={analyticsData?.customers} 
+              loading={analyticsLoading}
+            />
+          </Grid>
+
+          {/* Engagement Metrics */}
+          <Grid item xs={12} lg={8}>
+            <EngagementMetrics 
+              data={analyticsData?.engagement} 
               loading={analyticsLoading}
             />
           </Grid>

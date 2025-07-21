@@ -12,10 +12,17 @@ const viewedProductSchema = new mongoose.Schema({
     index: true
   },
   
-  // User who viewed the product (using uid from user model)
+  // User who viewed the product (using uid from user model, or sessionId for anonymous)
   userUid: {
     type: String,
-    required: true,
+    required: false, // Allow null for anonymous users
+    index: true
+  },
+  
+  // For anonymous users, we'll use sessionId or IP-based tracking
+  anonymousId: {
+    type: String,
+    required: false,
     index: true
   },
   
@@ -85,6 +92,8 @@ const viewedProductSchema = new mongoose.Schema({
 // Compound indexes for efficient queries
 viewedProductSchema.index({ userUid: 1, viewedAt: -1 }); // Recent views by user
 viewedProductSchema.index({ userUid: 1, productId: 1 }); // Check if user viewed product
+viewedProductSchema.index({ anonymousId: 1, productId: 1 }); // Check if anonymous user viewed product
+viewedProductSchema.index({ anonymousId: 1, viewedAt: -1 }); // Recent views by anonymous user
 viewedProductSchema.index({ productId: 1, viewedAt: -1 }); // Product popularity analysis
 viewedProductSchema.index({ viewedAt: -1 }); // Global recent views
 viewedProductSchema.index({ isDeleted: 1, viewedAt: -1 }); // Active views only
@@ -105,31 +114,71 @@ viewedProductSchema.statics.getRecentViewsByUser = function(userUid, limit = 20,
 };
 
 viewedProductSchema.statics.addOrUpdateView = async function(viewData) {
-  const { userUid, productId, metadata = {} } = viewData;
+  const { userUid, anonymousId, productId, metadata = {} } = viewData;
   
-  // Check if user recently viewed this product (within last 30 minutes)
-  const recentView = await this.findOne({
+  console.log('🔍 addOrUpdateView called with:', {
     userUid,
+    anonymousId,
+    productId,
+    metadata
+  });
+  
+  // Build query for checking recent views
+  let query = {
     productId,
     isDeleted: false,
     viewedAt: { $gte: new Date(Date.now() - 30 * 60 * 1000) } // 30 minutes ago
-  });
+  };
+  
+  // Add user identification to query
+  if (userUid) {
+    query.userUid = userUid;
+    console.log('🔍 Using authenticated user query:', query);
+  } else if (anonymousId) {
+    query.anonymousId = anonymousId;
+    console.log('🔍 Using anonymous user query:', query);
+  } else {
+    // If no user identification provided, create new view anyway
+    query = null;
+    console.log('🔍 No user identification provided, will create new view');
+  }
+  
+  let recentView = null;
+  if (query) {
+    recentView = await this.findOne(query);
+    console.log('🔍 Recent view found:', recentView ? 'YES' : 'NO');
+    if (recentView) {
+      console.log('🔍 Recent view details:', {
+        id: recentView.externalId,
+        viewedAt: recentView.viewedAt,
+        userUid: recentView.userUid,
+        anonymousId: recentView.anonymousId
+      });
+    }
+  }
   
   if (recentView) {
-    // Update existing recent view
+    // Update existing recent view (don't create duplicate)
+    console.log('✅ Updating existing view record');
     recentView.viewedAt = new Date();
     recentView.metadata = { ...recentView.metadata, ...metadata };
-    return await recentView.save();
+    const savedView = await recentView.save();
+    console.log('✅ Updated view record:', savedView.externalId);
+    return savedView;
   } else {
     // Create new view record
+    console.log('✅ Creating new view record');
     const newView = new this({
-      userUid,
+      userUid: userUid || null,
+      anonymousId: anonymousId || null,
       productId,
       metadata,
       // Set expiration date (e.g., 1 year from now for data retention)
       expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
     });
-    return await newView.save();
+    const savedView = await newView.save();
+    console.log('✅ Created new view record:', savedView.externalId);
+    return savedView;
   }
 };
 

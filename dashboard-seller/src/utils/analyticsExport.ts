@@ -85,6 +85,41 @@ export const analyticsToCSV = (
     csv += '\n';
   }
 
+  // Engagement Metrics
+  if (analyticsData.engagement) {
+    csv += 'ENGAGEMENT METRICS SUMMARY\n';
+    csv += 'Metric,Value,Notes\n';
+    csv += `Total Views,${analyticsData.engagement.totalViews},All listing views\n`;
+    csv += `Unique Viewers,${analyticsData.engagement.uniqueViewers},Distinct users who viewed listings\n`;
+    csv += `Average Views per Listing,${analyticsData.engagement.avgViewsPerListing},Views divided by total listings\n`;
+    csv += `Conversion Rate,${analyticsData.engagement.conversionRate}%,Views to purchases ratio\n`;
+    csv += '\n';
+
+    // Top Viewed Listings
+    if (analyticsData.engagement.topViewedListings?.length > 0) {
+      csv += 'MOST VIEWED LISTINGS\n';
+      csv += 'Rank,Product Title,Platform,Total Views,Unique Viewers,Views per Viewer\n';
+      analyticsData.engagement.topViewedListings.forEach((listing, index) => {
+        const cleanTitle = listing.title.replace(/"/g, '""');
+        const viewsPerViewer = listing.uniqueViewers > 0 ? (listing.viewCount / listing.uniqueViewers).toFixed(1) : '0.0';
+        csv += `${index + 1},"${cleanTitle}",${listing.platform},${listing.viewCount},${listing.uniqueViewers},${viewsPerViewer}\n`;
+      });
+      csv += '\n';
+    }
+
+    // Traffic Sources
+    if (analyticsData.engagement.viewsBySource?.length > 0) {
+      csv += 'TRAFFIC SOURCES\n';
+      csv += 'Source,Views,Percentage\n';
+      const totalViews = analyticsData.engagement.totalViews || 1;
+      analyticsData.engagement.viewsBySource.forEach(source => {
+        const percentage = ((source.count / totalViews) * 100).toFixed(1);
+        csv += `${source.source.replace('_', ' ')},${source.count},${percentage}%\n`;
+      });
+      csv += '\n';
+    }
+  }
+
   // Customer Insights
   if (analyticsData.customers) {
     csv += 'CUSTOMER INSIGHTS SUMMARY\n';

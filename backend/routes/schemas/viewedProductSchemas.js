@@ -27,7 +27,7 @@ const metadataSchema = {
 };
 
 const addViewedProductSchema = {
-  description: 'Add a viewed product record',
+  description: 'Add a viewed product record (authenticated users)',
   tags: ['viewed-products'],
   body: {
     type: 'object',
@@ -36,6 +36,60 @@ const addViewedProductSchema = {
       productId: {
         type: 'string',
         description: 'External ID of the product being viewed',
+        minLength: 1,
+        maxLength: 100
+      },
+      metadata: metadataSchema
+    }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            viewId: { type: 'string' },
+            viewedAt: { type: 'string', format: 'date-time' }
+          }
+        }
+      }
+    },
+    400: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    },
+    404: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    }
+  }
+};
+
+const addAnonymousViewedProductSchema = {
+  description: 'Add a viewed product record (anonymous users)',
+  tags: ['viewed-products'],
+  body: {
+    type: 'object',
+    required: ['productId', 'anonymousId'],
+    properties: {
+      productId: {
+        type: 'string',
+        description: 'External ID of the product being viewed',
+        minLength: 1,
+        maxLength: 100
+      },
+      anonymousId: {
+        type: 'string',
+        description: 'Anonymous user identifier',
         minLength: 1,
         maxLength: 100
       },
@@ -317,6 +371,7 @@ const getViewingAnalyticsSchema = {
 
 module.exports = {
   addViewedProductSchema,
+  addAnonymousViewedProductSchema,
   bulkAddViewedProductsSchema,
   getViewedProductsSchema,
   clearViewedProductsSchema,

@@ -10,6 +10,7 @@ const {
 
 const {
   addViewedProductSchema,
+  addAnonymousViewedProductSchema,
   bulkAddViewedProductsSchema,
   getViewedProductsSchema,
   clearViewedProductsSchema,
@@ -19,10 +20,16 @@ const {
 
 async function viewedProductRoutes(fastify, options) {
 
-  // Add a viewed product
+  // Add a viewed product (authenticated users)
   fastify.post('/', {
     preHandler: verifyAuth(["buyer"]),
     schema: addViewedProductSchema,
+    handler: addViewedProduct
+  });
+
+  // Add a viewed product (anonymous users)
+  fastify.post('/anonymous', {
+    schema: addAnonymousViewedProductSchema,
     handler: addViewedProduct
   });
 

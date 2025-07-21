@@ -46,7 +46,9 @@ const fastifyCookie = require("fastify-cookie");
 const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
 const { setupListingExpirationCron } = require("./jobs/listingExpirationCron");
 const { configCache } = require("./services/configCache");
-const { registerWithFastify: registerImageKitWithFastify } = require("./handlers/imageUploadHandler");
+const {
+  registerWithFastify: registerImageKitWithFastify,
+} = require("./handlers/imageUploadHandler");
 
 // fastify-helmet adds various HTTP headers for security
 if (configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV) {
@@ -64,8 +66,9 @@ if (configs.COOKIE_SECRET) {
     httpOnly: true,
     path: "/",
     signed: true,
-    sameSite: configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV ? "strict" : "lax",
-    secure: configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV
+    sameSite:
+      configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV ? "strict" : "lax",
+    secure: configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV,
   };
 
   fastify.register(fastifyCsrf, {
@@ -147,10 +150,10 @@ fastify.register(wishlistRoutes, { prefix: "/api/v1/wishlist" });
 fastify.register(viewedProductRoutes, { prefix: "/api/v1/viewed-products" });
 
 // Register multipart content parser for file uploads
-fastify.register(require('fastify-multipart'), {
+fastify.register(require("fastify-multipart"), {
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 1 // Only allow one file per request
+    files: 1, // Only allow one file per request
   },
   addToBody: false, // Don't add files to the request body
   onFile: async (part) => {
@@ -161,9 +164,9 @@ fastify.register(require('fastify-multipart'), {
         // Just consume the stream
       }
     } catch (err) {
-      console.error('Error in multipart onFile:', err);
+      console.error("Error in multipart onFile:", err);
     }
-  }
+  },
 });
 
 // Register image upload routes

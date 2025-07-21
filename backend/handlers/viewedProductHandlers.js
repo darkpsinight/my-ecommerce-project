@@ -17,17 +17,33 @@ const successResponse = (reply, message, data = null, statusCode = 200) => {
 };
 
 /**
- * Add a viewed product record for authenticated user
+ * Add a viewed product record for authenticated or anonymous user
  * POST /api/v1/viewed-products
  */
 const addViewedProduct = async (request, reply) => {
   try {
-    const { productId, metadata = {} } = request.body;
-    const userUid = request.user.uid;
+    const { productId, metadata = {}, anonymousId } = request.body;
+    const userUid = request.user?.uid; // Optional for anonymous users
+
+    console.log('🚀 addViewedProduct called with:', {
+      productId,
+      userUid,
+      anonymousId,
+      metadata,
+      isAuthenticated: !!request.user,
+      route: request.url
+    });
 
     // Validate required fields
     if (!productId) {
+      console.log('❌ Missing productId');
       return errorResponse(reply, "Product ID is required", 400);
+    }
+
+    // For anonymous users, require anonymousId
+    if (!userUid && !anonymousId) {
+      console.log('❌ Missing user identification');
+      return errorResponse(reply, "Anonymous ID is required for non-authenticated users", 400);
     }
 
     // Verify product exists
@@ -37,12 +53,16 @@ const addViewedProduct = async (request, reply) => {
     }).lean();
     
     if (!product) {
+      console.log('❌ Product not found:', productId);
       return errorResponse(reply, "Product not found", 404);
     }
+
+    console.log('✅ Product found:', product.title);
 
     // Add or update the view record
     const viewRecord = await ViewedProduct.addOrUpdateView({
       userUid,
+      anonymousId,
       productId,
       metadata: {
         source: metadata.source || 'other',
@@ -51,6 +71,12 @@ const addViewedProduct = async (request, reply) => {
         referrer: metadata.referrer,
         viewDuration: metadata.viewDuration
       }
+    });
+
+    console.log('✅ View record processed:', {
+      viewId: viewRecord.externalId,
+      viewedAt: viewRecord.viewedAt,
+      wasUpdated: viewRecord.updatedAt > viewRecord.createdAt
     });
 
     return successResponse(reply, "Product view recorded successfully", {

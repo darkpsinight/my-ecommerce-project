@@ -2,7 +2,7 @@ const { Order } = require("../models/order");
 const { Listing } = require("../models/listing");
 const { User } = require("../models/user");
 const { Transaction } = require("../models/transaction");
-const { ViewedProduct } = require("../models/viewedProduct");
+const ViewedProduct = require("../models/viewedProduct");
 const {
   sendSuccessResponse,
   sendErrorResponse,
@@ -60,6 +60,9 @@ const getSellerAnalyticsOverview = async (request, reply) => {
     
     // Get customer analytics
     const customerData = await getCustomerAnalytics(sellerId, startDate, now);
+    
+    // Get engagement analytics (listing views)
+    const engagementData = await getEngagementAnalytics(sellerId, startDate, now);
 
     const responseData = {
       timeRange,
@@ -67,6 +70,7 @@ const getSellerAnalyticsOverview = async (request, reply) => {
       sales: salesData,
       inventory: inventoryData,
       customers: customerData,
+      engagement: engagementData,
       generatedAt: new Date(),
     };
 
@@ -352,6 +356,264 @@ const getCustomerAnalytics = async (sellerId, startDate, endDate) => {
       firstOrder: new Date(customer.firstOrder),
       lastOrder: new Date(customer.lastOrder),
     })),
+  };
+};
+
+// Helper function to get engagement analytics (listing views)
+const getEngagementAnalytics = async (sellerId, startDate, endDate) => {
+  console.log('getEngagementAnalytics called with:', { sellerId, startDate, endDate });
+  console.log('ViewedProduct model:', ViewedProduct);
+  
+  // Get seller's UID to match listings
+  const seller = await User.findById(sellerId);
+  if (!seller) {
+    throw new Error("Seller not found");
+  }
+
+  // Get seller's listing IDs
+  const sellerListings = await Listing.find({ 
+    sellerId: seller.uid,
+    status: { $ne: 'deleted' }
+  }).select('externalId title platform').lean();
+
+  const listingIds = sellerListings.map(listing => listing.externalId);
+
+  if (listingIds.length === 0) {
+    return {
+      totalViews: 0,
+      uniqueViewers: 0,
+      avgViewsPerListing: 0,
+      topViewedListings: [],
+      viewsBySource: [],
+      dailyViews: [],
+      conversionRate: 0
+    };
+  }
+
+  // Total views and unique viewers (including both authenticated and anonymous)
+  const viewsAggregation = await ViewedProduct.aggregate([
+    {
+      $match: {
+        productId: { $in: listingIds },
+        viewedAt: { $gte: startDate, $lte: endDate },
+        isDeleted: false
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalViews: { $sum: 1 },
+        uniqueAuthenticatedViewers: { 
+          $addToSet: {
+            $cond: [{ $ne: ["$userUid", null] }, "$userUid", null]
+          }
+        },
+        uniqueAnonymousViewers: { 
+          $addToSet: {
+            $cond: [{ $ne: ["$anonymousId", null] }, "$anonymousId", null]
+          }
+        }
+      }
+    },
+    {
+      $addFields: {
+        uniqueAuthenticatedCount: { 
+          $size: { 
+            $filter: { 
+              input: "$uniqueAuthenticatedViewers", 
+              cond: { $ne: ["$$this", null] } 
+            } 
+          } 
+        },
+        uniqueAnonymousCount: { 
+          $size: { 
+            $filter: { 
+              input: "$uniqueAnonymousViewers", 
+              cond: { $ne: ["$$this", null] } 
+            } 
+          } 
+        }
+      }
+    },
+    {
+      $addFields: {
+        uniqueViewerCount: { $add: ["$uniqueAuthenticatedCount", "$uniqueAnonymousCount"] }
+      }
+    }
+  ]);
+
+  const viewStats = viewsAggregation[0] || { totalViews: 0, uniqueViewerCount: 0 };
+
+  // Top viewed listings
+  const topViewedListings = await ViewedProduct.aggregate([
+    {
+      $match: {
+        productId: { $in: listingIds },
+        viewedAt: { $gte: startDate, $lte: endDate },
+        isDeleted: false
+      }
+    },
+    {
+      $group: {
+        _id: "$productId",
+        viewCount: { $sum: 1 },
+        uniqueAuthenticatedViewers: { 
+          $addToSet: {
+            $cond: [{ $ne: ["$userUid", null] }, "$userUid", null]
+          }
+        },
+        uniqueAnonymousViewers: { 
+          $addToSet: {
+            $cond: [{ $ne: ["$anonymousId", null] }, "$anonymousId", null]
+          }
+        }
+      }
+    },
+    {
+      $addFields: {
+        uniqueAuthenticatedCount: { 
+          $size: { 
+            $filter: { 
+              input: "$uniqueAuthenticatedViewers", 
+              cond: { $ne: ["$$this", null] } 
+            } 
+          } 
+        },
+        uniqueAnonymousCount: { 
+          $size: { 
+            $filter: { 
+              input: "$uniqueAnonymousViewers", 
+              cond: { $ne: ["$$this", null] } 
+            } 
+          } 
+        }
+      }
+    },
+    {
+      $addFields: {
+        uniqueViewerCount: { $add: ["$uniqueAuthenticatedCount", "$uniqueAnonymousCount"] }
+      }
+    },
+    { $sort: { viewCount: -1 } },
+    { $limit: 10 }
+  ]);
+
+  // Add listing details to top viewed
+  const topViewedWithDetails = topViewedListings.map(item => {
+    const listing = sellerListings.find(l => l.externalId === item._id);
+    return {
+      listingId: String(item._id),
+      title: listing ? listing.title : 'Unknown',
+      platform: listing ? listing.platform : 'Unknown',
+      viewCount: Number(item.viewCount),
+      uniqueViewers: Number(item.uniqueViewerCount)
+    };
+  });
+
+  // Views by source
+  const viewsBySource = await ViewedProduct.aggregate([
+    {
+      $match: {
+        productId: { $in: listingIds },
+        viewedAt: { $gte: startDate, $lte: endDate },
+        isDeleted: false
+      }
+    },
+    {
+      $group: {
+        _id: "$metadata.source",
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { count: -1 } }
+  ]);
+
+  // Daily views trend
+  const dailyViews = await ViewedProduct.aggregate([
+    {
+      $match: {
+        productId: { $in: listingIds },
+        viewedAt: { $gte: startDate, $lte: endDate },
+        isDeleted: false
+      }
+    },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$viewedAt" },
+          month: { $month: "$viewedAt" },
+          day: { $dayOfMonth: "$viewedAt" }
+        },
+        views: { $sum: 1 },
+        uniqueAuthenticatedViewers: { 
+          $addToSet: {
+            $cond: [{ $ne: ["$userUid", null] }, "$userUid", null]
+          }
+        },
+        uniqueAnonymousViewers: { 
+          $addToSet: {
+            $cond: [{ $ne: ["$anonymousId", null] }, "$anonymousId", null]
+          }
+        }
+      }
+    },
+    {
+      $addFields: {
+        uniqueAuthenticatedCount: { 
+          $size: { 
+            $filter: { 
+              input: "$uniqueAuthenticatedViewers", 
+              cond: { $ne: ["$$this", null] } 
+            } 
+          } 
+        },
+        uniqueAnonymousCount: { 
+          $size: { 
+            $filter: { 
+              input: "$uniqueAnonymousViewers", 
+              cond: { $ne: ["$$this", null] } 
+            } 
+          } 
+        }
+      }
+    },
+    {
+      $addFields: {
+        uniqueViewerCount: { $add: ["$uniqueAuthenticatedCount", "$uniqueAnonymousCount"] }
+      }
+    },
+    { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
+  ]);
+
+  // Calculate conversion rate (views to purchases)
+  const totalOrders = await Order.countDocuments({
+    sellerId: sellerId,
+    status: "completed",
+    createdAt: { $gte: startDate, $lte: endDate }
+  });
+
+  const conversionRate = viewStats.totalViews > 0 ? (totalOrders / viewStats.totalViews) * 100 : 0;
+
+  // Convert MongoDB objects to plain JavaScript objects
+  return {
+    totalViews: Number(viewStats.totalViews),
+    uniqueViewers: Number(viewStats.uniqueViewerCount),
+    avgViewsPerListing: listingIds.length > 0 ? Number((viewStats.totalViews / listingIds.length).toFixed(2)) : 0,
+    topViewedListings: topViewedWithDetails,
+    viewsBySource: viewsBySource.map(item => ({
+      source: String(item._id || 'unknown'),
+      count: Number(item.count)
+    })),
+    dailyViews: dailyViews.map(item => ({
+      date: {
+        year: Number(item._id.year),
+        month: Number(item._id.month),
+        day: Number(item._id.day)
+      },
+      views: Number(item.views),
+      uniqueViewers: Number(item.uniqueViewerCount)
+    })),
+    conversionRate: Number(conversionRate.toFixed(2))
   };
 };
 

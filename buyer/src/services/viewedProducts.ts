@@ -45,6 +45,8 @@ class ViewedProductsService {
   private isAuthenticated: boolean = false;
   private sessionId: string;
   private viewQueue: Map<string, NodeJS.Timeout> = new Map();
+  private isMigrationInProgress: boolean = false;
+  private lastMigrationTime: number = 0;
 
   constructor() {
     this.sessionId = this.generateSessionId();
@@ -63,9 +65,16 @@ class ViewedProductsService {
     try {
       // Get token from Redux store (same as auth.ts)
       const { store } = require('@/redux/store');
-      const token = store.getState().authReducer.token;
+      const state = store.getState();
+      const token = state.authReducer.token;
       const isAuthenticated = !!token;
       
+      console.log('[ViewedProducts] Auth check:', { 
+        token: token ? 'EXISTS' : 'MISSING', 
+        isAuthenticated,
+        storeState: state.authReducer ? 'EXISTS' : 'MISSING',
+        tokenLength: token ? token.length : 0
+      });
       return isAuthenticated;
     } catch (error) {
       console.error('[ViewedProducts] Auth check failed:', error);
@@ -190,6 +199,53 @@ class ViewedProductsService {
     }
   }
 
+  private async addAnonymousViewToDatabase(productId: string, metadata?: ViewMetadata): Promise<boolean> {
+    try {
+      const anonymousId = this.getAnonymousId();
+      
+      const payload = {
+        productId,
+        anonymousId,
+        metadata: {
+          ...metadata,
+          sessionId: this.sessionId,
+          deviceType: this.detectDevice(),
+          referrer: typeof window !== 'undefined' ? document.referrer : undefined
+        }
+      };
+      
+      const response = await axios.post(
+        `${API_URL}/viewed-products/anonymous`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      return (response.data as any)?.success || false;
+    } catch (error) {
+      console.error('[ViewedProducts] Error adding anonymous viewed product to database:', error);
+      if ((error as any).response) {
+        console.error('[ViewedProducts] Error response:', (error as any).response.data);
+        console.error('[ViewedProducts] Error status:', (error as any).response.status);
+      }
+      return false;
+    }
+  }
+
+  private getAnonymousId(): string {
+    if (typeof window === 'undefined') return `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    let anonymousId = localStorage.getItem('anonymousUserId');
+    if (!anonymousId) {
+      anonymousId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('anonymousUserId', anonymousId);
+    }
+    return anonymousId;
+  }
+
   private async bulkAddToDatabase(products: ViewedProductData[]): Promise<{ successful: number; failed: number }> {
     try {
       const response = await axios.post(
@@ -223,40 +279,65 @@ class ViewedProductsService {
     // If not explicitly provided, check current auth status
     this.isAuthenticated = isAuthenticated !== undefined ? isAuthenticated : this.checkAuthStatus();
 
-    // If user just logged in, migrate localStorage data
-    if (!wasAuthenticated && this.isAuthenticated) {
+    // Only migrate localStorage data if user JUST logged in (not on every page load)
+    // and only if explicitly called with isAuthenticated=true
+    if (!wasAuthenticated && this.isAuthenticated && isAuthenticated === true) {
       this.migrateLocalStorageToDatabase();
     }
   }
 
   public async addViewedProduct(productId: string, metadata?: ViewMetadata): Promise<void> {
-    if (!productId) return;
+    console.log('[ViewedProducts] addViewedProduct called:', { productId, metadata });
+    
+    if (!productId) {
+      console.log('[ViewedProducts] No productId provided, returning');
+      return;
+    }
 
     // Clear any existing timeout for this product
     if (this.viewQueue.has(productId)) {
+      console.log('[ViewedProducts] Clearing existing timeout for product:', productId);
       clearTimeout(this.viewQueue.get(productId)!);
     }
 
-    // Set debounced timeout
+    console.log('[ViewedProducts] Setting 5-second debounce timeout (allowing time for auth)');
+    
+    // Set debounced timeout with longer delay to allow authentication to complete
     const timeout = setTimeout(async () => {
+      console.log('[ViewedProducts] Timeout triggered, processing view...');
       this.viewQueue.delete(productId);
       
-      // Always check current auth status before deciding where to save
+      // Check auth status at processing time (not call time) to get accurate status
       const currentAuthStatus = this.checkAuthStatus();
       
       // Update stored auth status to match current status  
       this.isAuthenticated = currentAuthStatus;
       
+      console.log('[ViewedProducts] Processing view:', { 
+        productId, 
+        isAuthenticated: this.isAuthenticated,
+        currentAuthStatus,
+        storedAuthStatus: this.isAuthenticated,
+        metadata 
+      });
+      
       if (this.isAuthenticated) {
         // User is authenticated, save to database
-        await this.addViewToDatabase(productId, metadata);
+        console.log('[ViewedProducts] Calling addViewToDatabase for authenticated user');
+        const success = await this.addViewToDatabase(productId, metadata);
+        console.log('[ViewedProducts] addViewToDatabase result:', success);
       } else {
-        // User is guest, save to localStorage
+        // User is guest, save to localStorage AND database (anonymous)
+        console.log('[ViewedProducts] Processing anonymous user view');
         this.addToLocalStorage(productId, metadata);
+        console.log('[ViewedProducts] Calling addAnonymousViewToDatabase');
+        const success = await this.addAnonymousViewToDatabase(productId, metadata);
+        console.log('[ViewedProducts] addAnonymousViewToDatabase result:', success);
       }
-    }, 1000); // 1 second debounce
+    }, 5000); // 5 second debounce
 
     this.viewQueue.set(productId, timeout);
+    console.log('[ViewedProducts] Timeout set, waiting 5 seconds...');
   }
 
   public async getViewedProducts(options?: {
@@ -403,36 +484,58 @@ class ViewedProductsService {
   }
 
   public async migrateLocalStorageToDatabase(): Promise<{ successful: number; failed: number }> {
+    // Prevent duplicate migrations
+    const now = Date.now();
+    if (now - this.lastMigrationTime < 10000) { // 10 second debounce
+      console.log('⚠️ Migration skipped - too recent (within 10 seconds)');
+      return { successful: 0, failed: 0 };
+    }
+    
+    if (this.isMigrationInProgress) {
+      console.log('⚠️ Migration skipped - already in progress');
+      return { successful: 0, failed: 0 };
+    }
+
+    this.isMigrationInProgress = true;
+    this.lastMigrationTime = now;
+    
     // Always check current auth status
     const currentAuthStatus = this.checkAuthStatus();
     this.isAuthenticated = currentAuthStatus;
     
     if (!this.isAuthenticated) {
+      this.isMigrationInProgress = false;
       return { successful: 0, failed: 0 };
     }
 
     const localData = this.getLocalStorageData();
     
     if (localData.length === 0) {
+      this.isMigrationInProgress = false;
       return { successful: 0, failed: 0 };
     }
 
     console.log(`Migrating ${localData.length} viewed products to database...`);
 
-    // Migrate data to database
-    const result = await this.bulkAddToDatabase(localData);
+    try {
+      // Migrate data to database
+      const result = await this.bulkAddToDatabase(localData);
 
-    // Clear localStorage after successful migration
-    if (result.successful > 0) {
-      this.clearLocalStorage();
-      console.log(`Successfully migrated ${result.successful} viewed products to database`);
+      // Clear localStorage after successful migration
+      if (result.successful > 0) {
+        this.clearLocalStorage();
+        console.log(`Successfully migrated ${result.successful} viewed products to database`);
+      }
+
+      if (result.failed > 0) {
+        console.warn(`Failed to migrate ${result.failed} viewed products`);
+      }
+
+      return result;
+    } finally {
+      // Always reset the migration flag
+      this.isMigrationInProgress = false;
     }
-
-    if (result.failed > 0) {
-      console.warn(`Failed to migrate ${result.failed} viewed products`);
-    }
-
-    return result;
   }
 
   // Analytics methods (for future use)

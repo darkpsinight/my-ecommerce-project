@@ -200,6 +200,10 @@ export const useViewedProducts = (options: UseViewedProductsOptions = {}): UseVi
   };
 };
 
+// Global tracking state to prevent duplicate calls across component remounts
+const globalTrackingState = new Map<string, { timestamp: number; hasTracked: boolean }>();
+const GLOBAL_DEBOUNCE_TIME = 5000; // 5 seconds global debounce
+
 // Hook for tracking individual product views
 interface UseProductViewTrackerOptions {
   productId: string;
@@ -217,26 +221,88 @@ export const useProductViewTracker = (options: UseProductViewTrackerOptions) => 
   const viewTimer = useRef<NodeJS.Timeout | null>(null);
   const hasTracked = useRef(false);
 
-  const trackView = useCallback(() => {
-    if (!productId || hasTracked.current) return;
+  const trackView = useCallback(async () => {
+    console.log('🎯 trackView called:', { productId, hasTracked: hasTracked.current });
+    
+    if (!productId) {
+      console.log('❌ No productId, returning');
+      return;
+    }
+    
+    if (hasTracked.current) {
+      console.log('❌ Already tracked (local), returning');
+      return;
+    }
 
+    // Check global tracking state to prevent duplicate calls across component remounts
+    const now = Date.now();
+    const globalState = globalTrackingState.get(productId);
+    
+    if (globalState && (now - globalState.timestamp) < GLOBAL_DEBOUNCE_TIME) {
+      console.log('❌ Already tracked globally within debounce window, returning');
+      hasTracked.current = true;
+      return;
+    }
+    
+    // Update global tracking state
+    globalTrackingState.set(productId, { timestamp: now, hasTracked: true });
+    console.log('✅ Updated global tracking state for product:', productId);
+
+    console.log('✅ Starting view tracking...');
     setIsTracking(true);
     viewStartTime.current = Date.now();
 
-    // Track view after minimum duration
-    viewTimer.current = setTimeout(async () => {
-      if (viewStartTime.current) {
-        const duration = Date.now() - viewStartTime.current;
-        
+    if (minViewDuration === 0) {
+      // Track immediately without timer
+      console.log('📤 Tracking immediately (no delay)');
+      
+      const duration = 0; // No duration since it's immediate
+      
+      console.log('📤 Calling addViewedProductService with:', { productId, metadata, duration });
+      
+      try {
         await addViewedProductService(productId, {
           ...metadata,
           viewDuration: duration
         });
-        
-        hasTracked.current = true;
-        setIsTracking(false);
+        console.log('✅ addViewedProductService completed successfully');
+      } catch (error) {
+        console.error('❌ addViewedProductService failed:', error);
       }
-    }, minViewDuration);
+      
+      hasTracked.current = true;
+      setIsTracking(false);
+      console.log('✅ View tracking completed');
+    } else {
+      // Use timer for delayed tracking
+      console.log(`⏰ Setting timer for ${minViewDuration}ms`);
+      
+      viewTimer.current = setTimeout(async () => {
+        console.log('⏰ Timer triggered, tracking view now...');
+        
+        if (viewStartTime.current) {
+          const duration = Date.now() - viewStartTime.current;
+          
+          console.log('📤 Calling addViewedProductService with:', { productId, metadata, duration });
+          
+          try {
+            await addViewedProductService(productId, {
+              ...metadata,
+              viewDuration: duration
+            });
+            console.log('✅ addViewedProductService completed successfully');
+          } catch (error) {
+            console.error('❌ addViewedProductService failed:', error);
+          }
+          
+          hasTracked.current = true;
+          setIsTracking(false);
+          console.log('✅ View tracking completed');
+        }
+      }, minViewDuration);
+      
+      console.log('✅ Timer set successfully');
+    }
   }, [productId, metadata, minViewDuration]);
 
   const stopTracking = useCallback(() => {
@@ -250,11 +316,15 @@ export const useProductViewTracker = (options: UseProductViewTrackerOptions) => 
 
   // Track on mount
   useEffect(() => {
+    console.log('🔄 useProductViewTracker effect:', { trackOnMount, productId });
+    
     if (trackOnMount && productId) {
+      console.log('🚀 Auto-tracking on mount');
       trackView();
     }
 
     return () => {
+      console.log('🧹 useProductViewTracker cleanup');
       stopTracking();
     };
   }, [trackOnMount, productId, trackView, stopTracking]);

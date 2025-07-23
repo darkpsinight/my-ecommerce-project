@@ -24,6 +24,7 @@ export const RefreshIndicator: React.FC<RefreshIndicatorProps> = ({
 }) => {
   const getLastUpdatedText = () => {
     if (loading || (isRefreshing && !lastUpdated)) return 'Loading data...';
+    if (isRefreshing) return 'Refreshing...';
     if (!lastUpdated) return 'No data loaded';
 
     try {
@@ -84,16 +85,6 @@ export const RefreshIndicator: React.FC<RefreshIndicatorProps> = ({
           )}
         </IconButton>
       </Tooltip>
-
-      {isRefreshing && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ fontSize: '0.75rem' }}
-        >
-          Refreshing...
-        </Typography>
-      )}
     </Box>
   );
 };

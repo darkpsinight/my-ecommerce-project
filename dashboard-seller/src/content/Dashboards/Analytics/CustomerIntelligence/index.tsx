@@ -8,7 +8,7 @@ import CustomerInsights from '../CustomerInsights';
 import CustomerGeographicAnalytics from '../CustomerGeographicAnalytics';
 import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
 import { useSellerProfile } from 'src/hooks/useSellerProfile';
-import { useAnalytics } from '../hooks/useAnalytics';
+import { useOptimizedAnalytics } from '../hooks/useOptimizedAnalytics';
 import { useState } from 'react';
 import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 
@@ -22,14 +22,14 @@ function CustomerIntelligence() {
     openProfileSetup
   } = useSellerProfile();
 
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
-  
   const {
     analyticsData,
     loading: analyticsLoading,
     error,
-    refetch
-  } = useAnalytics(timeRange);
+    refetch,
+    timeRange,
+    setTimeRange
+  } = useOptimizedAnalytics();
 
   const handleTimeRangeChange = (event: SelectChangeEvent) => {
     setTimeRange(event.target.value as '7d' | '30d' | '90d' | '1y');

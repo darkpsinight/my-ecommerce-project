@@ -10,6 +10,7 @@ import ProtectedRoute from 'src/components/ProtectedRoute';
 import AuthenticatedRedirect from 'src/components/AuthenticatedRedirect';
 import AuthRedirect from './pages/AuthRedirect';
 import OAuthCallback from './pages/OAuthCallback';
+import { AnalyticsProviderWrapper } from 'src/content/Dashboards/Analytics/context/AnalyticsContext';
 
 const Loader = (Component) => (props) =>
   (
@@ -165,6 +166,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'analytics',
+        element: <AnalyticsProviderWrapper />,
         children: [
           {
             path: '',

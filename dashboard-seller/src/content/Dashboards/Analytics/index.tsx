@@ -18,7 +18,8 @@ import GeographicAnalytics from './GeographicAnalytics';
 import CustomerGeographicAnalytics from './CustomerGeographicAnalytics';
 import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
 import { useSellerProfile } from 'src/hooks/useSellerProfile';
-import { useAnalytics } from './hooks/useAnalytics';
+import { useOptimizedAnalytics } from './hooks/useOptimizedAnalytics';
+import { RefreshIndicator } from './components/RefreshIndicator';
 import { useState } from 'react';
 import { Box, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 
@@ -32,15 +33,17 @@ function DashboardAnalytics() {
     openProfileSetup
   } = useSellerProfile();
 
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
-  
   const {
     analyticsData,
     chartData,
     loading: analyticsLoading,
     error,
-    refetch
-  } = useAnalytics(timeRange);
+    refetch,
+    timeRange,
+    setTimeRange,
+    lastUpdated,
+    isRefreshing
+  } = useOptimizedAnalytics();
 
   const handleTimeRangeChange = (event: SelectChangeEvent) => {
     setTimeRange(event.target.value as '7d' | '30d' | '90d' | '1y');
@@ -76,8 +79,14 @@ function DashboardAnalytics() {
 
         <AnalyticsNavigation />
 
-        {/* Time Range Selector */}
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        {/* Time Range Selector and Refresh Indicator */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <RefreshIndicator
+            lastUpdated={lastUpdated}
+            onRefresh={refetch}
+            isRefreshing={isRefreshing}
+          />
+          
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Time Range</InputLabel>
             <Select

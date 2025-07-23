@@ -85,6 +85,7 @@ function DashboardAnalytics() {
             lastUpdated={lastUpdated}
             onRefresh={refetch}
             isRefreshing={isRefreshing}
+            loading={analyticsLoading}
           />
           
           <FormControl size="small" sx={{ minWidth: 150 }}>

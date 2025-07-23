@@ -26,49 +26,19 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
   loading,
   onSetupProfile
 }) => {
-  const [showCompletionMessage, setShowCompletionMessage] = useState(true);
-  const [hasShownCompletionBefore, setHasShownCompletionBefore] = useState(false);
+  // LocalStorage key for tracking completion message dismissal
+  const COMPLETION_DISMISSED_KEY = 'seller-profile-completion-dismissed';
 
-  // LocalStorage key for tracking completion message display
-  const COMPLETION_MESSAGE_KEY = 'seller-profile-completion-shown';
-
-  // Check if completion message has been shown before
-  useEffect(() => {
-    const hasShown = localStorage.getItem(COMPLETION_MESSAGE_KEY);
-    if (hasShown === 'true') {
-      setHasShownCompletionBefore(true);
-      setShowCompletionMessage(false);
-    }
-  }, []);
-
-  // Mark completion message as shown when profile is complete
-  useEffect(() => {
-    if (profileData?.profile && !loading) {
-      const profile = profileData.profile;
-      const completionItems = [
-        { key: 'nickname', completed: !!profile.nickname },
-        { key: 'about', completed: !!profile.about },
-        { key: 'profileImage', completed: !!profile.profileImageUrl },
-        { key: 'bannerImage', completed: !!profile.bannerImageUrl },
-        { key: 'marketName', completed: !!profile.marketName },
-      ];
-
-      const completedCount = completionItems.filter(item => item.completed).length;
-      const completionPercentage = Math.round((completedCount / completionItems.length) * 100);
-
-      // If profile is 100% complete and user hasn't seen the message before, show it
-      if (completionPercentage === 100 && !hasShownCompletionBefore) {
-        setShowCompletionMessage(true);
-        // Mark as shown in localStorage
-        localStorage.setItem(COMPLETION_MESSAGE_KEY, 'true');
-        setHasShownCompletionBefore(true);
-      }
-    }
-  }, [profileData, loading, hasShownCompletionBefore]);
+  // Check if completion message has been dismissed - start with this check
+  const [isDismissed, setIsDismissed] = useState(() => {
+    return localStorage.getItem(COMPLETION_DISMISSED_KEY) === 'true';
+  });
 
   // Function to dismiss the completion message
   const handleDismissCompletion = () => {
-    setShowCompletionMessage(false);
+    setIsDismissed(true);
+    // Save dismissal state to localStorage so it persists across page navigation
+    localStorage.setItem(COMPLETION_DISMISSED_KEY, 'true');
   };
 
   if (loading) {
@@ -141,8 +111,8 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
   const completionPercentage = Math.round((completedCount / completionItems.length) * 100);
 
   if (completionPercentage === 100) {
-    // Only show the completion message if it should be displayed
-    if (showCompletionMessage) {
+    // Only show the completion message if it hasn't been dismissed
+    if (!isDismissed) {
       return (
         <Box sx={{ mb: 3 }}>
           <Alert 

@@ -29,6 +29,14 @@ const Crypto = Loader(lazy(() => import('src/content/Dashboards/Crypto')));
 const Listings = Loader(lazy(() => import('src/content/Dashboards/Listings')));
 const Analytics = Loader(lazy(() => import('src/content/Dashboards/Analytics')));
 
+// Analytics Sub-pages
+const AnalyticsOverview = Loader(lazy(() => import('src/content/Dashboards/Analytics/AnalyticsOverview')));
+const SalesPerformance = Loader(lazy(() => import('src/content/Dashboards/Analytics/SalesPerformance')));
+const ProductAnalytics = Loader(lazy(() => import('src/content/Dashboards/Analytics/ProductAnalytics')));
+const CustomerIntelligence = Loader(lazy(() => import('src/content/Dashboards/Analytics/CustomerIntelligence')));
+const MarketInsights = Loader(lazy(() => import('src/content/Dashboards/Analytics/MarketInsights')));
+const EngagementGrowth = Loader(lazy(() => import('src/content/Dashboards/Analytics/EngagementGrowth')));
+
 // Applications
 
 const Messenger = Loader(
@@ -157,7 +165,36 @@ const routes: RouteObject[] = [
       },
       {
         path: 'analytics',
-        element: <Analytics />
+        children: [
+          {
+            path: '',
+            element: <Navigate to="overview" replace />
+          },
+          {
+            path: 'overview',
+            element: <AnalyticsOverview />
+          },
+          {
+            path: 'sales',
+            element: <SalesPerformance />
+          },
+          {
+            path: 'products',
+            element: <ProductAnalytics />
+          },
+          {
+            path: 'customers',
+            element: <CustomerIntelligence />
+          },
+          {
+            path: 'market',
+            element: <MarketInsights />
+          },
+          {
+            path: 'engagement',
+            element: <EngagementGrowth />
+          }
+        ]
       },
       {
         path: 'messenger',

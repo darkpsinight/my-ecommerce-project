@@ -3,6 +3,7 @@ import PageHeader from './PageHeader';
 import PageTitleWrapper from 'src/components/PageTitleWrapper';
 import { Container, Grid } from '@mui/material';
 import Footer from 'src/components/Footer';
+import AnalyticsNavigation from './AnalyticsNavigation';
 
 import RevenueOverview from './RevenueOverview';
 import SalesMetrics from './SalesMetrics';
@@ -72,6 +73,8 @@ function DashboardAnalytics() {
           loading={profileLoading}
           onSetupProfile={openProfileSetup}
         />
+
+        <AnalyticsNavigation />
 
         {/* Time Range Selector */}
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>

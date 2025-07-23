@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 
 import {
   ListSubheader,
@@ -7,9 +7,11 @@ import {
   List,
   styled,
   Button,
-  ListItem
+  ListItem,
+  Collapse,
+  Badge
 } from '@mui/material';
-import { NavLink as RouterLink } from 'react-router-dom';
+import { NavLink as RouterLink, useLocation } from 'react-router-dom';
 import { SidebarContext } from 'src/contexts/SidebarContext';
 
 import DesignServicesTwoToneIcon from '@mui/icons-material/DesignServicesTwoTone';
@@ -33,6 +35,13 @@ import CameraFrontTwoToneIcon from '@mui/icons-material/CameraFrontTwoTone';
 import DisplaySettingsTwoToneIcon from '@mui/icons-material/DisplaySettingsTwoTone';
 import ListAltTwoToneIcon from '@mui/icons-material/ListAltTwoTone';
 import AnalyticsTwoToneIcon from '@mui/icons-material/AnalyticsTwoTone';
+import ExpandLessTwoToneIcon from '@mui/icons-material/ExpandLessTwoTone';
+import ExpandMoreTwoToneIcon from '@mui/icons-material/ExpandMoreTwoTone';
+import TrendingUpTwoToneIcon from '@mui/icons-material/TrendingUpTwoTone';
+import InventoryTwoToneIcon from '@mui/icons-material/InventoryTwoTone';
+import PeopleTwoToneIcon from '@mui/icons-material/PeopleTwoTone';
+import PublicTwoToneIcon from '@mui/icons-material/PublicTwoTone';
+import FavoriteTwoToneIcon from '@mui/icons-material/FavoriteTwoTone';
 
 const MenuWrapper = styled(Box)(
   ({ theme }) => `
@@ -178,6 +187,10 @@ const SubMenuWrapper = styled(Box)(
 
 function SidebarMenu() {
   const { closeSidebar } = useContext(SidebarContext);
+  const location = useLocation();
+  const [analyticsOpen, setAnalyticsOpen] = useState(
+    location.pathname.startsWith('/dashboards/analytics')
+  );
 
   return (
     <>
@@ -220,16 +233,92 @@ function SidebarMenu() {
                   Listings
                 </Button>
               </ListItem>
-              <ListItem component="div">
+              <ListItem component="div" className="Mui-children">
                 <Button
                   disableRipple
-                  component={RouterLink}
-                  onClick={closeSidebar}
-                  to="/dashboards/analytics"
+                  onClick={() => setAnalyticsOpen(!analyticsOpen)}
                   startIcon={<AnalyticsTwoToneIcon />}
+                  endIcon={analyticsOpen ? <ExpandLessTwoToneIcon /> : <ExpandMoreTwoToneIcon />}
+                  className={location.pathname.startsWith('/dashboards/analytics') ? 'active' : ''}
                 >
                   VIP Analytics
                 </Button>
+                <Collapse in={analyticsOpen}>
+                  <List component="div">
+                    <ListItem component="div">
+                      <Button
+                        disableRipple
+                        component={RouterLink}
+                        onClick={closeSidebar}
+                        to="/dashboards/analytics/overview"
+                        startIcon={<AnalyticsTwoToneIcon />}
+                        className={location.pathname === '/dashboards/analytics/overview' ? 'active' : ''}
+                      >
+                        Overview
+                      </Button>
+                    </ListItem>
+                    <ListItem component="div">
+                      <Button
+                        disableRipple
+                        component={RouterLink}
+                        onClick={closeSidebar}
+                        to="/dashboards/analytics/sales"
+                        startIcon={<TrendingUpTwoToneIcon />}
+                        className={location.pathname === '/dashboards/analytics/sales' ? 'active' : ''}
+                      >
+                        Sales Performance
+                      </Button>
+                    </ListItem>
+                    <ListItem component="div">
+                      <Button
+                        disableRipple
+                        component={RouterLink}
+                        onClick={closeSidebar}
+                        to="/dashboards/analytics/products"
+                        startIcon={<InventoryTwoToneIcon />}
+                        className={location.pathname === '/dashboards/analytics/products' ? 'active' : ''}
+                      >
+                        Product Analytics
+                      </Button>
+                    </ListItem>
+                    <ListItem component="div">
+                      <Button
+                        disableRipple
+                        component={RouterLink}
+                        onClick={closeSidebar}
+                        to="/dashboards/analytics/customers"
+                        startIcon={<PeopleTwoToneIcon />}
+                        className={location.pathname === '/dashboards/analytics/customers' ? 'active' : ''}
+                      >
+                        Customer Intelligence
+                      </Button>
+                    </ListItem>
+                    <ListItem component="div">
+                      <Button
+                        disableRipple
+                        component={RouterLink}
+                        onClick={closeSidebar}
+                        to="/dashboards/analytics/market"
+                        startIcon={<PublicTwoToneIcon />}
+                        className={location.pathname === '/dashboards/analytics/market' ? 'active' : ''}
+                      >
+                        Market Insights
+                      </Button>
+                    </ListItem>
+                    <ListItem component="div">
+                      <Button
+                        disableRipple
+                        component={RouterLink}
+                        onClick={closeSidebar}
+                        to="/dashboards/analytics/engagement"
+                        startIcon={<FavoriteTwoToneIcon />}
+                        className={location.pathname === '/dashboards/analytics/engagement' ? 'active' : ''}
+                      >
+                        Engagement & Growth
+                      </Button>
+                    </ListItem>
+                  </List>
+                </Collapse>
               </ListItem>
               <ListItem component="div">
                 <Button

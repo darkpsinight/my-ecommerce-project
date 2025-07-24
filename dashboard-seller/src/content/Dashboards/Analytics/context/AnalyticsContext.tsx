@@ -20,8 +20,8 @@ interface AnalyticsProviderProps {
   children: React.ReactNode;
 }
 
-const CACHE_DURATION = 60 * 1000; // 60 seconds cache
-const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000; // Auto-refresh every 2 minutes
+const CACHE_DURATION = 10 * 1000; // 10 seconds cache (reduced for testing)
+const AUTO_REFRESH_INTERVAL = 30 * 1000; // Auto-refresh every 30 seconds (reduced for testing)
 
 export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }) => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsOverviewResponse['data'] | null>(null);

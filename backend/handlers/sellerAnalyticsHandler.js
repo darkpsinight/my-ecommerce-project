@@ -635,6 +635,36 @@ const getEngagementAnalytics = async (sellerId, startDate, endDate) => {
   const conversionRate =
     viewStats.totalViews > 0 ? (totalOrders / viewStats.totalViews) * 100 : 0;
 
+  // Get time-based analytics for seller's listings
+  const timeAnalytics = await ViewedProduct.getTimeAnalytics(listingIds, startDate, endDate);
+  
+  // Calculate overall time metrics
+  let avgTimeOnPage = 0;
+  let totalTimeSpent = 0;
+  let viewsWithDuration = 0;
+  
+  if (timeAnalytics.length > 0) {
+    const timeStats = timeAnalytics.reduce((acc, item) => {
+      acc.totalTime += item.totalTimeSpent || 0;
+      acc.totalViews += item.totalViews || 0;
+      return acc;
+    }, { totalTime: 0, totalViews: 0 });
+    
+    avgTimeOnPage = timeStats.totalViews > 0 ? timeStats.totalTime / timeStats.totalViews : 0;
+    totalTimeSpent = timeStats.totalTime;
+    viewsWithDuration = timeStats.totalViews;
+  }
+
+  // Add time metrics to top viewed listings
+  const topViewedWithTimeDetails = topViewedWithDetails.map((listing) => {
+    const timeData = timeAnalytics.find(t => t._id === listing.listingId);
+    return {
+      ...listing,
+      avgTimeOnPage: timeData ? Number((timeData.avgTimeOnPageSeconds || 0).toFixed(1)) : 0,
+      totalTimeSpent: timeData ? Number((timeData.totalTimeSpentMinutes || 0).toFixed(1)) : 0
+    };
+  });
+
   // Convert MongoDB objects to plain JavaScript objects
   return {
     totalViews: Number(viewStats.totalViews),
@@ -643,7 +673,10 @@ const getEngagementAnalytics = async (sellerId, startDate, endDate) => {
       listingIds.length > 0
         ? Number((viewStats.totalViews / listingIds.length).toFixed(2))
         : 0,
-    topViewedListings: topViewedWithDetails,
+    avgTimeOnPage: Number((avgTimeOnPage / 1000).toFixed(1)), // Convert to seconds
+    totalTimeSpent: Number((totalTimeSpent / 60000).toFixed(1)), // Convert to minutes
+    viewsWithDuration: Number(viewsWithDuration),
+    topViewedListings: topViewedWithTimeDetails,
     viewsBySource: viewsBySource.map((item) => ({
       source: String(item._id || "unknown"),
       count: Number(item.count),

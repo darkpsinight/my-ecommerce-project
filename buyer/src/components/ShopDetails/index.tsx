@@ -76,7 +76,7 @@ const ShopDetails = () => {
       referrer: typeof window !== "undefined" ? document.referrer : undefined,
     },
     trackOnMount: false, // We'll track manually after product is loaded
-    minViewDuration: 0, // Track immediately (no delay)
+    minViewDuration: 3000, // Track after 3 seconds to capture meaningful engagement
   });
 
   const tabs = [

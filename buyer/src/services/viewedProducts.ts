@@ -177,18 +177,55 @@ class ViewedProductsService {
         }
       };
       
-      const response = await axios.post(
-        `${API_URL}/viewed-products`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            ...authHeaders
+      // If viewDuration is provided, use session tracking
+      if (metadata?.viewDuration !== undefined) {
+        console.log('[ViewedProducts] Using session tracking for authenticated user with duration:', metadata.viewDuration);
+        
+        // First, create the initial view
+        await axios.post(
+          `${API_URL}/viewed-products`,
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              ...authHeaders
+            }
           }
-        }
-      );
+        );
+        
+        // Then end the session with duration
+        const sessionEndResponse = await axios.post(
+          `${API_URL}/viewed-products/session/end`,
+          {
+            productId,
+            sessionId: this.sessionId,
+            finalDuration: metadata.viewDuration
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              ...authHeaders
+            }
+          }
+        );
+        
+        console.log('[ViewedProducts] Session ended with duration:', metadata.viewDuration);
+        return (sessionEndResponse.data as any)?.success || false;
+      } else {
+        // Regular view tracking without duration
+        const response = await axios.post(
+          `${API_URL}/viewed-products`,
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              ...authHeaders
+            }
+          }
+        );
 
-      return (response.data as any)?.success || false;
+        return (response.data as any)?.success || false;
+      }
     } catch (error) {
       console.error('[ViewedProducts] Error adding viewed product to database:', error);
       if ((error as any).response) {
@@ -214,17 +251,53 @@ class ViewedProductsService {
         }
       };
       
-      const response = await axios.post(
-        `${API_URL}/viewed-products/anonymous`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json'
+      // If viewDuration is provided, use session tracking
+      if (metadata?.viewDuration !== undefined) {
+        console.log('[ViewedProducts] Using session tracking for anonymous user with duration:', metadata.viewDuration);
+        
+        // First, create the initial view
+        await axios.post(
+          `${API_URL}/viewed-products/anonymous`,
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
-        }
-      );
+        );
+        
+        // Then end the session with duration
+        const sessionEndResponse = await axios.post(
+          `${API_URL}/viewed-products/session/end`,
+          {
+            productId,
+            sessionId: this.sessionId,
+            finalDuration: metadata.viewDuration,
+            anonymousId
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log('[ViewedProducts] Anonymous session ended with duration:', metadata.viewDuration);
+        return (sessionEndResponse.data as any)?.success || false;
+      } else {
+        // Regular view tracking without duration
+        const response = await axios.post(
+          `${API_URL}/viewed-products/anonymous`,
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
 
-      return (response.data as any)?.success || false;
+        return (response.data as any)?.success || false;
+      }
     } catch (error) {
       console.error('[ViewedProducts] Error adding anonymous viewed product to database:', error);
       if ((error as any).response) {

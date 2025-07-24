@@ -98,21 +98,69 @@ export const trackProductView = async (productId, options = {}) => {
   }
 };
 
-// Track view with timing
+// Track view with timing using new session tracking
 export const trackProductViewWithTiming = (productId, options = {}) => {
   const startTime = Date.now();
+  const sessionId = getSessionId();
   
-  // Track initial view
-  trackProductView(productId, options);
+  // Track initial view to start session
+  trackProductView(productId, { ...options, sessionId });
   
-  // Return function to track view duration when user leaves
-  return () => {
+  // Set up heartbeat to keep session active
+  const heartbeatInterval = setInterval(async () => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const requestData = {
+        productId,
+        sessionId,
+        ...(token ? {} : { anonymousId: getAnonymousId() })
+      };
+
+      await axios.put(
+        `${API_BASE_URL}/viewed-products/session/activity`,
+        requestData,
+        {
+          headers: {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } catch (error) {
+      console.warn('Heartbeat failed:', error.message);
+    }
+  }, 30000); // Send heartbeat every 30 seconds
+  
+  // Return function to end session when user leaves
+  return async () => {
+    clearInterval(heartbeatInterval);
+    
     const viewDuration = Date.now() - startTime;
     if (viewDuration > 1000) { // Only track if viewed for more than 1 second
-      trackProductView(productId, {
-        ...options,
-        viewDuration
-      });
+      try {
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const requestData = {
+          productId,
+          sessionId,
+          finalDuration: viewDuration,
+          ...(token ? {} : { anonymousId: getAnonymousId() })
+        };
+
+        await axios.post(
+          `${API_BASE_URL}/viewed-products/session/end`,
+          requestData,
+          {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log(`✅ Session ended for ${productId}, duration: ${Math.round(viewDuration / 1000)}s`);
+      } catch (error) {
+        console.error('❌ Error ending session:', error.message);
+      }
     }
   };
 };

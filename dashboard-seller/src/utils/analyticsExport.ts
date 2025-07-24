@@ -92,17 +92,22 @@ export const analyticsToCSV = (
     csv += `Total Views,${analyticsData.engagement.totalViews},All listing views\n`;
     csv += `Unique Viewers,${analyticsData.engagement.uniqueViewers},Distinct users who viewed listings\n`;
     csv += `Average Views per Listing,${analyticsData.engagement.avgViewsPerListing},Views divided by total listings\n`;
+    csv += `Average Time on Page,${analyticsData.engagement.avgTimeOnPage}s,Average seconds spent viewing listings\n`;
+    csv += `Total Time Spent,${analyticsData.engagement.totalTimeSpent}min,Total minutes across all views\n`;
+    csv += `Views with Duration Data,${analyticsData.engagement.viewsWithDuration},Views that tracked time spent\n`;
     csv += `Conversion Rate,${analyticsData.engagement.conversionRate}%,Views to purchases ratio\n`;
     csv += '\n';
 
     // Top Viewed Listings
     if (analyticsData.engagement.topViewedListings?.length > 0) {
       csv += 'MOST VIEWED LISTINGS\n';
-      csv += 'Rank,Product Title,Platform,Total Views,Unique Viewers,Views per Viewer\n';
+      csv += 'Rank,Product Title,Platform,Total Views,Unique Viewers,Views per Viewer,Avg Time on Page (s),Total Time Spent (min)\n';
       analyticsData.engagement.topViewedListings.forEach((listing, index) => {
         const cleanTitle = listing.title.replace(/"/g, '""');
         const viewsPerViewer = listing.uniqueViewers > 0 ? (listing.viewCount / listing.uniqueViewers).toFixed(1) : '0.0';
-        csv += `${index + 1},"${cleanTitle}",${listing.platform},${listing.viewCount},${listing.uniqueViewers},${viewsPerViewer}\n`;
+        const avgTimeOnPage = listing.avgTimeOnPage || 0;
+        const totalTimeSpent = listing.totalTimeSpent || 0;
+        csv += `${index + 1},"${cleanTitle}",${listing.platform},${listing.viewCount},${listing.uniqueViewers},${viewsPerViewer},${avgTimeOnPage},${totalTimeSpent}\n`;
       });
       csv += '\n';
     }

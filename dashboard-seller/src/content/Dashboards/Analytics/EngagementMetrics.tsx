@@ -145,6 +145,52 @@ function EngagementMetrics({ data, loading }: EngagementMetricsProps) {
           </Grid>
         </Grid>
 
+        {/* Time Tracking Metrics */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={6} sm={3}>
+            <Box textAlign="center" p={2} bgcolor="info.light" borderRadius={1} color="info.contrastText">
+              <Typography variant="h4">
+                {data?.avgTimeOnPage || 0}s
+              </Typography>
+              <Typography variant="caption">
+                Avg Time on Page
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Box textAlign="center" p={2} bgcolor="error.light" borderRadius={1} color="error.contrastText">
+              <Typography variant="h4">
+                {data?.totalTimeSpent || 0}m
+              </Typography>
+              <Typography variant="caption">
+                Total Time Spent
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Box textAlign="center" p={2} bgcolor="grey.600" borderRadius={1} color="white">
+              <Typography variant="h4">
+                {data?.viewsWithDuration || 0}
+              </Typography>
+              <Typography variant="caption">
+                Views with Duration
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Box textAlign="center" p={2} bgcolor="purple" borderRadius={1} color="white">
+              <Typography variant="h4">
+                {data?.viewsWithDuration && totalViews > 0 
+                  ? ((data.viewsWithDuration / totalViews) * 100).toFixed(1)
+                  : 0}%
+              </Typography>
+              <Typography variant="caption">
+                Tracking Coverage
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+
         {/* Top Viewed Listings */}
         <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <RemoveRedEye />
@@ -202,6 +248,17 @@ function EngagementMetrics({ data, loading }: EngagementMetricsProps) {
                             {listing.uniqueViewers} unique viewers
                           </Typography>
                         </Box>
+                        {/* Time tracking metrics for this listing */}
+                        {(listing.avgTimeOnPage || listing.totalTimeSpent) && (
+                          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
+                            <Typography variant="caption" color="info.main">
+                              ⏱️ Avg time: {listing.avgTimeOnPage || 0}s
+                            </Typography>
+                            <Typography variant="caption" color="info.main">
+                              📊 Total: {listing.totalTimeSpent || 0}m
+                            </Typography>
+                          </Box>
+                        )}
                         <LinearProgress 
                           variant="determinate" 
                           value={progressValue}
@@ -312,6 +369,25 @@ function EngagementMetrics({ data, loading }: EngagementMetricsProps) {
               </Alert>
             )}
 
+            {/* Time-based insights */}
+            {data.avgTimeOnPage > 60 && (
+              <Alert severity="success" sx={{ mb: 1 }}>
+                Excellent engagement! Users spend {data.avgTimeOnPage}s on average viewing your listings.
+              </Alert>
+            )}
+            
+            {data.avgTimeOnPage < 15 && data.avgTimeOnPage > 0 && (
+              <Alert severity="warning" sx={{ mb: 1 }}>
+                Short viewing time detected. Consider improving listing descriptions and images.
+              </Alert>
+            )}
+            
+            {data.viewsWithDuration && totalViews > 0 && (data.viewsWithDuration / totalViews) < 0.5 && (
+              <Alert severity="info" sx={{ mb: 1 }}>
+                Time tracking coverage is {((data.viewsWithDuration / totalViews) * 100).toFixed(1)}%. Encourage users to enable JavaScript for better analytics.
+              </Alert>
+            )}
+
             <Box p={2} bgcolor="background.default" borderRadius={1}>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
                 <TrendingUp color="success" fontSize="small" />
@@ -328,6 +404,16 @@ function EngagementMetrics({ data, loading }: EngagementMetricsProps) {
               {data.viewsBySource?.length > 0 && (
                 <Typography variant="caption" color="textSecondary" display="block">
                   • Top traffic source: {data.viewsBySource[0].source.replace('_', ' ')}
+                </Typography>
+              )}
+              {data.avgTimeOnPage > 0 && (
+                <Typography variant="caption" color="textSecondary" display="block">
+                  • Average engagement time: {data.avgTimeOnPage}s per listing view
+                </Typography>
+              )}
+              {data.totalTimeSpent > 0 && (
+                <Typography variant="caption" color="textSecondary" display="block">
+                  • Total user engagement: {data.totalTimeSpent} minutes across all listings
                 </Typography>
               )}
             </Box>

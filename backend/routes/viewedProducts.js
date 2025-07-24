@@ -5,6 +5,8 @@ const {
   getViewedProducts,
   clearViewedProducts,
   removeViewedProduct,
+  updateSessionActivity,
+  endSession,
   getViewingAnalytics
 } = require("../handlers/viewedProductHandlers");
 
@@ -59,6 +61,43 @@ async function viewedProductRoutes(fastify, options) {
     preHandler: verifyAuth(["buyer"]),
     schema: removeViewedProductSchema,
     handler: removeViewedProduct
+  });
+
+  // Update session activity (heartbeat)
+  fastify.put('/session/activity', {
+    schema: {
+      description: 'Update session activity for time tracking',
+      tags: ['viewed-products', 'session'],
+      body: {
+        type: 'object',
+        required: ['productId'],
+        properties: {
+          productId: { type: 'string' },
+          sessionId: { type: 'string' },
+          anonymousId: { type: 'string' }
+        }
+      }
+    },
+    handler: updateSessionActivity
+  });
+
+  // End session and record duration
+  fastify.post('/session/end', {
+    schema: {
+      description: 'End session and record final duration',
+      tags: ['viewed-products', 'session'],
+      body: {
+        type: 'object',
+        required: ['productId'],
+        properties: {
+          productId: { type: 'string' },
+          sessionId: { type: 'string' },
+          finalDuration: { type: 'number' },
+          anonymousId: { type: 'string' }
+        }
+      }
+    },
+    handler: endSession
   });
 
   // Get viewing analytics (admin/support only)

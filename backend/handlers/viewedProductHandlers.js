@@ -354,6 +354,86 @@ const removeViewedProduct = async (request, reply) => {
 };
 
 /**
+ * Update session activity (heartbeat from frontend)
+ * PUT /api/v1/viewed-products/session/activity
+ */
+const updateSessionActivity = async (request, reply) => {
+  try {
+    const { productId, sessionId, anonymousId } = request.body;
+    const userUid = request.user?.uid;
+
+    if (!productId) {
+      return errorResponse(reply, "Product ID is required", 400);
+    }
+
+    if (!userUid && !anonymousId) {
+      return errorResponse(reply, "User identification is required", 400);
+    }
+
+    const updatedSession = await ViewedProduct.updateSessionActivity({
+      userUid,
+      anonymousId,
+      productId,
+      sessionId
+    });
+
+    if (!updatedSession) {
+      return errorResponse(reply, "Active session not found", 404);
+    }
+
+    return successResponse(reply, "Session activity updated successfully", {
+      sessionId: updatedSession.metadata.sessionId,
+      lastActivity: updatedSession.metadata.lastActivity
+    });
+
+  } catch (error) {
+    console.error("Error updating session activity:", error);
+    return errorResponse(reply, "Failed to update session activity", 500);
+  }
+};
+
+/**
+ * End session and record final duration
+ * POST /api/v1/viewed-products/session/end
+ */
+const endSession = async (request, reply) => {
+  try {
+    const { productId, sessionId, finalDuration, anonymousId } = request.body;
+    const userUid = request.user?.uid;
+
+    if (!productId) {
+      return errorResponse(reply, "Product ID is required", 400);
+    }
+
+    if (!userUid && !anonymousId) {
+      return errorResponse(reply, "User identification is required", 400);
+    }
+
+    const endedSession = await ViewedProduct.endSession({
+      userUid,
+      anonymousId,
+      productId,
+      sessionId,
+      finalDuration
+    });
+
+    if (!endedSession) {
+      return errorResponse(reply, "Active session not found", 404);
+    }
+
+    return successResponse(reply, "Session ended successfully", {
+      sessionId: endedSession.metadata.sessionId,
+      duration: endedSession.metadata.viewDuration,
+      durationSeconds: Math.round(endedSession.metadata.viewDuration / 1000)
+    });
+
+  } catch (error) {
+    console.error("Error ending session:", error);
+    return errorResponse(reply, "Failed to end session", 500);
+  }
+};
+
+/**
  * Get viewing analytics for admin/support (future feature)
  * GET /api/v1/viewed-products/analytics
  */
@@ -428,5 +508,7 @@ module.exports = {
   getViewedProducts,
   clearViewedProducts,
   removeViewedProduct,
+  updateSessionActivity,
+  endSession,
   getViewingAnalytics
 };

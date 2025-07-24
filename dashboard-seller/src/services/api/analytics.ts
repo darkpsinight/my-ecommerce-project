@@ -103,12 +103,17 @@ export interface EngagementData {
   totalViews: number;
   uniqueViewers: number;
   avgViewsPerListing: number;
+  avgTimeOnPage: number; // in seconds
+  totalTimeSpent: number; // in minutes
+  viewsWithDuration: number;
   topViewedListings: Array<{
     listingId: string;
     title: string;
     platform: string;
     viewCount: number;
     uniqueViewers: number;
+    avgTimeOnPage: number; // in seconds
+    totalTimeSpent: number; // in minutes
   }>;
   viewsBySource: Array<{
     source: string;

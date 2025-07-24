@@ -66,10 +66,28 @@ const viewedProductSchema = new mongoose.Schema({
     // Referrer URL if available
     referrer: String,
     
-    // View duration (if tracked by frontend)
+    // View duration tracking
     viewDuration: {
       type: Number, // in milliseconds
       min: 0
+    },
+    
+    // Session tracking for time on page
+    sessionStart: {
+      type: Date,
+      default: Date.now
+    },
+    
+    // Last activity timestamp for calculating active time
+    lastActivity: {
+      type: Date,
+      default: Date.now
+    },
+    
+    // Whether this is an active session (user still on page)
+    isActiveSession: {
+      type: Boolean,
+      default: true
     },
     
     // Customer Geographic Data
@@ -197,7 +215,18 @@ viewedProductSchema.statics.addOrUpdateView = async function(viewData) {
     // Update existing recent view (don't create duplicate)
     console.log('✅ Updating existing view record');
     recentView.viewedAt = new Date();
-    recentView.metadata = { ...recentView.metadata, ...metadata };
+    
+    // Update metadata fields individually to avoid validation issues
+    if (metadata.source) recentView.metadata.source = metadata.source;
+    if (metadata.deviceType) recentView.metadata.deviceType = metadata.deviceType;
+    if (metadata.sessionId) recentView.metadata.sessionId = metadata.sessionId;
+    if (metadata.referrer) recentView.metadata.referrer = metadata.referrer;
+    if (metadata.viewDuration !== undefined) recentView.metadata.viewDuration = metadata.viewDuration;
+    if (metadata.customerLocation) recentView.metadata.customerLocation = metadata.customerLocation;
+    
+    // Update session tracking fields
+    recentView.metadata.lastActivity = new Date();
+    
     const savedView = await recentView.save();
     console.log('✅ Updated view record:', savedView.externalId);
     return savedView;
@@ -208,7 +237,12 @@ viewedProductSchema.statics.addOrUpdateView = async function(viewData) {
       userUid: userUid || null,
       anonymousId: anonymousId || null,
       productId,
-      metadata,
+      metadata: {
+        ...metadata,
+        sessionStart: new Date(),
+        lastActivity: new Date(),
+        isActiveSession: true
+      },
       // Set expiration date (e.g., 1 year from now for data retention)
       expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
     });
@@ -308,6 +342,122 @@ viewedProductSchema.statics.getUserViewingPatterns = function(userUid, timeframe
     },
     {
       $sort: { _id: -1 }
+    }
+  ]);
+};
+
+// Update session activity (heartbeat from frontend)
+viewedProductSchema.statics.updateSessionActivity = async function(sessionData) {
+  const { userUid, anonymousId, productId, sessionId } = sessionData;
+  
+  // Find active session for this user/product combination
+  let query = {
+    productId,
+    isDeleted: false,
+    'metadata.isActiveSession': true
+  };
+  
+  if (userUid) {
+    query.userUid = userUid;
+  } else if (anonymousId) {
+    query.anonymousId = anonymousId;
+  }
+  
+  if (sessionId) {
+    query['metadata.sessionId'] = sessionId;
+  }
+  
+  const activeSession = await this.findOne(query).sort({ viewedAt: -1 });
+  
+  if (activeSession) {
+    activeSession.metadata.lastActivity = new Date();
+    await activeSession.save();
+    return activeSession;
+  }
+  
+  return null;
+};
+
+// End session and calculate final duration
+viewedProductSchema.statics.endSession = async function(sessionData) {
+  const { userUid, anonymousId, productId, sessionId, finalDuration } = sessionData;
+  
+  // Find active session
+  let query = {
+    productId,
+    isDeleted: false,
+    'metadata.isActiveSession': true
+  };
+  
+  if (userUid) {
+    query.userUid = userUid;
+  } else if (anonymousId) {
+    query.anonymousId = anonymousId;
+  }
+  
+  if (sessionId) {
+    query['metadata.sessionId'] = sessionId;
+  }
+  
+  const activeSession = await this.findOne(query).sort({ viewedAt: -1 });
+  
+  if (activeSession) {
+    // Calculate duration if not provided
+    let duration = finalDuration;
+    if (!duration && activeSession.metadata.sessionStart) {
+      duration = Date.now() - activeSession.metadata.sessionStart.getTime();
+    }
+    
+    activeSession.metadata.isActiveSession = false;
+    activeSession.metadata.viewDuration = duration;
+    activeSession.metadata.lastActivity = new Date();
+    
+    await activeSession.save();
+    return activeSession;
+  }
+  
+  return null;
+};
+
+// Get time-based analytics for products
+viewedProductSchema.statics.getTimeAnalytics = function(productIds, startDate, endDate) {
+  return this.aggregate([
+    {
+      $match: {
+        productId: { $in: productIds },
+        viewedAt: { $gte: startDate, $lte: endDate },
+        isDeleted: false,
+        'metadata.viewDuration': { $exists: true, $gt: 0 }
+      }
+    },
+    {
+      $group: {
+        _id: '$productId',
+        totalViews: { $sum: 1 },
+        totalTimeSpent: { $sum: '$metadata.viewDuration' },
+        avgTimeOnPage: { $avg: '$metadata.viewDuration' },
+        minTimeOnPage: { $min: '$metadata.viewDuration' },
+        maxTimeOnPage: { $max: '$metadata.viewDuration' },
+        uniqueViewers: { 
+          $addToSet: {
+            $cond: [
+              { $ne: ['$userUid', null] },
+              '$userUid',
+              '$anonymousId'
+            ]
+          }
+        }
+      }
+    },
+    {
+      $addFields: {
+        uniqueViewerCount: { $size: '$uniqueViewers' },
+        avgTimeOnPageSeconds: { $divide: ['$avgTimeOnPage', 1000] },
+        totalTimeSpentMinutes: { $divide: ['$totalTimeSpent', 60000] }
+      }
+    },
+    {
+      $sort: { avgTimeOnPage: -1 }
     }
   ]);
 };

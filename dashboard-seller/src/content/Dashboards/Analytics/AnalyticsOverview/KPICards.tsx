@@ -11,7 +11,9 @@ import {
   AttachMoney,
   ShoppingCart,
   Inventory,
-  People
+  People,
+  AccessTime,
+  Visibility
 } from '@mui/icons-material';
 
 interface KPICardsProps {
@@ -32,6 +34,20 @@ function KPICards({ data, loading, timeRange }: KPICardsProps) {
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US').format(num);
+  };
+
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) {
+      return `${seconds}s`;
+    } else if (seconds < 3600) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+    } else {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    }
   };
 
   const getTimeRangeLabel = (range: string) => {
@@ -72,14 +88,28 @@ function KPICards({ data, loading, timeRange }: KPICardsProps) {
       format: 'number',
       icon: <People />,
       color: theme.palette.primary.main
+    },
+    {
+      title: 'Avg Time on Page',
+      value: data?.engagement?.avgTimeOnPage || 0,
+      format: 'time',
+      icon: <AccessTime />,
+      color: theme.palette.secondary.main
+    },
+    {
+      title: 'Total Views',
+      value: data?.engagement?.totalViews || 0,
+      format: 'number',
+      icon: <Visibility />,
+      color: theme.palette.error.main
     }
   ];
 
   if (loading) {
     return (
       <Grid container spacing={3}>
-        {[1, 2, 3, 4].map((item) => (
-          <Grid item xs={12} sm={6} md={3} key={item}>
+        {[1, 2, 3, 4, 5, 6].map((item) => (
+          <Grid item xs={12} sm={6} md={4} lg={2} key={item}>
             <Card>
               <CardContent>
                 <Skeleton height={80} />
@@ -94,7 +124,7 @@ function KPICards({ data, loading, timeRange }: KPICardsProps) {
   return (
     <Grid container spacing={3}>
       {kpiData.map((kpi, index) => (
-        <Grid item xs={12} sm={6} md={3} key={index}>
+        <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={1}>
@@ -120,6 +150,8 @@ function KPICards({ data, loading, timeRange }: KPICardsProps) {
               <Typography variant="h4" component="div" gutterBottom>
                 {kpi.format === 'currency' 
                   ? formatCurrency(kpi.value)
+                  : kpi.format === 'time'
+                  ? formatTime(kpi.value)
                   : formatNumber(kpi.value)
                 }
               </Typography>

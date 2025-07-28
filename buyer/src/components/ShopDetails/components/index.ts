@@ -1,0 +1,9 @@
+export { default as Breadcrumb } from './Breadcrumb';
+export { default as ProductImage } from './ProductImage';
+export { default as ProductHeader } from './ProductHeader';
+export { default as ProductActions } from './ProductActions';
+export { default as ProductRating } from './ProductRating';
+export { default as ProductTabs } from './ProductTabs';
+export { default as ProductReviews } from './ProductReviews';
+export { default as ReviewsSummary } from './ReviewsSummary';
+export { default as ReviewSubmission } from './ReviewSubmission';

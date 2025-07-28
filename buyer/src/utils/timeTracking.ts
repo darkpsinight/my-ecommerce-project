@@ -144,7 +144,7 @@ class TimeTracker {
   /**
    * Send heartbeat to backend for active sessions
    */
-  private async sendHeartbeat(): void {
+  private async sendHeartbeat(): Promise<void> {
     const activeSessions = Array.from(this.sessions.values()).filter(s => s.isActive);
     
     for (const session of activeSessions) {

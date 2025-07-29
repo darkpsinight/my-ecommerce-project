@@ -247,7 +247,15 @@ viewedProductSchema.statics.addOrUpdateView = async function(viewData) {
       expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
     });
     const savedView = await newView.save();
-    console.log('✅ Created new view record:', savedView.externalId);
+    console.log('✅ Created new view record:', {
+      id: savedView.externalId,
+      productId: savedView.productId,
+      userUid: savedView.userUid,
+      anonymousId: savedView.anonymousId,
+      sessionId: savedView.metadata?.sessionId,
+      isActiveSession: savedView.metadata?.isActiveSession,
+      viewDuration: savedView.metadata?.viewDuration
+    });
     return savedView;
   }
 };

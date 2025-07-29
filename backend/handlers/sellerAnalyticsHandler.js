@@ -386,12 +386,6 @@ const getCustomerAnalytics = async (sellerId, startDate, endDate) => {
 
 // Helper function to get engagement analytics (listing views)
 const getEngagementAnalytics = async (sellerId, startDate, endDate) => {
-  console.log("getEngagementAnalytics called with:", {
-    sellerId,
-    startDate,
-    endDate,
-  });
-  console.log("ViewedProduct model:", ViewedProduct);
 
   // Get seller's UID to match listings
   const seller = await User.findById(sellerId);
@@ -635,6 +629,7 @@ const getEngagementAnalytics = async (sellerId, startDate, endDate) => {
   const conversionRate =
     viewStats.totalViews > 0 ? (totalOrders / viewStats.totalViews) * 100 : 0;
 
+  // Get time-based analytics for seller's listings
   // Get time-based analytics for seller's listings
   const timeAnalytics = await ViewedProduct.getTimeAnalytics(listingIds, startDate, endDate);
   

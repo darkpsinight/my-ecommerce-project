@@ -1,7 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Product } from '@/types/product';
-import { useProductViewTracker } from '@/hooks/useViewedProducts';
-import { useTimeTracking } from '@/utils/timeTracking';
+import { addViewedProduct } from '@/services/viewedProducts';
 
 interface UseProductTrackingOptions {
   product: Product | null;
@@ -14,52 +13,124 @@ export const useProductTracking = ({
   productId, 
   enabled = true 
 }: UseProductTrackingOptions) => {
-  // View tracking with hybrid storage system
-  const { isTracking, trackView } = useProductViewTracker({
-    productId: productId || "",
-    metadata: {
-      source: "direct",
-      referrer: typeof window !== "undefined" ? document.referrer : undefined,
-    },
-    trackOnMount: false, // We'll track manually after product is loaded
-    minViewDuration: 3000, // Track after 3 seconds to capture meaningful engagement
-  });
+  const startTimeRef = useRef<number | null>(null);
+  const hasTrackedRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Duration tracking
-  const { startTracking, stopTracking, getSessionInfo } = useTimeTracking(productId);
+  // Generate session ID
+  const generateSessionId = () => {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
 
-  // Track product view when product is loaded
+  // Track product view with duration when product is loaded
   useEffect(() => {
-    if (!enabled || !product?.id) return;
+    if (!enabled || !product?.id || hasTrackedRef.current) return;
 
-    console.log('🎯 About to call trackView() for product:', product.id);
-    try {
-      trackView();
-      console.log('✅ trackView() called successfully');
-    } catch (error) {
-      console.error('❌ Error calling trackView():', error);
-    }
-  }, [product?.id, trackView, enabled]);
+    console.log('🎯 Starting duration tracking for:', product.id);
+    
+    // Mark as tracked to prevent duplicate tracking
+    hasTrackedRef.current = true;
+    startTimeRef.current = Date.now();
+    sessionIdRef.current = generateSessionId();
 
-  // Start duration tracking when product is loaded
-  useEffect(() => {
-    if (!enabled || !productId) return;
-
-    console.log('⏱️ Starting duration tracking for product:', productId);
-    const sessionId = startTracking();
-    console.log('⏱️ Duration tracking started with session:', sessionId);
-
-    return () => {
-      console.log('⏱️ Stopping duration tracking for product:', productId);
-      stopTracking();
+    // Set up page visibility and beforeunload listeners for accurate duration tracking
+    const handleVisibilityChange = () => {
+      if (document.hidden && startTimeRef.current) {
+        // User switched tabs or minimized - track duration
+        trackFinalDuration('visibility_change');
+      }
     };
-  }, [productId, startTracking, stopTracking, enabled]);
+
+    const handleBeforeUnload = () => {
+      if (startTimeRef.current) {
+        // User is leaving the page - track duration
+        trackFinalDuration('page_unload');
+      }
+    };
+
+    const trackFinalDuration = async (reason: string) => {
+      if (!startTimeRef.current || !product?.id) return;
+
+      const finalDuration = Date.now() - startTimeRef.current;
+      
+      // Only track if user spent more than 3 seconds for meaningful engagement
+      if (finalDuration >= 3000) {
+        console.log(`📊 Tracking final duration (${reason}):`, {
+          productId: product.id,
+          duration: finalDuration,
+          durationSeconds: (finalDuration / 1000).toFixed(1)
+        });
+
+        try {
+          await addViewedProduct(product.id, {
+            source: "direct",
+            referrer: typeof window !== "undefined" ? document.referrer : undefined,
+            sessionId: sessionIdRef.current || undefined,
+            viewDuration: finalDuration
+          });
+          console.log('✅ Duration tracked successfully');
+          
+          // Mark as tracked to prevent duplicate tracking
+          startTimeRef.current = null;
+        } catch (error) {
+          console.error('❌ Error tracking duration:', error);
+        }
+      } else {
+        console.log(`⏭️ Duration too short (${(finalDuration / 1000).toFixed(1)}s), not tracking`);
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup function
+    return () => {
+      // Remove event listeners
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      
+      // Track final duration on component unmount
+      if (startTimeRef.current) {
+        const finalDuration = Date.now() - startTimeRef.current;
+        
+        if (finalDuration >= 3000) {
+          console.log('📊 Tracking duration on cleanup:', finalDuration);
+          
+          addViewedProduct(product.id, {
+            source: "direct",
+            referrer: typeof window !== "undefined" ? document.referrer : undefined,
+            sessionId: sessionIdRef.current || undefined,
+            viewDuration: finalDuration
+          }).catch(error => {
+            console.error('❌ Error tracking cleanup duration:', error);
+          });
+        }
+      }
+    };
+  }, [product?.id, enabled]);
+
+  // Reset tracking state when product changes
+  useEffect(() => {
+    hasTrackedRef.current = false;
+    startTimeRef.current = null;
+    sessionIdRef.current = null;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, [productId]);
 
   return {
-    isTracking,
-    trackView,
-    getSessionInfo,
-    startTracking,
-    stopTracking
+    isTracking: hasTrackedRef.current,
+    sessionId: sessionIdRef.current,
+    getSessionInfo: () => {
+      if (!startTimeRef.current) return null;
+      return {
+        duration: Date.now() - startTimeRef.current,
+        isActive: true
+      };
+    }
   };
 };

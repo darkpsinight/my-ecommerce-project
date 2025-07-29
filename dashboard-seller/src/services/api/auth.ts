@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api/v1';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || 'http://localhost:3000/api/v1';
 
 // Function to get token without importing store directly
 const getAuthToken = (): string | null => {
@@ -55,13 +56,19 @@ class AuthService {
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/seller-signin`, credentials, {
-        withCredentials: true // Enable sending/receiving cookies
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/auth/seller-signin`,
+        credentials,
+        {
+          withCredentials: true // Enable sending/receiving cookies
+        }
+      );
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const loginError = new Error(error.response?.data?.message || 'Login failed') as Error & LoginError;
+        const loginError = new Error(
+          error.response?.data?.message || 'Login failed, try again later'
+        ) as Error & LoginError;
         loginError.metadata = error.response?.data?.metadata;
         throw loginError;
       }
@@ -103,13 +110,17 @@ class AuthService {
     }
 
     // Send request to backend to clear the HTTP-only cookie and blacklist token
-    await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      withCredentials: true
-    });
+    await axios.post(
+      `${API_BASE_URL}/auth/logout`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
   }
 }
 

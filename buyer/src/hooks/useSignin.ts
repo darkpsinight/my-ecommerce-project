@@ -106,7 +106,7 @@ export const useSignin = (): UseSigninReturn => {
       
       if (errorResponse) {
         setApiError({
-          message: errorResponse.message || 'Login failed',
+          message: errorResponse.message || 'Login failed, try again later',
           hint: errorResponse.metadata?.hint,
           links: errorResponse.metadata?.links
         });

@@ -7,7 +7,8 @@ import {
   People,
   Public,
   Favorite,
-  AttachMoney
+  AttachMoney,
+  CheckCircle
 } from '@mui/icons-material';
 
 function AnalyticsNavigation() {
@@ -60,6 +61,12 @@ function AnalyticsNavigation() {
       shortLabel: 'CAC',
       value: '/dashboards/analytics/cac', 
       icon: <AttachMoney /> 
+    },
+    { 
+      label: 'Transaction Success Rate', 
+      shortLabel: 'Success Rate',
+      value: '/dashboards/analytics/transaction-success-rate', 
+      icon: <CheckCircle /> 
     }
   ];
 

@@ -468,6 +468,81 @@ export interface RevenueChartResponse {
   data: RevenueChartData;
 }
 
+export interface TransactionSuccessRateData {
+  overall: {
+    totalTransactions: number;
+    successfulTransactions: number;
+    failedTransactions: number;
+    successRate: number;
+    failureRate: number;
+  };
+  byTransactionType: {
+    funding: {
+      totalTransactions: number;
+      successfulTransactions: number;
+      failedTransactions: number;
+      successRate: number;
+      failureRate: number;
+    };
+    purchase: {
+      totalTransactions: number;
+      successfulTransactions: number;
+      failedTransactions: number;
+      successRate: number;
+      failureRate: number;
+    };
+  };
+  byPaymentMethod: Array<{
+    paymentMethod: string;
+    totalTransactions: number;
+    successfulTransactions: number;
+    failedTransactions: number;
+    successRate: number;
+    failureRate: number;
+  }>;
+  timeTrends: Array<{
+    period: {
+      year: number;
+      month: number;
+      day?: number;
+      week?: number;
+      hour?: number;
+    };
+    totalTransactions: number;
+    successfulTransactions: number;
+    failedTransactions: number;
+    successRate: number;
+    failureRate: number;
+  }>;
+  failureAnalysis: {
+    totalFailures: number;
+    topFailureReasons: Array<{
+      reason: string;
+      count: number;
+      percentage: number;
+    }>;
+    failuresByType: {
+      transactionFailures: number;
+      orderFailures: number;
+    };
+  };
+}
+
+export interface TransactionSuccessRateResponse {
+  success: boolean;
+  message: string;
+  data: {
+    timeRange: string;
+    groupBy: string;
+    generatedAt: string;
+  } & TransactionSuccessRateData;
+}
+
+export interface TransactionSuccessRateParams {
+  timeRange?: '7d' | '30d' | '90d' | '1y';
+  groupBy?: 'hour' | 'day' | 'week' | 'month';
+}
+
 export interface AnalyticsParams {
   timeRange?: '7d' | '30d' | '90d' | '1y';
 }
@@ -520,6 +595,14 @@ class AnalyticsService {
   }): Promise<MarketingSpendResponse> {
     const response = await axiosInstance.get<MarketingSpendResponse>(
       `${this.baseUrl}/marketing-spend`,
+      { params }
+    );
+    return response.data;
+  }
+
+  async getTransactionSuccessRate(params?: TransactionSuccessRateParams): Promise<TransactionSuccessRateResponse> {
+    const response = await axiosInstance.get<TransactionSuccessRateResponse>(
+      `${this.baseUrl}/transaction-success-rate`,
       { params }
     );
     return response.data;

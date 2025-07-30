@@ -42,6 +42,7 @@ import InventoryTwoToneIcon from '@mui/icons-material/InventoryTwoTone';
 import PeopleTwoToneIcon from '@mui/icons-material/PeopleTwoTone';
 import PublicTwoToneIcon from '@mui/icons-material/PublicTwoTone';
 import FavoriteTwoToneIcon from '@mui/icons-material/FavoriteTwoTone';
+import CheckCircleTwoToneIcon from '@mui/icons-material/CheckCircleTwoTone';
 
 const MenuWrapper = styled(Box)(
   ({ theme }) => `
@@ -315,6 +316,18 @@ function SidebarMenu() {
                         className={location.pathname === '/dashboards/analytics/engagement' ? 'active' : ''}
                       >
                         Engagement & Growth
+                      </Button>
+                    </ListItem>
+                    <ListItem component="div">
+                      <Button
+                        disableRipple
+                        component={RouterLink}
+                        onClick={closeSidebar}
+                        to="/dashboards/analytics/transaction-success-rate"
+                        startIcon={<CheckCircleTwoToneIcon />}
+                        className={location.pathname === '/dashboards/analytics/transaction-success-rate' ? 'active' : ''}
+                      >
+                        Transaction Success Rate
                       </Button>
                     </ListItem>
                   </List>

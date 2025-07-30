@@ -16,6 +16,9 @@ const {
   addMarketingSpend,
   getMarketingSpend
 } = require("../handlers/cacAnalyticsHandler");
+const {
+  getTransactionSuccessRate,
+} = require("../handlers/transactionAnalyticsHandler");
 
 const sellerRoutes = async (fastify, opts) => {
   // Get seller profile (basic user info + extended profile)
@@ -517,6 +520,33 @@ const sellerRoutes = async (fastify, opts) => {
       }
     },
     handler: getMarketingSpend,
+  });
+
+  // Get transaction success rate analytics
+  fastify.route({
+    method: "GET",
+    url: "/analytics/transaction-success-rate",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      description: "Get transaction success rate analytics",
+      tags: ["Seller", "Analytics", "Transactions"],
+      querystring: {
+        type: "object",
+        properties: {
+          timeRange: {
+            type: "string",
+            enum: ["7d", "30d", "90d", "1y"],
+            default: "30d",
+          },
+          groupBy: {
+            type: "string",
+            enum: ["hour", "day", "week", "month"],
+            default: "day",
+          },
+        },
+      },
+    },
+    handler: getTransactionSuccessRate,
   });
 };
 

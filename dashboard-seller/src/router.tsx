@@ -38,6 +38,7 @@ const CustomerIntelligence = Loader(lazy(() => import('src/content/Dashboards/An
 const MarketInsights = Loader(lazy(() => import('src/content/Dashboards/Analytics/MarketInsights')));
 const EngagementGrowth = Loader(lazy(() => import('src/content/Dashboards/Analytics/EngagementGrowth')));
 const CACAnalytics = Loader(lazy(() => import('src/content/Dashboards/Analytics/CACAnalytics')));
+const TransactionSuccessRate = Loader(lazy(() => import('src/content/Dashboards/Analytics/TransactionSuccessRate')));
 
 // Applications
 
@@ -200,6 +201,10 @@ const routes: RouteObject[] = [
           {
             path: 'cac',
             element: <CACAnalytics />
+          },
+          {
+            path: 'transaction-success-rate',
+            element: <TransactionSuccessRate />
           }
         ]
       },

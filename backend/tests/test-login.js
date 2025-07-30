@@ -4,6 +4,7 @@ async function simpleTest() {
   try {
     console.log('🔍 Testing login...');
     
+    // test login with seller account
     const loginResponse = await axios.post('http://localhost:3000/api/v1/auth/login', {
       email: "darkpsinight@gmail.com",
       password: "12345678000aA!"

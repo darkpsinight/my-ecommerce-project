@@ -95,22 +95,94 @@ function CustomerInsights({ data, loading }: CustomerInsightsProps) {
             </Box>
             <Box textAlign="center" flex={1}>
               <Typography variant="h5" color="secondary">
-                {avgOrdersPerCustomer.toFixed(1)}
+                {data?.repeatPurchaseRate || 0}%
               </Typography>
               <Typography variant="caption" color="textSecondary">
-                Avg Orders/Customer
+                Repeat Purchase Rate
               </Typography>
             </Box>
           </Box>
-          
-          {totalRevenue > 0 && (
-            <Box textAlign="center" p={2} bgcolor="background.default" borderRadius={1}>
+
+          {/* Customer Metrics Grid */}
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} mb={2}>
+            <Box textAlign="center" p={1.5} bgcolor="background.default" borderRadius={1}>
               <Typography variant="h6" color="success.main">
-                {formatCurrency(totalRevenue)}
+                {formatCurrency(data?.avgCustomerLifetimeValue || 0)}
               </Typography>
               <Typography variant="caption" color="textSecondary">
-                Revenue from Top Customers
+                Avg Customer LTV
               </Typography>
+            </Box>
+            <Box textAlign="center" p={1.5} bgcolor="background.default" borderRadius={1}>
+              <Typography variant="h6" color="warning.main">
+                {data?.churnRate || 0}%
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Churn Rate (90d)
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Additional Metrics */}
+          <Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={1} mb={2}>
+            <Box textAlign="center" p={1} bgcolor="background.default" borderRadius={1}>
+              <Typography variant="body2" color="primary">
+                {formatCurrency(data?.avgOrderValue || 0)}
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Avg Order Value
+              </Typography>
+            </Box>
+            <Box textAlign="center" p={1} bgcolor="background.default" borderRadius={1}>
+              <Typography variant="body2" color="secondary">
+                {data?.avgTimeBetweenPurchases || 0}d
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Avg Days Between Orders
+              </Typography>
+            </Box>
+            <Box textAlign="center" p={1} bgcolor="background.default" borderRadius={1}>
+              <Typography variant="body2" color="info.main">
+                {data?.avgOrderFrequency?.toFixed(1) || 0}
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Orders per Customer
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Customer Segmentation */}
+          {data?.customerSegmentation && (
+            <Box p={2} bgcolor="background.default" borderRadius={1}>
+              <Typography variant="subtitle2" gutterBottom>
+                Customer Segments
+              </Typography>
+              <Box display="flex" justifyContent="space-between" gap={1}>
+                <Box textAlign="center" flex={1}>
+                  <Typography variant="h6" color="info.main">
+                    {data.customerSegmentation.newCustomers}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    New (1 order)
+                  </Typography>
+                </Box>
+                <Box textAlign="center" flex={1}>
+                  <Typography variant="h6" color="warning.main">
+                    {data.customerSegmentation.repeatCustomers}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Repeat (2-5 orders)
+                  </Typography>
+                </Box>
+                <Box textAlign="center" flex={1}>
+                  <Typography variant="h6" color="success.main">
+                    {data.customerSegmentation.loyalCustomers}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Loyal (6+ orders)
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
           )}
         </Box>
@@ -212,11 +284,21 @@ function CustomerInsights({ data, loading }: CustomerInsightsProps) {
               </Typography>
             </Box>
             <Typography variant="caption" color="textSecondary" display="block">
-              • {data.topCustomers.filter(c => c.orderCount > 1).length} repeat customers
+              • {data.topCustomers.filter(c => c.orderCount > 1).length} repeat customers ({((data.topCustomers.filter(c => c.orderCount > 1).length / data.topCustomers.length) * 100).toFixed(1)}%)
             </Typography>
             <Typography variant="caption" color="textSecondary" display="block">
-              • {data.topCustomers.filter(c => getCustomerTier(c.totalSpent).tier !== 'Bronze').length} premium customers
+              • {data.topCustomers.filter(c => getCustomerTier(c.totalSpent).tier !== 'Bronze').length} premium customers (Silver+)
             </Typography>
+            {data.avgTimeBetweenPurchases > 0 && (
+              <Typography variant="caption" color="textSecondary" display="block">
+                • Customers typically reorder every {Math.round(data.avgTimeBetweenPurchases)} days
+              </Typography>
+            )}
+            {data.churnRate > 0 && (
+              <Typography variant="caption" color="textSecondary" display="block">
+                • {data.churnRate}% of customers haven't purchased in 90+ days
+              </Typography>
+            )}
           </Box>
         )}
       </CardContent>

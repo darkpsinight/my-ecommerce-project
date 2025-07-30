@@ -217,11 +217,23 @@ export const analyticsToCSV = (
   if (analyticsData.customers) {
     csv += 'CUSTOMER INSIGHTS SUMMARY\n';
     csv += 'Metric,Value,Notes\n';
-    csv += `Unique Customers,${analyticsData.customers.uniqueCustomerCount},Total unique buyers\n`;
+    csv += `Unique Customers,${analyticsData.customers.uniqueCustomerCount},Total unique buyers in time period\n`;
+    csv += `Repeat Purchase Rate,${analyticsData.customers.repeatPurchaseRate || 0}%,Percentage of customers who made multiple purchases\n`;
+    csv += `Average Time Between Purchases,${analyticsData.customers.avgTimeBetweenPurchases || 0} days,Average days between repeat purchases\n`;
+    csv += `Customer Lifetime Value,${(analyticsData.customers.avgCustomerLifetimeValue || 0).toFixed(2)} USD,Estimated CLV per customer\n`;
+    csv += `Customer Churn Rate,${analyticsData.customers.churnRate || 0}%,Percentage of customers who haven't purchased in 90+ days\n`;
+    csv += `Average Order Value,${(analyticsData.customers.avgOrderValue || 0).toFixed(2)} USD,Average amount spent per order\n`;
+    csv += `Average Order Frequency,${(analyticsData.customers.avgOrderFrequency || 0).toFixed(1)},Average orders per customer\n`;
+    
+    if (analyticsData.customers.customerSegmentation) {
+      csv += `New Customers,${analyticsData.customers.customerSegmentation.newCustomers},Customers with 1 order\n`;
+      csv += `Repeat Customers,${analyticsData.customers.customerSegmentation.repeatCustomers},Customers with 2-5 orders\n`;
+      csv += `Loyal Customers,${analyticsData.customers.customerSegmentation.loyalCustomers},Customers with 6+ orders\n`;
+    }
     
     if (analyticsData.customers.topCustomers?.length > 0) {
       const avgSpentPerCustomer = analyticsData.customers.topCustomers.reduce((sum, c) => sum + c.totalSpent, 0) / analyticsData.customers.topCustomers.length;
-      csv += `Average Spent (Top Customers),${avgSpentPerCustomer.toFixed(2)},USD per customer\n`;
+      csv += `Average Spent (Top Customers),${avgSpentPerCustomer.toFixed(2)} USD,Average spending of top 10 customers\n`;
     }
     csv += '\n';
 

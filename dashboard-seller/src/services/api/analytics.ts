@@ -90,6 +90,17 @@ export interface InventoryData {
 
 export interface CustomerData {
   uniqueCustomerCount: number;
+  repeatPurchaseRate: number;
+  avgTimeBetweenPurchases: number;
+  avgCustomerLifetimeValue: number;
+  churnRate: number;
+  avgOrderValue: number;
+  avgOrderFrequency: number;
+  customerSegmentation: {
+    newCustomers: number;
+    repeatCustomers: number;
+    loyalCustomers: number;
+  };
   topCustomers: Array<{
     customerId: string;
     orderCount: number;

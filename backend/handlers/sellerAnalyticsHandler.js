@@ -347,7 +347,7 @@ const getInventoryAnalytics = async (sellerId) => {
 
 // Helper function to get customer analytics
 const getCustomerAnalytics = async (sellerId, startDate, endDate) => {
-  // Unique customers
+  // Unique customers in time period
   const uniqueCustomers = await Order.aggregate([
     {
       $match: {
@@ -367,14 +367,92 @@ const getCustomerAnalytics = async (sellerId, startDate, endDate) => {
     },
   ]);
 
+  // Calculate repeat purchase rate
+  const repeatCustomers = uniqueCustomers.filter(customer => customer.orderCount > 1);
+  const repeatPurchaseRate = uniqueCustomers.length > 0 
+    ? (repeatCustomers.length / uniqueCustomers.length) * 100 
+    : 0;
+
+  // Calculate average time between purchases for repeat customers
+  let avgTimeBetweenPurchases = 0;
+  if (repeatCustomers.length > 0) {
+    const timeDifferences = repeatCustomers
+      .filter(customer => customer.firstOrder && customer.lastOrder)
+      .map(customer => {
+        const timeDiff = customer.lastOrder.getTime() - customer.firstOrder.getTime();
+        const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+        return daysDiff / (customer.orderCount - 1); // Average days between orders
+      });
+    
+    if (timeDifferences.length > 0) {
+      avgTimeBetweenPurchases = timeDifferences.reduce((sum, days) => sum + days, 0) / timeDifferences.length;
+    }
+  }
+
+  // Calculate Customer Lifetime Value (CLV) - simplified version
+  const totalRevenue = uniqueCustomers.reduce((sum, customer) => sum + customer.totalSpent, 0);
+  const avgOrderValue = totalRevenue / uniqueCustomers.reduce((sum, customer) => sum + customer.orderCount, 0) || 0;
+  const avgOrderFrequency = uniqueCustomers.length > 0 
+    ? uniqueCustomers.reduce((sum, customer) => sum + customer.orderCount, 0) / uniqueCustomers.length 
+    : 0;
+  
+  // Simple CLV calculation: AOV * Purchase Frequency * Estimated Customer Lifespan (assume 1 year)
+  const estimatedCustomerLifespan = 365; // days
+  const purchaseFrequencyPerYear = avgTimeBetweenPurchases > 0 ? estimatedCustomerLifespan / avgTimeBetweenPurchases : avgOrderFrequency;
+  const avgCustomerLifetimeValue = avgOrderValue * purchaseFrequencyPerYear;
+
+  // Get all-time customer data for better CLV calculation
+  const allTimeCustomers = await Order.aggregate([
+    {
+      $match: {
+        sellerId: sellerId,
+        status: "completed",
+      },
+    },
+    {
+      $group: {
+        _id: "$buyerId",
+        totalOrders: { $sum: 1 },
+        totalSpent: { $sum: "$totalAmount" },
+        firstOrder: { $min: "$createdAt" },
+        lastOrder: { $max: "$createdAt" },
+      },
+    },
+  ]);
+
+  // Calculate churn rate (customers who haven't purchased in the last 90 days)
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  const activeCustomers = allTimeCustomers.filter(customer => customer.lastOrder >= ninetyDaysAgo);
+  const churnRate = allTimeCustomers.length > 0 
+    ? ((allTimeCustomers.length - activeCustomers.length) / allTimeCustomers.length) * 100 
+    : 0;
+
   // Top customers
   const topCustomers = uniqueCustomers
     .sort((a, b) => b.totalSpent - a.totalSpent)
     .slice(0, 10);
 
+  // Customer segmentation based on purchase behavior
+  const customerSegments = {
+    newCustomers: uniqueCustomers.filter(c => c.orderCount === 1).length,
+    repeatCustomers: uniqueCustomers.filter(c => c.orderCount >= 2 && c.orderCount <= 5).length,
+    loyalCustomers: uniqueCustomers.filter(c => c.orderCount > 5).length,
+  };
+
   // Convert MongoDB objects to plain JavaScript objects
   return {
     uniqueCustomerCount: Number(uniqueCustomers.length),
+    repeatPurchaseRate: Number(repeatPurchaseRate.toFixed(2)),
+    avgTimeBetweenPurchases: Number(avgTimeBetweenPurchases.toFixed(1)),
+    avgCustomerLifetimeValue: Number(avgCustomerLifetimeValue.toFixed(2)),
+    churnRate: Number(churnRate.toFixed(2)),
+    avgOrderValue: Number(avgOrderValue.toFixed(2)),
+    avgOrderFrequency: Number(avgOrderFrequency.toFixed(2)),
+    customerSegmentation: {
+      newCustomers: Number(customerSegments.newCustomers),
+      repeatCustomers: Number(customerSegments.repeatCustomers),
+      loyalCustomers: Number(customerSegments.loyalCustomers),
+    },
     topCustomers: topCustomers.map((customer) => ({
       customerId: String(customer._id),
       orderCount: Number(customer.orderCount),

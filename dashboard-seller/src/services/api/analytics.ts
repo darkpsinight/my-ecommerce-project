@@ -329,6 +329,104 @@ export interface CustomerGeographicData {
   }>;
 }
 
+export interface CACData {
+  totalMarketingSpend: number;
+  newCustomersAcquired: number;
+  overallCAC: number;
+  avgOrderValue: number;
+  cacPaybackPeriod: number; // in orders
+  spendByChannel: Array<{
+    channel: string;
+    totalSpend: number;
+    campaignCount: number;
+    avgSpend: number;
+  }>;
+  cacByChannel: Array<{
+    channel: string;
+    totalSpend: number;
+    customerCount: number;
+    cac: number;
+    avgSpend: number;
+  }>;
+  customersByChannel: Array<{
+    channel: string;
+    customerCount: number;
+    totalRevenue: number;
+  }>;
+  dailyTrend: Array<{
+    date: {
+      year: number;
+      month: number;
+      day: number;
+    };
+    totalSpend: number;
+    newCustomers: number;
+    cac: number;
+  }>;
+}
+
+export interface MarketingSpendEntry {
+  _id: string;
+  amount: number;
+  currency: string;
+  channel: string;
+  campaignName?: string;
+  description?: string;
+  spendDate: string;
+  periodStart: string;
+  periodEnd: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  impressions?: number;
+  clicks?: number;
+  conversions?: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketingSpendResponse {
+  success: boolean;
+  message: string;
+  data: {
+    spendEntries: MarketingSpendEntry[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
+}
+
+export interface AddMarketingSpendRequest {
+  amount: number;
+  currency?: string;
+  channel: string;
+  campaignName?: string;
+  description?: string;
+  spendDate: string;
+  periodStart: string;
+  periodEnd: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  impressions?: number;
+  clicks?: number;
+  conversions?: number;
+}
+
+export interface CACAnalyticsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    timeRange: string;
+    cac: CACData;
+    generatedAt: string;
+  };
+}
+
 export interface AnalyticsOverviewData {
   timeRange: string;
   revenue: RevenueData;
@@ -339,6 +437,7 @@ export interface AnalyticsOverviewData {
   wishlist: WishlistData;
   geographic: GeographicData;
   customerGeographic: CustomerGeographicData;
+  cac: CACData;
   generatedAt: string;
 }
 
@@ -391,6 +490,36 @@ class AnalyticsService {
   async getRevenueChart(params?: ChartParams): Promise<RevenueChartResponse> {
     const response = await axiosInstance.get<RevenueChartResponse>(
       `${this.baseUrl}/revenue-chart`,
+      { params }
+    );
+    return response.data;
+  }
+
+  async getCACAnalytics(params?: AnalyticsParams): Promise<CACAnalyticsResponse> {
+    const response = await axiosInstance.get<CACAnalyticsResponse>(
+      `${this.baseUrl}/cac`,
+      { params }
+    );
+    return response.data;
+  }
+
+  async addMarketingSpend(data: AddMarketingSpendRequest): Promise<{ success: boolean; message: string; data: MarketingSpendEntry }> {
+    const response = await axiosInstance.post<{ success: boolean; message: string; data: MarketingSpendEntry }>(
+      `${this.baseUrl}/marketing-spend`,
+      data
+    );
+    return response.data;
+  }
+
+  async getMarketingSpend(params?: {
+    page?: number;
+    limit?: number;
+    channel?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<MarketingSpendResponse> {
+    const response = await axiosInstance.get<MarketingSpendResponse>(
+      `${this.baseUrl}/marketing-spend`,
       { params }
     );
     return response.data;

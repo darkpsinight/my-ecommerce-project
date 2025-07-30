@@ -97,6 +97,15 @@ export interface SignupData {
   email: string;
   password: string;
   recaptchaToken?: string;
+  acquisitionSource?: {
+    channel?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    utmContent?: string;
+    utmTerm?: string;
+    referralCode?: string;
+  };
 }
 
 export interface SignupResponse {

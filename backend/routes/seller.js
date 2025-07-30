@@ -11,6 +11,11 @@ const {
   getSellerAnalyticsOverview,
   getRevenueChartData,
 } = require("../handlers/sellerAnalyticsHandler");
+const {
+  getCACAnalytics,
+  addMarketingSpend,
+  getMarketingSpend
+} = require("../handlers/cacAnalyticsHandler");
 
 const sellerRoutes = async (fastify, opts) => {
   // Get seller profile (basic user info + extended profile)
@@ -425,6 +430,93 @@ const sellerRoutes = async (fastify, opts) => {
       },
     },
     handler: getRevenueChartData,
+  });
+
+  // CAC Analytics Routes
+  
+  // Get CAC analytics
+  fastify.route({
+    method: "GET",
+    url: "/analytics/cac",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      description: "Get Customer Acquisition Cost analytics",
+      tags: ["Seller", "Analytics", "CAC"],
+      querystring: {
+        type: "object",
+        properties: {
+          timeRange: {
+            type: "string",
+            enum: ["7d", "30d", "90d", "1y"],
+            default: "30d",
+          },
+        },
+      },
+    },
+    handler: getCACAnalytics,
+  });
+
+  // Add marketing spend
+  fastify.route({
+    method: "POST",
+    url: "/analytics/marketing-spend",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      description: "Add marketing spend entry",
+      tags: ["Seller", "Analytics", "CAC"],
+      body: {
+        type: "object",
+        required: ["amount", "channel", "spendDate", "periodStart", "periodEnd"],
+        properties: {
+          amount: { type: "number", minimum: 0 },
+          currency: { type: "string", enum: ["USD", "EUR", "GBP"], default: "USD" },
+          channel: {
+            type: "string",
+            enum: [
+              "google_ads", "facebook_ads", "instagram_ads", "twitter_ads",
+              "linkedin_ads", "youtube_ads", "tiktok_ads", "reddit_ads",
+              "influencer_marketing", "affiliate_marketing", "email_marketing",
+              "content_marketing", "seo", "referral_program", "direct_mail",
+              "events", "partnerships", "other"
+            ]
+          },
+          campaignName: { type: "string", maxLength: 200 },
+          description: { type: "string", maxLength: 500 },
+          spendDate: { type: "string", format: "date" },
+          periodStart: { type: "string", format: "date" },
+          periodEnd: { type: "string", format: "date" },
+          utmSource: { type: "string" },
+          utmMedium: { type: "string" },
+          utmCampaign: { type: "string" },
+          impressions: { type: "number", minimum: 0 },
+          clicks: { type: "number", minimum: 0 },
+          conversions: { type: "number", minimum: 0 }
+        }
+      }
+    },
+    handler: addMarketingSpend,
+  });
+
+  // Get marketing spend entries
+  fastify.route({
+    method: "GET",
+    url: "/analytics/marketing-spend",
+    preHandler: verifyAuth(["seller"]),
+    schema: {
+      description: "Get marketing spend entries",
+      tags: ["Seller", "Analytics", "CAC"],
+      querystring: {
+        type: "object",
+        properties: {
+          page: { type: "number", minimum: 1, default: 1 },
+          limit: { type: "number", minimum: 1, maximum: 100, default: 20 },
+          channel: { type: "string" },
+          startDate: { type: "string", format: "date" },
+          endDate: { type: "string", format: "date" }
+        }
+      }
+    },
+    handler: getMarketingSpend,
   });
 };
 

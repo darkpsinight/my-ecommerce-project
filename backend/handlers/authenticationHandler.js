@@ -39,7 +39,7 @@ const bcrypt = require("bcryptjs");
 const registerUser = async (request, reply) => {
   request.log.info("handlers/registerUser");
 
-  let { name, email, password } = request.body;
+  let { name, email, password, acquisitionSource } = request.body;
   let roles = ["buyer"];
   let provider = "email";
 
@@ -96,6 +96,10 @@ const registerUser = async (request, reply) => {
     password,
     roles,
     provider,
+    acquisitionSource: acquisitionSource || {
+      channel: "organic",
+      acquisitionDate: new Date()
+    }
   });
 
   const confirmationToken = user.getEmailConfirmationToken();

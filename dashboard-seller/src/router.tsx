@@ -37,6 +37,7 @@ const ProductAnalytics = Loader(lazy(() => import('src/content/Dashboards/Analyt
 const CustomerIntelligence = Loader(lazy(() => import('src/content/Dashboards/Analytics/CustomerIntelligence')));
 const MarketInsights = Loader(lazy(() => import('src/content/Dashboards/Analytics/MarketInsights')));
 const EngagementGrowth = Loader(lazy(() => import('src/content/Dashboards/Analytics/EngagementGrowth')));
+const CACAnalytics = Loader(lazy(() => import('src/content/Dashboards/Analytics/CACAnalytics')));
 
 // Applications
 
@@ -195,6 +196,10 @@ const routes: RouteObject[] = [
           {
             path: 'engagement',
             element: <EngagementGrowth />
+          },
+          {
+            path: 'cac',
+            element: <CACAnalytics />
           }
         ]
       },

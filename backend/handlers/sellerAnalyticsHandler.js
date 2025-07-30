@@ -5,6 +5,7 @@ const { Transaction } = require("../models/transaction");
 const ViewedProduct = require("../models/viewedProduct");
 const ListingImpression = require("../models/listingImpression");
 const { Wishlist } = require("../models/wishlist");
+const { MarketingSpend } = require("../models/marketingSpend");
 const {
   sendSuccessResponse,
   sendErrorResponse,
@@ -87,6 +88,9 @@ const getSellerAnalyticsOverview = async (request, reply) => {
       now
     );
 
+    // Get CAC analytics
+    const cacData = await getCACAnalyticsData(sellerId, startDate, now);
+
     const responseData = {
       timeRange,
       revenue: revenueData,
@@ -97,6 +101,7 @@ const getSellerAnalyticsOverview = async (request, reply) => {
       wishlist: wishlistData,
       geographic: geographicData,
       customerGeographic: customerGeographicData,
+      cac: cacData,
       generatedAt: new Date(),
     };
 
@@ -1646,6 +1651,108 @@ const getCustomerGeographicAnalytics = async (sellerId, startDate, endDate) => {
       coordinates: item.coordinates || { lat: null, lng: null }
     }))
   };
+};
+
+// Helper function to get CAC analytics data for overview
+const getCACAnalyticsData = async (sellerId, startDate, endDate) => {
+  try {
+    // Get total marketing spend for the period
+    const totalSpendData = await MarketingSpend.getTotalSpendByPeriod(sellerId, startDate, endDate);
+    const totalMarketingSpend = totalSpendData.totalSpend || 0;
+
+    // Get new customers acquired in the period
+    const newCustomers = await Order.aggregate([
+      {
+        $match: {
+          sellerId: sellerId,
+          status: "completed",
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: "$buyerId",
+          firstPurchaseDate: { $min: "$createdAt" },
+          totalSpent: { $sum: "$totalAmount" }
+        }
+      },
+      {
+        $lookup: {
+          from: "orders",
+          let: { buyerId: "$_id", sellerId: sellerId },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$buyerId", "$$buyerId"] },
+                    { $eq: ["$sellerId", "$$sellerId"] },
+                    { $eq: ["$status", "completed"] }
+                  ]
+                }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                earliestOrder: { $min: "$createdAt" }
+              }
+            }
+          ],
+          as: "customerHistory"
+        }
+      },
+      {
+        $addFields: {
+          isNewCustomer: {
+            $cond: [
+              { $eq: [{ $size: "$customerHistory" }, 0] },
+              true,
+              {
+                $gte: [
+                  { $arrayElemAt: ["$customerHistory.earliestOrder", 0] },
+                  startDate
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        $match: {
+          isNewCustomer: true
+        }
+      }
+    ]);
+
+    const newCustomerCount = newCustomers.length;
+    const overallCAC = newCustomerCount > 0 ? totalMarketingSpend / newCustomerCount : 0;
+
+    // Get spend by top channels
+    const topChannels = await MarketingSpend.getSpendByChannel(sellerId, startDate, endDate);
+    const topChannelsLimited = topChannels.slice(0, 5).map(item => ({
+      channel: String(item._id),
+      totalSpend: Number(item.totalSpend),
+      campaignCount: Number(item.campaignCount)
+    }));
+
+    return {
+      totalMarketingSpend: Number(totalMarketingSpend),
+      newCustomersAcquired: Number(newCustomerCount),
+      overallCAC: Number(overallCAC.toFixed(2)),
+      topChannels: topChannelsLimited,
+      hasData: totalMarketingSpend > 0 || newCustomerCount > 0
+    };
+  } catch (error) {
+    console.log('⚠️ CAC analytics failed (non-critical):', error.message);
+    return {
+      totalMarketingSpend: 0,
+      newCustomersAcquired: 0,
+      overallCAC: 0,
+      topChannels: [],
+      hasData: false
+    };
+  }
 };
 
 module.exports = {

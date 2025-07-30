@@ -1,4 +1,4 @@
-const { isValidUrl, isValidImageUrl, validateUrl } = require('../utils/urlValidator');
+const { isValidUrl, isValidImageUrl, validateUrl } = require('../../utils/urlValidator');
 
 // Test isValidUrl function
 console.log('Testing isValidUrl function:');

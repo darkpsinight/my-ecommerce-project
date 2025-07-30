@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const ViewedProduct = require('./models/viewedProduct');
+const ViewedProduct = require('../../models/viewedProduct');
 
 // Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/ecommerce', {

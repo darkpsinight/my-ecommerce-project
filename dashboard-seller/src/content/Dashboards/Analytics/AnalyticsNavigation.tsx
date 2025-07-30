@@ -6,7 +6,8 @@ import {
   Inventory,
   People,
   Public,
-  Favorite
+  Favorite,
+  AttachMoney
 } from '@mui/icons-material';
 
 function AnalyticsNavigation() {
@@ -53,6 +54,12 @@ function AnalyticsNavigation() {
       shortLabel: 'Engagement',
       value: '/dashboards/analytics/engagement', 
       icon: <Favorite /> 
+    },
+    { 
+      label: 'Customer Acquisition Cost', 
+      shortLabel: 'CAC',
+      value: '/dashboards/analytics/cac', 
+      icon: <AttachMoney /> 
     }
   ];
 

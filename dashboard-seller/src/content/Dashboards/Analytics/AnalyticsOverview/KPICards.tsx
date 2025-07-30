@@ -13,7 +13,8 @@ import {
   Inventory,
   People,
   AccessTime,
-  Visibility
+  Visibility,
+  Campaign
 } from '@mui/icons-material';
 
 interface KPICardsProps {
@@ -102,13 +103,20 @@ function KPICards({ data, loading, timeRange }: KPICardsProps) {
       format: 'number',
       icon: <Visibility />,
       color: theme.palette.error.main
+    },
+    {
+      title: 'Customer Acquisition Cost',
+      value: data?.cac?.overallCAC || 0,
+      format: 'currency',
+      icon: <Campaign />,
+      color: theme.palette.info.main
     }
   ];
 
   if (loading) {
     return (
       <Grid container spacing={3}>
-        {[1, 2, 3, 4, 5, 6].map((item) => (
+        {[1, 2, 3, 4, 5, 6, 7].map((item) => (
           <Grid item xs={12} sm={6} md={4} lg={2} key={item}>
             <Card>
               <CardContent>

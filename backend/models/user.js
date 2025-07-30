@@ -113,6 +113,44 @@ const userSchema = new mongoose.Schema({
 	stripeCustomerId: {
 		type: String
 	},
+	// Customer acquisition tracking
+	acquisitionSource: {
+		channel: {
+			type: String,
+			enum: [
+				"organic",
+				"google_ads",
+				"facebook_ads", 
+				"instagram_ads",
+				"twitter_ads",
+				"linkedin_ads",
+				"youtube_ads",
+				"tiktok_ads",
+				"reddit_ads",
+				"influencer_marketing",
+				"affiliate_marketing",
+				"email_marketing",
+				"referral_program",
+				"direct",
+				"other"
+			],
+			default: "organic"
+		},
+		utmSource: String,
+		utmMedium: String,
+		utmCampaign: String,
+		utmContent: String,
+		utmTerm: String,
+		referralCode: String,
+		referredBy: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User"
+		},
+		acquisitionDate: {
+			type: Date,
+			default: Date.now
+		}
+	},
 	createdAt: {
 		type: Date,
 		default: Date.now,

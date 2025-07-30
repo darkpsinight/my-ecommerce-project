@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const ViewedProduct = require('./models/viewedProduct');
+const ViewedProduct = require('../../models/viewedProduct');
 
 // Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/ecommerce', {
@@ -62,8 +62,8 @@ async function testViewTracking() {
     // Now test the analytics for this seller
     console.log('\n🔍 Testing analytics after new view...');
     
-    const { User } = require('./models/user');
-    const { Listing } = require('./models/listing');
+    const { User } = require('../../models/user');
+    const { Listing } = require('../../models/listing');
     
     const seller = await User.findOne({ uid: 'test-seller-analytics' });
     if (seller) {

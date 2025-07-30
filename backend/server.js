@@ -38,6 +38,7 @@ const { reviewRoutes } = require("./routes/reviews");
 const cartRoutes = require("./routes/cart");
 const wishlistRoutes = require("./routes/wishlist");
 const viewedProductRoutes = require("./routes/viewedProducts");
+const impressionRoutes = require("./routes/impressions");
 const performanceRoutes = require("./routes/performanceRoutes");
 const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
@@ -148,6 +149,9 @@ fastify.register(wishlistRoutes, { prefix: "/api/v1/wishlist" });
 
 // Register viewed products routes
 fastify.register(viewedProductRoutes, { prefix: "/api/v1/viewed-products" });
+
+// Register impression tracking routes
+fastify.register(impressionRoutes, { prefix: "/api/v1" });
 
 // Register multipart content parser for file uploads
 fastify.register(require("fastify-multipart"), {

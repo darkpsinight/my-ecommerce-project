@@ -11,8 +11,24 @@ import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useImpressionTracking } from "@/hooks/useImpressionTracking";
+import { markImpressionClicked } from "@/utils/impressionTracking";
 
-const SingleListItem = ({ item }: { item: Product }) => {
+interface SingleListItemProps {
+  item: Product;
+  source?: string;
+  position?: number;
+  searchQuery?: string;
+  category?: string;
+}
+
+const SingleListItem = ({ 
+  item, 
+  source = 'other', 
+  position, 
+  searchQuery, 
+  category 
+}: SingleListItemProps) => {
   const { openModal } = useModalContext();
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -20,11 +36,34 @@ const SingleListItem = ({ item }: { item: Product }) => {
   const isInWishlist = useAppSelector(state => selectIsItemInWishlist(state, item.id));
   const isWishlistLoading = useAppSelector(selectWishlistLoading);
 
-
+  // Track impression when this product is displayed
+  const { elementRef, hasTracked } = useImpressionTracking(item.id, {
+    source,
+    position,
+    searchQuery,
+    category,
+    trackOnVisible: true,
+    visibilityThreshold: 0.5,
+    trackingDelay: 1000,
+  });
 
   // update the QuickView state
   const handleQuickViewUpdate = () => {
     dispatch(updateQuickView({ ...item }));
+  };
+
+  // Handle product click - mark impression as clicked
+  const handleProductClick = async (e: React.MouseEvent) => {
+    // Don't prevent default - let the link work
+    // But mark the impression as clicked
+    if (hasTracked) {
+      try {
+        await markImpressionClicked(item.id);
+        console.log('✅ Marked impression as clicked for:', item.id);
+      } catch (error) {
+        console.error('❌ Failed to mark impression as clicked:', error);
+      }
+    }
   };
 
 
@@ -64,8 +103,12 @@ const SingleListItem = ({ item }: { item: Product }) => {
   };
 
   return (
-    <div className="group rounded-lg bg-white shadow-1 relative">
-      <Link href={`/shop-details?id=${item.id}`} className="block absolute inset-0 z-10"></Link>
+    <div ref={elementRef} className="group rounded-lg bg-white shadow-1 relative" data-product-id={item.id}>
+      <Link 
+        href={`/shop-details?id=${item.id}`} 
+        className="block absolute inset-0 z-10"
+        onClick={handleProductClick}
+      ></Link>
       <div className="flex">
         <div className="shadow-list relative overflow-hidden max-w-[270px] w-full h-[270px]">
           <div className="relative w-full h-full">

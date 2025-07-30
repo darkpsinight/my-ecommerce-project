@@ -191,6 +191,186 @@ function EngagementMetrics({ data, loading }: EngagementMetricsProps) {
           </Grid>
         </Grid>
 
+        {/* CTR Metrics */}
+        {data?.ctr && (
+          <>
+            <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 3 }}>
+              <Assessment />
+              Click-Through Rate (CTR) Analytics
+            </Typography>
+            
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={6} sm={4}>
+                <Box textAlign="center" p={2} bgcolor="primary.light" borderRadius={1} color="primary.contrastText">
+                  <Typography variant="h4">
+                    {data.ctr.totalImpressions.toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption">
+                    Total Impressions
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6} sm={4}>
+                <Box textAlign="center" p={2} bgcolor="secondary.light" borderRadius={1} color="secondary.contrastText">
+                  <Typography variant="h4">
+                    {data.ctr.totalClicks.toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption">
+                    Total Clicks
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Box 
+                  textAlign="center" 
+                  p={2} 
+                  bgcolor={data.ctr.overallCTR >= 5 ? 'success.light' : data.ctr.overallCTR >= 2 ? 'warning.light' : 'error.light'} 
+                  borderRadius={1} 
+                  color={data.ctr.overallCTR >= 5 ? 'success.contrastText' : data.ctr.overallCTR >= 2 ? 'warning.contrastText' : 'error.contrastText'}
+                >
+                  <Typography variant="h4">
+                    {data.ctr.overallCTR}%
+                  </Typography>
+                  <Typography variant="caption">
+                    Overall CTR
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* CTR by Source */}
+            {data.ctr.ctrBySource && data.ctr.ctrBySource.length > 0 && (
+              <Box mb={3}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                  CTR by Traffic Source
+                </Typography>
+                {data.ctr.ctrBySource.slice(0, 5).map((source, index) => (
+                  <Box key={source.source} mb={1}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
+                      <Typography variant="body2">
+                        {getSourceIcon(source.source)} {source.source.replace('_', ' ')}
+                      </Typography>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography variant="caption" color="textSecondary">
+                          {source.totalImpressions} imp, {source.totalClicks} clicks
+                        </Typography>
+                        <Chip 
+                          label={`${source.clickThroughRate}%`}
+                          size="small"
+                          color={source.clickThroughRate >= 5 ? 'success' : source.clickThroughRate >= 2 ? 'warning' : 'error'}
+                        />
+                      </Box>
+                    </Box>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={Math.min(source.clickThroughRate * 10, 100)} // Scale for better visualization
+                      color={source.clickThroughRate >= 5 ? 'success' : source.clickThroughRate >= 2 ? 'warning' : 'error'}
+                      sx={{ height: 6, borderRadius: 3 }}
+                    />
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            {/* Top CTR Listings */}
+            {data.ctr.topCTRListings && data.ctr.topCTRListings.length > 0 && (
+              <Box mb={3}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                  Top CTR Listings
+                </Typography>
+                <List dense>
+                  {data.ctr.topCTRListings.slice(0, 3).map((listing, index) => (
+                    <ListItem key={listing.listingId} sx={{ px: 0 }}>
+                      <ListItemAvatar>
+                        <Avatar 
+                          sx={{ 
+                            bgcolor: listing.clickThroughRate >= 5 ? 'success.main' : listing.clickThroughRate >= 2 ? 'warning.main' : 'error.main',
+                            width: 32,
+                            height: 32,
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          #{index + 1}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                fontWeight: 'bold',
+                                maxWidth: '200px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {listing.title}
+                            </Typography>
+                            <Chip 
+                              label={`${listing.clickThroughRate}% CTR`}
+                              size="small"
+                              color={listing.clickThroughRate >= 5 ? 'success' : listing.clickThroughRate >= 2 ? 'warning' : 'error'}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography variant="caption" color="textSecondary">
+                              {listing.platform} • {listing.totalImpressions} impressions • {listing.totalClicks} clicks
+                              {listing.avgClickDelay && ` • ${listing.avgClickDelay}s avg delay`}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* CTR Insights */}
+            <Box mb={3}>
+              {data.ctr.overallCTR >= 5 && (
+                <Alert severity="success" sx={{ mb: 1 }}>
+                  🎉 Excellent CTR! Your listings are very compelling to users.
+                </Alert>
+              )}
+              
+              {data.ctr.overallCTR < 1 && data.ctr.totalImpressions > 100 && (
+                <Alert severity="warning" sx={{ mb: 1 }}>
+                  ⚠️ Low CTR detected. Consider improving listing titles, images, and pricing.
+                </Alert>
+              )}
+              
+              {data.ctr.overallCTR >= 2 && data.ctr.overallCTR < 5 && (
+                <Alert severity="info" sx={{ mb: 1 }}>
+                  👍 Good CTR! There's still room for optimization to reach excellent levels.
+                </Alert>
+              )}
+
+              <Box p={2} bgcolor="background.default" borderRadius={1}>
+                <Typography variant="caption" color="textSecondary" display="block">
+                  <strong>CTR Benchmarks:</strong>
+                </Typography>
+                <Typography variant="caption" color="success.main" display="block">
+                  • Excellent: 5%+ CTR
+                </Typography>
+                <Typography variant="caption" color="warning.main" display="block">
+                  • Good: 2-5% CTR
+                </Typography>
+                <Typography variant="caption" color="info.main" display="block">
+                  • Average: 1-2% CTR
+                </Typography>
+                <Typography variant="caption" color="error.main" display="block">
+                  • Needs Work: &lt;1% CTR
+                </Typography>
+              </Box>
+            </Box>
+          </>
+        )}
+
         {/* Top Viewed Listings */}
         <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <RemoveRedEye />
@@ -414,6 +594,11 @@ function EngagementMetrics({ data, loading }: EngagementMetricsProps) {
               {data.totalTimeSpent > 0 && (
                 <Typography variant="caption" color="textSecondary" display="block">
                   • Total user engagement: {data.totalTimeSpent} minutes across all listings
+                </Typography>
+              )}
+              {data.ctr && data.ctr.totalImpressions > 0 && (
+                <Typography variant="caption" color="textSecondary" display="block">
+                  • Click-through rate: {data.ctr.overallCTR}% ({data.ctr.totalClicks} clicks from {data.ctr.totalImpressions} impressions)
                 </Typography>
               )}
             </Box>

@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const ViewedProduct = require('./models/viewedProduct');
-const { Listing } = require('./models/listing');
-const { User } = require('./models/user');
-const { getSellerAnalyticsOverview } = require('./handlers/sellerAnalyticsHandler');
+const ViewedProduct = require('../../models/viewedProduct');
+const { Listing } = require('../../models/listing');
+const { User } = require('../../models/user');
+const { getSellerAnalyticsOverview } = require('../../handlers/sellerAnalyticsHandler');
 
 // Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/ecommerce', {

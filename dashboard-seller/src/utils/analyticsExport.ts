@@ -96,6 +96,14 @@ export const analyticsToCSV = (
     csv += `Total Time Spent,${analyticsData.engagement.totalTimeSpent}min,Total minutes across all views\n`;
     csv += `Views with Duration Data,${analyticsData.engagement.viewsWithDuration},Views that tracked time spent\n`;
     csv += `Conversion Rate,${analyticsData.engagement.conversionRate}%,Views to purchases ratio\n`;
+    
+    // Add CTR metrics if available
+    if (analyticsData.engagement.ctr) {
+      csv += `Total Impressions,${analyticsData.engagement.ctr.totalImpressions},Times listings were shown to users\n`;
+      csv += `Total Clicks,${analyticsData.engagement.ctr.totalClicks},Times users clicked on listings\n`;
+      csv += `Overall Click-Through Rate,${analyticsData.engagement.ctr.overallCTR}%,Percentage of impressions that resulted in clicks\n`;
+    }
+    
     csv += '\n';
 
     // Top Viewed Listings
@@ -122,6 +130,50 @@ export const analyticsToCSV = (
         csv += `${source.source.replace('_', ' ')},${source.count},${percentage}%\n`;
       });
       csv += '\n';
+    }
+
+    // CTR Analytics
+    if (analyticsData.engagement.ctr) {
+      // CTR by Source
+      if (analyticsData.engagement.ctr.ctrBySource?.length > 0) {
+        csv += 'CLICK-THROUGH RATE BY SOURCE\n';
+        csv += 'Source,Impressions,Clicks,CTR (%),Performance\n';
+        analyticsData.engagement.ctr.ctrBySource.forEach(source => {
+          const performance = source.clickThroughRate > 5 ? 'Excellent' : 
+                            source.clickThroughRate > 2 ? 'Good' : 
+                            source.clickThroughRate > 1 ? 'Average' : 'Needs Improvement';
+          csv += `${source.source.replace('_', ' ')},${source.totalImpressions},${source.totalClicks},${source.clickThroughRate},${performance}\n`;
+        });
+        csv += '\n';
+      }
+
+      // Top CTR Listings
+      if (analyticsData.engagement.ctr.topCTRListings?.length > 0) {
+        csv += 'HIGHEST CLICK-THROUGH RATE LISTINGS\n';
+        csv += 'Rank,Product Title,Platform,Impressions,Clicks,CTR (%),Avg Click Delay (s),Performance\n';
+        analyticsData.engagement.ctr.topCTRListings.forEach((listing, index) => {
+          const cleanTitle = listing.title.replace(/"/g, '""');
+          const avgClickDelay = listing.avgClickDelay ? listing.avgClickDelay.toFixed(1) : 'N/A';
+          const performance = listing.clickThroughRate > 5 ? 'Excellent' : 
+                            listing.clickThroughRate > 2 ? 'Good' : 
+                            listing.clickThroughRate > 1 ? 'Average' : 'Needs Improvement';
+          csv += `${index + 1},"${cleanTitle}",${listing.platform},${listing.totalImpressions},${listing.totalClicks},${listing.clickThroughRate},${avgClickDelay},${performance}\n`;
+        });
+        csv += '\n';
+      }
+
+      // Position Analysis
+      if (analyticsData.engagement.ctr.positionAnalysis?.length > 0) {
+        csv += 'CLICK-THROUGH RATE BY POSITION\n';
+        csv += 'Position,Impressions,Clicks,CTR (%),Avg Click Delay (s),Notes\n';
+        analyticsData.engagement.ctr.positionAnalysis.forEach(position => {
+          const avgClickDelay = position.avgClickDelay ? position.avgClickDelay.toFixed(1) : 'N/A';
+          const notes = position.position <= 3 ? 'Top positions' : 
+                       position.position <= 10 ? 'Above fold' : 'Below fold';
+          csv += `${position.position},${position.totalImpressions},${position.totalClicks},${position.clickThroughRate},${avgClickDelay},${notes}\n`;
+        });
+        csv += '\n';
+      }
     }
   }
 

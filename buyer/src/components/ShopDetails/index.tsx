@@ -105,6 +105,18 @@ const ShopDetails = () => {
     enabled: true,
   });
 
+  // Mark impression as clicked when product detail page loads
+  useEffect(() => {
+    if (product?.id) {
+      // Import the impression tracking utility
+      import('@/utils/impressionTracking').then(({ markImpressionClicked }) => {
+        markImpressionClicked(product.id).catch(error => {
+          console.log('Note: No recent impression found to mark as clicked (this is normal if user came directly to product)');
+        });
+      });
+    }
+  }, [product?.id]);
+
   // Analytics tracking
   const { trackEvent, trackInteraction } = useProductAnalytics({
     product,

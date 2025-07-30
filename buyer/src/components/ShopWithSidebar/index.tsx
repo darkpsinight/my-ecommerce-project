@@ -837,9 +837,23 @@ const ShopWithSidebar = ({ sellerId }: ShopWithSidebarProps) => {
                   >
                     {products.map((item, key) =>
                       productStyle === "grid" ? (
-                        <SingleGridItem item={item} key={key} />
+                        <SingleGridItem 
+                          item={item} 
+                          key={key}
+                          source={searchQuery ? 'search_results' : selectedCategory ? 'category_page' : 'other'}
+                          position={key + 1}
+                          searchQuery={searchQuery || undefined}
+                          category={selectedCategory || undefined}
+                        />
                       ) : (
-                        <SingleListItem item={item} key={key} />
+                        <SingleListItem 
+                          item={item} 
+                          key={key}
+                          source={searchQuery ? 'search_results' : selectedCategory ? 'category_page' : 'other'}
+                          position={key + 1}
+                          searchQuery={searchQuery || undefined}
+                          category={selectedCategory || undefined}
+                        />
                       )
                     )}
                   </div>

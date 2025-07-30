@@ -47,8 +47,10 @@ const viewedProductSchema = new mongoose.Schema({
     source: {
       type: String,
       enum: [
-        'homepage', 'search', 'category', 'recommendation', 
-        'related', 'seller_profile', 'wishlist', 'direct', 'other'
+        'homepage', 'search', 'search_results', 'category', 'category_page', 
+        'homepage_featured', 'recommendation', 'recommendations', 'related', 
+        'related_products', 'seller_profile', 'wishlist', 'wishlist_page', 
+        'trending', 'new_arrivals', 'direct', 'other'
       ],
       default: 'other'
     },

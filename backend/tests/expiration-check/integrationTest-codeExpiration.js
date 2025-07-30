@@ -4,11 +4,11 @@
  */
 
 const mongoose = require("mongoose");
-const { Listing } = require("../models/listing");
-const { User } = require("../models/user");
-const { Order } = require("../models/order");
-const { Wallet } = require("../models/wallet");
-const { configs } = require("../configs");
+const { Listing } = require("../../models/listing");
+const { User } = require("../../models/user");
+const { Order } = require("../../models/order");
+const { Wallet } = require("../../models/wallet");
+const { configs } = require("../../configs");
 
 // Connect to MongoDB
 async function connectToDatabase() {

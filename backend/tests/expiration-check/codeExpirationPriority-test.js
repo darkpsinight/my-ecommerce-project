@@ -4,8 +4,8 @@
  */
 
 const mongoose = require("mongoose");
-const { Listing } = require("../models/listing");
-const { configs } = require("../configs");
+const { Listing } = require("../../models/listing");
+const { configs } = require("../../configs");
 
 // Connect to MongoDB
 async function connectToDatabase() {

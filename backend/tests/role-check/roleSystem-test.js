@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-const { configs } = require("../configs");
-const { User } = require("../models/user");
+const { configs } = require("../../configs");
+const { User } = require("../../models/user");
 
 /**
  * Test script to verify the new multi-role system functionality

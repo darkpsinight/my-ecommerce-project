@@ -1,4 +1,5 @@
 const ViewedProduct = require("../models/viewedProduct");
+const ListingImpression = require("../models/listingImpression");
 const { User } = require("../models/user");
 const { Listing } = require("../models/listing");
 const { sendErrorResponse, sendSuccessResponse } = require("../utils/responseHelpers");
@@ -84,6 +85,20 @@ const addViewedProduct = async (request, reply) => {
       viewedAt: viewRecord.viewedAt,
       wasUpdated: viewRecord.updatedAt > viewRecord.createdAt
     });
+
+    // Mark any recent impression as clicked for CTR tracking
+    try {
+      await ListingImpression.markAsClicked(
+        productId,
+        userUid,
+        anonymousId,
+        viewRecord.externalId
+      );
+      console.log('✅ Impression click tracking updated');
+    } catch (impressionError) {
+      // Don't fail the view tracking if impression tracking fails
+      console.log('⚠️ Impression click tracking failed (non-critical):', impressionError.message);
+    }
 
     return successResponse(reply, "Product view recorded successfully", {
       viewId: viewRecord.externalId,

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
-const { configs } = require("../configs");
-const { User } = require("../models/user");
-const { Wallet } = require("../models/wallet");
+const { configs } = require("../../configs");
+const { User } = require("../../models/user");
+const { Wallet } = require("../../models/wallet");
 
 /**
  * Simple test to debug wallet creation

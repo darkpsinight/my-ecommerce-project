@@ -1,7 +1,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const { User } = require('../models/user');
-const { SellerProfile } = require('../models/sellerProfile');
+const { User } = require('../../models/user');
+const { SellerProfile } = require('../../models/sellerProfile');
 const crypto = require('crypto');
 
 // Connect to MongoDB

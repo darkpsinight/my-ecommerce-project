@@ -4,8 +4,8 @@
 
 const { describe, it, expect, beforeEach, beforeAll, afterAll } = require('@jest/globals');
 const mongoose = require('mongoose');
-const { Listing } = require('../models/listing');
-const { Cart } = require('../models/cart');
+const { Listing } = require('../../models/listing');
+const { Cart } = require('../../models/cart');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
 let mongoServer;

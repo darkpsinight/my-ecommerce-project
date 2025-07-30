@@ -4,9 +4,9 @@
  */
 
 const mongoose = require('mongoose');
-const { Wishlist } = require('../models/wishlist');
-const { User } = require('../models/user');
-const { Listing } = require('../models/listing');
+const { Wishlist } = require('../../models/wishlist');
+const { User } = require('../../models/user');
+const { Listing } = require('../../models/listing');
 
 // Mock data for testing
 const mockUserId = new mongoose.Types.ObjectId();

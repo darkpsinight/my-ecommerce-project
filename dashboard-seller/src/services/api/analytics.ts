@@ -99,6 +99,34 @@ export interface CustomerData {
   }>;
 }
 
+export interface CTRData {
+  totalImpressions: number;
+  totalClicks: number;
+  overallCTR: number;
+  ctrBySource: Array<{
+    source: string;
+    totalImpressions: number;
+    totalClicks: number;
+    clickThroughRate: number;
+  }>;
+  topCTRListings: Array<{
+    listingId: string;
+    title: string;
+    platform: string;
+    totalImpressions: number;
+    totalClicks: number;
+    clickThroughRate: number;
+    avgClickDelay: number | null;
+  }>;
+  positionAnalysis: Array<{
+    position: number;
+    totalImpressions: number;
+    totalClicks: number;
+    clickThroughRate: number;
+    avgClickDelay: number | null;
+  }>;
+}
+
 export interface EngagementData {
   totalViews: number;
   uniqueViewers: number;
@@ -129,6 +157,7 @@ export interface EngagementData {
     uniqueViewers: number;
   }>;
   conversionRate: number;
+  ctr: CTRData; // Add CTR data to engagement
 }
 
 export interface WishlistData {

@@ -1,13 +1,10 @@
 const mongoose = require('mongoose');
-const { User } = require('./models/user');
-const { Listing } = require('./models/listing');
-const ViewedProduct = require('./models/viewedProduct');
+const { User } = require('../../models/user');
+const { Listing } = require('../../models/listing');
+const ViewedProduct = require('../../models/viewedProduct');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/ecommerce', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(process.env.MONGO_URI);
 
 async function checkCurrentSeller() {
   try {

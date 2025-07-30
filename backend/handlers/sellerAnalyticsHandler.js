@@ -3,6 +3,7 @@ const { Listing } = require("../models/listing");
 const { User } = require("../models/user");
 const { Transaction } = require("../models/transaction");
 const ViewedProduct = require("../models/viewedProduct");
+const ListingImpression = require("../models/listingImpression");
 const { Wishlist } = require("../models/wishlist");
 const {
   sendSuccessResponse,
@@ -660,6 +661,91 @@ const getEngagementAnalytics = async (sellerId, startDate, endDate) => {
     };
   });
 
+  // Get CTR analytics for seller's listings
+  let ctrData = {
+    totalImpressions: 0,
+    totalClicks: 0,
+    overallCTR: 0,
+    ctrBySource: [],
+    topCTRListings: [],
+    positionAnalysis: []
+  };
+
+  try {
+    // Get overall CTR analytics
+    const ctrAnalytics = await ListingImpression.getCTRAnalytics(
+      listingIds,
+      startDate,
+      endDate,
+      { groupBy: 'product', includePosition: false }
+    );
+
+    // Get CTR by source
+    const ctrBySource = await ListingImpression.getCTRAnalytics(
+      listingIds,
+      startDate,
+      endDate,
+      { groupBy: 'source', includePosition: false }
+    );
+
+    // Get position-based CTR analysis
+    const positionAnalysis = await ListingImpression.getPositionCTRAnalysis(
+      listingIds,
+      startDate,
+      endDate
+    );
+
+    // Calculate totals and format data
+    const ctrSummary = ctrAnalytics.reduce((acc, item) => {
+      acc.totalImpressions += item.totalImpressions || 0;
+      acc.totalClicks += item.totalClicks || 0;
+      return acc;
+    }, { totalImpressions: 0, totalClicks: 0 });
+
+    // Add listing details to CTR analytics
+    const topCTRListings = ctrAnalytics
+      .filter(item => item.totalImpressions > 0)
+      .sort((a, b) => b.clickThroughRate - a.clickThroughRate)
+      .slice(0, 10)
+      .map(item => {
+        const listing = sellerListings.find(l => l.externalId === item._id);
+        return {
+          listingId: String(item._id),
+          title: listing ? listing.title : "Unknown",
+          platform: listing ? listing.platform : "Unknown",
+          totalImpressions: Number(item.totalImpressions),
+          totalClicks: Number(item.totalClicks),
+          clickThroughRate: Number(item.clickThroughRate.toFixed(2)),
+          avgClickDelay: item.avgClickDelaySeconds ? Number(item.avgClickDelaySeconds.toFixed(1)) : null
+        };
+      });
+
+    ctrData = {
+      totalImpressions: Number(ctrSummary.totalImpressions),
+      totalClicks: Number(ctrSummary.totalClicks),
+      overallCTR: ctrSummary.totalImpressions > 0 
+        ? Number(((ctrSummary.totalClicks / ctrSummary.totalImpressions) * 100).toFixed(2))
+        : 0,
+      ctrBySource: ctrBySource.map(item => ({
+        source: String(item._id || 'unknown'),
+        totalImpressions: Number(item.totalImpressions),
+        totalClicks: Number(item.totalClicks),
+        clickThroughRate: Number(item.clickThroughRate.toFixed(2))
+      })),
+      topCTRListings,
+      positionAnalysis: positionAnalysis.map(item => ({
+        position: Number(item.position),
+        totalImpressions: Number(item.totalImpressions),
+        totalClicks: Number(item.totalClicks),
+        clickThroughRate: Number(item.clickThroughRate.toFixed(2)),
+        avgClickDelay: item.avgClickDelaySeconds ? Number(item.avgClickDelaySeconds.toFixed(1)) : null
+      }))
+    };
+  } catch (ctrError) {
+    console.log('⚠️ CTR analytics failed (non-critical):', ctrError.message);
+    // Keep default empty CTR data
+  }
+
   // Convert MongoDB objects to plain JavaScript objects
   return {
     totalViews: Number(viewStats.totalViews),
@@ -686,6 +772,8 @@ const getEngagementAnalytics = async (sellerId, startDate, endDate) => {
       uniqueViewers: Number(item.uniqueViewerCount),
     })),
     conversionRate: Number(conversionRate.toFixed(2)),
+    // Add CTR metrics
+    ctr: ctrData,
   };
 };
 

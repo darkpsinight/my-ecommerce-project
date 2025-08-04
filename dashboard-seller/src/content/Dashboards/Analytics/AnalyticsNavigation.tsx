@@ -52,7 +52,8 @@ function AnalyticsNavigation() {
   const tabRefs = useRef<(HTMLElement | null)[]>([]);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
-  const tabs: TabItem[] = [
+  // Memoize tabs to prevent recreation on every render
+  const tabs = React.useMemo<TabItem[]>(() => [
     { 
       label: 'Overview', 
       shortLabel: 'Overview',
@@ -109,7 +110,7 @@ function AnalyticsNavigation() {
       value: '/dashboards/analytics/transaction-success-rate', 
       icon: <CheckCircle /> 
     }
-  ];
+  ], []);
 
   // Helper function to get appropriate tab label based on screen size
   const getTabLabel = useCallback((tab: TabItem) => {
@@ -182,7 +183,7 @@ function AnalyticsNavigation() {
 
     setVisibleTabs(tabs.slice(0, visibleCount));
     setOverflowTabs(tabs.slice(visibleCount));
-  }, [tabs, location.pathname, isMobile, isSmall, getTabLabel]);
+  }, [location.pathname, isMobile, isSmall, getTabLabel]);
 
   // Handle tab navigation
   const handleTabClick = (value: string) => {
@@ -248,12 +249,25 @@ function AnalyticsNavigation() {
     return cleanup;
   }, [debouncedCalculateOverflow, containerWidth]);
 
-  // Initial calculation
+  // Initial calculation and fallback
   useEffect(() => {
-    if (!isSmall) {
+    if (isSmall) {
+      // For small screens, always show all tabs
+      setVisibleTabs(tabs);
+      setOverflowTabs([]);
+    } else {
+      // For larger screens, calculate overflow
       calculateOverflow();
     }
-  }, [calculateOverflow, isSmall]);
+  }, [calculateOverflow, isSmall, tabs]);
+
+  // Fallback: if no visible tabs, show all tabs
+  useEffect(() => {
+    if (visibleTabs.length === 0 && tabs.length > 0) {
+      setVisibleTabs(tabs);
+      setOverflowTabs([]);
+    }
+  }, [visibleTabs.length, tabs]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

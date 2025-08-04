@@ -323,6 +323,18 @@ function SidebarMenu() {
                         disableRipple
                         component={RouterLink}
                         onClick={closeSidebar}
+                        to="/dashboards/analytics/cac"
+                        startIcon={<AnalyticsTwoToneIcon />}
+                        className={location.pathname === '/dashboards/analytics/cac' ? 'active' : ''}
+                      >
+                        Customer Acquisition Cost
+                      </Button>
+                    </ListItem>
+                    <ListItem component="div">
+                      <Button
+                        disableRipple
+                        component={RouterLink}
+                        onClick={closeSidebar}
                         to="/dashboards/analytics/transaction-success-rate"
                         startIcon={<CheckCircleTwoToneIcon />}
                         className={location.pathname === '/dashboards/analytics/transaction-success-rate' ? 'active' : ''}

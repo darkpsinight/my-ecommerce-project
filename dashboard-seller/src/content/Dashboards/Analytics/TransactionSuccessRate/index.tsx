@@ -1,40 +1,99 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Container, Grid, Card, CardHeader, Divider } from '@mui/material';
-import { useAnalyticsContext } from '../context/AnalyticsContext';
+import { Container, Grid, Typography, Box, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import PageTitleWrapper from 'src/components/PageTitleWrapper';
+import Footer from 'src/components/Footer';
+import AnalyticsNavigation from '../AnalyticsNavigation';
+
 import TransactionSuccessRateDashboard from 'src/components/Analytics/TransactionSuccessRateDashboard';
+import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
+import { useSellerProfile } from 'src/hooks/useSellerProfile';
+import { useAnalyticsContext } from '../context/AnalyticsContext';
 
 function TransactionSuccessRateAnalytics() {
   const { timeRange, setTimeRange } = useAnalyticsContext();
   const [groupBy, setGroupBy] = useState<'hour' | 'day' | 'week' | 'month'>('day');
 
+  const {
+    profileData,
+    loading: profileLoading,
+    updateProfile,
+    showProfileSetup,
+    setShowProfileSetup,
+    openProfileSetup
+  } = useSellerProfile();
+
+  const handleTimeRangeChange = (event: SelectChangeEvent) => {
+    setTimeRange(event.target.value as '7d' | '30d' | '90d' | '1y');
+  };
+
+  const timeRangeOptions = [
+    { value: '7d', label: 'Last 7 Days' },
+    { value: '30d', label: 'Last 30 Days' },
+    { value: '90d', label: 'Last 90 Days' },
+    { value: '1y', label: 'Last Year' }
+  ];
+
   return (
     <>
       <Helmet>
-        <title>Transaction Success Rate Analytics - Seller Dashboard</title>
+        <title>Transaction Success Rate - VIP Analytics</title>
       </Helmet>
+      <PageTitleWrapper>
+        <Box>
+          <Typography variant="h3" component="h3" gutterBottom>
+            Transaction Success Rate
+          </Typography>
+          <Typography variant="subtitle2">
+            Monitor payment success rates and transaction performance
+          </Typography>
+        </Box>
+      </PageTitleWrapper>
       <Container maxWidth="lg">
-        <Grid
-          container
-          direction="row"
-          justifyContent="center"
-          alignItems="stretch"
-          spacing={4}
-        >
+        <ProfileStatusBanner
+          profileData={profileData}
+          loading={profileLoading}
+          onSetupProfile={openProfileSetup}
+        />
+
+        <AnalyticsNavigation />
+
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Time Range</InputLabel>
+            <Select
+              value={timeRange}
+              label="Time Range"
+              onChange={handleTimeRangeChange}
+            >
+              {timeRangeOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Grid container spacing={4}>
           <Grid item xs={12}>
-            <Card>
-              <CardHeader title="Transaction Success Rate Analytics" />
-              <Divider />
-              <TransactionSuccessRateDashboard
-                timeRange={timeRange}
-                groupBy={groupBy}
-                onTimeRangeChange={setTimeRange}
-                onGroupByChange={setGroupBy}
-              />
-            </Card>
+            <TransactionSuccessRateDashboard
+              timeRange={timeRange}
+              groupBy={groupBy}
+              onTimeRangeChange={setTimeRange}
+              onGroupByChange={setGroupBy}
+            />
           </Grid>
         </Grid>
+
+        <SellerProfileSetupModal
+          open={showProfileSetup}
+          onClose={() => setShowProfileSetup(false)}
+          onSubmit={updateProfile}
+          loading={profileLoading}
+        />
       </Container>
+      <Footer />
     </>
   );
 }

@@ -172,24 +172,10 @@ const TransactionSuccessRateDashboard: React.FC<TransactionSuccessRateDashboardP
     <Box>
       {/* Controls */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Transaction Success Rate Analytics
+        <Typography variant="h5" component="h2">
+          Analytics Dashboard
         </Typography>
         <Box display="flex" gap={2} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Time Range</InputLabel>
-            <Select
-              value={timeRange}
-              label="Time Range"
-              onChange={(e) => onTimeRangeChange?.(e.target.value as any)}
-            >
-              <MenuItem value="7d">Last 7 days</MenuItem>
-              <MenuItem value="30d">Last 30 days</MenuItem>
-              <MenuItem value="90d">Last 90 days</MenuItem>
-              <MenuItem value="1y">Last year</MenuItem>
-            </Select>
-          </FormControl>
-          
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <InputLabel>Group By</InputLabel>
             <Select

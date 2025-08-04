@@ -214,8 +214,8 @@ const CACDashboard: React.FC<CACDashboardProps> = ({
     <Box>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Customer Acquisition Cost (CAC) Analytics
+        <Typography variant="h5" component="h2">
+          Analytics Dashboard
         </Typography>
         <Box display="flex" gap={2}>
           <Button

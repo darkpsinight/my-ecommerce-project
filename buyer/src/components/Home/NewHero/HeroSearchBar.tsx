@@ -204,24 +204,6 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Get icon for suggestion type
-  const getSuggestionIcon = (type: string) => {
-    switch (type) {
-      case "title":
-        return "🎮";
-      case "platform":
-        return "💻";
-      case "tag":
-        return "🏷️";
-      case "seller":
-        return "👤";
-      case "description":
-        return "📝";
-      default:
-        return "🔍";
-    }
-  };
-
   return (
     <div className={`w-full max-w-4xl mx-auto ${className}`}>
       <div className="relative">
@@ -330,9 +312,6 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
                         : ""
                     }`}
                   >
-                    <span className="text-lg flex-shrink-0">
-                      {getSuggestionIcon(suggestion.type)}
-                    </span>
                     <div className="flex-1 min-w-0">
                       <div className="text-gray-900 font-medium truncate">
                         {suggestion.text}

@@ -1,7 +1,7 @@
 const { configCache } = require("../services/configCache");
 const { Category } = require("../models/category");
 const { getPublicSellerProfileById, getAllPublicSellerProfiles } = require("../handlers/publicSellerProfileHandler");
-const { getFilterOptions, getPriceRange } = require("../handlers/publicFilterHandler");
+const { getFilterOptions, getPriceRange, getSearchSuggestions } = require("../handlers/publicFilterHandler");
 
 async function publicRoutes(fastify, options) {
   // Get all public configs
@@ -381,6 +381,54 @@ async function publicRoutes(fastify, options) {
       }
     },
     handler: getPriceRange
+  });
+
+  // Get search autocomplete suggestions
+  fastify.get("/search-suggestions", {
+    config: {
+      rateLimit: {
+        max: 100,
+        timeWindow: '1 minute',
+        errorResponseBuilder: function (req, context) {
+          return {
+            success: false,
+            error: 'Too many search suggestion requests',
+            message: `Rate limit exceeded: maximum of 100 requests per minute. Please try again in ${context.after}`,
+            retryAfter: context.after
+          };
+        }
+      }
+    },
+    schema: {
+      querystring: {
+        type: "object",
+        properties: {
+          q: { type: "string", minLength: 1 },
+          limit: { type: "integer", minimum: 1, maximum: 20, default: 10 }
+        },
+        required: ["q"]
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  text: { type: "string" },
+                  type: { type: "string" },
+                  category: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    handler: getSearchSuggestions
   });
 }
 

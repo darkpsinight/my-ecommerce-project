@@ -283,7 +283,271 @@ const getPriceRange = async (request, reply) => {
   }
 };
 
+// Get search autocomplete suggestions
+const getSearchSuggestions = async (request, reply) => {
+  try {
+    const { q: query, limit = 10 } = request.query;
+    
+    if (!query || query.trim().length === 0) {
+      return reply.code(400).send({
+        success: false,
+        error: "Query parameter 'q' is required"
+      });
+    }
+
+    const searchTerm = query.trim();
+    const suggestions = [];
+    const seenSuggestions = new Set();
+
+    // Base filter to only show active listings
+    const baseFilter = { status: "active" };
+
+    // Create regex for case-insensitive search
+    const searchRegex = { $regex: searchTerm, $options: 'i' };
+
+    // 1. Get title suggestions
+    const titleSuggestions = await Listing.aggregate([
+      { $match: { ...baseFilter, title: searchRegex } },
+      {
+        $project: {
+          title: 1,
+          _id: 0
+        }
+      },
+      { $limit: limit }
+    ]);
+
+    titleSuggestions.forEach(item => {
+      if (!seenSuggestions.has(item.title.toLowerCase())) {
+        suggestions.push({
+          text: item.title,
+          type: "title",
+          category: "Product"
+        });
+        seenSuggestions.add(item.title.toLowerCase());
+      }
+    });
+
+    // 2. Get platform suggestions
+    const platformSuggestions = await Listing.aggregate([
+      { $match: { ...baseFilter, platform: searchRegex } },
+      {
+        $group: {
+          _id: "$platform",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          platform: "$_id",
+          count: 1,
+          _id: 0
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+
+    platformSuggestions.forEach(item => {
+      if (!seenSuggestions.has(item.platform.toLowerCase())) {
+        suggestions.push({
+          text: item.platform,
+          type: "platform",
+          category: "Platform"
+        });
+        seenSuggestions.add(item.platform.toLowerCase());
+      }
+    });
+
+    // 3. Get tag suggestions
+    const tagSuggestions = await Listing.aggregate([
+      { $match: { ...baseFilter, tags: { $elemMatch: searchRegex } } },
+      { $unwind: "$tags" },
+      { $match: { tags: searchRegex } },
+      {
+        $group: {
+          _id: "$tags",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          tag: "$_id",
+          count: 1,
+          _id: 0
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+
+    tagSuggestions.forEach(item => {
+      if (!seenSuggestions.has(item.tag.toLowerCase())) {
+        suggestions.push({
+          text: item.tag,
+          type: "tag",
+          category: "Tag"
+        });
+        seenSuggestions.add(item.tag.toLowerCase());
+      }
+    });
+
+    // 4. Get description suggestions (extract relevant phrases)
+    const descriptionSuggestions = await Listing.aggregate([
+      { $match: { ...baseFilter, description: searchRegex } },
+      {
+        $project: {
+          description: 1,
+          title: 1,
+          _id: 0
+        }
+      },
+      { $limit: 5 }
+    ]);
+
+    descriptionSuggestions.forEach(item => {
+      // Extract words around the search term from description
+      const desc = item.description || '';
+      const words = desc.split(/\s+/);
+      const searchWords = searchTerm.toLowerCase().split(/\s+/);
+      
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i].toLowerCase();
+        if (searchWords.some(sw => word.includes(sw))) {
+          // Get a phrase around the matching word
+          const start = Math.max(0, i - 2);
+          const end = Math.min(words.length, i + 3);
+          const phrase = words.slice(start, end).join(' ');
+          
+          if (phrase.length > 10 && phrase.length < 50 && !seenSuggestions.has(phrase.toLowerCase())) {
+            suggestions.push({
+              text: phrase,
+              type: "description",
+              category: "Description"
+            });
+            seenSuggestions.add(phrase.toLowerCase());
+            break; // Only add one phrase per listing
+          }
+        }
+      }
+    });
+
+    // 5. Get seller suggestions
+    const sellerSuggestions = await Listing.aggregate([
+      { $match: baseFilter },
+      
+      // Lookup user data
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'sellerId',
+          foreignField: 'uid',
+          as: 'user'
+        }
+      },
+      
+      // Lookup seller profile data
+      {
+        $lookup: {
+          from: 'sellerprofiles',
+          localField: 'user._id',
+          foreignField: 'userId',
+          as: 'sellerProfile'
+        }
+      },
+      
+      // Add computed fields
+      {
+        $addFields: {
+          sellerMarketName: {
+            $ifNull: [
+              { $arrayElemAt: ['$sellerProfile.marketName', 0] },
+              { $arrayElemAt: ['$sellerProfile.nickname', 0] }
+            ]
+          }
+        }
+      },
+      
+      // Match sellers with search term
+      {
+        $match: {
+          sellerMarketName: searchRegex
+        }
+      },
+      
+      {
+        $group: {
+          _id: "$sellerMarketName",
+          count: { $sum: 1 }
+        }
+      },
+      
+      {
+        $project: {
+          sellerName: "$_id",
+          count: 1,
+          _id: 0
+        }
+      },
+      
+      { $sort: { count: -1 } },
+      { $limit: 3 }
+    ]);
+
+    sellerSuggestions.forEach(item => {
+      if (item.sellerName && !seenSuggestions.has(item.sellerName.toLowerCase())) {
+        suggestions.push({
+          text: item.sellerName,
+          type: "seller",
+          category: "Seller"
+        });
+        seenSuggestions.add(item.sellerName.toLowerCase());
+      }
+    });
+
+    // Sort suggestions by relevance (prioritize exact matches and shorter text)
+    suggestions.sort((a, b) => {
+      const aLower = a.text.toLowerCase();
+      const bLower = b.text.toLowerCase();
+      const queryLower = searchTerm.toLowerCase();
+      
+      // Exact matches first
+      const aExact = aLower === queryLower;
+      const bExact = bLower === queryLower;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      
+      // Starts with query
+      const aStarts = aLower.startsWith(queryLower);
+      const bStarts = bLower.startsWith(queryLower);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      
+      // Shorter text first (more relevant)
+      return a.text.length - b.text.length;
+    });
+
+    // Limit final results
+    const finalSuggestions = suggestions.slice(0, limit);
+
+    request.log.info(`Public API: Generated ${finalSuggestions.length} search suggestions for query: "${searchTerm}"`);
+
+    return reply.code(200).send({
+      success: true,
+      data: finalSuggestions
+    });
+  } catch (error) {
+    request.log.error(`Error generating search suggestions: ${error.message}`);
+    return reply.code(500).send({
+      success: false,
+      error: "Failed to generate search suggestions",
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   getFilterOptions,
-  getPriceRange
+  getPriceRange,
+  getSearchSuggestions
 };

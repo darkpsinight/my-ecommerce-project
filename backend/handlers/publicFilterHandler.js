@@ -305,12 +305,13 @@ const getSearchSuggestions = async (request, reply) => {
     // Create regex for case-insensitive search
     const searchRegex = { $regex: searchTerm, $options: 'i' };
 
-    // 1. Get title suggestions
+    // 1. Get title suggestions with images
     const titleSuggestions = await Listing.aggregate([
       { $match: { ...baseFilter, title: searchRegex } },
       {
         $project: {
           title: 1,
+          thumbnailUrl: 1,
           _id: 0
         }
       },
@@ -322,25 +323,28 @@ const getSearchSuggestions = async (request, reply) => {
         suggestions.push({
           text: item.title,
           type: "title",
-          category: "Product"
+          category: "Product",
+          imageUrl: item.thumbnailUrl || null
         });
         seenSuggestions.add(item.title.toLowerCase());
       }
     });
 
-    // 2. Get platform suggestions
+    // 2. Get platform suggestions with sample image
     const platformSuggestions = await Listing.aggregate([
       { $match: { ...baseFilter, platform: searchRegex } },
       {
         $group: {
           _id: "$platform",
-          count: { $sum: 1 }
+          count: { $sum: 1 },
+          sampleImage: { $first: "$thumbnailUrl" }
         }
       },
       {
         $project: {
           platform: "$_id",
           count: 1,
+          sampleImage: 1,
           _id: 0
         }
       },
@@ -353,13 +357,14 @@ const getSearchSuggestions = async (request, reply) => {
         suggestions.push({
           text: item.platform,
           type: "platform",
-          category: "Platform"
+          category: "Platform",
+          imageUrl: item.sampleImage || null
         });
         seenSuggestions.add(item.platform.toLowerCase());
       }
     });
 
-    // 3. Get tag suggestions
+    // 3. Get tag suggestions with sample image
     const tagSuggestions = await Listing.aggregate([
       { $match: { ...baseFilter, tags: { $elemMatch: searchRegex } } },
       { $unwind: "$tags" },
@@ -367,13 +372,15 @@ const getSearchSuggestions = async (request, reply) => {
       {
         $group: {
           _id: "$tags",
-          count: { $sum: 1 }
+          count: { $sum: 1 },
+          sampleImage: { $first: "$thumbnailUrl" }
         }
       },
       {
         $project: {
           tag: "$_id",
           count: 1,
+          sampleImage: 1,
           _id: 0
         }
       },
@@ -386,19 +393,20 @@ const getSearchSuggestions = async (request, reply) => {
         suggestions.push({
           text: item.tag,
           type: "tag",
-          category: "Tag"
+          category: "Tag",
+          imageUrl: item.sampleImage || null
         });
         seenSuggestions.add(item.tag.toLowerCase());
       }
     });
 
-    // 4. Get description suggestions (extract relevant phrases)
+    // 4. Get listings that match in description but show the listing title
     const descriptionSuggestions = await Listing.aggregate([
       { $match: { ...baseFilter, description: searchRegex } },
       {
         $project: {
-          description: 1,
           title: 1,
+          thumbnailUrl: 1,
           _id: 0
         }
       },
@@ -406,33 +414,19 @@ const getSearchSuggestions = async (request, reply) => {
     ]);
 
     descriptionSuggestions.forEach(item => {
-      // Extract words around the search term from description
-      const desc = item.description || '';
-      const words = desc.split(/\s+/);
-      const searchWords = searchTerm.toLowerCase().split(/\s+/);
-      
-      for (let i = 0; i < words.length; i++) {
-        const word = words[i].toLowerCase();
-        if (searchWords.some(sw => word.includes(sw))) {
-          // Get a phrase around the matching word
-          const start = Math.max(0, i - 2);
-          const end = Math.min(words.length, i + 3);
-          const phrase = words.slice(start, end).join(' ');
-          
-          if (phrase.length > 10 && phrase.length < 50 && !seenSuggestions.has(phrase.toLowerCase())) {
-            suggestions.push({
-              text: phrase,
-              type: "description",
-              category: "Description"
-            });
-            seenSuggestions.add(phrase.toLowerCase());
-            break; // Only add one phrase per listing
-          }
-        }
+      // Show the listing title instead of description phrases
+      if (item.title && !seenSuggestions.has(item.title.toLowerCase())) {
+        suggestions.push({
+          text: item.title,
+          type: "description",
+          category: "Product",
+          imageUrl: item.thumbnailUrl || null
+        });
+        seenSuggestions.add(item.title.toLowerCase());
       }
     });
 
-    // 5. Get seller suggestions
+    // 5. Get seller suggestions with profile images
     const sellerSuggestions = await Listing.aggregate([
       { $match: baseFilter },
       
@@ -464,7 +458,8 @@ const getSearchSuggestions = async (request, reply) => {
               { $arrayElemAt: ['$sellerProfile.marketName', 0] },
               { $arrayElemAt: ['$sellerProfile.nickname', 0] }
             ]
-          }
+          },
+          sellerProfileImage: { $arrayElemAt: ['$sellerProfile.profileImageUrl', 0] }
         }
       },
       
@@ -478,7 +473,8 @@ const getSearchSuggestions = async (request, reply) => {
       {
         $group: {
           _id: "$sellerMarketName",
-          count: { $sum: 1 }
+          count: { $sum: 1 },
+          profileImage: { $first: "$sellerProfileImage" }
         }
       },
       
@@ -486,6 +482,7 @@ const getSearchSuggestions = async (request, reply) => {
         $project: {
           sellerName: "$_id",
           count: 1,
+          profileImage: 1,
           _id: 0
         }
       },
@@ -499,7 +496,8 @@ const getSearchSuggestions = async (request, reply) => {
         suggestions.push({
           text: item.sellerName,
           type: "seller",
-          category: "Seller"
+          category: "Seller",
+          imageUrl: item.profileImage || null
         });
         seenSuggestions.add(item.sellerName.toLowerCase());
       }

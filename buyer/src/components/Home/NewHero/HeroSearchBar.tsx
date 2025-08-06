@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect, FormEvent, useRef } from "react";
+import React, { useState, useEffect, FormEvent, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import Image from "next/image";
 
 interface HeroSearchBarProps {
   className?: string;
@@ -11,6 +12,7 @@ interface SearchSuggestion {
   text: string;
   type: string;
   category: string;
+  imageUrl?: string | null;
 }
 
 interface SearchSuggestionsResponse {
@@ -20,6 +22,9 @@ interface SearchSuggestionsResponse {
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+
+// Global image cache to maintain image states across re-renders
+const imageCache = new Map<string, { loaded: boolean; error: boolean }>();
 
 // Animated Placeholder Component
 const AnimatedPlaceholder = () => {
@@ -71,6 +76,12 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState(-1);
+
+  // Debug hover state changes
+  useEffect(() => {
+    console.log(`🎯 Hover state changed to index: ${hoveredIndex}`);
+  }, [hoveredIndex]);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -81,6 +92,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
       if (!searchQuery.trim() || searchQuery.trim().length < 2) {
         setSuggestions([]);
         setShowSuggestions(false);
+        setHoveredIndex(-1); // Reset hover state when hiding suggestions
         return;
       }
 
@@ -96,6 +108,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
         if (response.data.success) {
           setSuggestions(response.data.data);
           setShowSuggestions(true);
+          setHoveredIndex(-1); // Reset hover state when new suggestions load
         }
       } catch (error) {
         console.error("Error fetching suggestions:", error);
@@ -204,6 +217,224 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Optimize ImageKit.io URLs for faster loading - memoized to prevent recreation
+  const optimizeImageUrl = useCallback((url: string | null | undefined): string | null => {
+    if (!url) return null;
+
+    // Check if it's an ImageKit.io URL
+    if (url.includes("imagekit.io")) {
+      // Add ImageKit transformations for small thumbnails
+      // tr=f-webp,q-80 means:
+      // - format: webp (smaller file size)
+      // - quality: 80 (good balance of quality/size)
+      // No width/height constraints to avoid zoom
+      const separator = url.includes("?") ? "&" : "?";
+      return `${url}${separator}tr=f-webp,q-80`;
+    }
+
+    return url;
+  }, []);
+
+  // Component for suggestion image with fallback - Using global cache
+  const SuggestionImage = React.memo(({
+    suggestion,
+  }: {
+    suggestion: SearchSuggestion;
+  }) => {
+    const optimizedImageUrl = optimizeImageUrl(suggestion.imageUrl);
+    const cacheKey = `${suggestion.text}-${optimizedImageUrl}`;
+    
+    // Initialize cache entry if it doesn't exist
+    if (!imageCache.has(cacheKey)) {
+      imageCache.set(cacheKey, { loaded: false, error: false });
+    }
+    
+    const cachedState = imageCache.get(cacheKey)!;
+    const [imageError, setImageError] = useState(cachedState.error);
+    const [imageLoaded, setImageLoaded] = useState(cachedState.loaded);
+
+    // Debug logs
+    console.log(`🖼️ SuggestionImage render for: ${suggestion.text}`, {
+      imageError,
+      imageLoaded,
+      optimizedImageUrl,
+      cacheKey,
+      cachedState,
+      timestamp: Date.now()
+    });
+
+    // Fallback component
+    const FallbackImage = React.memo(() => {
+      const getInitials = (text: string) => {
+        return text
+          .split(" ")
+          .map((word) => word[0])
+          .join("")
+          .substring(0, 2)
+          .toUpperCase();
+      };
+
+      const getBackgroundStyle = (type: string) => {
+        switch (type) {
+          case "title":
+            return { backgroundColor: "#3C50E0", color: "#FFFFFF" }; // blue
+          case "platform":
+            return { backgroundColor: "#22AD5C", color: "#FFFFFF" }; // green
+          case "tag":
+            return { backgroundColor: "#8B5CF6", color: "#FFFFFF" }; // purple
+          case "seller":
+            return { backgroundColor: "#F27430", color: "#FFFFFF" }; // orange
+          case "description":
+            return { backgroundColor: "#6B7280", color: "#FFFFFF" }; // gray-6
+          default:
+            return { backgroundColor: "#3C50E0", color: "#FFFFFF" }; // blue
+        }
+      };
+
+      return (
+        <div
+          style={{
+            ...getBackgroundStyle(suggestion.type),
+            width: "40px",
+            height: "40px",
+            borderRadius: "8px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "12px",
+            fontWeight: "600",
+            minWidth: "40px",
+            minHeight: "40px",
+          }}
+        >
+          {getInitials(suggestion.text)}
+        </div>
+      );
+    });
+
+    FallbackImage.displayName = 'FallbackImage';
+
+    if (!optimizedImageUrl || imageError) {
+      return <FallbackImage />;
+    }
+
+    return (
+      <div className="relative w-10 h-10">
+        {/* Show fallback while loading */}
+        {!imageLoaded && <FallbackImage />}
+
+        {/* Actual image */}
+        <Image
+          src={optimizedImageUrl}
+          alt={suggestion.text}
+          width={40}
+          height={40}
+          className={`absolute inset-0 object-contain transition-opacity duration-200 ${
+            imageLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => {
+            console.log(`✅ Image loaded for: ${suggestion.text}`);
+            imageCache.set(cacheKey, { loaded: true, error: false });
+            setImageLoaded(true);
+          }}
+          onError={() => {
+            console.log(`❌ Image error for: ${suggestion.text}`);
+            imageCache.set(cacheKey, { loaded: false, error: true });
+            setImageError(true);
+          }}
+          unoptimized={true}
+          priority={false}
+        />
+      </div>
+    );
+  });
+
+  SuggestionImage.displayName = 'SuggestionImage';
+  
+  // Custom comparison function for SuggestionImage memo
+  const arePropsEqual = (prevProps: { suggestion: SearchSuggestion }, nextProps: { suggestion: SearchSuggestion }) => {
+    const isEqual = (
+      prevProps.suggestion.text === nextProps.suggestion.text &&
+      prevProps.suggestion.type === nextProps.suggestion.type &&
+      prevProps.suggestion.category === nextProps.suggestion.category &&
+      prevProps.suggestion.imageUrl === nextProps.suggestion.imageUrl
+    );
+    
+    console.log(`🔍 SuggestionImage memo comparison for: ${nextProps.suggestion.text}`, {
+      isEqual,
+      prevImageUrl: prevProps.suggestion.imageUrl,
+      nextImageUrl: nextProps.suggestion.imageUrl,
+      timestamp: Date.now()
+    });
+    
+    return isEqual;
+  };
+  
+  // Apply custom comparison to SuggestionImage
+  const MemoizedSuggestionImage = React.memo(SuggestionImage, arePropsEqual);
+
+  // Render suggestions directly without memoization to avoid recreation issues
+  const renderSuggestions = () => {
+    console.log(`🔄 Rendering suggestions directly`, {
+      suggestionsLength: suggestions.length,
+      selectedSuggestionIndex,
+      hoveredIndex,
+      timestamp: Date.now()
+    });
+    
+    return suggestions.map((suggestion, index) => {
+      const suggestionKey = `${suggestion.type}-${suggestion.text}-${suggestion.category}`;
+      
+      return (
+        <button
+          key={suggestionKey}
+          type="button"
+          onClick={() => handleSuggestionClick(suggestion)}
+          onMouseEnter={() => {
+            console.log(`🐭 Mouse enter on: ${suggestion.text} (index: ${index})`);
+            setHoveredIndex(index);
+          }}
+          onMouseLeave={() => {
+            console.log(`🐭 Mouse leave from: ${suggestion.text} (index: ${index})`);
+            setHoveredIndex(-1);
+          }}
+          className={`w-full px-4 py-3 text-left transition-all duration-150 flex items-center gap-3 ${
+            index === selectedSuggestionIndex
+              ? "bg-blue-50 border-r-2 border-blue"
+              : hoveredIndex === index
+              ? "bg-gray-200"
+              : "bg-transparent hover:bg-gray-200"
+          }`}
+        >
+          <div className="flex-shrink-0" style={{ isolation: 'isolate' }}>
+            <MemoizedSuggestionImage suggestion={suggestion} />
+          </div>
+          <div className="flex-1 min-w-0 ml-3">
+            <div className="text-gray-900 font-medium truncate">
+              {suggestion.text}
+            </div>
+            <div className="text-xs text-gray-500 capitalize">
+              {suggestion.category}
+            </div>
+          </div>
+          <svg
+            className="w-4 h-4 text-gray-400 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      );
+    });
+  };
+
   return (
     <div className={`w-full max-w-4xl mx-auto ${className}`}>
       <div className="relative">
@@ -290,7 +521,8 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
         {showSuggestions && (
           <div
             ref={suggestionsRef}
-            className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-80 overflow-y-auto"
+            className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] overflow-y-auto"
+            style={{ maxHeight: "320px" }} // 5 items × 64px per item = 320px
           >
             {isLoadingSuggestions ? (
               <div className="flex items-center justify-center py-4">
@@ -301,40 +533,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
               </div>
             ) : suggestions.length > 0 ? (
               <div className="py-2">
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={`${suggestion.type}-${suggestion.text}-${index}`}
-                    type="button"
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-150 flex items-center gap-3 ${
-                      index === selectedSuggestionIndex
-                        ? "bg-blue-50 border-r-2 border-blue"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="text-gray-900 font-medium truncate">
-                        {suggestion.text}
-                      </div>
-                      <div className="text-xs text-gray-500 capitalize">
-                        {suggestion.category}
-                      </div>
-                    </div>
-                    <svg
-                      className="w-4 h-4 text-gray-400 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
-                ))}
+                {renderSuggestions()}
               </div>
             ) : searchQuery.trim().length >= 2 ? (
               <div className="py-4 px-4 text-center text-gray-500">

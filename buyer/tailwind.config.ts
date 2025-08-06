@@ -124,8 +124,8 @@ const config: Config = {
     },
     extend: {
       lineClamp: {
-        2: '2',
-        3: '3',
+        2: "2",
+        3: "3",
       },
       fontSize: {
         "2xs": ["10px", "17px"],

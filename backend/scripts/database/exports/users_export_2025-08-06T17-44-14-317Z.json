@@ -1,0 +1,38 @@
+{
+  "exportDate": "2025-08-06T17:44:14.318Z",
+  "totalUsers": 2,
+  "users": [
+    {
+      "id": "68372f291d658b7ca58f331e",
+      "name": "seller",
+      "email": "darkpsinight@gmail.com",
+      "roles": [
+        "buyer",
+        "seller"
+      ],
+      "isEmailConfirmed": true,
+      "provider": "email",
+      "isDeactivated": false,
+      "hasWallet": true,
+      "hasStripe": false,
+      "createdAt": "2025-05-28T15:43:37.017Z"
+    },
+    {
+      "id": "68372dae1d658b7ca58f32bb",
+      "name": "first account",
+      "email": "firstaccount@mail.com",
+      "roles": [
+        "admin",
+        "buyer",
+        "seller",
+        "support"
+      ],
+      "isEmailConfirmed": true,
+      "provider": "email",
+      "isDeactivated": false,
+      "hasWallet": false,
+      "hasStripe": true,
+      "createdAt": "2025-05-28T15:37:18.745Z"
+    }
+  ]
+}

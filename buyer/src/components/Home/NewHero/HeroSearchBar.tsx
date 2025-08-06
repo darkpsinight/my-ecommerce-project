@@ -78,10 +78,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(-1);
 
-  // Debug hover state changes
-  useEffect(() => {
-    console.log(`🎯 Hover state changed to index: ${hoveredIndex}`);
-  }, [hoveredIndex]);
+
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -92,7 +89,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
       if (!searchQuery.trim() || searchQuery.trim().length < 2) {
         setSuggestions([]);
         setShowSuggestions(false);
-        setHoveredIndex(-1); // Reset hover state when hiding suggestions
+        setHoveredIndex(-1);
         return;
       }
 
@@ -108,7 +105,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
         if (response.data.success) {
           setSuggestions(response.data.data);
           setShowSuggestions(true);
-          setHoveredIndex(-1); // Reset hover state when new suggestions load
+          setHoveredIndex(-1);
         }
       } catch (error) {
         console.error("Error fetching suggestions:", error);
@@ -253,15 +250,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
     const [imageError, setImageError] = useState(cachedState.error);
     const [imageLoaded, setImageLoaded] = useState(cachedState.loaded);
 
-    // Debug logs
-    console.log(`🖼️ SuggestionImage render for: ${suggestion.text}`, {
-      imageError,
-      imageLoaded,
-      optimizedImageUrl,
-      cacheKey,
-      cachedState,
-      timestamp: Date.now()
-    });
+
 
     // Fallback component
     const FallbackImage = React.memo(() => {
@@ -333,12 +322,10 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
             imageLoaded ? "opacity-100" : "opacity-0"
           }`}
           onLoad={() => {
-            console.log(`✅ Image loaded for: ${suggestion.text}`);
             imageCache.set(cacheKey, { loaded: true, error: false });
             setImageLoaded(true);
           }}
           onError={() => {
-            console.log(`❌ Image error for: ${suggestion.text}`);
             imageCache.set(cacheKey, { loaded: false, error: true });
             setImageError(true);
           }}
@@ -360,13 +347,6 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
       prevProps.suggestion.imageUrl === nextProps.suggestion.imageUrl
     );
     
-    console.log(`🔍 SuggestionImage memo comparison for: ${nextProps.suggestion.text}`, {
-      isEqual,
-      prevImageUrl: prevProps.suggestion.imageUrl,
-      nextImageUrl: nextProps.suggestion.imageUrl,
-      timestamp: Date.now()
-    });
-    
     return isEqual;
   };
   
@@ -375,13 +355,6 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
 
   // Render suggestions directly without memoization to avoid recreation issues
   const renderSuggestions = () => {
-    console.log(`🔄 Rendering suggestions directly`, {
-      suggestionsLength: suggestions.length,
-      selectedSuggestionIndex,
-      hoveredIndex,
-      timestamp: Date.now()
-    });
-    
     return suggestions.map((suggestion, index) => {
       const suggestionKey = `${suggestion.type}-${suggestion.text}-${suggestion.category}`;
       
@@ -390,20 +363,14 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
           key={suggestionKey}
           type="button"
           onClick={() => handleSuggestionClick(suggestion)}
-          onMouseEnter={() => {
-            console.log(`🐭 Mouse enter on: ${suggestion.text} (index: ${index})`);
-            setHoveredIndex(index);
-          }}
-          onMouseLeave={() => {
-            console.log(`🐭 Mouse leave from: ${suggestion.text} (index: ${index})`);
-            setHoveredIndex(-1);
-          }}
-          className={`w-full px-4 py-3 text-left transition-all duration-150 flex items-center gap-3 ${
+          onMouseEnter={() => setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(-1)}
+          className={`w-full px-4 py-3 text-left transition-all duration-200 flex items-center gap-3 border-l-4 ${
             index === selectedSuggestionIndex
-              ? "bg-blue-50 border-r-2 border-blue"
+              ? "bg-blue-50 border-l-blue shadow-sm"
               : hoveredIndex === index
-              ? "bg-gray-200"
-              : "bg-transparent hover:bg-gray-200"
+              ? "bg-gray-1 border-l-gray-200"
+              : "bg-transparent border-l-transparent hover:bg-gray-1 hover:border-l-gray-200"
           }`}
         >
           <div className="flex-shrink-0" style={{ isolation: 'isolate' }}>
@@ -521,7 +488,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
         {showSuggestions && (
           <div
             ref={suggestionsRef}
-            className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] overflow-y-auto"
+            className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-200 z-999999 overflow-y-auto"
             style={{ maxHeight: "320px" }} // 5 items × 64px per item = 320px
           >
             {isLoadingSuggestions ? (

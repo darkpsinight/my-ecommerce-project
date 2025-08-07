@@ -1,6 +1,14 @@
 "use client";
-import React, { useState, useEffect, FormEvent, useRef, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  FormEvent,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import axios from "axios";
 import Image from "next/image";
 
@@ -78,10 +86,45 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(-1);
 
-
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+
+  // Function to calculate dropdown position
+  const updateDropdownPosition = useCallback(() => {
+    if (formRef.current) {
+      const rect = formRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4, // 4px gap
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, []);
+
+  // Update position when showing suggestions
+  useEffect(() => {
+    if (showSuggestions) {
+      updateDropdownPosition();
+
+      // Update position on scroll and resize
+      const handleUpdate = () => updateDropdownPosition();
+      window.addEventListener("scroll", handleUpdate);
+      window.addEventListener("resize", handleUpdate);
+
+      return () => {
+        window.removeEventListener("scroll", handleUpdate);
+        window.removeEventListener("resize", handleUpdate);
+      };
+    }
+  }, [showSuggestions, updateDropdownPosition]);
 
   // Debounced function to fetch suggestions
   useEffect(() => {
@@ -184,6 +227,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   const handleFocus = () => {
     setIsFocused(true);
     if (suggestions.length > 0 && searchQuery.trim().length >= 2) {
+      updateDropdownPosition();
       setShowSuggestions(true);
     }
   };
@@ -202,6 +246,8 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
+        formRef.current &&
+        !formRef.current.contains(event.target as Node) &&
         suggestionsRef.current &&
         !suggestionsRef.current.contains(event.target as Node)
       ) {
@@ -215,141 +261,142 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   }, []);
 
   // Optimize ImageKit.io URLs for faster loading - memoized to prevent recreation
-  const optimizeImageUrl = useCallback((url: string | null | undefined): string | null => {
-    if (!url) return null;
+  const optimizeImageUrl = useCallback(
+    (url: string | null | undefined): string | null => {
+      if (!url) return null;
 
-    // Check if it's an ImageKit.io URL
-    if (url.includes("imagekit.io")) {
-      // Add ImageKit transformations for small thumbnails
-      // tr=f-webp,q-80 means:
-      // - format: webp (smaller file size)
-      // - quality: 80 (good balance of quality/size)
-      // No width/height constraints to avoid zoom
-      const separator = url.includes("?") ? "&" : "?";
-      return `${url}${separator}tr=f-webp,q-80`;
-    }
+      // Check if it's an ImageKit.io URL
+      if (url.includes("imagekit.io")) {
+        // Add ImageKit transformations for small thumbnails
+        // tr=f-webp,q-80 means:
+        // - format: webp (smaller file size)
+        // - quality: 80 (good balance of quality/size)
+        // No width/height constraints to avoid zoom
+        const separator = url.includes("?") ? "&" : "?";
+        return `${url}${separator}tr=f-webp,q-80`;
+      }
 
-    return url;
-  }, []);
+      return url;
+    },
+    []
+  );
 
   // Component for suggestion image with fallback - Using global cache
-  const SuggestionImage = React.memo(({
-    suggestion,
-  }: {
-    suggestion: SearchSuggestion;
-  }) => {
-    const optimizedImageUrl = optimizeImageUrl(suggestion.imageUrl);
-    const cacheKey = `${suggestion.text}-${optimizedImageUrl}`;
-    
-    // Initialize cache entry if it doesn't exist
-    if (!imageCache.has(cacheKey)) {
-      imageCache.set(cacheKey, { loaded: false, error: false });
-    }
-    
-    const cachedState = imageCache.get(cacheKey)!;
-    const [imageError, setImageError] = useState(cachedState.error);
-    const [imageLoaded, setImageLoaded] = useState(cachedState.loaded);
+  const SuggestionImage = React.memo(
+    ({ suggestion }: { suggestion: SearchSuggestion }) => {
+      const optimizedImageUrl = optimizeImageUrl(suggestion.imageUrl);
+      const cacheKey = `${suggestion.text}-${optimizedImageUrl}`;
 
+      // Initialize cache entry if it doesn't exist
+      if (!imageCache.has(cacheKey)) {
+        imageCache.set(cacheKey, { loaded: false, error: false });
+      }
 
+      const cachedState = imageCache.get(cacheKey)!;
+      const [imageError, setImageError] = useState(cachedState.error);
+      const [imageLoaded, setImageLoaded] = useState(cachedState.loaded);
 
-    // Fallback component
-    const FallbackImage = React.memo(() => {
-      const getInitials = (text: string) => {
-        return text
-          .split(" ")
-          .map((word) => word[0])
-          .join("")
-          .substring(0, 2)
-          .toUpperCase();
-      };
+      // Fallback component
+      const FallbackImage = React.memo(() => {
+        const getInitials = (text: string) => {
+          return text
+            .split(" ")
+            .map((word) => word[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase();
+        };
 
-      const getBackgroundStyle = (type: string) => {
-        switch (type) {
-          case "title":
-            return { backgroundColor: "#3C50E0", color: "#FFFFFF" }; // blue
-          case "platform":
-            return { backgroundColor: "#22AD5C", color: "#FFFFFF" }; // green
-          case "tag":
-            return { backgroundColor: "#8B5CF6", color: "#FFFFFF" }; // purple
-          case "seller":
-            return { backgroundColor: "#F27430", color: "#FFFFFF" }; // orange
-          case "description":
-            return { backgroundColor: "#6B7280", color: "#FFFFFF" }; // gray-6
-          default:
-            return { backgroundColor: "#3C50E0", color: "#FFFFFF" }; // blue
-        }
-      };
+        const getBackgroundStyle = (type: string) => {
+          switch (type) {
+            case "title":
+              return { backgroundColor: "#3C50E0", color: "#FFFFFF" }; // blue
+            case "platform":
+              return { backgroundColor: "#22AD5C", color: "#FFFFFF" }; // green
+            case "tag":
+              return { backgroundColor: "#8B5CF6", color: "#FFFFFF" }; // purple
+            case "seller":
+              return { backgroundColor: "#F27430", color: "#FFFFFF" }; // orange
+            case "description":
+              return { backgroundColor: "#6B7280", color: "#FFFFFF" }; // gray-6
+            default:
+              return { backgroundColor: "#3C50E0", color: "#FFFFFF" }; // blue
+          }
+        };
+
+        return (
+          <div
+            style={{
+              ...getBackgroundStyle(suggestion.type),
+              width: "40px",
+              height: "40px",
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "12px",
+              fontWeight: "600",
+              minWidth: "40px",
+              minHeight: "40px",
+            }}
+          >
+            {getInitials(suggestion.text)}
+          </div>
+        );
+      });
+
+      FallbackImage.displayName = "FallbackImage";
+
+      if (!optimizedImageUrl || imageError) {
+        return <FallbackImage />;
+      }
 
       return (
-        <div
-          style={{
-            ...getBackgroundStyle(suggestion.type),
-            width: "40px",
-            height: "40px",
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "12px",
-            fontWeight: "600",
-            minWidth: "40px",
-            minHeight: "40px",
-          }}
-        >
-          {getInitials(suggestion.text)}
+        <div className="relative w-10 h-10">
+          {/* Show fallback while loading */}
+          {!imageLoaded && <FallbackImage />}
+
+          {/* Actual image */}
+          <Image
+            src={optimizedImageUrl}
+            alt={suggestion.text}
+            width={40}
+            height={40}
+            className={`absolute inset-0 object-contain transition-opacity duration-200 ${
+              imageLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            onLoad={() => {
+              imageCache.set(cacheKey, { loaded: true, error: false });
+              setImageLoaded(true);
+            }}
+            onError={() => {
+              imageCache.set(cacheKey, { loaded: false, error: true });
+              setImageError(true);
+            }}
+            unoptimized={true}
+            priority={false}
+          />
         </div>
       );
-    });
-
-    FallbackImage.displayName = 'FallbackImage';
-
-    if (!optimizedImageUrl || imageError) {
-      return <FallbackImage />;
     }
+  );
 
-    return (
-      <div className="relative w-10 h-10">
-        {/* Show fallback while loading */}
-        {!imageLoaded && <FallbackImage />}
+  SuggestionImage.displayName = "SuggestionImage";
 
-        {/* Actual image */}
-        <Image
-          src={optimizedImageUrl}
-          alt={suggestion.text}
-          width={40}
-          height={40}
-          className={`absolute inset-0 object-contain transition-opacity duration-200 ${
-            imageLoaded ? "opacity-100" : "opacity-0"
-          }`}
-          onLoad={() => {
-            imageCache.set(cacheKey, { loaded: true, error: false });
-            setImageLoaded(true);
-          }}
-          onError={() => {
-            imageCache.set(cacheKey, { loaded: false, error: true });
-            setImageError(true);
-          }}
-          unoptimized={true}
-          priority={false}
-        />
-      </div>
-    );
-  });
-
-  SuggestionImage.displayName = 'SuggestionImage';
-  
   // Custom comparison function for SuggestionImage memo
-  const arePropsEqual = (prevProps: { suggestion: SearchSuggestion }, nextProps: { suggestion: SearchSuggestion }) => {
-    const isEqual = (
+  const arePropsEqual = (
+    prevProps: { suggestion: SearchSuggestion },
+    nextProps: { suggestion: SearchSuggestion }
+  ) => {
+    const isEqual =
       prevProps.suggestion.text === nextProps.suggestion.text &&
       prevProps.suggestion.type === nextProps.suggestion.type &&
       prevProps.suggestion.category === nextProps.suggestion.category &&
-      prevProps.suggestion.imageUrl === nextProps.suggestion.imageUrl
-    );
-    
+      prevProps.suggestion.imageUrl === nextProps.suggestion.imageUrl;
+
     return isEqual;
   };
-  
+
   // Apply custom comparison to SuggestionImage
   const MemoizedSuggestionImage = React.memo(SuggestionImage, arePropsEqual);
 
@@ -357,7 +404,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   const renderSuggestions = () => {
     return suggestions.map((suggestion, index) => {
       const suggestionKey = `${suggestion.type}-${suggestion.text}-${suggestion.category}`;
-      
+
       return (
         <button
           key={suggestionKey}
@@ -373,7 +420,7 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
               : "bg-transparent border-l-transparent hover:bg-gray-1 hover:border-l-gray-200"
           }`}
         >
-          <div className="flex-shrink-0" style={{ isolation: 'isolate' }}>
+          <div className="flex-shrink-0" style={{ isolation: "isolate" }}>
             <MemoizedSuggestionImage suggestion={suggestion} />
           </div>
           <div className="flex-1 min-w-0 ml-3">
@@ -403,9 +450,9 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
   };
 
   return (
-    <div className={`w-full max-w-4xl mx-auto ${className}`}>
-      <div className="relative">
-        <form onSubmit={handleSearch} className="relative">
+    <div className={`w-full max-w-4xl mx-auto ${className}`} ref={containerRef}>
+      <div className="relative" style={{ zIndex: 1 }}>
+        <form onSubmit={handleSearch} className="relative" ref={formRef}>
           <div className="flex items-stretch bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-3xl focus-within:shadow-3xl focus-within:border-blue-light min-w-0">
             {/* Search Icon */}
             <div className="flex items-center justify-center px-4 sm:px-6 text-gray-400 flex-shrink-0">
@@ -484,31 +531,38 @@ const HeroSearchBar: React.FC<HeroSearchBarProps> = ({ className = "" }) => {
           </div>
         </form>
 
-        {/* Autocomplete Suggestions Dropdown - Positioned directly below search bar */}
-        {showSuggestions && (
-          <div
-            ref={suggestionsRef}
-            className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-200 z-999999 overflow-y-auto"
-            style={{ maxHeight: "320px" }} // 5 items × 64px per item = 320px
-          >
-            {isLoadingSuggestions ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="w-5 h-5 border-2 border-blue border-t-transparent rounded-full animate-spin"></div>
-                <span className="ml-2 text-gray-500">
-                  Loading suggestions...
-                </span>
-              </div>
-            ) : suggestions.length > 0 ? (
-              <div className="py-2">
-                {renderSuggestions()}
-              </div>
-            ) : searchQuery.trim().length >= 2 ? (
-              <div className="py-4 px-4 text-center text-gray-500">
-                No suggestions found for &quot;{searchQuery}&quot;
-              </div>
-            ) : null}
-          </div>
-        )}
+        {/* Autocomplete Suggestions Dropdown - Rendered as portal */}
+        {showSuggestions &&
+          typeof window !== "undefined" &&
+          createPortal(
+            <div
+              ref={suggestionsRef}
+              className="fixed bg-white rounded-xl shadow-2xl border border-gray-200 overflow-y-auto"
+              style={{
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                width: dropdownPosition.width,
+                maxHeight: "320px", // 5 items × 64px per item = 320px
+                zIndex: 2147483647, // Maximum safe integer for z-index
+              }}
+            >
+              {isLoadingSuggestions ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="w-5 h-5 border-2 border-blue border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-2 text-gray-500">
+                    Loading suggestions...
+                  </span>
+                </div>
+              ) : suggestions.length > 0 ? (
+                <div className="py-2">{renderSuggestions()}</div>
+              ) : searchQuery.trim().length >= 2 ? (
+                <div className="py-4 px-4 text-center text-gray-500">
+                  No suggestions found for &quot;{searchQuery}&quot;
+                </div>
+              ) : null}
+            </div>,
+            document.body
+          )}
       </div>
 
       {/* Popular Searches - Moved outside the relative container */}

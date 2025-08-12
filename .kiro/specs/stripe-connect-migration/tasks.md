@@ -10,16 +10,12 @@
 - [ ] 2. Implement Stripe Connect payment adapter
 - [x] 2.1 Create core Stripe adapter service
 
-
   - Write stripeAdapter.ts with methods for account creation, payment intents, and transfers
   - Implement idempotency key generation and comprehensive logging
   - Add error handling with retry logic for Stripe API calls
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [x] 2.2 Implement seller account management
-
-
-
 
   - Code createStripeAccountForSeller and createAccountLink methods
   - Write unit tests for account creation and link generation
@@ -28,33 +24,34 @@
 
 - [x] 2.3 Implement payment processing methods
 
-
-
-
   - Code createPaymentIntentOnPlatform and createTopUpIntent methods
   - Implement createTransferToSeller with fee calculation
   - Write unit tests for all payment processing methods
   - _Requirements: 4.1, 5.2, 6.1_
 
 - [ ] 3. Create webhook handling system
-- [ ] 3.1 Implement webhook endpoint and event storage
+- [x] 3.1 Implement webhook endpoint and event storage
 
   - Create POST /webhooks/stripe route with signature verification
   - Implement webhook event storage in webhook_events collection
   - Add raw event processing and normalization logic
   - _Requirements: 2.1, 2.2_
 
-- [ ] 3.2 Build webhook event processors
+- [x] 3.2 Build webhook event processors
 
   - Code handlers for payment_intent.succeeded, transfer.created, and account.updated events
   - Implement idempotent event processing to prevent duplicates
   - Write unit tests for each webhook event type
   - _Requirements: 2.3, 2.5_
 
-- [ ] 3.3 Create reconciliation service
+- [x] 3.3 Create reconciliation service
+
+
+
 
   - Implement reconcileStripe.ts job for balance verification
   - Code comparison logic between Stripe and database records
+
   - Add discrepancy reporting and manual review workflows
   - _Requirements: 2.4, 8.4_
 

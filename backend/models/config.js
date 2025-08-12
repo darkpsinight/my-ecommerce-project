@@ -27,6 +27,8 @@ const configSchema = new mongoose.Schema(
         "rate_limiting",
         "oauth",
         "system",
+        "payment",
+        "feature_flag"
       ],
     },
     isPublic: {

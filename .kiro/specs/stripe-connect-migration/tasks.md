@@ -56,21 +56,30 @@
   - _Requirements: 2.4, 8.4_
 
 - [ ] 4. Implement legacy wallet migration system
-- [ ] 4.1 Create legacy wallet bridge service
+- [x] 4.1 Create legacy wallet bridge service
+
+
+
 
   - Write legacyWalletBridge.ts with methods for legacy balance management
   - Implement legacy balance spending and refund logic
   - Add migration utilities for converting legacy wallets
   - _Requirements: 4.2, 4.4, 8.1_
 
-- [ ] 4.2 Build wallet data migration script
+- [x] 4.2 Build wallet data migration script
+
+
+
 
   - Create migrate_legacy_wallets.js script to move existing wallet data
   - Implement data validation and integrity checks
   - Add rollback functionality for failed migrations
   - _Requirements: 4.2, 8.1, 8.2_
 
-- [ ] 4.3 Implement feature flag system for wallet flows
+- [x] 4.3 Implement feature flag system for wallet flows
+
+
+
 
   - Add feature flag checks in wallet-related endpoints
   - Code logic to route between legacy and new wallet flows

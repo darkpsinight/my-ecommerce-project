@@ -27,6 +27,8 @@ const walletSchema = {
                 properties: {
                   externalId: { type: "string" },
                   balance: { type: "number" },
+                  legacyBalance: { type: "number" },
+                  combinedBalance: { type: "number" },
                   currency: { type: "string" },
                   totalFunded: { type: "number" },
                   totalSpent: { type: "number" },
@@ -49,6 +51,14 @@ const walletSchema = {
                     description: { type: "string" },
                     createdAt: { type: "string", format: "date-time" }
                   }
+                }
+              },
+              featureFlags: {
+                type: "object",
+                properties: {
+                  legacyWalletEnabled: { type: "boolean" },
+                  stripeConnectEnabled: { type: "boolean" },
+                  hybridMode: { type: "boolean" }
                 }
               }
             }
@@ -141,6 +151,52 @@ const walletSchema = {
                 }
               },
               newBalance: { type: "number" }
+            }
+          }
+        }
+      },
+      ...errors
+    }
+  },
+
+  // Create wallet top-up request using new payment adapter
+  createTopUpRequest: {
+    description: "Create a wallet top-up request using the new payment adapter with feature flag routing",
+    tags: ["Wallet"],
+    security: jwtSecurity,
+    body: {
+      type: "object",
+      properties: {
+        amount: {
+          type: "number",
+          minimum: configs.WALLET_MIN_FUNDING_AMOUNT,
+          maximum: configs.WALLET_MAX_FUNDING_AMOUNT,
+          example: 50
+        },
+        currency: {
+          type: "string",
+          enum: ["USD", "EUR", "GBP"],
+          default: configs.WALLET_DEFAULT_CURRENCY
+        }
+      },
+      required: ["amount"],
+      additionalProperties: false
+    },
+    response: {
+      200: {
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          message: { type: "string" },
+          data: {
+            type: "object",
+            properties: {
+              clientSecret: { type: "string" },
+              paymentIntentId: { type: "string" },
+              amount: { type: "number" },
+              currency: { type: "string" },
+              method: { type: "string", enum: ["stripe_connect", "legacy"] },
+              legacyBalance: { type: "number" }
             }
           }
         }

@@ -3,9 +3,11 @@ const { walletSchema } = require("./schemas/walletSchema");
 const {
   getWallet,
   createPaymentIntent,
+  createTopUpRequest,
   confirmPayment,
   getTransactions
 } = require("../handlers/walletHandlers");
+const WalletFeatureFlagMiddleware = require("../middleware/walletFeatureFlagMiddleware");
 const { configs } = require("../configs");
 
 // Rate limiting configurations
@@ -37,16 +39,37 @@ const walletRoutes = async (fastify, opts) => {
     handler: getWallet
   });
 
-  // Create payment intent for wallet funding
+  // Create payment intent for wallet funding (legacy)
   fastify.route({
     config: {
       rateLimit: rateLimits.sensitive
     },
     method: "POST",
     url: "/payment-intent",
-    preHandler: verifyAuth(["buyer", "seller", "admin"]), // Allow buyer, seller, and admin access
+    preHandler: [
+      verifyAuth(["buyer", "seller", "admin"]),
+      WalletFeatureFlagMiddleware.requirePaymentsEnabled(),
+      WalletFeatureFlagMiddleware.addWalletContext()
+    ],
     schema: walletSchema.createPaymentIntent,
     handler: createPaymentIntent
+  });
+
+  // Create wallet top-up request using new payment adapter
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.sensitive
+    },
+    method: "POST",
+    url: "/topup_request",
+    preHandler: [
+      verifyAuth(["buyer", "seller", "admin"]),
+      WalletFeatureFlagMiddleware.requirePaymentsEnabled(),
+      WalletFeatureFlagMiddleware.validateWalletOperation("topup"),
+      WalletFeatureFlagMiddleware.addWalletContext()
+    ],
+    schema: walletSchema.createTopUpRequest,
+    handler: createTopUpRequest
   });
 
   // Confirm payment and update wallet

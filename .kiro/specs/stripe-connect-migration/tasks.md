@@ -46,9 +46,6 @@
 
 - [x] 3.3 Create reconciliation service
 
-
-
-
   - Implement reconcileStripe.ts job for balance verification
   - Code comparison logic between Stripe and database records
 
@@ -58,18 +55,12 @@
 - [ ] 4. Implement legacy wallet migration system
 - [x] 4.1 Create legacy wallet bridge service
 
-
-
-
   - Write legacyWalletBridge.ts with methods for legacy balance management
   - Implement legacy balance spending and refund logic
   - Add migration utilities for converting legacy wallets
   - _Requirements: 4.2, 4.4, 8.1_
 
 - [x] 4.2 Build wallet data migration script
-
-
-
 
   - Create migrate_legacy_wallets.js script to move existing wallet data
   - Implement data validation and integrity checks
@@ -78,23 +69,21 @@
 
 - [x] 4.3 Implement feature flag system for wallet flows
 
-
-
-
   - Add feature flag checks in wallet-related endpoints
   - Code logic to route between legacy and new wallet flows
   - Write tests for feature flag behavior
   - _Requirements: 1.4, 4.3, 8.3_
 
 - [ ] 5. Update wallet and topup functionality
-- [ ] 5.1 Modify wallet topup endpoints
+- [x] 5.1 Modify wallet topup endpoints
 
   - Update POST /wallet/topup_request to use new payment adapter
   - Implement client_secret generation for Stripe Elements
   - Add legacy wallet balance display logic
   - _Requirements: 4.1, 4.3_
 
-- [ ] 5.2 Update wallet balance management
+- [x] 5.2 Update wallet balance management
+
 
   - Modify wallet service to handle both legacy and platform balances
   - Implement logic to spend legacy balance first in transactions

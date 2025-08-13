@@ -13,6 +13,10 @@ const getStripe = () => {
 const { Wallet } = require("../models/wallet");
 const { Transaction } = require("../models/transaction");
 const { User } = require("../models/user");
+const { LegacyWallet } = require("../models/legacyWallet");
+const PaymentProcessor = require("../services/payment/paymentProcessor");
+const WalletService = require("../services/wallet/walletService");
+const { getWalletFeatureFlags } = require("../services/featureFlags/walletFeatureFlags");
 const { configs } = require("../configs");
 const { sendSuccessResponse, sendErrorResponse } = require("../utils/responseHelpers");
 
@@ -30,15 +34,18 @@ const getWallet = async (request, reply) => {
     }
     const userId = user._id;
 
-    // Get or create wallet for user
-    let wallet = await Wallet.getWalletByUserId(userId);
+    // Use wallet service to get comprehensive wallet information
+    const walletService = new WalletService();
+    const walletInfo = await walletService.getWalletInfo(userId);
 
+    // Get recent transactions (last 5)
+    const transactionHistory = await walletService.getTransactionHistory(userId, { limit: 5 });
+
+    // Get or create platform wallet for backward compatibility
+    let wallet = await Wallet.getWalletByUserId(userId);
     if (!wallet) {
       wallet = await Wallet.createWalletForUser(userId, configs.WALLET_DEFAULT_CURRENCY);
     }
-
-    // Get recent transactions (last 5)
-    const recentTransactions = await Transaction.getTransactionsByUserId(userId, { limit: 5 });
 
     return sendSuccessResponse(reply, {
       statusCode: 200,
@@ -46,8 +53,10 @@ const getWallet = async (request, reply) => {
       data: {
         wallet: {
           externalId: wallet.externalId,
-          balance: wallet.balance,
-          currency: wallet.currency,
+          balance: walletInfo.breakdown.platform.balanceDollars,
+          legacyBalance: walletInfo.breakdown.legacy.balanceDollars,
+          combinedBalance: walletInfo.totalBalanceDollars,
+          currency: walletInfo.currency,
           totalFunded: wallet.totalFunded,
           totalSpent: wallet.totalSpent,
           lastFundedAt: wallet.lastFundedAt,
@@ -55,15 +64,19 @@ const getWallet = async (request, reply) => {
           createdAt: wallet.createdAt,
           updatedAt: wallet.updatedAt
         },
-        recentTransactions: recentTransactions.map(tx => ({
+        recentTransactions: transactionHistory.transactions.map(tx => ({
           externalId: tx.externalId,
           type: tx.type,
           amount: tx.amount,
           currency: tx.currency,
           status: tx.status,
           description: tx.description,
-          createdAt: tx.createdAt
-        }))
+          createdAt: tx.createdAt,
+          source: tx.source
+        })),
+        featureFlags: walletInfo.featureFlags,
+        spendingStrategy: walletInfo.spendingStrategy,
+        migrationStatus: walletInfo.migrationStatus
       }
     });
   } catch (error) {
@@ -74,8 +87,167 @@ const getWallet = async (request, reply) => {
   }
 };
 
+// @route   POST /api/v1/wallet/topup_request
+// @desc    Create wallet top-up request using new payment adapter with feature flag routing
+// @access  Private (buyer role required)
+const createTopUpRequest = async (request, reply) => {
+  request.log.info("handlers/createTopUpRequest");
+
+  try {
+    const { amount, currency = configs.WALLET_DEFAULT_CURRENCY } = request.body;
+
+    // Get user by uid from JWT token to get MongoDB _id
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      return sendErrorResponse(reply, 404, "User not found");
+    }
+    const userId = user._id;
+
+    // Validate amount
+    const minAmount = configs.WALLET_MIN_FUNDING_AMOUNT;
+    const maxAmount = configs.WALLET_MAX_FUNDING_AMOUNT;
+
+    if (amount < minAmount || amount > maxAmount) {
+      return sendErrorResponse(reply, 400, `Amount must be between ${minAmount} and ${maxAmount}`, {
+        metadata: { hint: `Please enter an amount between ${minAmount} and ${maxAmount}` }
+      });
+    }
+
+    // Get feature flags and determine topup method
+    const featureFlags = getWalletFeatureFlags();
+    const topUpMethod = featureFlags.getTopUpMethod(userId.toString());
+
+    if (topUpMethod.method === "disabled") {
+      return sendErrorResponse(reply, 503, "Wallet top-ups are currently disabled", {
+        code: "TOPUP_DISABLED",
+        reason: topUpMethod.reason
+      });
+    }
+
+    // Get legacy balance for display
+    let legacyBalance = 0;
+    if (featureFlags.isLegacyWalletEnabled()) {
+      try {
+        const legacyWallet = await LegacyWallet.getByUserId(userId);
+        if (legacyWallet) {
+          legacyBalance = legacyWallet.balanceCents / 100;
+        }
+      } catch (error) {
+        request.log.warn(`Could not retrieve legacy wallet for user ${userId}: ${error.message}`);
+      }
+    }
+
+    let result;
+
+    if (topUpMethod.method === "stripe_connect") {
+      // Use new payment processor
+      const paymentProcessor = new PaymentProcessor();
+      
+      const topUpRequest = {
+        amountCents: Math.round(amount * 100),
+        currency: currency.toUpperCase(),
+        buyerId: userId.toString(),
+        metadata: {
+          source: "wallet_topup_request",
+          userAgent: request.headers["user-agent"] || "unknown"
+        }
+      };
+
+      const processorResult = await paymentProcessor.createWalletTopUpIntent(topUpRequest);
+      
+      result = {
+        clientSecret: processorResult.clientSecret,
+        paymentIntentId: processorResult.paymentIntentId,
+        amount,
+        currency: currency.toUpperCase(),
+        method: "stripe_connect",
+        legacyBalance
+      };
+
+    } else if (topUpMethod.method === "legacy") {
+      // Fall back to legacy payment intent creation
+      // Get or create wallet
+      let wallet = await Wallet.getWalletByUserId(userId);
+      if (!wallet) {
+        wallet = await Wallet.createWalletForUser(userId, currency);
+      }
+
+      // Get or create Stripe customer
+      let customerId = user.stripeCustomerId;
+
+      if (!customerId) {
+        const stripeInstance = getStripe();
+        const customer = await stripeInstance.customers.create({
+          email: user.email,
+          metadata: {
+            userId: userId.toString(),
+            walletId: wallet._id.toString()
+          }
+        });
+
+        customerId = customer.id;
+        user.stripeCustomerId = customerId;
+        await user.save();
+      }
+
+      // Create payment intent using legacy method
+      const stripeInstance = getStripe();
+      const paymentIntent = await stripeInstance.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency: currency.toLowerCase(),
+        customer: customerId,
+        metadata: {
+          userId: userId.toString(),
+          walletId: wallet._id.toString(),
+          type: "wallet_funding",
+          source: "legacy_topup_request"
+        },
+        automatic_payment_methods: {
+          enabled: true
+        }
+      });
+
+      // Create pending transaction record
+      await Transaction.createFundingTransaction({
+        walletId: wallet._id,
+        userId,
+        amount,
+        currency,
+        paymentIntentId: paymentIntent.id,
+        balanceBefore: wallet.balance
+      });
+
+      result = {
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        amount,
+        currency: currency.toUpperCase(),
+        method: "legacy",
+        legacyBalance
+      };
+    } else {
+      return sendErrorResponse(reply, 503, "No available top-up methods", {
+        code: "NO_TOPUP_METHODS",
+        reason: topUpMethod.reason
+      });
+    }
+
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "Top-up request created successfully",
+      data: result
+    });
+
+  } catch (error) {
+    request.log.error(`Error creating top-up request: ${error.message}`);
+    return sendErrorResponse(reply, 500, "Failed to create top-up request", {
+      metadata: { hint: "Please try again later" }
+    });
+  }
+};
+
 // @route   POST /api/v1/wallet/payment-intent
-// @desc    Create Stripe payment intent for wallet funding
+// @desc    Create Stripe payment intent for wallet funding (legacy)
 // @access  Private (buyer role required)
 const createPaymentIntent = async (request, reply) => {
   request.log.info("handlers/createPaymentIntent");
@@ -312,6 +484,7 @@ const getTransactions = async (request, reply) => {
 module.exports = {
   getWallet,
   createPaymentIntent,
+  createTopUpRequest,
   confirmPayment,
   getTransactions
 };

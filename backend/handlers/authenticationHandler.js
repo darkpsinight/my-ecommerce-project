@@ -271,6 +271,82 @@ const sellerSignin = async (request, reply) => {
   );
 };
 
+// @route   POST /api/v1/auth/support-signin
+// @desc    Login handler for support staff only
+// @access  Public
+const supportSignin = async (request, reply) => {
+  request.log.info("handlers/supportSignin");
+  const user = await handleSignIn(request, reply);
+
+  if (!user) return; // Error response already sent by handleSignIn
+
+  // Check if user has support role
+  if (!user.hasRole("support")) {
+    return sendErrorResponse(reply, 403, "Access denied", {
+      metadata: {
+        hint: "Only support staff can access this login",
+      },
+    });
+  }
+
+  const refreshToken = await getRefreshToken(user, request.ipAddress);
+  const emailStatus = await sendNewLoginEmail(user, request);
+  const verifyToken = await reply.generateCsrf();
+
+  return sendSuccessResponse(
+    reply,
+    {
+      statusCode: 200,
+      message: "Support staff signed in successfully",
+      token: user.getJWT(),
+      emailSuccess: emailStatus.success,
+      emailMessage: emailStatus.message,
+      verifyToken,
+    },
+    {
+      refreshToken,
+    }
+  );
+};
+
+// @route   POST /api/v1/auth/admin-signin
+// @desc    Login handler for administrators only
+// @access  Public
+const adminSignin = async (request, reply) => {
+  request.log.info("handlers/adminSignin");
+  const user = await handleSignIn(request, reply);
+
+  if (!user) return; // Error response already sent by handleSignIn
+
+  // Check if user has admin role
+  if (!user.hasRole("admin")) {
+    return sendErrorResponse(reply, 403, "Access denied", {
+      metadata: {
+        hint: "Only administrators can access this login",
+      },
+    });
+  }
+
+  const refreshToken = await getRefreshToken(user, request.ipAddress);
+  const emailStatus = await sendNewLoginEmail(user, request);
+  const verifyToken = await reply.generateCsrf();
+
+  return sendSuccessResponse(
+    reply,
+    {
+      statusCode: 200,
+      message: "Administrator signed in successfully",
+      token: user.getJWT(),
+      emailSuccess: emailStatus.success,
+      emailMessage: emailStatus.message,
+      verifyToken,
+    },
+    {
+      refreshToken,
+    }
+  );
+};
+
 // @route	POST /api/v1/auth/emailLogin
 // @desc	Request to sign in or sign up with email
 // @access 	Public
@@ -1495,6 +1571,8 @@ module.exports = {
   logout,
   updateUserRole,
   sellerSignin,
+  supportSignin,
+  adminSignin,
   generateSellerToken,
   validateSellerToken,
   updateProfile,

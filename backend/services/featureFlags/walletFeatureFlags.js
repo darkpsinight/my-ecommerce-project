@@ -134,7 +134,7 @@ class WalletFeatureFlags {
   /**
    * Check if seller payouts via Stripe Connect are enabled
    */
-  canPayoutViaSt ripeConnect() {
+  canPayoutViaStripeConnect() {
     if (!this.isStripeConnectEnabled()) return false;
     return this.flags.STRIPE_CONNECT_SELLER_PAYOUTS;
   }

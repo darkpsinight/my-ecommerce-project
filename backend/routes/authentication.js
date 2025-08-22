@@ -18,6 +18,8 @@ const {
   logout,
   updateUserRole,
   sellerSignin,
+  supportSignin,
+  adminSignin,
   generateSellerToken,
   validateSellerToken,
   updateProfile,
@@ -105,6 +107,36 @@ const authenticationRoutes = async (fastify, opts) => {
       ],
       schema: authenticationSchema.signin, // Reuse the signin schema
       handler: sellerSignin,
+    });
+
+    // Support staff login route
+    fastify.route({
+      method: "POST",
+      url: "/support-signin",
+      preHandler: [
+        rateLimiter(rateLimits.auth),
+        recaptchaVerification,
+        attachUserWithPassword(true),
+        checkDeactivated,
+        checkEmailConfirmed,
+      ],
+      schema: authenticationSchema.signin, // Reuse the signin schema
+      handler: supportSignin,
+    });
+
+    // Administrator login route
+    fastify.route({
+      method: "POST",
+      url: "/admin-signin",
+      preHandler: [
+        rateLimiter(rateLimits.auth),
+        recaptchaVerification,
+        attachUserWithPassword(true),
+        checkDeactivated,
+        checkEmailConfirmed,
+      ],
+      schema: authenticationSchema.signin, // Reuse the signin schema
+      handler: adminSignin,
     });
 
     // Route to check reset password token and redirect to frontend

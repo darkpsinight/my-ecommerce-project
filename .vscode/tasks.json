@@ -41,8 +41,34 @@
       }
     },
     {
+      "label": "Support Dashboard",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/dashboard-support"
+      },
+      "presentation": {
+        "group": "split-group",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Admin Dashboard",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/dashboard-admin"
+      },
+      "presentation": {
+        "group": "split-group",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
       "label": "Run Project",
-      "dependsOn": ["Backend", "Buyer", "Seller Dashboard"],
+      "dependsOn": ["Backend", "Buyer", "Seller Dashboard", "Support Dashboard", "Admin Dashboard"],
       "group": {
         "kind": "build",
         "isDefault": true

@@ -2,6 +2,7 @@
 
 import React from "react";
 import NewHero from "./NewHero";
+import TrustedBrands from "./TrustedBrands";
 import CategoryGrid from "./CategoryGrid";
 import FeaturedCarousel from "./FeaturedCarousel";
 
@@ -27,6 +28,7 @@ const Home = () => {
     <main className="overflow-hidden">
       <ScrollIndicator />
       <NewHero />
+      <TrustedBrands />
       <CategoryGrid />
       <FeaturedCarousel />
       <DigitalPromoBanner />

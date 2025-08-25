@@ -1,4 +1,6 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,8 +13,48 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { authService } from '@/services/auth'
+import { useAuthStore } from '@/stores/auth-store'
 
 export function ProfileDropdown() {
+  const navigate = useNavigate()
+  const { reset } = useAuthStore((state) => state.auth)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+
+      // Call the logout API to invalidate server-side session
+      await authService.logout()
+
+      // Clear local authentication state
+      reset()
+      
+      // Show success message
+      toast.success('Successfully logged out')
+      
+      // Navigate to sign-in page
+      navigate({ to: '/sign-in' })
+
+    } catch (error) {
+      // Even if the API call fails, we should still clear local data
+      // This handles cases where the token might be expired or invalid
+      reset()
+
+      // Show appropriate error message
+      if (error instanceof Error && error.message.includes('No authentication token')) {
+        toast.success('Logged out successfully')
+        navigate({ to: '/sign-in' })
+      } else {
+        toast.error('An unexpected error occurred during logout')
+        navigate({ to: '/sign-in' })
+      }
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
@@ -55,8 +97,8 @@ export function ProfileDropdown() {
           <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          Log out
+        <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+          {isLoggingOut ? 'Signing out...' : 'Log out'}
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>

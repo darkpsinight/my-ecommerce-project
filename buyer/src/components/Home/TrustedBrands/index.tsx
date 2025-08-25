@@ -53,6 +53,10 @@ const TrustedBrands = () => {
       name: "Discord",
       image: "/images/brands-Hero/brand-logo-discord.png",
     },
+    {
+      name: "Binance",
+      image: "/images/brands-Hero/brand-logo-binance.png",
+    },
   ];
 
   return (

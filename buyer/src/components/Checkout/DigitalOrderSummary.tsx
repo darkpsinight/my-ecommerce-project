@@ -162,7 +162,7 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
               </h4>
               <p className="text-green-dark text-xs leading-relaxed">
                 Your codes will be available immediately after payment confirmation. 
-                Access them from your account dashboard.
+                Access them from your Digital library.
               </p>
             </div>
           </div>

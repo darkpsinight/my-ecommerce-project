@@ -271,7 +271,6 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
                     walletBalance >= totalPrice ? "text-blue" : "text-red"
                   }`}
                 >
-                  $
                   {walletBalance >= totalPrice
                     ? (walletBalance - totalPrice).toFixed(2)
                     : "Insufficient"}

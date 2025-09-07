@@ -9,6 +9,7 @@ import ListingsSummary from './ListingsSummary';
 import ListingsActions from './ListingsActions';
 import { ListingsProvider } from './context/ListingsContext';
 import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
+import { FinancialOnboardingModal, FinancialStatusBanner } from 'src/components/FinancialOnboarding';
 import { useSellerProfile } from 'src/hooks/useSellerProfile';
 
 import { useState } from 'react';
@@ -25,7 +26,14 @@ function DashboardListings() {
     updateProfile,
     showProfileSetup,
     setShowProfileSetup,
-    openProfileSetup
+    openProfileSetup,
+    // Financial onboarding
+    financialData,
+    showFinancialSetup,
+    setShowFinancialSetup,
+    openFinancialSetup,
+    needsFinancialSetup,
+    completeProfileAndShowFinancial
   } = useSellerProfile();
 
   return (
@@ -43,6 +51,17 @@ function DashboardListings() {
             profileData={profileData}
             loading={profileLoading}
             onSetupProfile={openProfileSetup}
+            financialData={financialData}
+            onSetupPayments={openFinancialSetup}
+          />
+
+          {/* Financial Status Banner */}
+          <FinancialStatusBanner
+            profileData={profileData}
+            financialData={financialData}
+            loading={profileLoading}
+            onSetupPayments={openFinancialSetup}
+            onViewPaymentSettings={() => window.open('/management/payment-setup', '_blank')}
           />
 
           <Grid
@@ -69,6 +88,19 @@ function DashboardListings() {
           open={showProfileSetup}
           onClose={() => setShowProfileSetup(false)}
           onSubmit={updateProfile}
+          onCompleteProfile={completeProfileAndShowFinancial}
+          loading={profileLoading}
+        />
+
+        {/* Financial Onboarding Modal */}
+        <FinancialOnboardingModal
+          open={showFinancialSetup}
+          onClose={() => setShowFinancialSetup(false)}
+          onComplete={() => {
+            setShowFinancialSetup(false);
+            // Optionally redirect to payment setup page
+            window.open('/management/payment-setup', '_blank');
+          }}
           loading={profileLoading}
         />
       </ListingsProvider>

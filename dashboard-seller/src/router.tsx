@@ -54,6 +54,9 @@ const UserProfile = Loader(
 const UserSettings = Loader(
   lazy(() => import('src/content/Applications/Users/settings'))
 );
+const PaymentSetup = Loader(
+  lazy(() => import('src/content/Management/PaymentSetup'))
+);
 
 // Components
 
@@ -225,6 +228,10 @@ const routes: RouteObject[] = [
       {
         path: 'transactions',
         element: <Transactions />
+      },
+      {
+        path: 'payment-setup',
+        element: <PaymentSetup />
       },
       {
         path: 'profile',

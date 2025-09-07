@@ -17,6 +17,7 @@ import WishlistAnalytics from './WishlistAnalytics';
 import GeographicAnalytics from './GeographicAnalytics';
 import CustomerGeographicAnalytics from './CustomerGeographicAnalytics';
 import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
+import { FinancialOnboardingModal, FinancialStatusBanner } from 'src/components/FinancialOnboarding';
 import { useSellerProfile } from 'src/hooks/useSellerProfile';
 import { useOptimizedAnalytics } from './hooks/useOptimizedAnalytics';
 import { RefreshIndicator } from './components/RefreshIndicator';
@@ -30,7 +31,13 @@ function DashboardAnalytics() {
     updateProfile,
     showProfileSetup,
     setShowProfileSetup,
-    openProfileSetup
+    openProfileSetup,
+    // Financial onboarding
+    financialData,
+    showFinancialSetup,
+    setShowFinancialSetup,
+    openFinancialSetup,
+    completeProfileAndShowFinancial
   } = useSellerProfile();
 
   const {
@@ -75,6 +82,17 @@ function DashboardAnalytics() {
           profileData={profileData}
           loading={profileLoading}
           onSetupProfile={openProfileSetup}
+          financialData={financialData}
+          onSetupPayments={openFinancialSetup}
+        />
+
+        {/* Financial Status Banner */}
+        <FinancialStatusBanner
+          profileData={profileData}
+          financialData={financialData}
+          loading={profileLoading}
+          onSetupPayments={openFinancialSetup}
+          onViewPaymentSettings={() => window.open('/management/payment-setup', '_blank')}
         />
 
         <AnalyticsNavigation />
@@ -207,6 +225,18 @@ function DashboardAnalytics() {
           open={showProfileSetup}
           onClose={() => setShowProfileSetup(false)}
           onSubmit={updateProfile}
+          onCompleteProfile={completeProfileAndShowFinancial}
+          loading={profileLoading}
+        />
+
+        {/* Financial Onboarding Modal */}
+        <FinancialOnboardingModal
+          open={showFinancialSetup}
+          onClose={() => setShowFinancialSetup(false)}
+          onComplete={() => {
+            setShowFinancialSetup(false);
+            window.open('/management/payment-setup', '_blank');
+          }}
           loading={profileLoading}
         />
       </Container>

@@ -33,6 +33,7 @@ interface SellerProfileSetupModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: Partial<SellerProfileData>) => Promise<boolean>;
+  onCompleteProfile?: () => void; // New prop for handling profile completion
   loading?: boolean;
 }
 
@@ -60,6 +61,7 @@ const SellerProfileSetupModal: React.FC<SellerProfileSetupModalProps> = ({
   open,
   onClose,
   onSubmit,
+  onCompleteProfile,
   loading = false
 }) => {
   const [activeStep, setActiveStep] = useState(0);
@@ -184,6 +186,10 @@ const SellerProfileSetupModal: React.FC<SellerProfileSetupModalProps> = ({
     const success = await onSubmit(finalData);
     if (success) {
       handleClose();
+      // Call the completion handler to trigger financial onboarding
+      if (onCompleteProfile) {
+        onCompleteProfile();
+      }
     }
   };
 
@@ -372,7 +378,8 @@ const SellerProfileSetupModal: React.FC<SellerProfileSetupModalProps> = ({
 
       <DialogContent>
         <Alert severity="info" sx={{ mb: 3 }}>
-          Complete your public profile to build trust with buyers and showcase your brand. This information will be visible on your listings and seller page.
+          Complete your public profile to build trust with buyers and showcase your brand. 
+          After completing your profile, you'll be guided to set up payment processing.
         </Alert>
 
         <Stepper activeStep={activeStep} orientation="vertical">

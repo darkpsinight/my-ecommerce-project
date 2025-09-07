@@ -9,6 +9,7 @@ import Wallets from './Wallets';
 import AccountSecurity from './AccountSecurity';
 import WatchList from './WatchList';
 import { SellerProfileSetupModal, ProfileStatusBanner } from 'src/components/SellerProfileSetup';
+import { FinancialOnboardingModal, FinancialStatusBanner } from 'src/components/FinancialOnboarding';
 import { useSellerProfile } from 'src/hooks/useSellerProfile';
 
 function DashboardCrypto() {
@@ -18,7 +19,13 @@ function DashboardCrypto() {
     updateProfile,
     showProfileSetup,
     setShowProfileSetup,
-    openProfileSetup
+    openProfileSetup,
+    // Financial onboarding
+    financialData,
+    showFinancialSetup,
+    setShowFinancialSetup,
+    openFinancialSetup,
+    completeProfileAndShowFinancial
   } = useSellerProfile();
 
   return (
@@ -35,6 +42,17 @@ function DashboardCrypto() {
           profileData={profileData}
           loading={profileLoading}
           onSetupProfile={openProfileSetup}
+          financialData={financialData}
+          onSetupPayments={openFinancialSetup}
+        />
+
+        {/* Financial Status Banner */}
+        <FinancialStatusBanner
+          profileData={profileData}
+          financialData={financialData}
+          loading={profileLoading}
+          onSetupPayments={openFinancialSetup}
+          onViewPaymentSettings={() => window.open('/management/payment-setup', '_blank')}
         />
 
         <Grid
@@ -63,6 +81,18 @@ function DashboardCrypto() {
           open={showProfileSetup}
           onClose={() => setShowProfileSetup(false)}
           onSubmit={updateProfile}
+          onCompleteProfile={completeProfileAndShowFinancial}
+          loading={profileLoading}
+        />
+
+        {/* Financial Onboarding Modal */}
+        <FinancialOnboardingModal
+          open={showFinancialSetup}
+          onClose={() => setShowFinancialSetup(false)}
+          onComplete={() => {
+            setShowFinancialSetup(false);
+            window.open('/management/payment-setup', '_blank');
+          }}
           loading={profileLoading}
         />
       </Container>

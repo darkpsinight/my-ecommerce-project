@@ -19,12 +19,19 @@ interface ProfileStatusBannerProps {
   profileData: SellerProfileResponse | null;
   loading: boolean;
   onSetupProfile: () => void;
+  financialData?: {
+    hasStripeAccount: boolean;
+    canReceivePayments: boolean;
+  } | null;
+  onSetupPayments?: () => void;
 }
 
 const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
   profileData,
   loading,
-  onSetupProfile
+  onSetupProfile,
+  financialData,
+  onSetupPayments
 }) => {
   // LocalStorage key for tracking completion message dismissal
   const COMPLETION_DISMISSED_KEY = 'seller-profile-completion-dismissed';
@@ -109,9 +116,43 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
 
   const completedCount = completionItems.filter(item => item.completed).length;
   const completionPercentage = Math.round((completedCount / completionItems.length) * 100);
+  
+  // Check if financial setup is also needed
+  const needsPaymentSetup = financialData && !financialData.canReceivePayments;
 
   if (completionPercentage === 100) {
-    // Only show the completion message if it hasn't been dismissed
+    // Profile complete, check payment setup
+    if (needsPaymentSetup) {
+      return (
+        <Box sx={{ mb: 3 }}>
+          <Alert 
+            severity="warning"
+            action={
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={onSetupPayments}
+                variant="outlined"
+              >
+                Set Up Payments
+              </Button>
+            }
+          >
+            <AlertTitle>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <WarningIcon />
+                Payment Setup Required
+              </Box>
+            </AlertTitle>
+            <Typography variant="body2">
+              Your profile is complete! Now set up payment processing to start selling and receiving payments from buyers.
+            </Typography>
+          </Alert>
+        </Box>
+      );
+    }
+    
+    // Both profile and payments complete - only show if not dismissed
     if (!isDismissed) {
       return (
         <Box sx={{ mb: 3 }}>
@@ -131,11 +172,11 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
             <AlertTitle>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CheckCircleIcon />
-                Profile Complete!
+                Ready to Sell!
               </Box>
             </AlertTitle>
             <Typography variant="body2">
-              Great job! Your seller profile is complete. Buyers can now learn about you and your business.
+              Great job! Your seller profile and payment setup are complete. You can now start listing and selling products.
             </Typography>
           </Alert>
         </Box>

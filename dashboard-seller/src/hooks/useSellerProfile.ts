@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSellerProfile, updateSellerProfile, SellerProfileResponse, SellerProfileData } from 'src/services/api/sellerProfile';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 // Global cache to prevent multiple API calls
@@ -18,6 +19,13 @@ let globalProfileCache: {
 // Cache duration: 5 minutes
 const CACHE_DURATION = 5 * 60 * 1000;
 
+interface FinancialSetupData {
+  hasStripeAccount: boolean;
+  stripeAccountStatus: 'pending' | 'verified' | 'requires_action' | null;
+  canReceivePayments: boolean;
+  pendingRequirements?: string[];
+}
+
 interface UseSellerProfileReturn {
   profileData: SellerProfileResponse | null;
   loading: boolean;
@@ -28,15 +36,28 @@ interface UseSellerProfileReturn {
   showProfileSetup: boolean;
   setShowProfileSetup: (show: boolean) => void;
   openProfileSetup: () => void;
+  // Financial onboarding state
+  financialData: FinancialSetupData | null;
+  showFinancialSetup: boolean;
+  setShowFinancialSetup: (show: boolean) => void;
+  openFinancialSetup: () => void;
+  needsFinancialSetup: boolean;
+  completeProfileAndShowFinancial: () => void;
 }
 
 export const useSellerProfile = (): UseSellerProfileReturn => {
+  const navigate = useNavigate();
   const [profileData, setProfileData] = useState<SellerProfileResponse | null>(globalProfileCache.data);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(globalProfileCache.error);
   const [showProfileSetup, setShowProfileSetup] = useState<boolean>(false);
   const [hasBeenDismissed, setHasBeenDismissed] = useState<boolean>(false);
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+  
+  // Financial onboarding state
+  const [financialData, setFinancialData] = useState<FinancialSetupData | null>(null);
+  const [showFinancialSetup, setShowFinancialSetup] = useState<boolean>(false);
+  const [hasFinancialBeenDismissed, setHasFinancialBeenDismissed] = useState<boolean>(false);
 
   const refreshProfile = useCallback(async (forceRefresh: boolean = false) => {
     const now = Date.now();
@@ -130,6 +151,54 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     }
   }, [profileData]);
 
+  // Function to handle profile completion and show financial setup
+  const completeProfileAndShowFinancial = useCallback(() => {
+    setShowProfileSetup(false);
+    
+    // Check if financial setup is needed
+    if (!financialData?.canReceivePayments) {
+      setShowFinancialSetup(true);
+    }
+  }, [financialData]);
+
+  // Financial setup functions
+  const openFinancialSetup = useCallback(() => {
+    setHasFinancialBeenDismissed(false);
+    setShowFinancialSetup(true);
+  }, []);
+
+  const handleSetShowFinancialSetup = useCallback((show: boolean) => {
+    if (!show) {
+      setHasFinancialBeenDismissed(true);
+    }
+    setShowFinancialSetup(show);
+  }, []);
+
+  // Mock financial data fetch - TODO: Replace with actual API call
+  const fetchFinancialData = useCallback(async () => {
+    try {
+      // TODO: Implement actual API call to get financial setup status
+      // For now, return mock data
+      const mockFinancialData: FinancialSetupData = {
+        hasStripeAccount: false,
+        stripeAccountStatus: null,
+        canReceivePayments: false,
+        pendingRequirements: []
+      };
+      
+      setFinancialData(mockFinancialData);
+    } catch (err) {
+      console.error('Error fetching financial data:', err);
+    }
+  }, []);
+
+  // Load financial data when profile is loaded
+  useEffect(() => {
+    if (profileData?.hasProfile) {
+      fetchFinancialData();
+    }
+  }, [profileData, fetchFinancialData]);
+
   // Function to explicitly open profile setup (e.g., when user clicks "Set Up Profile" button)
   const openProfileSetup = useCallback(() => {
     setHasBeenDismissed(false); // Reset dismissal state
@@ -149,6 +218,9 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     refreshProfile();
   }, [refreshProfile]);
 
+  // Computed properties
+  const needsFinancialSetup = profileData?.hasProfile && !financialData?.canReceivePayments;
+
   return {
     profileData,
     loading,
@@ -158,6 +230,13 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     updateProfile,
     showProfileSetup,
     setShowProfileSetup: handleSetShowProfileSetup,
-    openProfileSetup
+    openProfileSetup,
+    // Financial onboarding
+    financialData,
+    showFinancialSetup,
+    setShowFinancialSetup: handleSetShowFinancialSetup,
+    openFinancialSetup,
+    needsFinancialSetup: needsFinancialSetup || false,
+    completeProfileAndShowFinancial
   };
 };

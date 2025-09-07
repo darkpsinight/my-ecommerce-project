@@ -25,6 +25,7 @@ import EmojiEventsTwoToneIcon from '@mui/icons-material/EmojiEventsTwoTone';
 import FilterVintageTwoToneIcon from '@mui/icons-material/FilterVintageTwoTone';
 import HowToVoteTwoToneIcon from '@mui/icons-material/HowToVoteTwoTone';
 import LocalPharmacyTwoToneIcon from '@mui/icons-material/LocalPharmacyTwoTone';
+import PaymentTwoToneIcon from '@mui/icons-material/PaymentTwoTone';
 import RedeemTwoToneIcon from '@mui/icons-material/RedeemTwoTone';
 import SettingsTwoToneIcon from '@mui/icons-material/SettingsTwoTone';
 import TrafficTwoToneIcon from '@mui/icons-material/TrafficTwoTone';
@@ -389,6 +390,17 @@ function SidebarMenu() {
                   startIcon={<TableChartTwoToneIcon />}
                 >
                   Transactions List
+                </Button>
+              </ListItem>
+              <ListItem component="div">
+                <Button
+                  disableRipple
+                  component={RouterLink}
+                  onClick={closeSidebar}
+                  to="/management/payment-setup"
+                  startIcon={<PaymentTwoToneIcon />}
+                >
+                  Payment Setup
                 </Button>
               </ListItem>
             </List>

@@ -451,17 +451,38 @@ class StripeAdapter extends PaymentAdapter {
     try {
       const stripe = this.getStripe();
       
+      console.log("🔄 StripeAdapter: Processing webhook event", {
+        hasBody: !!rawBody,
+        bodyLength: rawBody ? rawBody.length : 0,
+        hasSignature: !!signature,
+        hasSecret: !!endpointSecret
+      });
+      
       if (!endpointSecret) {
         throw new WebhookVerificationError("Webhook endpoint secret not configured");
       }
 
       // Verify webhook signature
+      console.log("🔍 StripeAdapter: Verifying webhook signature");
       const event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret);
+      
+      console.log("✅ StripeAdapter: Webhook signature verified", {
+        eventId: event.id,
+        eventType: event.type,
+        created: event.created
+      });
       
       // Store the raw event
       const webhookEvent = await WebhookEvent.createFromStripeEvent(event, "platform");
       
+      console.log("💾 StripeAdapter: Webhook event stored", {
+        webhookEventId: webhookEvent._id,
+        stripeEventId: event.id,
+        eventType: event.type
+      });
+      
       // Process the event asynchronously
+      console.log("🚀 StripeAdapter: Starting async webhook processing");
       setImmediate(() => this.processWebhookEvent(webhookEvent));
       
       return { received: true, eventId: event.id };
@@ -484,32 +505,47 @@ class StripeAdapter extends PaymentAdapter {
     try {
       const event = webhookEvent.rawData;
       
+      console.log("🔄 StripeAdapter: Processing webhook event", {
+        eventId: webhookEvent.stripeEventId,
+        eventType: event.type,
+        webhookEventId: webhookEvent._id
+      });
+      
       switch (event.type) {
         case "payment_intent.succeeded":
+          console.log("💳 StripeAdapter: Handling payment_intent.succeeded");
           await this.handlePaymentIntentSucceeded(event);
           break;
           
         case "payment_intent.payment_failed":
+          console.log("❌ StripeAdapter: Handling payment_intent.payment_failed");
           await this.handlePaymentIntentFailed(event);
           break;
           
         case "transfer.created":
+          console.log("🔄 StripeAdapter: Handling transfer.created");
           await this.handleTransferCreated(event);
           break;
           
         case "transfer.updated":
+          console.log("🔄 StripeAdapter: Handling transfer.updated");
           await this.handleTransferUpdated(event);
           break;
           
         case "account.updated":
+          console.log("📄 StripeAdapter: Handling account.updated");
           await this.handleAccountUpdated(event);
           break;
           
         default:
-          console.log(`Unhandled webhook event type: ${event.type}`);
+          console.log(`⚠️ StripeAdapter: Unhandled webhook event type: ${event.type}`);
       }
       
       await webhookEvent.markAsProcessed();
+      console.log("✅ StripeAdapter: Webhook event marked as processed", {
+        eventId: webhookEvent.stripeEventId,
+        eventType: event.type
+      });
       
     } catch (error) {
       await webhookEvent.recordProcessingError(error);
@@ -526,8 +562,140 @@ class StripeAdapter extends PaymentAdapter {
     const paymentIntent = event.data.object;
     const operation = await PaymentOperation.getByStripeId(paymentIntent.id);
     
+    console.log("✅ StripeAdapter: Handling payment_intent.succeeded", {
+      paymentIntentId: paymentIntent.id,
+      amount: paymentIntent.amount,
+      currency: paymentIntent.currency,
+      operationFound: !!operation,
+      metadata: paymentIntent.metadata
+    });
+    
     if (operation) {
+      console.log("🔄 StripeAdapter: Marking operation as succeeded", {
+        operationId: operation._id,
+        paymentIntentId: paymentIntent.id
+      });
       await operation.markAsSucceeded(paymentIntent);
+    } else {
+      // Handle legacy wallet funding that doesn't have PaymentOperation records
+      const metadata = paymentIntent.metadata || {};
+      console.log("🔍 StripeAdapter: No operation found, checking for legacy wallet funding", {
+        paymentIntentId: paymentIntent.id,
+        metadataType: metadata.type,
+        hasUserId: !!metadata.userId,
+        hasWalletId: !!metadata.walletId
+      });
+      
+      if (metadata.type === "wallet_funding" && metadata.userId && metadata.walletId) {
+        console.log("💰 StripeAdapter: Processing legacy wallet funding");
+        await this.handleLegacyWalletFunding(paymentIntent);
+      } else {
+        console.log("⚠️ StripeAdapter: Payment intent not recognized as legacy wallet funding", {
+          paymentIntentId: paymentIntent.id,
+          metadata
+        });
+      }
+    }
+  }
+
+  async handleLegacyWalletFunding(paymentIntent) {
+    const { Transaction } = require("../../models/transaction");
+    const { Wallet } = require("../../models/wallet");
+    
+    try {
+      const metadata = paymentIntent.metadata;
+      const userId = metadata.userId;
+      const walletId = metadata.walletId;
+      const amountCents = paymentIntent.amount;
+      const amountDollars = amountCents / 100;
+
+      console.log("🔄 StripeAdapter: Processing legacy wallet funding", {
+        paymentIntentId: paymentIntent.id,
+        userId,
+        walletId,
+        amountCents,
+        amountDollars
+      });
+
+      // Get the wallet
+      let wallet = await Wallet.findById(walletId);
+      console.log("🔍 StripeAdapter: Wallet lookup", {
+        walletId,
+        walletFound: !!wallet,
+        currentBalance: wallet?.balance
+      });
+      
+      if (!wallet) {
+        wallet = await Wallet.getWalletByUserId(userId);
+        console.log("🔍 StripeAdapter: Fallback wallet lookup by userId", {
+          userId,
+          walletFound: !!wallet,
+          walletId: wallet?._id
+        });
+      }
+      
+      if (wallet) {
+        const balanceBefore = wallet.balance;
+        
+        // Add funds to wallet
+        console.log("💰 StripeAdapter: Adding funds to wallet", {
+          walletId: wallet._id,
+          balanceBefore,
+          amountDollars
+        });
+        
+        await wallet.addFunds(amountDollars);
+        
+        // Refresh to get updated balance
+        await wallet.reload();
+        console.log("✅ StripeAdapter: Funds added to wallet", {
+          walletId: wallet._id,
+          balanceBefore,
+          balanceAfter: wallet.balance,
+          amountAdded: amountDollars
+        });
+        
+        // Update existing pending transaction to completed
+        const existingTransaction = await Transaction.getTransactionByPaymentIntent(paymentIntent.id);
+        console.log("🔍 StripeAdapter: Looking for existing transaction", {
+          paymentIntentId: paymentIntent.id,
+          transactionFound: !!existingTransaction,
+          transactionStatus: existingTransaction?.status
+        });
+        
+        if (existingTransaction && existingTransaction.status === "pending") {
+          console.log("🔄 StripeAdapter: Marking transaction as completed", {
+            transactionId: existingTransaction._id,
+            externalId: existingTransaction.externalId
+          });
+          await existingTransaction.markAsCompleted();
+          console.log("✅ StripeAdapter: Transaction marked as completed");
+        } else {
+          console.log("⚠️ StripeAdapter: No pending transaction found or already processed", {
+            paymentIntentId: paymentIntent.id,
+            existingTransaction: !!existingTransaction,
+            status: existingTransaction?.status
+          });
+        }
+      } else {
+        console.log("❌ StripeAdapter: No wallet found for legacy funding", {
+          paymentIntentId: paymentIntent.id,
+          userId,
+          walletId
+        });
+      }
+    } catch (error) {
+      console.error("❌ StripeAdapter: Error in handleLegacyWalletFunding", {
+        paymentIntentId: paymentIntent.id,
+        error: error.message,
+        stack: error.stack
+      });
+      
+      PaymentErrorHandler.logError(error, {
+        method: "handleLegacyWalletFunding",
+        paymentIntentId: paymentIntent.id,
+        userId: paymentIntent.metadata?.userId
+      });
     }
   }
 
@@ -541,6 +709,31 @@ class StripeAdapter extends PaymentAdapter {
         error?.code || "payment_failed",
         error?.message || "Payment failed"
       );
+    } else {
+      // Handle legacy wallet funding failures
+      const metadata = paymentIntent.metadata || {};
+      if (metadata.type === "wallet_funding" && metadata.userId && metadata.walletId) {
+        await this.handleLegacyWalletFundingFailure(paymentIntent);
+      }
+    }
+  }
+
+  async handleLegacyWalletFundingFailure(paymentIntent) {
+    const { Transaction } = require("../../models/transaction");
+    
+    try {
+      // Update existing pending transaction to failed
+      const existingTransaction = await Transaction.getTransactionByPaymentIntent(paymentIntent.id);
+      if (existingTransaction && existingTransaction.status === "pending") {
+        const errorMessage = paymentIntent.last_payment_error?.message || "Payment failed";
+        await existingTransaction.markAsFailed(errorMessage);
+      }
+    } catch (error) {
+      PaymentErrorHandler.logError(error, {
+        method: "handleLegacyWalletFundingFailure",
+        paymentIntentId: paymentIntent.id,
+        userId: paymentIntent.metadata?.userId
+      });
     }
   }
 

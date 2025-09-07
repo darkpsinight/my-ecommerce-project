@@ -4,6 +4,7 @@ const {
   getWallet,
   createPaymentIntent,
   createTopUpRequest,
+  createCheckoutSession,
   confirmPayment,
   getTransactions
 } = require("../handlers/walletHandlers");
@@ -70,6 +71,22 @@ const walletRoutes = async (fastify, opts) => {
     ],
     schema: walletSchema.createTopUpRequest,
     handler: createTopUpRequest
+  });
+
+  // Create Stripe Checkout session for wallet funding
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.sensitive
+    },
+    method: "POST",
+    url: "/checkout-session",
+    preHandler: [
+      verifyAuth(["buyer", "seller", "admin"]),
+      WalletFeatureFlagMiddleware.requirePaymentsEnabled(),
+      WalletFeatureFlagMiddleware.addWalletContext()
+    ],
+    schema: walletSchema.createCheckoutSession,
+    handler: createCheckoutSession
   });
 
   // Confirm payment and update wallet

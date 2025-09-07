@@ -127,6 +127,8 @@ class WebhookProcessor {
       // Handle specific payment types
       if (paymentIntent.metadata?.type === "wallet_topup") {
         await this.handleWalletTopupSuccess(paymentIntent);
+      } else if (paymentIntent.metadata?.type === "wallet_funding") {
+        await this.handleLegacyWalletFundingSuccess(paymentIntent);
       } else if (paymentIntent.metadata?.type === "escrow_payment") {
         await this.handleEscrowPaymentSuccess(paymentIntent);
       }
@@ -438,6 +440,18 @@ class WebhookProcessor {
       { type: "wallet_topup_success", id: paymentIntent.id },
       {
         buyerId: paymentIntent.metadata?.buyerId,
+        amount: paymentIntent.amount
+      }
+    );
+  }
+
+  async handleLegacyWalletFundingSuccess(paymentIntent) {
+    // Handle successful legacy wallet funding
+    // This integrates with wallet service to credit the buyer's wallet
+    this.logger.logOperationSuccess(
+      { type: "legacy_wallet_funding_success", id: paymentIntent.id },
+      {
+        userId: paymentIntent.metadata?.userId,
         amount: paymentIntent.amount
       }
     );

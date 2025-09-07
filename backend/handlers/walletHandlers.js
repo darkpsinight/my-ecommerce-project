@@ -481,10 +481,116 @@ const getTransactions = async (request, reply) => {
   }
 };
 
+// @route   POST /api/v1/wallet/checkout-session
+// @desc    Create Stripe Checkout session for wallet funding
+// @access  Private (buyer role required)
+const createCheckoutSession = async (request, reply) => {
+  request.log.info("handlers/createCheckoutSession");
+
+  try {
+    const { amount, currency = configs.WALLET_DEFAULT_CURRENCY } = request.body;
+
+    // Get user by uid from JWT token to get MongoDB _id
+    const user = await User.findOne({ uid: request.user.uid });
+    if (!user) {
+      return sendErrorResponse(reply, 404, "User not found");
+    }
+    const userId = user._id;
+
+    // Validate amount
+    const minAmount = configs.WALLET_MIN_FUNDING_AMOUNT;
+    const maxAmount = configs.WALLET_MAX_FUNDING_AMOUNT;
+
+    if (amount < minAmount || amount > maxAmount) {
+      return sendErrorResponse(reply, 400, `Amount must be between ${minAmount} and ${maxAmount}`, {
+        metadata: { hint: `Please enter an amount between ${minAmount} and ${maxAmount}` }
+      });
+    }
+
+    // Get or create wallet
+    let wallet = await Wallet.getWalletByUserId(userId);
+    if (!wallet) {
+      wallet = await Wallet.createWalletForUser(userId, currency);
+    }
+
+    // Get or create Stripe customer
+    let customerId = user.stripeCustomerId;
+
+    if (!customerId) {
+      const stripeInstance = getStripe();
+      const customer = await stripeInstance.customers.create({
+        email: user.email,
+        metadata: {
+          userId: userId.toString(),
+          walletId: wallet._id.toString()
+        }
+      });
+
+      customerId = customer.id;
+      user.stripeCustomerId = customerId;
+      await user.save();
+    }
+
+    // Create Stripe Checkout session
+    const stripeInstance = getStripe();
+    const session = await stripeInstance.checkout.sessions.create({
+      customer_email: user.email, // Pre-fill email but allow editing
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: currency.toLowerCase(),
+          product_data: {
+            name: 'Digital Wallet Funding',
+            description: `Add $${amount} to your digital wallet`
+          },
+          unit_amount: Math.round(amount * 100) // Convert to cents
+        },
+        quantity: 1
+      }],
+      mode: 'payment',
+      ui_mode: 'embedded', // Use embedded checkout
+      redirect_on_completion: 'never', // Prevent redirect
+      metadata: {
+        userId: userId.toString(),
+        walletId: wallet._id.toString(),
+        type: "wallet_funding",
+        amount: amount.toString()
+      }
+    });
+
+    // Create pending transaction record
+    await Transaction.createFundingTransaction({
+      walletId: wallet._id,
+      userId,
+      amount,
+      currency,
+      paymentIntentId: session.payment_intent, // Stripe Checkout creates a payment intent
+      balanceBefore: wallet.balance
+    });
+
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "Checkout session created successfully",
+      data: {
+        sessionId: session.id,
+        clientSecret: session.client_secret, // For embedded checkout
+        amount,
+        currency: currency.toUpperCase()
+      }
+    });
+  } catch (error) {
+    request.log.error(`Error creating checkout session: ${error.message}`);
+    return sendErrorResponse(reply, 500, "Failed to create checkout session", {
+      metadata: { hint: "Please try again later" }
+    });
+  }
+};
+
 module.exports = {
   getWallet,
   createPaymentIntent,
   createTopUpRequest,
+  createCheckoutSession,
   confirmPayment,
   getTransactions
 };

@@ -3,15 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { walletApi, WalletData, TransactionData } from '@/services/wallet';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { WalletPageSkeleton } from '@/components/Wallet/SkeletonLoaders';
 import { useAuthRefresh } from '@/hooks/useAuthRefresh';
+import CheckoutModal from '@/components/Wallet/CheckoutModal';
 import toast from 'react-hot-toast';
-
-// Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 interface WalletPageProps {}
 
@@ -21,12 +18,9 @@ const WalletContent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fundingAmount, setFundingAmount] = useState<number>(50);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isRefreshingTransactions, setIsRefreshingTransactions] = useState(false);
   const [isRefreshingWallet, setIsRefreshingWallet] = useState(false);
-
-  const stripe = useStripe();
-  const elements = useElements();
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 
   // Load wallet data
   const loadWalletData = async () => {
@@ -86,68 +80,25 @@ const WalletContent: React.FC = () => {
     }
   };
 
-  // Handle funding wallet
-  const handleFundWallet = async () => {
-    if (!stripe || !elements) {
-      toast.error('Stripe not loaded');
-      return;
-    }
-
+  // Handle opening checkout modal
+  const handleOpenCheckout = () => {
     if (fundingAmount < 5) {
       toast.error('Amount must be at least $5');
       return;
     }
+    setIsCheckoutModalOpen(true);
+  };
 
-    setIsProcessingPayment(true);
+  // Handle closing checkout modal
+  const handleCloseCheckout = () => {
+    setIsCheckoutModalOpen(false);
+  };
 
-    try {
-      // Create payment intent
-      const paymentIntentResponse = await walletApi.createPaymentIntent({
-        amount: fundingAmount,
-        currency: 'USD'
-      });
-
-      if (!paymentIntentResponse.success) {
-        throw new Error(paymentIntentResponse.message);
-      }
-
-      const { clientSecret, paymentIntentId } = paymentIntentResponse.data;
-
-      // Confirm payment with Stripe
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) {
-        throw new Error('Card element not found');
-      }
-
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement,
-        }
-      });
-
-      if (stripeError) {
-        throw new Error(stripeError.message);
-      }
-
-      if (paymentIntent?.status === 'succeeded') {
-        // Confirm payment on backend
-        const confirmResponse = await walletApi.confirmPayment({
-          paymentIntentId
-        });
-
-        if (confirmResponse.success) {
-          toast.success(`Successfully added $${fundingAmount} to your wallet!`);
-          setFundingAmount(50); // Reset amount
-          loadWalletData(); // Reload wallet data
-        } else {
-          throw new Error(confirmResponse.message);
-        }
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Payment failed');
-    } finally {
-      setIsProcessingPayment(false);
-    }
+  // Handle successful payment (for embedded checkout)
+  const handlePaymentSuccess = () => {
+    setFundingAmount(50); // Reset amount
+    setIsCheckoutModalOpen(false);
+    loadWalletData(); // Reload wallet data
   };
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
@@ -448,67 +399,36 @@ const WalletContent: React.FC = () => {
               </fieldset>
             </div>
 
-            {/* Payment Method - Single Active Method */}
+            {/* Payment Method - Checkout Button */}
             <div className="mb-4">
               <h4 className="block text-sm font-medium text-dark mb-3">Payment Method</h4>
-              <div className="rounded-xl border-2 border-blue-light-4 bg-blue-light-5/30 p-3">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 bg-blue-light-4 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
+              <div className="rounded-xl border-2 border-gray-3 bg-gray-1/50 p-4">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex-shrink-0">
+                    <Image 
+                      src="/images/svg/stripe/Stripe_Logo,_revised_2016.svg" 
+                      alt="Stripe" 
+                      width={80} 
+                      height={32} 
+                      className="object-contain"
+                    />
                   </div>
                   <div className="flex-1">
-                    <h5 className="font-semibold text-dark text-sm">Credit/Debit Card</h5>
-                    <p className="text-xs text-body">Secured by Stripe - Industry standard encryption</p>
+                    <h5 className="font-semibold text-dark text-base">Secure Stripe Checkout</h5>
+                    <p className="text-sm text-body">Quick & secure payment with industry standard encryption</p>
                   </div>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue text-white">
-                    Active
-                  </span>
-                </div>
-                
-                <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 mb-3">
-                  <label htmlFor="card-element" className="sr-only">
-                    Credit or debit card information
-                  </label>
-                  <CardElement
-                    id="card-element"
-                    options={{
-                      style: {
-                        base: {
-                          fontSize: '14px',
-                          color: '#374151',
-                          fontFamily: 'system-ui, sans-serif',
-                          '::placeholder': {
-                            color: '#9CA3AF',
-                          },
-                        },
-                      },
-                    }}
-                  />
                 </div>
 
                 <button
                   type="button"
-                  onClick={handleFundWallet}
-                  disabled={isProcessingPayment || !stripe || !elements}
+                  onClick={handleOpenCheckout}
                   aria-describedby="add-funds-status"
-                  className="w-full font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 text-sm bg-blue text-white hover:bg-blue-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full font-semibold py-3 px-4 rounded-lg transition-all duration-200 text-sm bg-blue text-white hover:bg-blue-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  {isProcessingPayment ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    `Add ${formatCurrency(fundingAmount)}`
-                  )}
+                  Add {formatCurrency(fundingAmount)} - Continue to Secure Checkout
                 </button>
                 <div id="add-funds-status" className="sr-only" aria-live="polite">
-                  {isProcessingPayment ? 'Processing payment...' : 'Ready to add funds'}
+                  Ready to add funds
                 </div>
               </div>
             </div>
@@ -635,6 +555,15 @@ const WalletContent: React.FC = () => {
         </section>
       </div>
     </section>
+
+    {/* Checkout Modal */}
+    <CheckoutModal 
+      isOpen={isCheckoutModalOpen}
+      closeModal={handleCloseCheckout}
+      amount={fundingAmount}
+      currency="USD"
+      onPaymentSuccess={handlePaymentSuccess}
+    />
     </>
   );
 };
@@ -719,11 +648,7 @@ const WalletPage: React.FC<WalletPageProps> = () => {
     return null;
   }
 
-  return (
-    <Elements stripe={stripePromise}>
-      <WalletContent />
-    </Elements>
-  );
+  return <WalletContent />;
 };
 
 export default WalletPage;

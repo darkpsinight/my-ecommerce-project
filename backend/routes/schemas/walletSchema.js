@@ -205,6 +205,50 @@ const walletSchema = {
     }
   },
 
+  // Create Stripe Checkout session for wallet funding
+  createCheckoutSession: {
+    description: "Create a Stripe Checkout session for wallet funding",
+    tags: ["Wallet"],
+    security: jwtSecurity,
+    body: {
+      type: "object",
+      properties: {
+        amount: {
+          type: "number",
+          minimum: configs.WALLET_MIN_FUNDING_AMOUNT,
+          maximum: configs.WALLET_MAX_FUNDING_AMOUNT,
+          example: 50
+        },
+        currency: {
+          type: "string",
+          enum: ["USD", "EUR", "GBP"],
+          default: configs.WALLET_DEFAULT_CURRENCY
+        }
+      },
+      required: ["amount"],
+      additionalProperties: false
+    },
+    response: {
+      200: {
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          message: { type: "string" },
+          data: {
+            type: "object",
+            properties: {
+              sessionId: { type: "string" },
+              clientSecret: { type: "string" },
+              amount: { type: "number" },
+              currency: { type: "string" }
+            }
+          }
+        }
+      },
+      ...errors
+    }
+  },
+
   // Get transaction history
   getTransactions: {
     description: "Get user's wallet transaction history with pagination",

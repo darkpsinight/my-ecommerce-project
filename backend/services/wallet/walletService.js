@@ -405,7 +405,7 @@ class WalletService {
       return {
         success: true,
         transactions: platformTransactions.map(tx => ({
-          ...tx.toObject(),
+          ...tx, // tx is already a plain object from .lean()
           source: "platform",
           amountCents: Math.round(tx.amount * 100),
           balanceBeforeCents: Math.round(tx.balanceBefore * 100),

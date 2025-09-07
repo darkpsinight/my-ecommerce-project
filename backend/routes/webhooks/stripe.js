@@ -24,7 +24,15 @@ const handleStripeWebhook = async (request, reply) => {
     const rawBody = request.rawBody || request.body;
     const signature = request.headers['stripe-signature'];
     
+    console.log("🔄 Stripe webhook received", {
+      hasSignature: !!signature,
+      bodyLength: rawBody ? rawBody.length : 0,
+      ip: request.ip,
+      userAgent: request.headers['user-agent']
+    });
+    
     if (!signature) {
+      console.log("❌ Missing Stripe signature header");
       logger.logSecurityEvent("missing_webhook_signature", {
         ip: request.ip,
         userAgent: request.headers['user-agent']
@@ -36,6 +44,7 @@ const handleStripeWebhook = async (request, reply) => {
     // Determine which webhook secret to use based on event source
     const webhookSecret = configs.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
+      console.log("❌ Webhook secret not configured");
       logger.logSecurityEvent("missing_webhook_secret", {
         configuredSecrets: {
           platform: !!configs.STRIPE_WEBHOOK_SECRET,
@@ -46,6 +55,8 @@ const handleStripeWebhook = async (request, reply) => {
       return sendErrorResponse(reply, 500, "Webhook secret not configured");
     }
 
+    console.log("🔍 Processing webhook with StripeAdapter");
+    
     // Verify and process the webhook
     const result = await stripeAdapter.handleWebhookEvent(
       rawBody,
@@ -54,6 +65,12 @@ const handleStripeWebhook = async (request, reply) => {
     );
 
     const processingTime = Date.now() - startTime;
+    
+    console.log("✅ Stripe webhook processed successfully", {
+      eventId: result.eventId,
+      processingTime,
+      received: result.received
+    });
     
     logger.logWebhookReceived({
       id: result.eventId,

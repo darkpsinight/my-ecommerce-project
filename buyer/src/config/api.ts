@@ -20,6 +20,7 @@ export const AUTH_API = {
 export const WALLET_API = {
     GET_WALLET: `${API_URL}/wallet`,
     CREATE_PAYMENT_INTENT: `${API_URL}/wallet/payment-intent`,
+    CREATE_CHECKOUT_SESSION: `${API_URL}/wallet/checkout-session`,
     CONFIRM_PAYMENT: `${API_URL}/wallet/confirm-payment`,
     GET_TRANSACTIONS: `${API_URL}/wallet/transactions`,
 };

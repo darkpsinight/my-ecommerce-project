@@ -110,6 +110,22 @@ export interface TransactionsResponse {
   };
 }
 
+export interface CreateCheckoutSessionData {
+  amount: number;
+  currency?: string;
+}
+
+export interface CheckoutSessionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    sessionId: string;
+    clientSecret: string;
+    amount: number;
+    currency: string;
+  };
+}
+
 export interface CreatePaymentIntentData {
   amount: number;
   currency?: string;
@@ -171,6 +187,23 @@ export const walletApi = {
       throw error.response?.data || {
         success: false,
         message: 'Failed to confirm payment',
+        statusCode: 500
+      };
+    }
+  },
+
+  // Create Stripe Checkout session for wallet funding
+  createCheckoutSession: async (data: CreateCheckoutSessionData): Promise<CheckoutSessionResponse> => {
+    try {
+      const response = await axiosInstance.post<CheckoutSessionResponse>(
+        WALLET_API.CREATE_CHECKOUT_SESSION,
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || {
+        success: false,
+        message: 'Failed to create checkout session',
         statusCode: 500
       };
     }

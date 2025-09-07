@@ -365,14 +365,14 @@ const SellerProfileSetupModal: React.FC<SellerProfileSetupModalProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <StoreIcon color="primary" />
           <Typography variant="h4">
-            Set Up Your Seller Profile
+            Create Your Public Seller Profile
           </Typography>
         </Box>
       </DialogTitle>
 
       <DialogContent>
         <Alert severity="info" sx={{ mb: 3 }}>
-          Complete your seller profile to start selling on our marketplace. This helps buyers learn about you and builds trust.
+          Complete your public profile to build trust with buyers and showcase your brand. This information will be visible on your listings and seller page.
         </Alert>
 
         <Stepper activeStep={activeStep} orientation="vertical">

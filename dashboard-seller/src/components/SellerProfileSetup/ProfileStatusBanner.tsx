@@ -75,12 +75,12 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
   if (!profileData.hasProfile) {
     return (
       <Box sx={{ mb: 3 }}>
-        <Alert 
-          severity="warning" 
+        <Alert
+          severity="warning"
           action={
-            <Button 
-              color="inherit" 
-              size="small" 
+            <Button
+              color="inherit"
+              size="small"
               startIcon={<StoreIcon />}
               onClick={onSetupProfile}
               variant="outlined"
@@ -96,7 +96,7 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
             </Box>
           </AlertTitle>
           <Typography variant="body2">
-            Welcome to the seller dashboard! To start selling, please complete your seller profile. 
+            Welcome to the seller dashboard! To start selling, please complete your seller profile.
             This helps buyers learn about you and builds trust in your listings.
           </Typography>
         </Alert>
@@ -116,52 +116,21 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
 
   const completedCount = completionItems.filter(item => item.completed).length;
   const completionPercentage = Math.round((completedCount / completionItems.length) * 100);
-  
+
   // Check if financial setup is also needed
   const needsPaymentSetup = financialData && !financialData.canReceivePayments;
 
+  // Profile complete
   if (completionPercentage === 100) {
-    // Profile complete, check payment setup
-    if (needsPaymentSetup) {
+    if (financialData?.canReceivePayments && !isDismissed) {
       return (
         <Box sx={{ mb: 3 }}>
-          <Alert 
-            severity="warning"
-            action={
-              <Button 
-                color="inherit" 
-                size="small" 
-                onClick={onSetupPayments}
-                variant="outlined"
-              >
-                Set Up Payments
-              </Button>
-            }
-          >
-            <AlertTitle>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <WarningIcon />
-                Payment Setup Required
-              </Box>
-            </AlertTitle>
-            <Typography variant="body2">
-              Your profile is complete! Now set up payment processing to start selling and receiving payments from buyers.
-            </Typography>
-          </Alert>
-        </Box>
-      );
-    }
-    
-    // Both profile and payments complete - only show if not dismissed
-    if (!isDismissed) {
-      return (
-        <Box sx={{ mb: 3 }}>
-          <Alert 
+          <Alert
             severity="success"
             action={
-              <Button 
-                color="inherit" 
-                size="small" 
+              <Button
+                color="inherit"
+                size="small"
                 onClick={handleDismissCompletion}
                 variant="outlined"
               >
@@ -181,20 +150,20 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
           </Alert>
         </Box>
       );
-    } else {
-      // If completion message is dismissed, don't show any banner
-      return null;
     }
+
+    // If payments not ready OR dismissed, return null
+    return null;
   }
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Alert 
+      <Alert
         severity="info"
         action={
-          <Button 
-            color="inherit" 
-            size="small" 
+          <Button
+            color="inherit"
+            size="small"
             onClick={onSetupProfile}
             variant="outlined"
           >
@@ -206,7 +175,7 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
         <Typography variant="body2" sx={{ mb: 2 }}>
           Your seller profile is partially complete. Consider adding the missing information to improve buyer trust.
         </Typography>
-        
+
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {completionItems.map((item) => (
             <Chip
@@ -219,10 +188,10 @@ const ProfileStatusBanner: React.FC<ProfileStatusBannerProps> = ({
             />
           ))}
         </Box>
-        
-        <LinearProgress 
-          variant="determinate" 
-          value={completionPercentage} 
+
+        <LinearProgress
+          variant="determinate"
+          value={completionPercentage}
           sx={{ mt: 2 }}
         />
       </Alert>

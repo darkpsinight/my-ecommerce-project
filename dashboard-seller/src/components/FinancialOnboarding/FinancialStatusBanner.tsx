@@ -79,12 +79,12 @@ const FinancialStatusBanner: React.FC<FinancialStatusBannerProps> = ({
     if (!isDismissed) {
       return (
         <Box sx={{ mb: 3 }}>
-          <Alert 
+          <Alert
             severity="success"
             action={
-              <Button 
-                color="inherit" 
-                size="small" 
+              <Button
+                color="inherit"
+                size="small"
                 onClick={handleDismissFinancial}
                 variant="outlined"
               >
@@ -100,8 +100,8 @@ const FinancialStatusBanner: React.FC<FinancialStatusBannerProps> = ({
             </AlertTitle>
             <Typography variant="body2">
               Your payment processing is active. You can now receive payments from buyers.
-              <Button 
-                size="small" 
+              <Button
+                size="small"
                 onClick={onViewPaymentSettings}
                 sx={{ ml: 1, textTransform: 'none' }}
               >
@@ -119,12 +119,12 @@ const FinancialStatusBanner: React.FC<FinancialStatusBannerProps> = ({
   if (financialData.hasStripeAccount && financialData.stripeAccountStatus === 'requires_action') {
     return (
       <Box sx={{ mb: 3 }}>
-        <Alert 
+        <Alert
           severity="warning"
           action={
-            <Button 
-              color="inherit" 
-              size="small" 
+            <Button
+              color="inherit"
+              size="small"
               startIcon={<SecurityIcon />}
               onClick={onViewPaymentSettings}
               variant="outlined"
@@ -164,12 +164,12 @@ const FinancialStatusBanner: React.FC<FinancialStatusBannerProps> = ({
   if (financialData.hasStripeAccount && financialData.stripeAccountStatus === 'pending') {
     return (
       <Box sx={{ mb: 3 }}>
-        <Alert 
+        <Alert
           severity="info"
           action={
-            <Button 
-              color="inherit" 
-              size="small" 
+            <Button
+              color="inherit"
+              size="small"
               onClick={onViewPaymentSettings}
               variant="outlined"
             >
@@ -196,14 +196,14 @@ const FinancialStatusBanner: React.FC<FinancialStatusBannerProps> = ({
   if (!financialData.hasStripeAccount) {
     return (
       <Box sx={{ mb: 3 }}>
-        <Alert 
+        <Alert
           severity="error"
           action={
-            <Button 
-              color="inherit" 
-              size="small" 
+            <Button
+              color="inherit"
+              size="small"
               startIcon={<PaymentIcon />}
-              onClick={onSetupPayments}
+              onClick={onViewPaymentSettings}
               variant="outlined"
             >
               Set Up Payments
@@ -217,7 +217,7 @@ const FinancialStatusBanner: React.FC<FinancialStatusBannerProps> = ({
             </Box>
           </AlertTitle>
           <Typography variant="body2">
-            You need to set up payment processing before you can start selling. 
+            You need to set up payment processing before you can start selling.
             This is required to receive payments from buyers.
           </Typography>
         </Alert>

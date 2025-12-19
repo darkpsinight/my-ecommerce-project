@@ -19,6 +19,10 @@ const {
 const {
   getTransactionSuccessRate,
 } = require("../handlers/transactionAnalyticsHandler");
+const {
+  connectStripeAccount,
+  getStripeAccountStatus,
+} = require("../handlers/stripeConnectHandler");
 
 const sellerRoutes = async (fastify, opts) => {
   // Get seller profile (basic user info + extended profile)
@@ -436,7 +440,7 @@ const sellerRoutes = async (fastify, opts) => {
   });
 
   // CAC Analytics Routes
-  
+
   // Get CAC analytics
   fastify.route({
     method: "GET",
@@ -547,6 +551,24 @@ const sellerRoutes = async (fastify, opts) => {
       },
     },
     handler: getTransactionSuccessRate,
+  });
+
+  // Stripe Connect Routes
+
+  // Initiate Stripe Connect (Create Account + Link)
+  fastify.route({
+    method: "POST",
+    url: "/stripe/connect",
+    preHandler: verifyAuth(["seller"]),
+    handler: connectStripeAccount,
+  });
+
+  // Get Stripe Account Status
+  fastify.route({
+    method: "GET",
+    url: "/stripe/status",
+    preHandler: verifyAuth(["seller"]),
+    handler: getStripeAccountStatus,
   });
 };
 

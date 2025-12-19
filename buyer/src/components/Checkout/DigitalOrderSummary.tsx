@@ -133,8 +133,43 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
           </div>
         ))}
 
+        {/* Subtotal */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 sm:pt-5 gap-2 sm:gap-0 border-t border-gray-3 mt-4">
+          <div>
+            <p className="font-medium text-base text-dark">Subtotal</p>
+          </div>
+          <div className="text-left sm:text-right">
+            <p className="font-medium text-base text-dark">
+              {formatPrice(totalPrice)}
+            </p>
+          </div>
+        </div>
+
+        {/* Processing Fee */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-2 gap-2 sm:gap-0">
+          <div>
+            <p className="font-medium text-base text-gray-500">Processing Fee</p>
+            <p className="text-xs text-gray-400">Transaction processing costs</p>
+          </div>
+          <div className="text-left sm:text-right">
+            <p className="font-medium text-base text-gray-500">
+              {(() => {
+                const amountCents = Math.round(totalPrice * 100);
+                // Only calculate fee if total > 0
+                if (amountCents === 0) return formatPrice(0);
+
+                const fixedFeeCents = 30;
+                const percentageFee = 0.029;
+                const grossAmountCents = Math.ceil((amountCents + fixedFeeCents) / (1 - percentageFee));
+                const feeCents = grossAmountCents - amountCents;
+                return formatPrice(feeCents / 100);
+              })()}
+            </p>
+          </div>
+        </div>
+
         {/* Total */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 sm:pt-5 gap-2 sm:gap-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 sm:pt-5 gap-2 sm:gap-0 border-t border-gray-3 mt-4">
           <div>
             <p className="font-semibold text-base sm:text-lg text-dark">Total</p>
             <p className="text-xs sm:text-sm text-gray-500">
@@ -143,7 +178,15 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
           </div>
           <div className="text-left sm:text-right">
             <p className="font-semibold text-base sm:text-lg text-dark">
-              {formatPrice(totalPrice)}
+              {(() => {
+                const amountCents = Math.round(totalPrice * 100);
+                if (amountCents === 0) return formatPrice(0);
+
+                const fixedFeeCents = 30;
+                const percentageFee = 0.029;
+                const grossAmountCents = Math.ceil((amountCents + fixedFeeCents) / (1 - percentageFee));
+                return formatPrice(grossAmountCents / 100);
+              })()}
             </p>
             <p className="text-xs sm:text-sm text-gray-500">USD</p>
           </div>
@@ -162,7 +205,7 @@ const DigitalOrderSummary: React.FC<DigitalOrderSummaryProps> = ({
                 Instant Digital Delivery
               </h4>
               <p className="text-green-dark text-xs leading-relaxed">
-                Your codes will be available immediately after payment confirmation. 
+                Your codes will be available immediately after payment confirmation.
                 Access them from your{" "}
                 <Link href="/library" className="font-bold text-green-dark hover:text-green-600 underline">
                   Digital library

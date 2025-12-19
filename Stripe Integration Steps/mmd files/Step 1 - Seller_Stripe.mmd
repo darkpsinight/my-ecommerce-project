@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant Seller
+    participant SellerUI as Seller Frontend
+    participant API as Backend API
+    participant Stripe
+
+    Seller->>SellerUI: Login & open dashboard
+    SellerUI->>API: GET /seller/me
+    API-->>SellerUI: kyc_status, stripe_status, stripe_account_id
+
+    SellerUI->>Seller: Show "Connect payouts" banner/modal
+
+    Seller->>SellerUI: Click "Connect with Stripe"
+    SellerUI->>API: POST /seller/stripe/connect
+    alt No stripe_account_id
+        API->>Stripe: Create Custom Account
+        Stripe-->>API: account_id
+        API->>API: Save stripe_account_id
+    end
+    API->>Stripe: Create Account Link (onboarding)
+    Stripe-->>API: account_link.url
+    API-->>SellerUI: account_link.url
+
+    SellerUI->>Seller: Redirect to account_link.url
+    Seller->>Stripe: Fill onboarding form
+    Stripe-->>Seller: Redirect to return_url
+
+    Seller->>SellerUI: Open /seller/payments/return
+    SellerUI->>API: GET /seller/stripe/status
+    API->>Stripe: Retrieve Account
+    Stripe-->>API: account data (charges_enabled, payouts_enabled...)
+    API->>API: Update stripe_status
+    API-->>SellerUI: stripe_status = ready / needs_more_info
+    SellerUI->>Seller: Show success or "needs more info"

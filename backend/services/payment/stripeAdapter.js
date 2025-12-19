@@ -1,11 +1,11 @@
 const PaymentAdapter = require("./paymentAdapter");
-const { 
-  PaymentError, 
-  StripeError, 
-  InsufficientFundsError, 
+const {
+  PaymentError,
+  StripeError,
+  InsufficientFundsError,
   AccountNotVerifiedError,
   WebhookVerificationError,
-  PaymentErrorHandler 
+  PaymentErrorHandler
 } = require("./paymentErrors");
 const PaymentValidation = require("./paymentValidation");
 const PaymentLogger = require("./paymentLogger");
@@ -17,7 +17,7 @@ const { configs } = require("../../configs");
 class StripeAdapter extends PaymentAdapter {
   constructor(config = {}) {
     super(config);
-    
+
     // Initialize Stripe lazily to avoid environment variable issues
     this.stripe = null;
     this.logger = new PaymentLogger();
@@ -40,7 +40,7 @@ class StripeAdapter extends PaymentAdapter {
           500
         );
       }
-      
+
       this.stripe = require("stripe")(this.config.secretKey, {
         apiVersion: this.config.apiVersion
       });
@@ -49,12 +49,21 @@ class StripeAdapter extends PaymentAdapter {
   }
 
   // Account Management Methods
-  async createStripeAccountForSeller(sellerId, country = "US") {
+  async createStripeAccountForSeller(sellerId, country = "US", businessType = "individual") {
     try {
       // Validate inputs
       PaymentValidation.validateUserId(sellerId);
       PaymentValidation.validateCountry(country);
-      
+
+      const validBusinessTypes = ["individual", "company"];
+      if (!validBusinessTypes.includes(businessType)) {
+        throw new PaymentError(
+          `Invalid business type: ${businessType}. Must be one of: ${validBusinessTypes.join(", ")}`,
+          "INVALID_BUSINESS_TYPE",
+          400
+        );
+      }
+
       const stripe = this.getStripe();
       const idempotencyKey = this.generateIdempotencyKey("acct");
 
@@ -74,21 +83,32 @@ class StripeAdapter extends PaymentAdapter {
 
       // Create Stripe Connect account
       const account = await PaymentErrorHandler.withRetry(async () => {
-        return await stripe.accounts.create({
-          type: "custom",
-          country: country,
-          capabilities: {
-            card_payments: { requested: true },
-            transfers: { requested: true }
-          },
-          business_type: "individual", // Can be made configurable
-          metadata: {
-            sellerId: sellerId.toString(),
-            createdBy: "stripe-connect-migration"
+        try {
+          return await stripe.accounts.create({
+            type: configs.STRIPE_ACCOUNT_TYPE,
+            country: country,
+            capabilities: {
+              card_payments: { requested: true },
+              transfers: { requested: true }
+            },
+            business_type: businessType, // Dynamic business type
+            metadata: {
+              sellerId: sellerId.toString(),
+              createdBy: "stripe-connect-migration"
+            }
+          }, {
+            idempotencyKey
+          });
+        } catch (error) {
+          if (error.code === 'country_unsupported') {
+            throw new PaymentError(
+              `Stripe ${configs.STRIPE_ACCOUNT_TYPE} accounts are not supported in ${country}`,
+              "COUNTRY_UNSUPPORTED",
+              400
+            );
           }
-        }, {
-          idempotencyKey
-        });
+          throw error;
+        }
       });
 
       // Save to database
@@ -107,10 +127,10 @@ class StripeAdapter extends PaymentAdapter {
       };
 
     } catch (error) {
-      PaymentErrorHandler.logError(error, { 
-        method: "createStripeAccountForSeller", 
-        sellerId, 
-        country 
+      PaymentErrorHandler.logError(error, {
+        method: "createStripeAccountForSeller",
+        sellerId,
+        country
       });
       throw PaymentErrorHandler.handleStripeError(error);
     }
@@ -145,11 +165,11 @@ class StripeAdapter extends PaymentAdapter {
       };
 
     } catch (error) {
-      PaymentErrorHandler.logError(error, { 
-        method: "createAccountLink", 
-        accountId, 
-        refreshUrl, 
-        returnUrl 
+      PaymentErrorHandler.logError(error, {
+        method: "createAccountLink",
+        accountId,
+        refreshUrl,
+        returnUrl
       });
       throw PaymentErrorHandler.handleStripeError(error);
     }
@@ -179,12 +199,33 @@ class StripeAdapter extends PaymentAdapter {
       };
 
     } catch (error) {
-      PaymentErrorHandler.logError(error, { 
-        method: "getAccountStatus", 
-        accountId 
+      PaymentErrorHandler.logError(error, {
+        method: "getAccountStatus",
+        accountId
       });
       throw PaymentErrorHandler.handleStripeError(error);
     }
+  }
+
+  // Helper: Calculate the gross amount to charge the buyer so the seller gets the target amount
+  calculateGrossAmount(targetAmountCents) {
+    // Stripe US pricing: 2.9% + 30¢
+    // Gross = (Target + FixedFee) / (1 - PercentageFee)
+    // PercentageFee = 0.029
+    // FixedFee = 30 cents
+
+    // TODO: these should be configurable/fetched from Stripe if possible, but hardcoded for now based on US standard
+    const PERCENTAGE_FEE = 0.029;
+    const FIXED_FEE_CENTS = 30;
+
+    const grossAmount = Math.ceil((targetAmountCents + FIXED_FEE_CENTS) / (1 - PERCENTAGE_FEE));
+    const stripeFee = grossAmount - targetAmountCents;
+
+    return {
+      grossAmountCents: grossAmount,
+      stripeFeeCents: stripeFee,
+      netAmountCents: targetAmountCents
+    };
   }
 
   // Payment Processing Methods
@@ -194,18 +235,37 @@ class StripeAdapter extends PaymentAdapter {
       PaymentValidation.validateAmount(amountCents);
       currency = PaymentValidation.validateCurrency(currency);
       metadata = PaymentValidation.validateMetadata(metadata);
-      
+
       const stripe = this.getStripe();
       const idempotencyKey = this.generateIdempotencyKey("pi");
 
+      // Check if we need to gross up the amount (Buyer Pays Fees)
+      // Check metadata or config. Defaulting to true for this flow if not specified
+      const buyerPaysFees = metadata.buyerPaysFees !== 'false';
+
+      let finalAmountCents = amountCents;
+      let stripeFeeCents = 0;
+      let platformFeeCents = 0;
+      let originalAmountCents = amountCents;
+
+      if (buyerPaysFees) {
+        const calculation = this.calculateGrossAmount(amountCents);
+        finalAmountCents = calculation.grossAmountCents;
+        stripeFeeCents = calculation.stripeFeeCents;
+        // platformFee remains 0
+      }
+
       const paymentIntent = await PaymentErrorHandler.withRetry(async () => {
         return await stripe.paymentIntents.create({
-          amount: amountCents,
+          amount: finalAmountCents,
           currency: currency.toLowerCase(),
           metadata: {
             ...metadata,
             createdBy: "stripe-connect-migration",
-            type: "platform_charge"
+            type: "platform_charge",
+            originalAmount: originalAmountCents.toString(),
+            stripeFeeEst: stripeFeeCents.toString(),
+            buyerPaysFees: buyerPaysFees.toString()
           },
           automatic_payment_methods: {
             enabled: true
@@ -218,28 +278,37 @@ class StripeAdapter extends PaymentAdapter {
       // Record the operation
       await PaymentOperation.createCharge({
         stripeId: paymentIntent.id,
-        amountCents,
+        amountCents: finalAmountCents,
         currency,
         userId: metadata.userId,
         escrowId: metadata.escrowId,
-        description: `Platform charge of ${amountCents/100} ${currency}`,
-        metadata
+        description: `Platform charge of ${finalAmountCents / 100} ${currency} (Item: ${originalAmountCents / 100}, Fee: ${stripeFeeCents / 100})`,
+        metadata: {
+          ...metadata,
+          feeStructure: {
+            itemAmount: originalAmountCents,
+            stripeFee: stripeFeeCents,
+            totalCharged: finalAmountCents
+          }
+        }
       });
 
       return {
         paymentIntentId: paymentIntent.id,
         clientSecret: paymentIntent.client_secret,
         status: paymentIntent.status,
-        amountCents,
+        amountCents: finalAmountCents,
+        originalAmountCents,
+        stripeFeeCents,
         currency
       };
 
     } catch (error) {
-      PaymentErrorHandler.logError(error, { 
-        method: "createPaymentIntentOnPlatform", 
-        amountCents, 
-        currency, 
-        metadata 
+      PaymentErrorHandler.logError(error, {
+        method: "createPaymentIntentOnPlatform",
+        amountCents,
+        currency,
+        metadata
       });
       throw PaymentErrorHandler.handleStripeError(error);
     }
@@ -253,7 +322,8 @@ class StripeAdapter extends PaymentAdapter {
       const topUpMetadata = {
         ...metadata,
         buyerId: buyerId.toString(),
-        type: "wallet_topup"
+        type: "wallet_topup",
+        buyerPaysFees: 'true' // Explicitly enable for topups too if desired
       };
 
       return await this.createPaymentIntentOnPlatform(
@@ -263,12 +333,12 @@ class StripeAdapter extends PaymentAdapter {
       );
 
     } catch (error) {
-      PaymentErrorHandler.logError(error, { 
-        method: "createTopUpIntent", 
-        buyerId, 
-        amountCents, 
-        currency, 
-        metadata 
+      PaymentErrorHandler.logError(error, {
+        method: "createTopUpIntent",
+        buyerId,
+        amountCents,
+        currency,
+        metadata
       });
       throw error;
     }
@@ -296,9 +366,9 @@ class StripeAdapter extends PaymentAdapter {
       };
 
     } catch (error) {
-      PaymentErrorHandler.logError(error, { 
-        method: "confirmPaymentIntent", 
-        paymentIntentId 
+      PaymentErrorHandler.logError(error, {
+        method: "confirmPaymentIntent",
+        paymentIntentId
       });
       throw PaymentErrorHandler.handleStripeError(error);
     }
@@ -308,7 +378,7 @@ class StripeAdapter extends PaymentAdapter {
   async createTransferToSeller(escrowId, amountCents, sellerId, stripeAccountId, metadata = {}) {
     try {
       this.validateAmount(amountCents);
-      
+
       const stripe = this.getStripe();
       const idempotencyKey = this.generateIdempotencyKey("tr");
 
@@ -318,10 +388,13 @@ class StripeAdapter extends PaymentAdapter {
         throw new AccountNotVerifiedError(stripeAccountId, stripeAccount?.currentlyDue || []);
       }
 
-      // Calculate platform fee (configurable, default 5%)
-      const platformFeeRate = metadata.platformFeeRate || 0.05;
-      const platformFeeCents = Math.round(amountCents * platformFeeRate);
-      const transferAmountCents = amountCents - platformFeeCents;
+      // 0% Platform Fee Enforcement
+      // We explicitly set platform fee to 0. 
+      // The amountCents passed here should be the 'originalAmount' (Listing Price) 
+      // which we collected from the buyer + fees.
+      const platformFeeRate = 0;
+      const platformFeeCents = 0;
+      const transferAmountCents = amountCents;
 
       const transfer = await PaymentErrorHandler.withRetry(async () => {
         return await stripe.transfers.create({
@@ -362,13 +435,13 @@ class StripeAdapter extends PaymentAdapter {
       };
 
     } catch (error) {
-      PaymentErrorHandler.logError(error, { 
-        method: "createTransferToSeller", 
-        escrowId, 
-        amountCents, 
-        sellerId, 
-        stripeAccountId, 
-        metadata 
+      PaymentErrorHandler.logError(error, {
+        method: "createTransferToSeller",
+        escrowId,
+        amountCents,
+        sellerId,
+        stripeAccountId,
+        metadata
       });
       throw PaymentErrorHandler.handleStripeError(error);
     }
@@ -382,7 +455,7 @@ class StripeAdapter extends PaymentAdapter {
 
       // Get the original payment intent
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-      
+
       if (paymentIntent.status !== "succeeded") {
         throw new PaymentError(
           `Cannot refund payment intent ${paymentIntentId} with status ${paymentIntent.status}`,
@@ -423,7 +496,7 @@ class StripeAdapter extends PaymentAdapter {
         currency: refund.currency.toUpperCase(),
         userId: paymentIntent.metadata?.userId,
         paymentIntentId,
-        description: `Refund of ${refundAmount/100} ${refund.currency.toUpperCase()} for payment ${paymentIntentId}`,
+        description: `Refund of ${refundAmount / 100} ${refund.currency.toUpperCase()} for payment ${paymentIntentId}`,
         metadata: { reason, originalAmount: paymentIntent.amount }
       });
 
@@ -436,11 +509,11 @@ class StripeAdapter extends PaymentAdapter {
       };
 
     } catch (error) {
-      PaymentErrorHandler.logError(error, { 
-        method: "refundPayment", 
-        paymentIntentId, 
-        amountCents, 
-        reason 
+      PaymentErrorHandler.logError(error, {
+        method: "refundPayment",
+        paymentIntentId,
+        amountCents,
+        reason
       });
       throw PaymentErrorHandler.handleStripeError(error);
     }
@@ -450,14 +523,14 @@ class StripeAdapter extends PaymentAdapter {
   async handleWebhookEvent(rawBody, signature, endpointSecret) {
     try {
       const stripe = this.getStripe();
-      
+
       console.log("🔄 StripeAdapter: Processing webhook event", {
         hasBody: !!rawBody,
         bodyLength: rawBody ? rawBody.length : 0,
         hasSignature: !!signature,
         hasSecret: !!endpointSecret
       });
-      
+
       if (!endpointSecret) {
         throw new WebhookVerificationError("Webhook endpoint secret not configured");
       }
@@ -465,34 +538,34 @@ class StripeAdapter extends PaymentAdapter {
       // Verify webhook signature
       console.log("🔍 StripeAdapter: Verifying webhook signature");
       const event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret);
-      
+
       console.log("✅ StripeAdapter: Webhook signature verified", {
         eventId: event.id,
         eventType: event.type,
         created: event.created
       });
-      
+
       // Store the raw event
       const webhookEvent = await WebhookEvent.createFromStripeEvent(event, "platform");
-      
+
       console.log("💾 StripeAdapter: Webhook event stored", {
         webhookEventId: webhookEvent._id,
         stripeEventId: event.id,
         eventType: event.type
       });
-      
+
       // Process the event asynchronously
       console.log("🚀 StripeAdapter: Starting async webhook processing");
       setImmediate(() => this.processWebhookEvent(webhookEvent));
-      
+
       return { received: true, eventId: event.id };
 
     } catch (error) {
       if (error.type === "StripeSignatureVerificationError") {
         throw new WebhookVerificationError(error.message);
       }
-      
-      PaymentErrorHandler.logError(error, { 
+
+      PaymentErrorHandler.logError(error, {
         method: "handleWebhookEvent",
         hasSignature: !!signature,
         hasSecret: !!endpointSecret
@@ -504,53 +577,53 @@ class StripeAdapter extends PaymentAdapter {
   async processWebhookEvent(webhookEvent) {
     try {
       const event = webhookEvent.rawData;
-      
+
       console.log("🔄 StripeAdapter: Processing webhook event", {
         eventId: webhookEvent.stripeEventId,
         eventType: event.type,
         webhookEventId: webhookEvent._id
       });
-      
+
       switch (event.type) {
         case "payment_intent.succeeded":
           console.log("💳 StripeAdapter: Handling payment_intent.succeeded");
           await this.handlePaymentIntentSucceeded(event);
           break;
-          
+
         case "payment_intent.payment_failed":
           console.log("❌ StripeAdapter: Handling payment_intent.payment_failed");
           await this.handlePaymentIntentFailed(event);
           break;
-          
+
         case "transfer.created":
           console.log("🔄 StripeAdapter: Handling transfer.created");
           await this.handleTransferCreated(event);
           break;
-          
+
         case "transfer.updated":
           console.log("🔄 StripeAdapter: Handling transfer.updated");
           await this.handleTransferUpdated(event);
           break;
-          
+
         case "account.updated":
           console.log("📄 StripeAdapter: Handling account.updated");
           await this.handleAccountUpdated(event);
           break;
-          
+
         default:
           console.log(`⚠️ StripeAdapter: Unhandled webhook event type: ${event.type}`);
       }
-      
+
       await webhookEvent.markAsProcessed();
       console.log("✅ StripeAdapter: Webhook event marked as processed", {
         eventId: webhookEvent.stripeEventId,
         eventType: event.type
       });
-      
+
     } catch (error) {
       await webhookEvent.recordProcessingError(error);
-      PaymentErrorHandler.logError(error, { 
-        method: "processWebhookEvent", 
+      PaymentErrorHandler.logError(error, {
+        method: "processWebhookEvent",
         eventType: webhookEvent.type,
         eventId: webhookEvent.stripeEventId
       });
@@ -561,7 +634,7 @@ class StripeAdapter extends PaymentAdapter {
   async handlePaymentIntentSucceeded(event) {
     const paymentIntent = event.data.object;
     const operation = await PaymentOperation.getByStripeId(paymentIntent.id);
-    
+
     console.log("✅ StripeAdapter: Handling payment_intent.succeeded", {
       paymentIntentId: paymentIntent.id,
       amount: paymentIntent.amount,
@@ -569,7 +642,7 @@ class StripeAdapter extends PaymentAdapter {
       operationFound: !!operation,
       metadata: paymentIntent.metadata
     });
-    
+
     if (operation) {
       console.log("🔄 StripeAdapter: Marking operation as succeeded", {
         operationId: operation._id,
@@ -585,7 +658,7 @@ class StripeAdapter extends PaymentAdapter {
         hasUserId: !!metadata.userId,
         hasWalletId: !!metadata.walletId
       });
-      
+
       if (metadata.type === "wallet_funding" && metadata.userId && metadata.walletId) {
         console.log("💰 StripeAdapter: Processing legacy wallet funding");
         await this.handleLegacyWalletFunding(paymentIntent);
@@ -601,7 +674,7 @@ class StripeAdapter extends PaymentAdapter {
   async handleLegacyWalletFunding(paymentIntent) {
     const { Transaction } = require("../../models/transaction");
     const { Wallet } = require("../../models/wallet");
-    
+
     try {
       const metadata = paymentIntent.metadata;
       const userId = metadata.userId;
@@ -624,7 +697,7 @@ class StripeAdapter extends PaymentAdapter {
         walletFound: !!wallet,
         currentBalance: wallet?.balance
       });
-      
+
       if (!wallet) {
         wallet = await Wallet.getWalletByUserId(userId);
         console.log("🔍 StripeAdapter: Fallback wallet lookup by userId", {
@@ -633,19 +706,19 @@ class StripeAdapter extends PaymentAdapter {
           walletId: wallet?._id
         });
       }
-      
+
       if (wallet) {
         const balanceBefore = wallet.balance;
-        
+
         // Add funds to wallet
         console.log("💰 StripeAdapter: Adding funds to wallet", {
           walletId: wallet._id,
           balanceBefore,
           amountDollars
         });
-        
+
         await wallet.addFunds(amountDollars);
-        
+
         // Refresh to get updated balance
         await wallet.reload();
         console.log("✅ StripeAdapter: Funds added to wallet", {
@@ -654,7 +727,7 @@ class StripeAdapter extends PaymentAdapter {
           balanceAfter: wallet.balance,
           amountAdded: amountDollars
         });
-        
+
         // Update existing pending transaction to completed
         const existingTransaction = await Transaction.getTransactionByPaymentIntent(paymentIntent.id);
         console.log("🔍 StripeAdapter: Looking for existing transaction", {
@@ -662,7 +735,7 @@ class StripeAdapter extends PaymentAdapter {
           transactionFound: !!existingTransaction,
           transactionStatus: existingTransaction?.status
         });
-        
+
         if (existingTransaction && existingTransaction.status === "pending") {
           console.log("🔄 StripeAdapter: Marking transaction as completed", {
             transactionId: existingTransaction._id,
@@ -690,7 +763,7 @@ class StripeAdapter extends PaymentAdapter {
         error: error.message,
         stack: error.stack
       });
-      
+
       PaymentErrorHandler.logError(error, {
         method: "handleLegacyWalletFunding",
         paymentIntentId: paymentIntent.id,
@@ -702,7 +775,7 @@ class StripeAdapter extends PaymentAdapter {
   async handlePaymentIntentFailed(event) {
     const paymentIntent = event.data.object;
     const operation = await PaymentOperation.getByStripeId(paymentIntent.id);
-    
+
     if (operation) {
       const error = paymentIntent.last_payment_error;
       await operation.markAsFailed(
@@ -720,7 +793,7 @@ class StripeAdapter extends PaymentAdapter {
 
   async handleLegacyWalletFundingFailure(paymentIntent) {
     const { Transaction } = require("../../models/transaction");
-    
+
     try {
       // Update existing pending transaction to failed
       const existingTransaction = await Transaction.getTransactionByPaymentIntent(paymentIntent.id);
@@ -740,7 +813,7 @@ class StripeAdapter extends PaymentAdapter {
   async handleTransferCreated(event) {
     const transfer = event.data.object;
     const operation = await PaymentOperation.getByStripeId(transfer.id);
-    
+
     if (operation) {
       await operation.markAsSucceeded(transfer);
     }
@@ -749,7 +822,7 @@ class StripeAdapter extends PaymentAdapter {
   async handleTransferUpdated(event) {
     const transfer = event.data.object;
     const operation = await PaymentOperation.getByStripeId(transfer.id);
-    
+
     if (operation) {
       if (transfer.status === "paid") {
         await operation.markAsSucceeded(transfer);
@@ -762,7 +835,7 @@ class StripeAdapter extends PaymentAdapter {
   async handleAccountUpdated(event) {
     const account = event.data.object;
     const stripeAccount = await StripeAccount.getByStripeAccountId(account.id);
-    
+
     if (stripeAccount) {
       await stripeAccount.updateFromStripeAccount(account);
     }

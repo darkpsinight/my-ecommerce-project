@@ -48,6 +48,7 @@ const configs = {
 	// Stripe Connect Configuration
 	STRIPE_CONNECT_MODE: process.env.STRIPE_CONNECT_MODE || "test",
 	STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+	STRIPE_ACCOUNT_TYPE: process.env.STRIPE_ACCOUNT_TYPE || "express",
 
 	// Feature Flags for Migration
 	FEATURE_USE_LEGACY_WALLET: process.env.FEATURE_USE_LEGACY_WALLET === "true",
@@ -79,6 +80,7 @@ const configs = {
 	IS_SMTP_CONFIGURED: false,
 	APP_NAME: process.env.APP_NAME || "",
 	APP_DOMAIN: process.env.APP_DOMAIN || "",
+	SELLER_DASHBOARD_URL: process.env.SELLER_DASHBOARD_URL || "http://localhost:3002",
 	APP_CONFIRM_EMAIL_REDIRECT: process.env.APP_CONFIRM_EMAIL_REDIRECT,
 	APP_RESET_PASSWORD_REDIRECT: process.env.APP_RESET_PASSWORD_REDIRECT,
 	APP_LOGIN_WTH_EMAIL_REDIRECT: process.env.APP_LOGIN_WTH_EMAIL_REDIRECT,
@@ -86,10 +88,10 @@ const configs = {
 
 	APP_DETAILS_CONFIGURED:
 		process.env.APP_NAME &&
-		process.env.APP_DOMAIN &&
-		process.env.APP_CONFIRM_EMAIL_REDIRECT &&
-		process.env.APP_RESET_PASSWORD_REDIRECT &&
-		process.env.APP_REACTIVATE_ACCOUNT_URL
+			process.env.APP_DOMAIN &&
+			process.env.APP_CONFIRM_EMAIL_REDIRECT &&
+			process.env.APP_RESET_PASSWORD_REDIRECT &&
+			process.env.APP_REACTIVATE_ACCOUNT_URL
 			? true
 			: false,
 
@@ -108,8 +110,8 @@ const configs = {
 		REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
 		CONFIGURED:
 			process.env.GOOGLE_CLIENT_ID &&
-			process.env.GOOGLE_CLIENT_SECRET &&
-			process.env.GOOGLE_REDIRECT_URI
+				process.env.GOOGLE_CLIENT_SECRET &&
+				process.env.GOOGLE_REDIRECT_URI
 				? true
 				: false,
 	},
@@ -189,10 +191,10 @@ const loadConfigsFromDB = async (fastify) => {
 		// Update app details configuration status
 		configs.APP_DETAILS_CONFIGURED =
 			configs.APP_NAME &&
-			configs.APP_DOMAIN &&
-			configs.APP_CONFIRM_EMAIL_REDIRECT &&
-			configs.APP_RESET_PASSWORD_REDIRECT &&
-			configs.APP_REACTIVATE_ACCOUNT_URL
+				configs.APP_DOMAIN &&
+				configs.APP_CONFIRM_EMAIL_REDIRECT &&
+				configs.APP_RESET_PASSWORD_REDIRECT &&
+				configs.APP_REACTIVATE_ACCOUNT_URL
 				? true
 				: false;
 

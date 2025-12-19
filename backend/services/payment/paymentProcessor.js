@@ -2,11 +2,11 @@ const StripeAdapter = require("./stripeAdapter");
 const PaymentValidation = require("./paymentValidation");
 const AccountValidation = require("./accountValidation");
 const PaymentLogger = require("./paymentLogger");
-const { 
-  PaymentError, 
-  InsufficientFundsError, 
+const {
+  PaymentError,
+  InsufficientFundsError,
   AccountNotVerifiedError,
-  PaymentErrorHandler 
+  PaymentErrorHandler
 } = require("./paymentErrors");
 const { PaymentOperation } = require("../../models/paymentOperation");
 const { StripeAccount } = require("../../models/stripeAccount");
@@ -18,7 +18,7 @@ class PaymentProcessor {
     this.stripeAdapter = stripeAdapter || new StripeAdapter();
     this.logger = new PaymentLogger();
     this.config = {
-      defaultPlatformFeeRate: 0.05, // 5% platform fee
+      defaultPlatformFeeRate: 0, // 0% platform fee (Buyer pays Stripe fees, Platform takes 0%)
       minTransferAmount: 100, // $1.00 minimum
       maxTransferAmount: 100000000, // $1M maximum
       ...configs
@@ -469,7 +469,7 @@ class PaymentProcessor {
 
       // Get from database first
       const operation = await PaymentOperation.getByStripeId(paymentIntentId);
-      
+
       // Get fresh status from Stripe
       const stripeStatus = await this.stripeAdapter.confirmPaymentIntent(paymentIntentId);
 
@@ -506,7 +506,7 @@ class PaymentProcessor {
   calculateTransferFees(amountCents, platformFeeRate) {
     const platformFeeCents = Math.round(amountCents * platformFeeRate);
     const netAmountCents = amountCents - platformFeeCents;
-    
+
     // Ensure minimum transfer amount after fees
     if (netAmountCents < this.config.minTransferAmount) {
       throw new PaymentError(
@@ -550,7 +550,7 @@ class PaymentProcessor {
   async getOperationHistory(userId, options = {}) {
     try {
       const { page = 1, limit = 20, type, status } = options;
-      
+
       PaymentValidation.validateUserId(userId);
 
       const operations = await PaymentOperation.getOperationsByUser(userId, {

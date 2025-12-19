@@ -2,6 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import PageHeader from './PageHeader';
 import PageTitleWrapper from 'src/components/PageTitleWrapper';
 import { Container, Grid, Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import Footer from 'src/components/Footer';
 
 import ListingsTable from './ListingsTable';
@@ -18,6 +19,7 @@ import { useState } from 'react';
 import './styles.css';
 
 function DashboardListings() {
+  const navigate = useNavigate();
   const [selected, setSelected] = useState<string[]>([]);
   const {
     profileData,
@@ -61,7 +63,7 @@ function DashboardListings() {
             financialData={financialData}
             loading={profileLoading}
             onSetupPayments={openFinancialSetup}
-            onViewPaymentSettings={() => window.open('/management/payment-setup', '_blank')}
+            onViewPaymentSettings={() => navigate('/management/payment-setup')}
           />
 
           <Grid

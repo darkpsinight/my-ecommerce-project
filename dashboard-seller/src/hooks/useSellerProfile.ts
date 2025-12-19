@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSellerProfile, updateSellerProfile, SellerProfileResponse, SellerProfileData } from 'src/services/api/sellerProfile';
+import { getStripeAccountStatus } from 'src/services/api/payment';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -53,7 +54,7 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
   const [showProfileSetup, setShowProfileSetup] = useState<boolean>(false);
   const [hasBeenDismissed, setHasBeenDismissed] = useState<boolean>(false);
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
-  
+
   // Financial onboarding state
   const [financialData, setFinancialData] = useState<FinancialSetupData | null>(null);
   const [showFinancialSetup, setShowFinancialSetup] = useState<boolean>(false);
@@ -62,7 +63,7 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
   const refreshProfile = useCallback(async (forceRefresh: boolean = false) => {
     const now = Date.now();
     const isCacheValid = globalProfileCache.data && (now - globalProfileCache.lastFetch) < CACHE_DURATION;
-    
+
     // Use cache if valid and not forcing refresh
     if (isCacheValid && !forceRefresh) {
       setProfileData(globalProfileCache.data);
@@ -80,21 +81,21 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
       globalProfileCache.loading = true;
       setLoading(true);
       setError(null);
-      
+
       const data = await getSellerProfile();
-      
+
       // Update global cache
       globalProfileCache.data = data;
       globalProfileCache.error = null;
       globalProfileCache.lastFetch = now;
-      
+
       setProfileData(data);
-      
+
       // Only auto-show profile setup on initial load and if user hasn't dismissed it
       if (!data.hasProfile && isInitialLoad && !hasBeenDismissed) {
         setShowProfileSetup(true);
       }
-      
+
       // Mark initial load as complete
       if (isInitialLoad) {
         setIsInitialLoad(false);
@@ -102,10 +103,10 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     } catch (err: any) {
       console.error('Error fetching seller profile:', err);
       const errorMessage = err.message || 'Failed to fetch seller profile';
-      
+
       // Update global cache
       globalProfileCache.error = errorMessage;
-      
+
       setError(errorMessage);
       toast.error('Failed to load your seller profile');
     } finally {
@@ -118,9 +119,9 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const updatedProfile = await updateSellerProfile(data);
-      
+
       // Update the profile data by merging with existing data
       if (profileData) {
         const newProfileData = {
@@ -128,18 +129,18 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
           profile: updatedProfile,
           hasProfile: true
         };
-        
+
         // Update local state
         setProfileData(newProfileData);
-        
+
         // Update global cache
         globalProfileCache.data = newProfileData;
         globalProfileCache.lastFetch = Date.now();
       }
-      
+
       toast.success('Seller profile updated successfully!');
       setShowProfileSetup(false);
-      
+
       return true;
     } catch (err: any) {
       console.error('Error updating seller profile:', err);
@@ -154,7 +155,7 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
   // Function to handle profile completion and show financial setup
   const completeProfileAndShowFinancial = useCallback(() => {
     setShowProfileSetup(false);
-    
+
     // Check if financial setup is needed
     if (!financialData?.canReceivePayments) {
       setShowFinancialSetup(true);
@@ -174,21 +175,31 @@ export const useSellerProfile = (): UseSellerProfileReturn => {
     setShowFinancialSetup(show);
   }, []);
 
-  // Mock financial data fetch - TODO: Replace with actual API call
+  // Fetch financial data from API
   const fetchFinancialData = useCallback(async () => {
     try {
-      // TODO: Implement actual API call to get financial setup status
-      // For now, return mock data
-      const mockFinancialData: FinancialSetupData = {
+      // Get the actual Stripe account status from the backend
+      const stripeStatus = await getStripeAccountStatus();
+
+      const newFinancialData: FinancialSetupData = {
+        hasStripeAccount: stripeStatus.hasAccount,
+        stripeAccountStatus: stripeStatus.chargesEnabled && stripeStatus.payoutsEnabled ? 'verified' :
+          stripeStatus.requirements?.currently_due?.length > 0 ? 'requires_action' :
+            stripeStatus.hasAccount ? 'pending' : null,
+        canReceivePayments: stripeStatus.chargesEnabled === true && stripeStatus.payoutsEnabled === true,
+        pendingRequirements: stripeStatus.requirements?.currently_due || []
+      };
+
+      setFinancialData(newFinancialData);
+    } catch (err) {
+      console.error('Error fetching financial data:', err);
+      // Fallback to empty state on error, don't use mock data
+      setFinancialData({
         hasStripeAccount: false,
         stripeAccountStatus: null,
         canReceivePayments: false,
         pendingRequirements: []
-      };
-      
-      setFinancialData(mockFinancialData);
-    } catch (err) {
-      console.error('Error fetching financial data:', err);
+      });
     }
   }, []);
 

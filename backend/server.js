@@ -4,17 +4,17 @@ const fastify = require("fastify")({
     transport:
       process.env.NODE_ENV === "development"
         ? {
-            target: "pino-pretty",
-            options: {
-              colorize: true,
-              translateTime: "SYS:standard",
-              ignore: "pid,hostname",
-              messageFormat: "{msg}",
-              singleLine: true,
-              levelFirst: false,
-              charset: "utf-8",
-            },
-          }
+          target: "pino-pretty",
+          options: {
+            colorize: true,
+            translateTime: "SYS:standard",
+            ignore: "pid,hostname",
+            messageFormat: "{msg}",
+            singleLine: true,
+            levelFirst: false,
+            charset: "utf-8",
+          },
+        }
         : undefined,
     stream: process.stdout,
   },
@@ -36,6 +36,7 @@ const { walletRoutes } = require("./routes/wallet");
 const { orderRoutes } = require("./routes/orders");
 const { reviewRoutes } = require("./routes/reviews");
 const cartRoutes = require("./routes/cart");
+const checkoutRoutes = require("./routes/checkout");
 const wishlistRoutes = require("./routes/wishlist");
 const viewedProductRoutes = require("./routes/viewedProducts");
 const impressionRoutes = require("./routes/impressions");
@@ -143,6 +144,9 @@ fastify.register(reviewRoutes, { prefix: "/api/v1/reviews" });
 
 // Register cart routes
 fastify.register(cartRoutes, { prefix: "/api/v1/cart" });
+
+// Register checkout routes
+fastify.register(checkoutRoutes, { prefix: "/api/v1/checkout" });
 
 // Register wishlist routes
 fastify.register(wishlistRoutes, { prefix: "/api/v1/wishlist" });

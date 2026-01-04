@@ -27,7 +27,7 @@ const GiftManagement: React.FC = () => {
             d="M19 7h-1V6a1 1 0 00-1-1H7a1 1 0 00-1 1v1H5a3 3 0 00-3 3v6a3 3 0 003 3h14a3 3 0 003-3v-6a3 3 0 00-3-3zM8 6h8v1H8V6zm12 13a1 1 0 01-1 1H5a1 1 0 01-1-1v-6a1 1 0 011-1h14a1 1 0 011 1v6z"
             fill="currentColor"
           />
-          <circle cx="12" cy="15" r="2" fill="currentColor"/>
+          <circle cx="12" cy="15" r="2" fill="currentColor" />
         </svg>
       ),
       gradient: "from-green to-teal",
@@ -42,7 +42,7 @@ const GiftManagement: React.FC = () => {
             d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"
             fill="currentColor"
           />
-          <path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z" fill="currentColor"/>
+          <path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z" fill="currentColor" />
         </svg>
       ),
       gradient: "from-blue to-blue-light",
@@ -136,7 +136,7 @@ const GiftManagement: React.FC = () => {
         </div>
         <div className="bg-gradient-to-r from-yellow-light-2 to-orange/20 rounded-lg p-4">
           <p className="text-sm text-gray-7">
-            <strong>Expected Launch:</strong> Q2 2024 • 
+            <strong>Expected Launch:</strong> Q2 2027 •
             <strong className="ml-2">Features:</strong> 6+ exciting gift management tools
           </p>
         </div>
@@ -159,7 +159,7 @@ const GiftManagement: React.FC = () => {
               </div>
             </div>
             <p className="text-gray-6 text-sm leading-relaxed">{feature.description}</p>
-            
+
             {/* Progress indicator */}
             <div className="mt-4">
               <div className="flex justify-between items-center mb-2">
@@ -169,7 +169,7 @@ const GiftManagement: React.FC = () => {
                 </span>
               </div>
               <div className="w-full bg-gray-2 rounded-full h-2">
-                <div 
+                <div
                   className={`bg-gradient-to-r ${feature.gradient} rounded-full h-2 transition-all duration-1000`}
                   style={{ width: `${Math.floor(Math.random() * 30) + 20}%` }}
                 ></div>
@@ -184,10 +184,10 @@ const GiftManagement: React.FC = () => {
         <div className="max-w-2xl mx-auto">
           <h3 className="text-2xl font-bold text-dark mb-4">Get Notified When Gift Features Launch</h3>
           <p className="text-gray-6 mb-6">
-            Be the first to know when our comprehensive gift management system goes live. 
+            Be the first to know when our comprehensive gift management system goes live.
             We&apos;ll send you early access and exclusive features.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
             <input
               type="email"
@@ -198,7 +198,7 @@ const GiftManagement: React.FC = () => {
               Notify Me
             </button>
           </div>
-          
+
           <p className="text-xs text-gray-5 mt-3">
             We&apos;ll only email you about gift feature updates. Unsubscribe anytime.
           </p>
@@ -209,7 +209,7 @@ const GiftManagement: React.FC = () => {
       <div className="mt-12 text-center">
         <h3 className="text-xl font-semibold text-dark mb-4">In the Meantime...</h3>
         <p className="text-gray-6 mb-6">
-          While we build these amazing gift features, you can still share your purchased codes manually 
+          While we build these amazing gift features, you can still share your purchased codes manually
           or explore our current marketplace offerings.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

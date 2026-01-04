@@ -119,11 +119,15 @@ class PaymentValidation {
       );
     }
 
-    // Check if it's a valid MongoDB ObjectId format
-    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-    if (!objectIdRegex.test(userId.toString())) {
+    // Handle MongoDB ObjectId or other objects with toString
+    if (userId && typeof userId === 'object' && typeof userId.toString === 'function') {
+      userId = userId.toString();
+    }
+
+    // Check if it's a valid string format
+    if (typeof userId !== 'string' && typeof userId !== 'number') {
       throw new PaymentError(
-        "Invalid user ID format",
+        "User ID must be a string or number",
         "INVALID_USER_ID",
         400
       );

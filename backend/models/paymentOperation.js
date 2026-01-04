@@ -35,17 +35,17 @@ const paymentOperationSchema = new mongoose.Schema({
   },
   // Related entities
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String, // UID string
     ref: "User",
     index: true
   },
   sellerId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String, // UID string
     ref: "User",
     index: true
   },
   escrowId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: "Order", // Will be used for escrow tracking
     index: true
   },
@@ -134,10 +134,10 @@ paymentOperationSchema.index({ status: 1, createdAt: -1 });
 paymentOperationSchema.index({ type: 1, status: 1 });
 
 // Instance methods
-paymentOperationSchema.methods.markAsSucceeded = function(stripeObject = {}) {
+paymentOperationSchema.methods.markAsSucceeded = function (stripeObject = {}) {
   this.status = "succeeded";
   this.processedAt = new Date();
-  
+
   // Update fees if available from Stripe object
   if (stripeObject.charges && stripeObject.charges.data[0]) {
     const charge = stripeObject.charges.data[0];
@@ -146,29 +146,29 @@ paymentOperationSchema.methods.markAsSucceeded = function(stripeObject = {}) {
       this.netAmountCents = charge.balance_transaction.net || this.amountCents;
     }
   }
-  
+
   return this.save();
 };
 
-paymentOperationSchema.methods.markAsFailed = function(errorCode, errorMessage) {
+paymentOperationSchema.methods.markAsFailed = function (errorCode, errorMessage) {
   this.status = "failed";
   this.failedAt = new Date();
   this.errorCode = errorCode;
   this.errorMessage = errorMessage;
   this.retryCount += 1;
-  
+
   return this.save();
 };
 
-paymentOperationSchema.methods.markAsCanceled = function() {
+paymentOperationSchema.methods.markAsCanceled = function () {
   this.status = "canceled";
   this.processedAt = new Date();
-  
+
   return this.save();
 };
 
 // Static methods
-paymentOperationSchema.statics.createCharge = async function(data) {
+paymentOperationSchema.statics.createCharge = async function (data) {
   const {
     stripeId,
     amountCents,
@@ -178,7 +178,7 @@ paymentOperationSchema.statics.createCharge = async function(data) {
     description,
     metadata = {}
   } = data;
-  
+
   const operation = new this({
     type: "charge",
     stripeId,
@@ -191,11 +191,11 @@ paymentOperationSchema.statics.createCharge = async function(data) {
     idempotencyKey: uuidv4(),
     externalId: uuidv4()
   });
-  
+
   return await operation.save();
 };
 
-paymentOperationSchema.statics.createTransfer = async function(data) {
+paymentOperationSchema.statics.createTransfer = async function (data) {
   const {
     stripeId,
     amountCents,
@@ -207,7 +207,7 @@ paymentOperationSchema.statics.createTransfer = async function(data) {
     description,
     metadata = {}
   } = data;
-  
+
   const operation = new this({
     type: "transfer",
     stripeId,
@@ -223,11 +223,11 @@ paymentOperationSchema.statics.createTransfer = async function(data) {
     idempotencyKey: uuidv4(),
     externalId: uuidv4()
   });
-  
+
   return await operation.save();
 };
 
-paymentOperationSchema.statics.createRefund = async function(data) {
+paymentOperationSchema.statics.createRefund = async function (data) {
   const {
     stripeId,
     amountCents,
@@ -237,7 +237,7 @@ paymentOperationSchema.statics.createRefund = async function(data) {
     description,
     metadata = {}
   } = data;
-  
+
   const operation = new this({
     type: "refund",
     stripeId,
@@ -250,22 +250,22 @@ paymentOperationSchema.statics.createRefund = async function(data) {
     idempotencyKey: uuidv4(),
     externalId: uuidv4()
   });
-  
+
   return await operation.save();
 };
 
-paymentOperationSchema.statics.getByStripeId = async function(stripeId) {
+paymentOperationSchema.statics.getByStripeId = async function (stripeId) {
   return await this.findOne({ stripeId });
 };
 
-paymentOperationSchema.statics.getOperationsByUser = async function(userId, options = {}) {
+paymentOperationSchema.statics.getOperationsByUser = async function (userId, options = {}) {
   const { page = 1, limit = 20, type, status } = options;
   const skip = (page - 1) * limit;
-  
+
   const query = { userId };
   if (type) query.type = type;
   if (status) query.status = status;
-  
+
   return await this.find(query)
     .sort({ createdAt: -1 })
     .skip(skip)

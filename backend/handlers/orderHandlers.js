@@ -44,7 +44,7 @@ const createOrder = async (request, reply) => {
       return sendErrorResponse(reply, 403, "Buyer role required");
     }
 
-    const buyerId = user._id;
+    const buyerId = user.uid;
 
     // Validate cart items
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
@@ -76,7 +76,7 @@ const createOrder = async (request, reply) => {
 
       // Select codes to purchase - either from expiration groups or with expiration date priority
       let codesToPurchase;
-      
+
       if (cartItem.expirationGroups && cartItem.expirationGroups.length > 0) {
         // Use expiration group-based code selection
         try {
@@ -143,7 +143,7 @@ const createOrder = async (request, reply) => {
     // Create order
     const order = await Order.createOrder({
       buyerId,
-      sellerId: seller._id, // Use seller's ObjectId
+      sellerId: seller.uid, // Use seller's UID
       orderItems,
       totalAmount,
       currency: "USD",
@@ -343,7 +343,7 @@ const getBuyerOrders = async (request, reply) => {
       return sendErrorResponse(reply, 403, "Buyer role required");
     }
 
-    const result = await Order.getOrdersByBuyer(user._id, {
+    const result = await Order.getOrdersByBuyer(user.uid, {
       page: parseInt(page),
       limit: parseInt(limit),
       status
@@ -380,7 +380,7 @@ const getSellerOrders = async (request, reply) => {
       return sendErrorResponse(reply, 403, "Seller role required");
     }
 
-    const result = await Order.getOrdersBySeller(user._id, {
+    const result = await Order.getOrdersBySeller(user.uid, {
       page: parseInt(page),
       limit: parseInt(limit),
       status
@@ -416,17 +416,17 @@ const getBuyerPurchasedCodes = async (request, reply) => {
       return sendErrorResponse(reply, 403, "Buyer role required");
     }
 
-    const { 
-      page = 1, 
-      limit = 20, 
-      search = "", 
-      sortBy = "createdAt", 
-      sortOrder = "desc" 
+    const {
+      page = 1,
+      limit = 20,
+      search = "",
+      sortBy = "createdAt",
+      sortOrder = "desc"
     } = request.query;
 
     // Build query for completed orders
-    const query = { 
-      buyerId: user._id, 
+    const query = {
+      buyerId: user.uid,
       status: "completed",
       deliveryStatus: "delivered"
     };
@@ -485,7 +485,7 @@ const getBuyerPurchasedCodes = async (request, reply) => {
     // Apply search filter if provided
     if (search.trim()) {
       const searchLower = search.toLowerCase();
-      codes = codes.filter(code => 
+      codes = codes.filter(code =>
         code.productName.toLowerCase().includes(searchLower) ||
         code.platform.toLowerCase().includes(searchLower) ||
         code.region.toLowerCase().includes(searchLower)
@@ -494,7 +494,7 @@ const getBuyerPurchasedCodes = async (request, reply) => {
 
     // Get total count for pagination
     const totalOrders = await Order.countDocuments(query);
-    
+
     // Estimate total codes (this is approximate)
     const totalCodes = codes.length;
 
@@ -544,12 +544,15 @@ const getOrderById = async (request, reply) => {
 
     // Find order by external ID or MongoDB ID
     let order;
-    if (orderId.length === 24) {
-      // MongoDB ObjectId
-      order = await Order.findOne({ _id: orderId, buyerId: user._id });
+    if (orderId.length === 24 && /^[0-9a-fA-F]{24}$/.test(orderId)) {
+      // MongoDB ObjectId - check matches either external or internal ID
+      order = await Order.findOne({
+        $or: [{ _id: orderId }, { externalId: orderId }],
+        buyerId: user.uid
+      });
     } else {
       // External UUID
-      order = await Order.findOne({ externalId: orderId, buyerId: user._id });
+      order = await Order.findOne({ externalId: orderId, buyerId: user.uid });
     }
 
     if (!order) {
@@ -588,12 +591,12 @@ const decryptCode = async (request, reply) => {
   request.log.info("handlers/decryptCode - START");
   try {
     const { codeId, orderId } = request.body;
-    const userId = request.user.userId;
-    const userRole = request.user.role;
+    const uid = request.user.uid;
+    const roles = request.user.roles || [];
 
     // Find the order to verify ownership
     let order;
-    if (orderId.match(/^[0-9a-fA-F]{24}$/)) {
+    if (orderId.length === 24 && /^[0-9a-fA-F]{24}$/.test(orderId)) {
       // MongoDB ObjectId
       order = await Order.findById(orderId);
     } else {
@@ -607,7 +610,7 @@ const decryptCode = async (request, reply) => {
     }
 
     // Authorization check - only buyers can decrypt their own codes
-    if (userRole !== 'buyer' || order.buyerId.toString() !== userId) {
+    if (!roles.includes('buyer') || order.buyerId !== uid) {
       request.log.error("handlers/decryptCode - Access denied");
       return sendErrorResponse(reply, 403, "Access denied");
     }

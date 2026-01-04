@@ -79,7 +79,7 @@ const listingSchema = new mongoose.Schema({
     expirationGroup: {
       type: String,
       enum: ["never_expires", "expires"],
-      default: function() {
+      default: function () {
         return this.expirationDate ? "expires" : "never_expires";
       }
     }
@@ -144,7 +144,7 @@ listingSchema.index({ price: -1 });
 // Text index for search functionality
 listingSchema.index({
   title: 'text',
-  description: 'text', 
+  description: 'text',
   platform: 'text',
   region: 'text',
   tags: 'text'
@@ -160,7 +160,7 @@ listingSchema.index({
 });
 
 // Virtual field for quantity of active codes
-listingSchema.virtual('quantityOfActiveCodes').get(function() {
+listingSchema.virtual('quantityOfActiveCodes').get(function () {
   if (!this.codes || this.codes.length === 0) {
     return 0;
   }
@@ -168,7 +168,7 @@ listingSchema.virtual('quantityOfActiveCodes').get(function() {
 });
 
 // Virtual field for quantity of all codes
-listingSchema.virtual('quantityOfAllCodes').get(function() {
+listingSchema.virtual('quantityOfAllCodes').get(function () {
   if (!this.codes || this.codes.length === 0) {
     return 0;
   }
@@ -180,7 +180,7 @@ listingSchema.set('toJSON', { virtuals: true });
 listingSchema.set('toObject', { virtuals: true });
 
 // Track status changes
-listingSchema.pre("save", function(next) {
+listingSchema.pre("save", function (next) {
   // Store the previous status if the status field is being modified
   if (this.isModified('status')) {
     this._previousStatus = this.get('status', String);
@@ -189,7 +189,7 @@ listingSchema.pre("save", function(next) {
 });
 
 // Middleware to update the updatedAt field and handle code-related logic on save
-listingSchema.pre("save", function(next) {
+listingSchema.pre("save", function (next) {
   // Update the updatedAt timestamp
   this.updatedAt = Date.now();
 
@@ -232,8 +232,8 @@ listingSchema.pre("save", function(next) {
 
     // Check if this is an explicit status change from draft to active
     const isExplicitActivation = this.isModified('status') &&
-                               this._previousStatus === 'draft' &&
-                               this.status === 'active';
+      this._previousStatus === 'draft' &&
+      this.status === 'active';
 
     if (this.status === "draft" || this.status === "deleted" || isExplicitActivation) {
       // Preserve draft status if explicitly set
@@ -277,7 +277,7 @@ listingSchema.pre("save", function(next) {
 });
 
 // Method to generate a hash for a code
-listingSchema.methods.generateCodeHash = function(code) {
+listingSchema.methods.generateCodeHash = function (code) {
   // Create a hash of the code using SHA-256
   // This hash will be used for duplicate checking without decrypting
   return crypto
@@ -287,7 +287,7 @@ listingSchema.methods.generateCodeHash = function(code) {
 };
 
 // Method to encrypt a single code
-listingSchema.methods.encryptCode = function(code) {
+listingSchema.methods.encryptCode = function (code) {
   // Create an initialization vector
   const iv = crypto.randomBytes(16);
 
@@ -309,7 +309,7 @@ listingSchema.methods.encryptCode = function(code) {
 };
 
 // Method to decrypt a specific code
-listingSchema.methods.decryptCode = function(encryptedCode, iv) {
+listingSchema.methods.decryptCode = function (encryptedCode, iv) {
   try {
     // Create decipher using the secret key from configs and the provided iv
     const decipher = crypto.createDecipheriv(
@@ -330,7 +330,7 @@ listingSchema.methods.decryptCode = function(encryptedCode, iv) {
 };
 
 // Method to add codes to the listing
-listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate = null) {
+listingSchema.methods.addCodes = function (plainTextCodes, defaultExpirationDate = null) {
   if (!Array.isArray(plainTextCodes)) {
     plainTextCodes = [plainTextCodes];
   }
@@ -424,7 +424,7 @@ listingSchema.methods.addCodes = function(plainTextCodes, defaultExpirationDate 
 };
 
 // Method to get count of available codes
-listingSchema.methods.getAvailableCodesCount = function() {
+listingSchema.methods.getAvailableCodesCount = function () {
   if (!this.codes || this.codes.length === 0) {
     return 0;
   }
@@ -432,13 +432,13 @@ listingSchema.methods.getAvailableCodesCount = function() {
 };
 
 // Method to check if listing has available codes for purchase
-listingSchema.methods.hasAvailableCodes = function(requestedQuantity = 1) {
+listingSchema.methods.hasAvailableCodes = function (requestedQuantity = 1) {
   const availableCount = this.getAvailableCodesCount();
   return availableCount >= requestedQuantity;
 };
 
 // Method to get active codes sorted by expiration date priority
-listingSchema.methods.getActiveCodesSortedByExpiration = function() {
+listingSchema.methods.getActiveCodesSortedByExpiration = function () {
   if (!this.codes || this.codes.length === 0) {
     return [];
   }
@@ -475,7 +475,7 @@ listingSchema.methods.getActiveCodesSortedByExpiration = function() {
 };
 
 // Method to get codes for purchase with expiration date priority
-listingSchema.methods.getCodesForPurchase = function(quantity = 1) {
+listingSchema.methods.getCodesForPurchase = function (quantity = 1) {
   // Get active codes sorted by expiration date priority
   const activeCodes = this.getActiveCodesSortedByExpiration();
 
@@ -488,7 +488,7 @@ listingSchema.methods.getCodesForPurchase = function(quantity = 1) {
 };
 
 // Method to purchase a code - marks one active code as sold and returns the decrypted code
-listingSchema.methods.purchaseCode = function() {
+listingSchema.methods.purchaseCode = function () {
   // Get active codes sorted by expiration date priority
   const activeCodes = this.getActiveCodesSortedByExpiration();
 
@@ -498,7 +498,7 @@ listingSchema.methods.purchaseCode = function() {
 
   // Get the first code (highest priority)
   const codeObj = activeCodes[0];
-  
+
   // Find the index in the original codes array
   const activeCodeIndex = this.codes.findIndex(code => code.codeId === codeObj.codeId);
 
@@ -524,25 +524,63 @@ listingSchema.methods.purchaseCode = function() {
   return decryptedCode;
 };
 
+// Method to purchase multiple codes - marks active codes as sold and returns the encrypted code objects
+listingSchema.methods.purchaseCodes = async function (quantity) {
+  // Get active codes sorted by expiration date priority
+  const activeCodes = this.getActiveCodesSortedByExpiration();
+
+  if (activeCodes.length < quantity) {
+    throw new Error(`Not enough active codes available. Available: ${activeCodes.length}, Requested: ${quantity}`);
+  }
+
+  // Get the top N codes (highest priority)
+  const codesToPurchase = activeCodes.slice(0, quantity);
+  const purchasedCodes = [];
+
+  codesToPurchase.forEach(codeObj => {
+    // Find the index in the original codes array
+    const activeCodeIndex = this.codes.findIndex(code => code.codeId === codeObj.codeId);
+
+    if (activeCodeIndex !== -1) {
+      // Mark the code as sold
+      this.codes[activeCodeIndex].soldStatus = "sold";
+      this.codes[activeCodeIndex].soldAt = new Date(); // Use same timestamp?
+
+      // Add to result list (Preserve encryption)
+      purchasedCodes.push({
+        codeId: codeObj.codeId,
+        code: codeObj.code, // Encrypted
+        iv: codeObj.iv,
+        expirationDate: codeObj.expirationDate
+      });
+    }
+  });
+
+  // Save the listing to trigger the pre-save middleware
+  await this.save();
+
+  return purchasedCodes;
+};
+
 // Method to get expiration groups for a listing
-listingSchema.methods.getExpirationGroups = function() {
+listingSchema.methods.getExpirationGroups = function () {
   if (!this.codes || this.codes.length === 0) {
     return [];
   }
 
   // Filter active codes and group by expiration type
   const activeCodes = this.codes.filter(code => code.soldStatus === "active");
-  
+
   if (activeCodes.length === 0) {
     return [];
   }
 
   // Group codes by expiration type and date
   const groups = {};
-  
+
   activeCodes.forEach(code => {
     const groupType = code.expirationGroup || (code.expirationDate ? "expires" : "never_expires");
-    
+
     // Create a unique key for each group (including date for expires)
     let groupKey;
     if (groupType === "expires" && code.expirationDate) {
@@ -550,20 +588,20 @@ listingSchema.methods.getExpirationGroups = function() {
     } else {
       groupKey = groupType;
     }
-    
+
     if (!groups[groupKey]) {
       groups[groupKey] = {
         type: groupType,
         quantity: 0,
         codes: []
       };
-      
+
       // Add date for expires group
       if (groupType === "expires" && code.expirationDate) {
         groups[groupKey].date = code.expirationDate;
       }
     }
-    
+
     groups[groupKey].quantity++;
     groups[groupKey].codes.push(code);
   });
@@ -574,11 +612,11 @@ listingSchema.methods.getExpirationGroups = function() {
       type: group.type,
       quantity: group.quantity
     };
-    
+
     if (group.type === "expires" && group.date) {
       formatted.date = group.date;
     }
-    
+
     return formatted;
   });
 
@@ -596,24 +634,24 @@ listingSchema.methods.getExpirationGroups = function() {
 };
 
 // Method to get codes for purchase from specific expiration groups
-listingSchema.methods.getCodesFromExpirationGroups = function(groupQuantities) {
+listingSchema.methods.getCodesFromExpirationGroups = function (groupQuantities) {
   if (!this.codes || this.codes.length === 0) {
     throw new Error("No codes available");
   }
 
   // Filter active codes
   const activeCodes = this.codes.filter(code => code.soldStatus === "active");
-  
+
   if (activeCodes.length === 0) {
     throw new Error("No active codes available");
   }
 
   // Group codes by expiration type and date
   const codeGroups = {};
-  
+
   activeCodes.forEach(code => {
     const groupType = code.expirationGroup || (code.expirationDate ? "expires" : "never_expires");
-    
+
     // Create a unique key for each group (including date for expires)
     let groupKey;
     if (groupType === "expires" && code.expirationDate) {
@@ -621,11 +659,11 @@ listingSchema.methods.getCodesFromExpirationGroups = function(groupQuantities) {
     } else {
       groupKey = groupType;
     }
-    
+
     if (!codeGroups[groupKey]) {
       codeGroups[groupKey] = [];
     }
-    
+
     codeGroups[groupKey].push(code);
   });
 
@@ -646,10 +684,10 @@ listingSchema.methods.getCodesFromExpirationGroups = function(groupQuantities) {
 
   // Select codes based on requested group quantities
   const selectedCodes = [];
-  
+
   groupQuantities.forEach(groupRequest => {
     const { type, count, date } = groupRequest;
-    
+
     // Create the groupKey to match the internal grouping
     let groupKey;
     if (type === "expires" && date) {
@@ -659,13 +697,13 @@ listingSchema.methods.getCodesFromExpirationGroups = function(groupQuantities) {
     } else {
       groupKey = type;
     }
-    
+
     const availableCodes = codeGroups[groupKey] || [];
-    
+
     if (availableCodes.length < count) {
       throw new Error(`Not enough codes available in ${type} group${date ? ` (${date})` : ''}. Available: ${availableCodes.length}, Requested: ${count}`);
     }
-    
+
     // Take the required number of codes from this group
     const selectedFromGroup = availableCodes.slice(0, count);
     selectedCodes.push(...selectedFromGroup);
@@ -680,7 +718,7 @@ listingSchema.methods.getCodesFromExpirationGroups = function(groupQuantities) {
  * @param {String} currentStatus - The current status of the listing
  * @returns {String} - The correct listing status
  */
-listingSchema.statics.determineListingStatus = function(codes, currentStatus) {
+listingSchema.statics.determineListingStatus = function (codes, currentStatus) {
   // If no codes, return draft if it's already draft, otherwise suspended
   if (!codes || codes.length === 0) {
     return currentStatus === "draft" ? "draft" : "suspended";
@@ -704,7 +742,7 @@ listingSchema.statics.determineListingStatus = function(codes, currentStatus) {
 
   // Check if this is an explicit status change from draft to active
   const isExplicitActivation = currentStatus === "active" &&
-                             this._isExplicitStatusChange === true;
+    this._isExplicitStatusChange === true;
 
   // Preserve deleted status - once deleted, always deleted
   if (currentStatus === "deleted") {
@@ -742,7 +780,7 @@ listingSchema.statics.determineListingStatus = function(codes, currentStatus) {
 };
 
 // Add a static method to fix inconsistent listings
-listingSchema.statics.auditAndFixListings = async function() {
+listingSchema.statics.auditAndFixListings = async function () {
   const Listing = this;
 
   // Find all listings

@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require("uuid");
 // Stripe Account schema for managing seller Connect accounts
 const stripeAccountSchema = new mongoose.Schema({
   sellerId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: "User",
     required: [true, "Seller ID is required"],
     unique: true,

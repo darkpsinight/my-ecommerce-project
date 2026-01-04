@@ -344,6 +344,80 @@ class StripeAdapter extends PaymentAdapter {
     }
   }
 
+  async createDirectPaymentIntent(amountCents, currency, sellerStripeAccountId, metadata = {}) {
+    try {
+      // Validate inputs
+      PaymentValidation.validateAmount(amountCents);
+      currency = PaymentValidation.validateCurrency(currency);
+
+      if (!sellerStripeAccountId) {
+        throw new PaymentError("Seller Stripe Account ID is required", "MISSING_SELLER_ACCOUNT", 400);
+      }
+
+      const stripe = this.getStripe();
+      const idempotencyKey = this.generateIdempotencyKey("pi_direct");
+
+      // 0% Platform Fee - Buyer pays exact item price, Seller receives exact item price (minus Stripe fees)
+      // Funds go to the Connected Account via transfer_data
+      // on_behalf_of makes the Connected Account the business of record
+
+      const paymentIntent = await PaymentErrorHandler.withRetry(async () => {
+        return await stripe.paymentIntents.create({
+          amount: amountCents,
+          currency: currency.toLowerCase(),
+          automatic_payment_methods: {
+            enabled: true
+          },
+          on_behalf_of: sellerStripeAccountId,
+          transfer_data: {
+            destination: sellerStripeAccountId
+          },
+          application_fee_amount: 0, // Explicitly 0% fee
+          metadata: {
+            ...metadata,
+            createdBy: "codeSale",
+            type: "direct_charge",
+            sellerStripeAccountId
+          }
+        }, {
+          idempotencyKey
+        });
+      });
+
+      // Record the operation
+      await PaymentOperation.createCharge({
+        stripeId: paymentIntent.id,
+        amountCents,
+        currency,
+        userId: metadata.buyerId,
+        sellerId: metadata.sellerId,
+        description: `Direct charge for seller ${sellerStripeAccountId}`,
+        metadata: {
+          ...metadata,
+          sellerStripeAccountId
+        },
+        stripeAccountId: sellerStripeAccountId
+      });
+
+      return {
+        paymentIntentId: paymentIntent.id,
+        clientSecret: paymentIntent.client_secret,
+        status: paymentIntent.status,
+        amountCents,
+        currency
+      };
+
+    } catch (error) {
+      PaymentErrorHandler.logError(error, {
+        method: "createDirectPaymentIntent",
+        amountCents,
+        currency,
+        sellerStripeAccountId
+      });
+      throw PaymentErrorHandler.handleStripeError(error);
+    }
+  }
+
   async confirmPaymentIntent(paymentIntentId) {
     try {
       const stripe = this.getStripe();
@@ -649,6 +723,14 @@ class StripeAdapter extends PaymentAdapter {
         paymentIntentId: paymentIntent.id
       });
       await operation.markAsSucceeded(paymentIntent);
+
+      // Trigger Checkout Service Logic for multi-seller orders
+      try {
+        const CheckoutService = require("../checkoutService");
+        await CheckoutService.handlePaymentSuccess(paymentIntent.id);
+      } catch (err) {
+        console.error("❌ StripeAdapter: Failed to trigger CheckoutService", err);
+      }
     } else {
       // Handle legacy wallet funding that doesn't have PaymentOperation records
       const metadata = paymentIntent.metadata || {};

@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant Buyer
+    participant BuyerUI as Buyer Frontend
+    participant API as Backend API
+    participant Stripe
+    participant SellerXStripe as Seller_X Stripe
+    participant SellerYStripe as Seller_Y Stripe
+
+    %% ===== CART CHECKOUT =====
+    Buyer->>BuyerUI: Checkout cart (3×product_X, 1×product_Y)
+    BuyerUI->>API: POST /checkout
+
+    API->>API: Group cart items by seller
+
+    %% ===== PAYMENTINTENT FOR SELLER X =====
+    API->>Stripe: Create PaymentIntent (on_behalf_of=Seller_X, amount=15)
+    Stripe-->>API: pi_X.client_secret
+
+    %% ===== PAYMENTINTENT FOR SELLER Y =====
+    API->>Stripe: Create PaymentIntent (on_behalf_of=Seller_Y, amount=5)
+    Stripe-->>API: pi_Y.client_secret
+
+    API-->>BuyerUI: client_secrets [pi_X, pi_Y]
+
+    BuyerUI->>Stripe: Confirm all payments
+    Stripe-->>API: Webhook payment_intent.succeeded (pi_X)
+    Stripe-->>API: Webhook payment_intent.succeeded (pi_Y)
+
+    API->>API: Verify all seller payments succeeded
+
+    %% ===== DELIVERY =====
+    API->>API: Assign 3 codes from Seller_X
+    API->>API: Assign 1 code from Seller_Y
+    API-->>BuyerUI: Order success + digital delivery

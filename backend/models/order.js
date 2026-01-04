@@ -4,13 +4,13 @@ const { v4: uuidv4 } = require("uuid");
 // Order schema for tracking digital code purchases
 const orderSchema = new mongoose.Schema({
   buyerId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String, // UID string
     ref: "User",
     required: [true, "Buyer ID is required"],
     index: true
   },
   sellerId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String, // UID string
     ref: "User",
     required: [true, "Seller ID is required"],
     index: true
@@ -39,6 +39,11 @@ const orderSchema = new mongoose.Schema({
       required: true,
       min: 1
     },
+    expirationGroups: [{
+      type: { type: String, required: true },
+      date: { type: Date },
+      count: { type: Number, required: true }
+    }],
     unitPrice: {
       type: Number,
       required: true,
@@ -98,7 +103,7 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Transaction"
   },
-  
+
   // Customer Geographic Data
   customerLocation: {
     ipAddress: {
@@ -159,6 +164,11 @@ const orderSchema = new mongoose.Schema({
     default: uuidv4,
     index: true
   },
+  // Group ID for multi-seller checkout sessions
+  checkoutGroupId: {
+    type: String,
+    index: true
+  },
   // Error tracking
   errorMessage: {
     type: String
@@ -186,7 +196,7 @@ orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ deliveryStatus: 1, createdAt: -1 });
 
 // Static method to create a new order
-orderSchema.statics.createOrder = async function(orderData) {
+orderSchema.statics.createOrder = async function (orderData) {
   const {
     buyerId,
     sellerId,
@@ -218,7 +228,7 @@ orderSchema.statics.createOrder = async function(orderData) {
 };
 
 // Instance method to mark order as completed
-orderSchema.methods.markAsCompleted = async function() {
+orderSchema.methods.markAsCompleted = async function () {
   this.status = "completed";
   this.deliveryStatus = "delivered";
   this.deliveredAt = new Date();
@@ -227,7 +237,7 @@ orderSchema.methods.markAsCompleted = async function() {
 };
 
 // Instance method to mark order as failed
-orderSchema.methods.markAsFailed = async function(errorMessage) {
+orderSchema.methods.markAsFailed = async function (errorMessage) {
   this.status = "failed";
   this.deliveryStatus = "failed";
   this.errorMessage = errorMessage;
@@ -236,13 +246,13 @@ orderSchema.methods.markAsFailed = async function(errorMessage) {
 };
 
 // Instance method to get buyer-safe order data (without codes for orders page)
-orderSchema.methods.getBuyerOrderData = function() {
+orderSchema.methods.getBuyerOrderData = function () {
   const orderData = this.toObject();
-  
+
   // Remove internal MongoDB ID
   delete orderData._id;
   delete orderData.__v;
-  
+
   // Process order items to include listing details
   if (orderData.orderItems) {
     orderData.orderItems.forEach((item, index) => {
@@ -250,7 +260,7 @@ orderSchema.methods.getBuyerOrderData = function() {
       if (item.purchasedCodes) {
         delete item.purchasedCodes;
       }
-      
+
       // Keep listing information for buyer to see (safe fields only)
       if (item.listingId && typeof item.listingId === 'object') {
         item.listing = {
@@ -265,7 +275,7 @@ orderSchema.methods.getBuyerOrderData = function() {
       }
     });
   }
-  
+
   // Keep seller information for buyer to see (safe fields only)
   if (orderData.sellerId && typeof orderData.sellerId === 'object') {
     orderData.seller = {
@@ -273,20 +283,23 @@ orderSchema.methods.getBuyerOrderData = function() {
       // Email removed for privacy/security
     };
     delete orderData.sellerId;
+  } else if (orderData.sellerId && typeof orderData.sellerId === 'string') {
+    // sellerId is a uid string, remove it (seller data added manually in static method)
+    delete orderData.sellerId;
   }
-  
+
   return orderData;
 };
 
 // Instance method to get seller-safe order data (without codes)
-orderSchema.methods.getSellerOrderData = function() {
+orderSchema.methods.getSellerOrderData = function () {
   const orderData = this.toObject();
-  
+
   // Remove buyer information, codes, and internal MongoDB ID
   delete orderData.buyerId;
   delete orderData._id;
   delete orderData.__v;
-  
+
   // Remove actual codes from order items
   if (orderData.orderItems) {
     orderData.orderItems.forEach(item => {
@@ -300,12 +313,12 @@ orderSchema.methods.getSellerOrderData = function() {
       }
     });
   }
-  
+
   return orderData;
 };
 
 // Static method to get orders by buyer
-orderSchema.statics.getOrdersByBuyer = async function(buyerId, options = {}) {
+orderSchema.statics.getOrdersByBuyer = async function (buyerId, options = {}) {
   const {
     page = 1,
     limit = 10,
@@ -329,13 +342,31 @@ orderSchema.statics.getOrdersByBuyer = async function(buyerId, options = {}) {
     .skip(skip)
     .limit(limit)
     .populate("orderItems.listingId", "title platform region description thumbnailUrl")
-    .populate("sellerId", "name email")
     .select("+orderItems.purchasedCodes.code +orderItems.purchasedCodes.iv");
 
   const total = await this.countDocuments(query);
 
+  // Get unique seller UIDs from orders
+  const sellerUids = [...new Set(orders.map(order => order.sellerId))];
+
+  // Fetch seller data manually using uid
+  const User = mongoose.model("User");
+  const sellers = await User.find({ uid: { $in: sellerUids } }).select("uid name");
+
+  // Create a map of sellerUid -> seller data for quick lookup
+  const sellerMap = {};
+  sellers.forEach(seller => {
+    sellerMap[seller.uid] = {
+      name: seller.name
+    };
+  });
+
   const processedOrders = orders.map(order => {
     const processed = order.getBuyerOrderData();
+    // Add seller info from the map
+    if (order.sellerId && sellerMap[order.sellerId]) {
+      processed.seller = sellerMap[order.sellerId];
+    }
     return processed;
   });
 
@@ -353,7 +384,7 @@ orderSchema.statics.getOrdersByBuyer = async function(buyerId, options = {}) {
 };
 
 // Static method to get orders by seller
-orderSchema.statics.getOrdersBySeller = async function(sellerId, options = {}) {
+orderSchema.statics.getOrdersBySeller = async function (sellerId, options = {}) {
   const {
     page = 1,
     limit = 10,
@@ -376,8 +407,7 @@ orderSchema.statics.getOrdersBySeller = async function(sellerId, options = {}) {
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate("orderItems.listingId", "title platform region")
-    .populate("buyerId", "email"); // Only email for seller
+    .populate("orderItems.listingId", "title platform region");
 
   const total = await this.countDocuments(query);
 

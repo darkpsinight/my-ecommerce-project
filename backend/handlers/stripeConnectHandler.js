@@ -18,7 +18,7 @@ const connectStripeAccount = async (request, reply) => {
             });
         }
 
-        const sellerId = user._id;
+        const sellerId = user.uid;
         const { country = "US", businessType = "individual" } = request.body || {};
 
         // 1. Ensure Stripe Account exists for this seller
@@ -72,7 +72,7 @@ const getStripeAccountStatus = async (request, reply) => {
             });
         }
 
-        const sellerId = user._id;
+        const sellerId = user.uid;
 
         // Get account from DB first
         const account = await StripeAccount.getBySellerId(sellerId);

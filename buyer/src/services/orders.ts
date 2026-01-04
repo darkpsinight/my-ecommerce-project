@@ -299,12 +299,29 @@ class OrdersService {
 
   async hasUserPurchasedProduct(productId: string): Promise<boolean> {
     try {
-      const response = await axiosInstance.get<{success: boolean, hasPurchased: boolean}>(`${this.baseUrl}/has-purchased/${productId}`);
+      const response = await axiosInstance.get<{ success: boolean, hasPurchased: boolean }>(`${this.baseUrl}/has-purchased/${productId}`);
       return response.data.hasPurchased;
     } catch (error) {
       console.error('Error checking if user purchased product:', error);
       return false;
     }
+  }
+
+  async createCheckoutSession(): Promise<{
+    success: boolean;
+    data: {
+      checkoutGroupId: string;
+      clientSecrets: string[];
+      orders: string[];
+    }
+  }> {
+    const response = await axiosInstance.post(`/checkout`);
+    return response.data;
+  }
+
+  async confirmPayment(paymentIntentId: string): Promise<{ success: boolean; status: string }> {
+    const response = await axiosInstance.post(`/checkout/confirm`, { paymentIntentId });
+    return response.data;
   }
 }
 

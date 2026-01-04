@@ -1,5 +1,6 @@
 const PaymentLogger = require("../paymentLogger");
 const { PaymentOperation } = require("../../../models/paymentOperation");
+const ledgerService = require("../ledgerService");
 const { Wallet } = require("../../../models/wallet");
 const { Order } = require("../../../models/order");
 const { Transaction } = require("../../../models/transaction");
@@ -29,25 +30,25 @@ class PaymentIntentProcessor {
     try {
       // Get the payment operation record
       const operation = await PaymentOperation.getByStripeId(paymentIntent.id);
-      
+
       console.log("🔍 PaymentIntentProcessor: Operation lookup result", {
         paymentIntentId: paymentIntent.id,
         operationFound: !!operation,
         operationId: operation?._id,
         operationStatus: operation?.status
       });
-      
+
       // Handle legacy wallet funding that doesn't have PaymentOperation records
       if (!operation) {
         const metadata = paymentIntent.metadata || {};
-        
+
         console.log("⚠️ PaymentIntentProcessor: No operation found, checking for legacy wallet funding", {
           paymentIntentId: paymentIntent.id,
           metadataType: metadata.type,
           hasUserId: !!metadata.userId,
           hasWalletId: !!metadata.walletId
         });
-        
+
         // Check if this is legacy wallet funding
         if (metadata.type === "wallet_funding" && metadata.userId && metadata.walletId) {
           console.log("✅ PaymentIntentProcessor: Processing as legacy wallet funding", {
@@ -56,12 +57,12 @@ class PaymentIntentProcessor {
             walletId: metadata.walletId,
             amount: paymentIntent.amount
           });
-          
+
           this.logger.logOperationStart(
             { type: "process_legacy_wallet_funding", id: paymentIntent.id },
             { userId: metadata.userId, amount: paymentIntent.amount }
           );
-          
+
           // Create a dummy operation for consistency
           const dummyOperation = {
             markAsSucceeded: async () => {
@@ -79,28 +80,28 @@ class PaymentIntentProcessor {
               );
             }
           };
-          
+
           const result = await this.processLegacyWalletFunding(paymentIntent, dummyOperation);
-          
+
           console.log("🎉 PaymentIntentProcessor: Legacy wallet funding completed", {
             paymentIntentId: paymentIntent.id,
             result
           });
-          
+
           this.logger.logOperationSuccess(
             { type: "process_legacy_wallet_funding", id: paymentIntent.id },
             result,
             correlationId
           );
-          
+
           return { processed: true, result };
         }
-        
+
         console.log("❌ PaymentIntentProcessor: Not a recognized legacy wallet funding", {
           paymentIntentId: paymentIntent.id,
           metadata
         });
-        
+
         this.logger.logOperationFailure(
           { type: "process_payment_intent_succeeded", id: paymentIntent.id },
           new Error("Payment operation not found"),
@@ -120,6 +121,30 @@ class PaymentIntentProcessor {
       // Process based on payment type
       const metadata = paymentIntent.metadata || {};
       let result;
+
+      // STEP 3: Create Internal Ledger Entries (Escrow Lock)
+      // This is independent of the payment type logic below, as long as it's a valid order payment.
+      // We need to fetch the actual orders to ensure we have the right amounts/sellers.
+      if (metadata.checkoutGroupId) {
+        try {
+          const orders = await Order.find({ checkoutGroupId: metadata.checkoutGroupId });
+          if (orders.length > 0) {
+            console.log("📒 Creating Ledger Entries for orders:", orders.map(o => o.externalId));
+            await ledgerService.recordPaymentSuccess(paymentIntent, orders);
+          } else {
+            console.warn("⚠️ No orders found for Ledger creation with group:", metadata.checkoutGroupId);
+          }
+        } catch (ledgerError) {
+          // CRITICAL: We do NOT fail the whole payment processing if ledger fails, 
+          // but we must log strictly because financial state is now out of sync.
+          console.error("🚨 LEDGER CREATION FAILED", ledgerError);
+          this.logger.logOperationFailure(
+            { type: "ledger_creation_failed", id: paymentIntent.id },
+            ledgerError
+          );
+          // In a real production system, this would trigger an urgent alert.
+        }
+      }
 
       switch (metadata.type) {
         case "wallet_topup":
@@ -214,7 +239,7 @@ class PaymentIntentProcessor {
 
   async processPaymentIntentCanceled(event) {
     const paymentIntent = event.data.object;
-    
+
     try {
       const operation = await PaymentOperation.getByStripeId(paymentIntent.id);
       if (!operation) {
@@ -247,12 +272,12 @@ class PaymentIntentProcessor {
 
   async processPaymentIntentRequiresAction(event) {
     const paymentIntent = event.data.object;
-    
+
     try {
       // Log that payment requires additional action (3D Secure, etc.)
       this.logger.logOperationStart(
         { type: "payment_requires_action", id: paymentIntent.id },
-        { 
+        {
           nextAction: paymentIntent.next_action?.type,
           metadata: paymentIntent.metadata
         }
@@ -386,7 +411,7 @@ class PaymentIntentProcessor {
         walletFound: !!wallet,
         currentBalance: wallet?.balance
       });
-      
+
       if (!wallet) {
         // Fallback: try to get wallet by userId
         console.log("🔄 Fallback: Looking up wallet by userId", userId);
@@ -397,7 +422,7 @@ class PaymentIntentProcessor {
           walletId: wallet?._id,
           currentBalance: wallet?.balance
         });
-        
+
         if (!wallet) {
           console.log("🆕 Creating new wallet for user", userId);
           wallet = await Wallet.createWalletForUser(userId, paymentIntent.currency.toUpperCase());
@@ -410,7 +435,7 @@ class PaymentIntentProcessor {
       }
 
       const balanceBefore = wallet.balance;
-      
+
       // Add funds to wallet (convert cents to dollars)
       const amountDollars = amountCents / 100;
       console.log("💰 Adding funds to wallet", {
@@ -419,13 +444,13 @@ class PaymentIntentProcessor {
         amountDollars,
         expectedBalanceAfter: balanceBefore + amountDollars
       });
-      
+
       await wallet.addFunds(amountDollars);
-      
+
       // Refresh wallet to get updated balance
       await wallet.reload();
       const balanceAfter = wallet.balance;
-      
+
       console.log("✅ Wallet funds added", {
         walletId: wallet._id,
         balanceBefore,
@@ -442,7 +467,7 @@ class PaymentIntentProcessor {
         transactionId: existingTransaction?._id,
         currentStatus: existingTransaction?.status
       });
-      
+
       if (existingTransaction && existingTransaction.status === "pending") {
         console.log("🔄 Marking existing transaction as completed", {
           transactionId: existingTransaction._id,
@@ -481,7 +506,7 @@ class PaymentIntentProcessor {
         transactionCompleted: true,
         walletId: wallet._id
       };
-      
+
       console.log("🎉 Legacy wallet funding processing completed", result);
       return result;
 
@@ -492,7 +517,7 @@ class PaymentIntentProcessor {
         error: error.message,
         stack: error.stack
       });
-      
+
       // If wallet update fails, we should mark the operation as failed
       await operation.markAsFailed("wallet_update_failed", error.message);
       throw error;
@@ -503,12 +528,12 @@ class PaymentIntentProcessor {
     // Handle generic payments that don't have specific types
     // Check if this might be a legacy wallet funding without operation record
     const metadata = paymentIntent.metadata || {};
-    
+
     // If it looks like wallet funding but has no operation, try to handle it
     if ((metadata.type === "wallet_funding" || metadata.walletId) && metadata.userId) {
       return await this.processLegacyWalletFunding(paymentIntent, operation);
     }
-    
+
     return {
       type: "generic_payment",
       paymentIntentId: paymentIntent.id,
@@ -623,14 +648,14 @@ class PaymentIntentProcessor {
 
   async getPaymentIntentStats(timeRange = 24) {
     const startTime = new Date(Date.now() - timeRange * 60 * 60 * 1000);
-    
+
     const stats = await PaymentOperation.aggregate([
-      { 
-        $match: { 
+      {
+        $match: {
           type: "charge",
           createdAt: { $gte: startTime },
           stripeId: { $regex: /^pi_/ } // Payment Intent IDs start with pi_
-        } 
+        }
       },
       {
         $group: {

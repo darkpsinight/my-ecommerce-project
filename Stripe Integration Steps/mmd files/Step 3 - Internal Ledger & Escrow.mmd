@@ -1,0 +1,26 @@
+sequenceDiagram
+    autonumber
+
+    participant Buyer
+    participant BuyerUI as Buyer Frontend
+    participant API as Backend API
+    participant Ledger as Internal Ledger
+    participant Stripe
+
+    Note over Buyer,Stripe: Step 2 completed – Buyer paid Platform, funds on Platform balance
+
+    Stripe-->>API: webhook payment_intent.succeeded
+    API->>API: Verify paymentIntentId and related orders
+
+    loop For each Order (per seller)
+        API->>Ledger: create LedgerEntry (escrow_lock)
+        Note right of Ledger: seller_uid | amount=order.amount | status=locked
+    end
+
+    API->>Ledger: create LedgerEntry (payment_capture)
+    Note right of Ledger: platform | amount=total_paid | status=settled
+
+    API-->>BuyerUI: Order confirmed
+    API-->>BuyerUI: Codes delivered
+
+    Note over Ledger: Funds locked in escrow, no Stripe transfers yet

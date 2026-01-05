@@ -1,9 +1,9 @@
 const { WebhookEvent } = require("../../models/webhookEvent");
 const StripeAdapter = require("../../services/payment/stripeAdapter");
 const PaymentLogger = require("../../services/payment/paymentLogger");
-const { 
-  WebhookVerificationError, 
-  PaymentErrorHandler 
+const {
+  WebhookVerificationError,
+  PaymentErrorHandler
 } = require("../../services/payment/paymentErrors");
 const { configs } = require("../../configs");
 const { sendSuccessResponse, sendErrorResponse } = require("../../utils/responseHelpers");
@@ -18,45 +18,41 @@ const logger = new PaymentLogger();
  */
 const handleStripeWebhook = async (request, reply) => {
   const startTime = Date.now();
-  
+
   try {
     // Get raw body and signature
     const rawBody = request.rawBody || request.body;
     const signature = request.headers['stripe-signature'];
-    
+
     console.log("🔄 Stripe webhook received", {
       hasSignature: !!signature,
       bodyLength: rawBody ? rawBody.length : 0,
       ip: request.ip,
       userAgent: request.headers['user-agent']
     });
-    
+
     if (!signature) {
       console.log("❌ Missing Stripe signature header");
-      logger.logSecurityEvent("missing_webhook_signature", {
-        ip: request.ip,
-        userAgent: request.headers['user-agent']
-      });
-      
+      console.log("❌ Missing Stripe signature header");
+      logger.logOperationFailure({ type: "webhook_signature_missing" }, new Error("Missing Stripe signature header"));
+
       return sendErrorResponse(reply, 400, "Missing Stripe signature header");
     }
 
     // Determine which webhook secret to use based on event source
-    const webhookSecret = configs.STRIPE_WEBHOOK_SECRET;
+    // Determine which webhook secret to use based on event source
+    // Fallback to connect secret if platform secret isn't set (dev environment convenience)
+    const webhookSecret = configs.STRIPE_WEBHOOK_SECRET || configs.STRIPE_CONNECT_WEBHOOK_SECRET;
+
     if (!webhookSecret) {
       console.log("❌ Webhook secret not configured");
-      logger.logSecurityEvent("missing_webhook_secret", {
-        configuredSecrets: {
-          platform: !!configs.STRIPE_WEBHOOK_SECRET,
-          connect: !!configs.STRIPE_CONNECT_WEBHOOK_SECRET
-        }
-      });
-      
+      logger.logOperationFailure({ type: "webhook_secret_missing" }, new Error("Webhook secret not configured"));
+
       return sendErrorResponse(reply, 500, "Webhook secret not configured");
     }
 
     console.log("🔍 Processing webhook with StripeAdapter");
-    
+
     // Verify and process the webhook
     const result = await stripeAdapter.handleWebhookEvent(
       rawBody,
@@ -65,13 +61,13 @@ const handleStripeWebhook = async (request, reply) => {
     );
 
     const processingTime = Date.now() - startTime;
-    
+
     console.log("✅ Stripe webhook processed successfully", {
       eventId: result.eventId,
       processingTime,
       received: result.received
     });
-    
+
     logger.logWebhookReceived({
       id: result.eventId,
       type: "unknown", // Will be updated by the adapter
@@ -98,42 +94,41 @@ const handleStripeWebhook = async (request, reply) => {
 
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    
+
     // Handle different types of webhook errors
     if (error instanceof WebhookVerificationError) {
-      logger.logSecurityEvent("webhook_verification_failed", {
-        error: error.message,
+      if (error instanceof WebhookVerificationError) {
+        logger.logOperationFailure({ type: "webhook_verification_failed" }, error);
+
+        request.log.warn({
+          msg: "Webhook signature verification failed",
+          error: error.message,
+          ip: request.ip,
+          processingTime
+        });
+
+        return sendErrorResponse(reply, 401, "Webhook signature verification failed");
+      }
+
+      // Log other webhook processing errors
+      PaymentErrorHandler.logError(error, {
+        context: "stripe_webhook",
         ip: request.ip,
-        userAgent: request.headers['user-agent'],
-        hasSignature: !!request.headers['stripe-signature']
+        hasSignature: !!request.headers['stripe-signature'],
+        processingTime
       });
-      
-      request.log.warn({
-        msg: "Webhook signature verification failed",
+
+      request.log.error({
+        msg: "Webhook processing failed",
         error: error.message,
+        stack: error.stack,
         ip: request.ip,
         processingTime
       });
-      
-      return sendErrorResponse(reply, 401, "Webhook signature verification failed");
+
+      // Return 500 to trigger Stripe retry
+      return sendErrorResponse(reply, 500, "Webhook processing failed");
     }
-
-    // Log other webhook processing errors
-    PaymentErrorHandler.logError(error, {
-      context: "stripe_webhook",
-      ip: request.ip,
-      hasSignature: !!request.headers['stripe-signature'],
-      processingTime
-    });
-
-    request.log.error({
-      msg: "Webhook processing failed",
-      error: error.message,
-      stack: error.stack,
-      ip: request.ip,
-      processingTime
-    });
-
     // Return 500 to trigger Stripe retry
     return sendErrorResponse(reply, 500, "Webhook processing failed");
   }
@@ -145,17 +140,14 @@ const handleStripeWebhook = async (request, reply) => {
  */
 const handleStripeConnectWebhook = async (request, reply) => {
   const startTime = Date.now();
-  
+
   try {
     const rawBody = request.rawBody || request.body;
     const signature = request.headers['stripe-signature'];
-    
+
     if (!signature) {
-      logger.logSecurityEvent("missing_connect_webhook_signature", {
-        ip: request.ip,
-        userAgent: request.headers['user-agent']
-      });
-      
+      logger.logOperationFailure({ type: "connect_webhook_signature_missing" }, new Error("Missing Stripe signature header"));
+
       return sendErrorResponse(reply, 400, "Missing Stripe signature header");
     }
 
@@ -198,7 +190,7 @@ const handleStripeConnectWebhook = async (request, reply) => {
 
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    
+
     PaymentErrorHandler.logError(error, {
       context: "stripe_connect_webhook",
       ip: request.ip,
@@ -237,7 +229,7 @@ const getWebhookEvents = async (request, reply) => {
     if (type) filters.type = type;
     if (source) filters.source = source;
     if (processed !== undefined) filters.processed = processed === 'true';
-    
+
     if (startDate || endDate) {
       filters.createdAt = {};
       if (startDate) filters.createdAt.$gte = new Date(startDate);
@@ -370,12 +362,12 @@ const webhookHealthCheck = async (request, reply) => {
       createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
     }).limit(100);
 
-    const failedEvents = recentEvents.filter(event => 
+    const failedEvents = recentEvents.filter(event =>
       !event.processed && event.processingAttempts > 0
     );
 
-    const processingRate = recentEvents.length > 0 
-      ? ((recentEvents.length - failedEvents.length) / recentEvents.length) * 100 
+    const processingRate = recentEvents.length > 0
+      ? ((recentEvents.length - failedEvents.length) / recentEvents.length) * 100
       : 100;
 
     const health = {
@@ -390,8 +382,8 @@ const webhookHealthCheck = async (request, reply) => {
       timestamp: new Date().toISOString()
     };
 
-    const statusCode = health.status === "healthy" ? 200 : 
-                      health.status === "degraded" ? 200 : 503;
+    const statusCode = health.status === "healthy" ? 200 :
+      health.status === "degraded" ? 200 : 503;
 
     return sendSuccessResponse(reply, {
       statusCode,

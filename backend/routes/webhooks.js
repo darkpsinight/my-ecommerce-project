@@ -5,9 +5,22 @@ const {
   retryWebhookEvent,
   webhookHealthCheck
 } = require("./webhooks/stripe");
+const { verifyAuth } = require("../plugins/authVerify");
 
 // Webhook routes configuration
 async function webhookRoutes(fastify, options) {
+  // Option A: Custom content type parser to capture raw body
+  fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, function (req, body, done) {
+    try {
+      req.rawBody = body;
+      const json = JSON.parse(body.toString());
+      done(null, json);
+    } catch (err) {
+      err.statusCode = 400;
+      done(err, undefined);
+    }
+  });
+
   // Stripe platform webhook endpoint
   fastify.post("/stripe", {
     config: {
@@ -109,37 +122,36 @@ async function webhookRoutes(fastify, options) {
   // Get webhook events (admin only)
   fastify.get("/stripe/events", {
     preHandler: [
-      fastify.authenticate,
-      fastify.requireRole(["admin"])
+      verifyAuth(["admin"])
     ],
     schema: {
       description: "Get webhook event history",
       tags: ["webhooks", "admin"],
-      security: [{ bearerAuth: [] }],
+      security: [{ JWTToken: [] }],
       querystring: {
         type: "object",
         properties: {
           page: { type: "integer", minimum: 1, default: 1 },
           limit: { type: "integer", minimum: 1, maximum: 100, default: 50 },
           type: { type: "string", description: "Filter by event type" },
-          source: { 
-            type: "string", 
+          source: {
+            type: "string",
             enum: ["platform", "connect", "legacy"],
-            description: "Filter by event source" 
+            description: "Filter by event source"
           },
-          processed: { 
-            type: "boolean", 
-            description: "Filter by processing status" 
+          processed: {
+            type: "boolean",
+            description: "Filter by processing status"
           },
-          startDate: { 
-            type: "string", 
+          startDate: {
+            type: "string",
             format: "date-time",
-            description: "Filter events after this date" 
+            description: "Filter events after this date"
           },
-          endDate: { 
-            type: "string", 
+          endDate: {
+            type: "string",
             format: "date-time",
-            description: "Filter events before this date" 
+            description: "Filter events before this date"
           }
         }
       },
@@ -197,17 +209,16 @@ async function webhookRoutes(fastify, options) {
   // Retry webhook event processing (admin only)
   fastify.post("/stripe/events/:eventId/retry", {
     preHandler: [
-      fastify.authenticate,
-      fastify.requireRole(["admin"])
+      verifyAuth(["admin"])
     ],
     schema: {
       description: "Retry processing a failed webhook event",
       tags: ["webhooks", "admin"],
-      security: [{ bearerAuth: [] }],
+      security: [{ JWTToken: [] }],
       params: {
         type: "object",
         properties: {
-          eventId: { 
+          eventId: {
             type: "string",
             description: "Webhook event ID to retry"
           }
@@ -263,7 +274,7 @@ async function webhookRoutes(fastify, options) {
             data: {
               type: "object",
               properties: {
-                status: { 
+                status: {
                   type: "string",
                   enum: ["healthy", "degraded", "unhealthy"]
                 },

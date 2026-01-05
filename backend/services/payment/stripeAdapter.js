@@ -12,10 +12,15 @@ const PaymentLogger = require("./paymentLogger");
 const { PaymentOperation } = require("../../models/paymentOperation");
 const { StripeAccount } = require("../../models/stripeAccount");
 const { WebhookEvent } = require("../../models/webhookEvent");
+const { Order } = require("../../models/order");
+const { LedgerEntry } = require("../../models/ledgerEntry");
+const ledgerService = require("./ledgerService");
 const { configs } = require("../../configs");
 
+console.log("🔥 STRIPE ADAPTER FILE LOADED:", __filename);
 class StripeAdapter extends PaymentAdapter {
   constructor(config = {}) {
+    console.log("🔥 STRIPE ADAPTER INSTANCE CREATED FROM:", __filename);
     super(config);
 
     // Initialize Stripe lazily to avoid environment variable issues
@@ -598,6 +603,11 @@ class StripeAdapter extends PaymentAdapter {
     try {
       const stripe = this.getStripe();
 
+      // Normalize payload ONCE (Fastify-safe)
+      const rawPayload = Buffer.isBuffer(rawBody)
+        ? rawBody
+        : Buffer.from(rawBody);
+
       console.log("🔄 StripeAdapter: Processing webhook event", {
         hasBody: !!rawBody,
         bodyLength: rawBody ? rawBody.length : 0,
@@ -605,19 +615,28 @@ class StripeAdapter extends PaymentAdapter {
         hasSecret: !!endpointSecret
       });
 
+      const bodyPreview = rawPayload.toString("utf8").slice(0, 50);
+      console.log("🚨 [DIAGNOSTIC] WEBHOOK RECEIVED RAW:", bodyPreview + "...");
+
       if (!endpointSecret) {
         throw new WebhookVerificationError("Webhook endpoint secret not configured");
       }
 
       // Verify webhook signature
       console.log("🔍 StripeAdapter: Verifying webhook signature");
-      const event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret);
+      const event = stripe.webhooks.constructEvent(
+        rawPayload,
+        signature,
+        endpointSecret
+      );
 
       console.log("✅ StripeAdapter: Webhook signature verified", {
         eventId: event.id,
         eventType: event.type,
         created: event.created
       });
+
+      console.log(`🚨 [DIAGNOSTIC] Event Type Verified: ${event.type}`);
 
       // Store the raw event
       const webhookEvent = await WebhookEvent.createFromStripeEvent(event, "platform");
@@ -649,6 +668,7 @@ class StripeAdapter extends PaymentAdapter {
   }
 
   async processWebhookEvent(webhookEvent) {
+    console.log("🔥 PROCESSING IN FILE:", __filename);
     try {
       const event = webhookEvent.rawData;
 
@@ -707,6 +727,10 @@ class StripeAdapter extends PaymentAdapter {
   // Webhook Event Handlers
   async handlePaymentIntentSucceeded(event) {
     const paymentIntent = event.data.object;
+
+    // MANDATORY: FIRST LINE LOG
+    console.log("📒 LEDGER SOURCE OF TRUTH HIT", paymentIntent.id);
+
     const operation = await PaymentOperation.getByStripeId(paymentIntent.id);
 
     console.log("✅ StripeAdapter: Handling payment_intent.succeeded", {
@@ -717,39 +741,88 @@ class StripeAdapter extends PaymentAdapter {
       metadata: paymentIntent.metadata
     });
 
+    // ─────────────────────────────────────────────
+    // Case 1: Normal marketplace checkout (Step 2+3)
+    // ─────────────────────────────────────────────
     if (operation) {
       console.log("🔄 StripeAdapter: Marking operation as succeeded", {
         operationId: operation._id,
         paymentIntentId: paymentIntent.id
       });
+
       await operation.markAsSucceeded(paymentIntent);
 
-      // Trigger Checkout Service Logic for multi-seller orders
+      // ─────────────────────────────────────────
+      // STEP 3: INTERNAL LEDGER CREATION (MANDATORY)
+      // ─────────────────────────────────────────
+      // NO return, NO checkoutGroupId dependency, NO async branching before this.
       try {
-        const CheckoutService = require("../checkoutService");
-        await CheckoutService.handlePaymentSuccess(paymentIntent.id);
-      } catch (err) {
-        console.error("❌ StripeAdapter: Failed to trigger CheckoutService", err);
+        // Idempotency check: ledger must be created exactly once
+        const ledgerExists = await LedgerEntry.exists({
+          related_payment_intent_id: paymentIntent.id,
+          type: "payment_capture"
+        });
+
+        if (!ledgerExists) {
+          // Query using paymentIntentId ONLY
+          const orders = await Order.find({ paymentIntentId: paymentIntent.id });
+
+          if (orders.length > 0) {
+            console.log(`� Orders found: ${orders.length}`);
+
+            // MANDATORY LOG BEFORE CALL
+            console.log("📒 ABOUT TO CALL ledgerService.recordPaymentSuccess");
+
+            await ledgerService.recordPaymentSuccess(paymentIntent, orders);
+
+            console.log("📒 Ledger entries created");
+          } else {
+            console.warn("⚠️ No orders found for PaymentIntent, skipping ledger creation (expected for topups/pure-platform)", { paymentIntentId: paymentIntent.id });
+          }
+        } else {
+          console.log("ℹ️ Ledger entries already exist for this payment intent", { paymentIntentId: paymentIntent.id });
+        }
+      } catch (ledgerError) {
+        console.error("🚨 LEDGER CREATION FAILED", ledgerError);
+        PaymentErrorHandler.logError(ledgerError, {
+          context: "ledger_creation",
+          paymentIntentId: paymentIntent.id
+        });
       }
-    } else {
-      // Handle legacy wallet funding that doesn't have PaymentOperation records
-      const metadata = paymentIntent.metadata || {};
-      console.log("🔍 StripeAdapter: No operation found, checking for legacy wallet funding", {
+
+      // 🚫 DO NOT trigger CheckoutService here
+      // Webhooks must NEVER perform delivery or stateful order mutations
+
+      return;
+    }
+
+    // ─────────────────────────────────────────────
+    // Case 2: Legacy wallet funding (pre-marketplace)
+    // ─────────────────────────────────────────────
+    const metadata = paymentIntent.metadata || {};
+
+    console.log(
+      "🔍 StripeAdapter: No operation found, checking legacy wallet funding",
+      {
         paymentIntentId: paymentIntent.id,
         metadataType: metadata.type,
         hasUserId: !!metadata.userId,
         hasWalletId: !!metadata.walletId
-      });
-
-      if (metadata.type === "wallet_funding" && metadata.userId && metadata.walletId) {
-        console.log("💰 StripeAdapter: Processing legacy wallet funding");
-        await this.handleLegacyWalletFunding(paymentIntent);
-      } else {
-        console.log("⚠️ StripeAdapter: Payment intent not recognized as legacy wallet funding", {
-          paymentIntentId: paymentIntent.id,
-          metadata
-        });
       }
+    );
+
+    if (
+      metadata.type === "wallet_funding" &&
+      metadata.userId &&
+      metadata.walletId
+    ) {
+      console.log("💰 StripeAdapter: Processing legacy wallet funding");
+      await this.handleLegacyWalletFunding(paymentIntent);
+    } else {
+      console.log(
+        "⚠️ StripeAdapter: Payment intent not recognized",
+        { paymentIntentId: paymentIntent.id, metadata }
+      );
     }
   }
 

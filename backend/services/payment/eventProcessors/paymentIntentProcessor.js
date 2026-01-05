@@ -1,9 +1,10 @@
 const PaymentLogger = require("../paymentLogger");
 const { PaymentOperation } = require("../../../models/paymentOperation");
-const ledgerService = require("../ledgerService");
+
 const { Wallet } = require("../../../models/wallet");
 const { Order } = require("../../../models/order");
 const { Transaction } = require("../../../models/transaction");
+const { LedgerEntry } = require("../../../models/ledgerEntry");
 const { PaymentErrorHandler } = require("../paymentErrors");
 
 class PaymentIntentProcessor {
@@ -26,6 +27,8 @@ class PaymentIntentProcessor {
       status: paymentIntent.status,
       metadata: paymentIntent.metadata
     });
+
+    console.log("🚨 [DIAGNOSTIC] PROCESSOR CALLED: payment_intent.succeeded for", paymentIntent.id);
 
     try {
       // Get the payment operation record
@@ -110,8 +113,11 @@ class PaymentIntentProcessor {
         return { processed: false, reason: "operation_not_found" };
       }
 
+
+
       // Check if already processed (idempotency)
       if (operation.status === "succeeded") {
+        console.log("🚨 [DIAGNOSTIC] SKIPPING LEDGER: Operation already 'succeeded' (likely via Fast Path). Ledger logic bypassed.");
         return { processed: true, reason: "already_processed" };
       }
 
@@ -122,29 +128,7 @@ class PaymentIntentProcessor {
       const metadata = paymentIntent.metadata || {};
       let result;
 
-      // STEP 3: Create Internal Ledger Entries (Escrow Lock)
-      // This is independent of the payment type logic below, as long as it's a valid order payment.
-      // We need to fetch the actual orders to ensure we have the right amounts/sellers.
-      if (metadata.checkoutGroupId) {
-        try {
-          const orders = await Order.find({ checkoutGroupId: metadata.checkoutGroupId });
-          if (orders.length > 0) {
-            console.log("📒 Creating Ledger Entries for orders:", orders.map(o => o.externalId));
-            await ledgerService.recordPaymentSuccess(paymentIntent, orders);
-          } else {
-            console.warn("⚠️ No orders found for Ledger creation with group:", metadata.checkoutGroupId);
-          }
-        } catch (ledgerError) {
-          // CRITICAL: We do NOT fail the whole payment processing if ledger fails, 
-          // but we must log strictly because financial state is now out of sync.
-          console.error("🚨 LEDGER CREATION FAILED", ledgerError);
-          this.logger.logOperationFailure(
-            { type: "ledger_creation_failed", id: paymentIntent.id },
-            ledgerError
-          );
-          // In a real production system, this would trigger an urgent alert.
-        }
-      }
+
 
       switch (metadata.type) {
         case "wallet_topup":

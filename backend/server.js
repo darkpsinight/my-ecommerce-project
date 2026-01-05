@@ -41,6 +41,7 @@ const wishlistRoutes = require("./routes/wishlist");
 const viewedProductRoutes = require("./routes/viewedProducts");
 const impressionRoutes = require("./routes/impressions");
 const performanceRoutes = require("./routes/performanceRoutes");
+const webhookRoutes = require("./routes/webhooks");
 const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
 const fastifyCsrf = require("fastify-csrf");
@@ -182,6 +183,9 @@ fastify.register(imageUploadRoutes, { prefix: "/api/v1/images" });
 
 // Register performance monitoring routes
 fastify.register(performanceRoutes, { prefix: "/api/v1" });
+
+// Register webhook routes (Note: Prefix is /api/webhooks to match Stripe config, not /api/v1)
+fastify.register(webhookRoutes, { prefix: "/api/webhooks" });
 
 // Auth Service health check
 fastify.get("/", async (request, reply) => {

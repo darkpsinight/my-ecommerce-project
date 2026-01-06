@@ -1,0 +1,37 @@
+sequenceDiagram
+    participant Admin as Admin/System
+    participant API as Backend API
+    participant DB as Payout Collection
+    participant Ledger as Internal Ledger
+    participant Stripe as Stripe Platform
+    participant Seller
+
+    Note over Ledger: Ledger already contains escrowed seller balance
+
+    Admin->>API: Approve payout (adminId, orderId)
+    
+    API->>API: Validations:
+    Note right of API: 1. Order DELIVERED? <br/>2. Currency Match? <br/>3. Ledger Balance >= Amount?
+    
+    API->>DB: Create Payout (PENDING, approvedBy)
+    
+    API->>Stripe: Create Transfer
+    Note over Stripe: Idempotency Key = Payout ID
+    
+    alt Stripe Success
+        Stripe-->>API: transfer_id
+        
+        Note right of API: START DB TRANSACTION
+        API->>Ledger: Create LE: type=PAYOUT (Debit)
+        API->>DB: Update Payout: COMPLETED
+        Note right of API: COMMIT DB TRANSACTION
+        
+        Note over Seller: Funds arrive in Stripe Connected Account
+    else Stripe Failed
+        Stripe-->>API: Error
+        API->>DB: Update Payout: FAILED
+    else Post-Stripe Persistence Failure (Critical)
+        Note right of API: DB Transaction Fails
+        API-->>Admin: Error "Inconsistency Alert"
+        Note over DB: Payout remains PENDING (Needs Recon)
+    end

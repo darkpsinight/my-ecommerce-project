@@ -1,0 +1,58 @@
+sequenceDiagram
+    participant Buyer
+    participant Stripe as Stripe Platform
+    participant API as Backend API
+    participant Ledger as Internal Ledger
+    participant Payout as Payout Collection
+    participant Seller
+
+    Note over Ledger: Ledger is append-only (no updates)
+
+    %% =========================
+    %% REFUND BEFORE PAYOUT
+    %% =========================
+    alt Refund BEFORE seller payout
+        Buyer->>Stripe: Request refund
+        Stripe-->>API: refund.succeeded webhook
+
+        API->>Ledger: Append REFUND entry (+buyer, -escrow)
+        Note over Ledger: Escrow is reversed, seller never paid
+    end
+
+    %% =========================
+    %% REFUND AFTER PAYOUT
+    %% =========================
+    alt Refund AFTER seller payout
+        Buyer->>Stripe: Request refund
+        Stripe-->>API: refund.succeeded webhook
+
+        API->>Ledger: Append REFUND entry (buyer credited)
+        API->>Ledger: Append SELLER_REVERSAL entry (seller debited)
+        Note over Seller: Seller balance may become NEGATIVE
+    end
+
+    %% =========================
+    %% STRIPE DISPUTE CREATED
+    %% =========================
+    Stripe-->>API: dispute.created webhook
+    API->>Ledger: Append DISPUTE_OPEN entry
+    Note over Ledger: Funds considered at risk
+
+    %% =========================
+    %% DISPUTE WON BY PLATFORM
+    %% =========================
+    alt Dispute WON
+        Stripe-->>API: dispute.closed (won)
+        API->>Ledger: Append DISPUTE_WON entry
+    end
+
+    %% =========================
+    %% DISPUTE LOST BY PLATFORM
+    %% =========================
+    alt Dispute LOST
+        Stripe-->>API: dispute.closed (lost)
+
+        API->>Ledger: Append DISPUTE_LOST entry
+        API->>Ledger: Append SELLER_REVERSAL entry
+        Note over Seller: Seller balance may become NEGATIVE
+    end

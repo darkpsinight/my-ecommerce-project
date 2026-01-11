@@ -461,6 +461,15 @@ class StripeAdapter extends PaymentAdapter {
       const stripe = this.getStripe();
       const idempotencyKey = this.generateIdempotencyKey("tr");
 
+      // Validate mandatory metadata for traceability
+      if (!metadata.payoutId || !metadata.orderId) {
+        throw new PaymentError(
+          "Transfer requires payoutId and orderId in metadata",
+          "MISSING_METADATA",
+          400
+        );
+      }
+
       // Verify seller account is ready for transfers
       const stripeAccount = await StripeAccount.getByStripeAccountId(stripeAccountId);
       if (!stripeAccount || !stripeAccount.isFullyVerified()) {

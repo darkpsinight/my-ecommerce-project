@@ -713,6 +713,17 @@ class StripeAdapter extends PaymentAdapter {
           await this.handleAccountUpdated(event);
           break;
 
+        case "charge.refunded":
+          console.log("💸 StripeAdapter: Handling charge.refunded");
+          await this.handleRefundEvent(event);
+          break;
+
+        case "charge.dispute.created":
+        case "charge.dispute.closed":
+          console.log(`⚖️ StripeAdapter: Handling ${event.type}`);
+          await this.handleDisputeEvent(event);
+          break;
+
         default:
           console.log(`⚠️ StripeAdapter: Unhandled webhook event type: ${event.type}`);
       }
@@ -998,12 +1009,91 @@ class StripeAdapter extends PaymentAdapter {
 
   async handleAccountUpdated(event) {
     const account = event.data.object;
-    const stripeAccount = await StripeAccount.getByStripeAccountId(account.id);
+    console.log("ℹ️ StripeAdapter: Auto-updating account status from webhook", {
+      accountId: account.id
+    });
 
+    const stripeAccount = await StripeAccount.getByStripeAccountId(account.id);
     if (stripeAccount) {
       await stripeAccount.updateFromStripeAccount(account);
+      console.log("✅ StripeAdapter: Account status updated in DB");
+    } else {
+      console.log("⚠️ StripeAdapter: received account.updated for unknown account", account.id);
     }
   }
+
+  async handleRefundEvent(event) {
+    const refund = event.data.object;
+    const paymentIntentId = refund.payment_intent;
+
+    console.log("Handling Refund Event", { refundId: refund.id, paymentIntentId });
+
+    // Idempotency: Check if we already recorded this refund
+    const existingEntry = await LedgerEntry.exists({
+      "metadata.refundId": refund.id,
+      type: { $in: ["escrow_reversal", "seller_reversal"] }
+    });
+
+    if (existingEntry) {
+      console.log("ℹ️ Skipping duplicate refund event", { refundId: refund.id });
+      return;
+    }
+
+    const stripe = this.getStripe();
+    // Fetch PaymentIntent to get original metadata/amount if needed
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    // Fetch related Orders
+    const orders = await Order.find({ paymentIntentId: paymentIntentId });
+
+    if (orders.length === 0) {
+      console.warn("⚠️ Refund received for PaymentIntent with no local orders (Direct Charge?)", { paymentIntentId });
+      return;
+    }
+
+    // Call LedgerService
+    await ledgerService.recordRefund(paymentIntent, refund, orders);
+    console.log("✅ Refund Recorded in Ledger");
+  }
+
+  async handleDisputeEvent(event) {
+    const dispute = event.data.object;
+    const paymentIntentId = dispute.payment_intent;
+
+    console.log(`Handling Dispute Event: ${event.type}`, { disputeId: dispute.id, status: dispute.status });
+
+    // Idempotency Logic
+    // For dispute_created: check if dispute_open exists
+    // For dispute_closed: check if dispute_won/lost exists
+    let checkType = "dispute_open";
+    if (event.type === "charge.dispute.closed") {
+      checkType = dispute.status === "lost" ? "dispute_lost" : "dispute_won";
+    }
+
+    const existingEntry = await LedgerEntry.exists({
+      "metadata.disputeId": dispute.id,
+      type: checkType
+    });
+
+    if (existingEntry) {
+      console.log("ℹ️ Skipping duplicate dispute event", { disputeId: dispute.id, type: checkType });
+      return;
+    }
+
+    // Fetch Orders
+    const orders = await Order.find({ paymentIntentId: paymentIntentId });
+    if (orders.length === 0) {
+      console.warn("⚠️ Dispute received for unknown PaymentIntent", { paymentIntentId });
+      return;
+    }
+
+    // Record for EACH order (Usually 1)
+    for (const order of orders) {
+      await ledgerService.recordDispute(dispute, order);
+    }
+    console.log("✅ Dispute Recorded in Ledger");
+  }
+
 }
 
 module.exports = StripeAdapter;

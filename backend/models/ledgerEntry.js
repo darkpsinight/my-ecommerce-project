@@ -5,11 +5,11 @@ const ledgerEntrySchema = new mongoose.Schema({
   // Core identifier
   user_uid: {
     type: String,
-    required: [true, "User UID is required"], 
+    required: [true, "User UID is required"],
     index: true
     // references User.uid, or 'PLATFORM' for platform entries
   },
-  
+
   // Role of the entity in this transaction
   role: {
     type: String,
@@ -26,7 +26,12 @@ const ledgerEntrySchema = new mongoose.Schema({
       "escrow_lock",     // Funds locked for seller (Seller credit, locked)
       "escrow_release",  // Funds released to seller (Seller locked->available transition)
       "refund",          // Money returned to buyer
-      "payout"           // Money sent out to external bank
+      "payout",          // Money sent out to external bank
+      "escrow_reversal", // Pre-payout refund (Locked -> Finalized Reversal)
+      "seller_reversal", // Post-payout refund (Available -> Debt)
+      "dispute_open",    // Notification only
+      "dispute_won",     // Notification only
+      "dispute_lost"     // Notification only
     ],
     required: true,
     index: true
@@ -84,7 +89,7 @@ const ledgerEntrySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
-  
+
   // Immutability enforcement (via unique ID and external ID)
   externalId: {
     type: String,
@@ -104,7 +109,7 @@ ledgerEntrySchema.index({ user_uid: 1, type: 1 });   // Audit log filter
 ledgerEntrySchema.index({ related_order_id: 1, type: 1 }); // Order history
 
 // Prevent updates to existing documents - Append Only!
-ledgerEntrySchema.pre('save', function(next) {
+ledgerEntrySchema.pre('save', function (next) {
   if (!this.isNew) {
     const err = new Error('LedgerEntry documents are immutable and cannot be modified.');
     next(err);

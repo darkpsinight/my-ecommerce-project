@@ -197,6 +197,41 @@ const adminRoutes = async (fastify, opts) => {
 		],
 		handler: deletePlatform,
 	});
+
+	// Escrow Management Routes
+	const { releaseEscrow, refundEscrow } = require("../handlers/escrowHandlers");
+
+	fastify.route({
+		method: "POST",
+		url: "/orders/:orderId/escrow/release",
+		schema: {
+			params: {
+				type: "object",
+				properties: { orderId: { type: "string" } },
+				required: ["orderId"]
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: releaseEscrow,
+	});
+
+	fastify.route({
+		method: "POST",
+		url: "/orders/:orderId/escrow/refund",
+		schema: {
+			params: {
+				type: "object",
+				properties: { orderId: { type: "string" } },
+				required: ["orderId"]
+			},
+			body: {
+				type: "object",
+				properties: { reason: { type: "string" } }
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: refundEscrow,
+	});
 };
 
 module.exports = {

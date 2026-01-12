@@ -184,6 +184,19 @@ const orderSchema = new mongoose.Schema({
   },
   failedAt: {
     type: Date
+  },
+  // Escrow Status
+  escrowStatus: {
+    type: String,
+    enum: ["held", "released", "refunded"],
+    default: "held", // Default to held for new orders via Stripe
+    index: true
+  },
+  escrowHeldAt: {
+    type: Date
+  },
+  escrowReleasedAt: {
+    type: Date
   }
 }, {
   timestamps: true

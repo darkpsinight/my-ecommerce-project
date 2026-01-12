@@ -156,6 +156,13 @@ class CheckoutService {
             // Mark as paid/processing
             order.status = "processing";
             order.processedAt = new Date();
+
+            // Set Escrow Status clearly
+            if (order.escrowStatus !== "held") {
+                order.escrowStatus = "held";
+                order.escrowHeldAt = new Date();
+            }
+
             await order.save();
 
             // Deliver immediately since the PaymentIntent is confirmed successful for the whole batch

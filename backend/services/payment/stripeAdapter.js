@@ -563,14 +563,22 @@ class StripeAdapter extends PaymentAdapter {
         );
       }
 
+      // FIX: Force Stripe-valid reason "requested_by_customer"
+      // Move internal/admin reason to metadata
+      const stripeReason = "requested_by_customer";
+      const internalReason = reason;
+
       const refund = await PaymentErrorHandler.withRetry(async () => {
         return await stripe.refunds.create({
           payment_intent: paymentIntentId,
           amount: refundAmount,
-          reason,
+          reason: stripeReason,
           metadata: {
             createdBy: "stripe-connect-migration",
-            originalAmount: paymentIntent.amount.toString()
+            originalAmount: paymentIntent.amount.toString(),
+            internal_reason: internalReason,
+            initiated_by: "admin",
+            orderExternalId: paymentIntent.metadata.orderExternalId || paymentIntent.metadata.escrowId || "unknown"
           }
         }, {
           idempotencyKey
@@ -585,7 +593,11 @@ class StripeAdapter extends PaymentAdapter {
         userId: paymentIntent.metadata?.userId,
         paymentIntentId,
         description: `Refund of ${refundAmount / 100} ${refund.currency.toUpperCase()} for payment ${paymentIntentId}`,
-        metadata: { reason, originalAmount: paymentIntent.amount }
+        metadata: {
+          reason: stripeReason,
+          internal_reason: internalReason,
+          originalAmount: paymentIntent.amount
+        }
       });
 
       return {

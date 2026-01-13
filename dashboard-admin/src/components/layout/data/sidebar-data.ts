@@ -18,6 +18,7 @@ import {
   Users,
   MessagesSquare,
   ShieldCheck,
+  ShoppingCart,
 } from 'lucide-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 import { ClerkLogo } from '@/assets/clerk-logo'
@@ -75,6 +76,11 @@ export const sidebarData: SidebarData = {
           title: 'Users',
           url: '/users',
           icon: Users,
+        },
+        {
+          title: 'Orders',
+          url: '/orders',
+          icon: ShoppingCart,
         },
         {
           title: 'Secured by Clerk',

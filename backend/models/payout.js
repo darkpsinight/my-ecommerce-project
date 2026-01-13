@@ -39,7 +39,7 @@ const payoutSchema = new mongoose.Schema({
     required: true,
     min: 1
   },
-  
+
   currency: {
     type: String,
     required: true,
@@ -68,7 +68,21 @@ const payoutSchema = new mongoose.Schema({
   metadata: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
-  }
+  },
+
+  // Retry Mechanism Fields
+  retryAttemptCount: {
+    type: Number,
+    default: 0
+  },
+
+  payoutHistory: [{
+    attemptAt: { type: Date, default: Date.now },
+    adminId: { type: String },
+    stripeTransferId: { type: String },
+    failureReason: { type: String },
+    status: { type: String }
+  }]
 }, {
   timestamps: true
 });

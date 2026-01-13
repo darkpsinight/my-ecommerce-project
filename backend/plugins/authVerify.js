@@ -15,30 +15,46 @@ const verifyAuth = (roles = []) => {
 			request.log.info(`Verifying user auth roles: ${roles}`);
 			request.JWT_TYPE = "auth";
 
-			// Get the authorization header
+			let token = null;
+
+			// 1. Check Authorization header
 			const authorizationHeader = request.headers["authorization"];
+			if (authorizationHeader && authorizationHeader.startsWith("Bearer ")) {
+				token = authorizationHeader.substring(7);
+			}
 
-			// If the token is not sent in authorization header send error
-			if (!authorizationHeader) {
+			// 2. Fallback to cookies if no valid header token
+			// Check both admin_auth_token and token (common names)
+			if (!token && request.cookies) {
+				if (request.cookies.admin_auth_token) {
+					token = request.cookies.admin_auth_token;
+				} else if (request.cookies.token) {
+					token = request.cookies.token;
+				}
+			}
+
+			// If no token found
+			if (!token) {
 				return sendErrorResponse(
 					reply,
 					401,
-					"Unauthorized: Token in the authorization header missing"
+					"Unauthorized: Authentication token missing"
 				);
 			}
 
-			if (!authorizationHeader.startsWith("Bearer ")) {
+			// 3. Sanitize token (remove quotes and whitespace)
+			// This fixes the issue where cookies or headers might contain double-quoted strings
+			token = token.trim().replace(/^"+|"+$/g, '');
+
+			if (!token) {
 				return sendErrorResponse(
 					reply,
 					401,
-					"Unauthorized: Invalid token format. Please send the token as Bearer token"
+					"Unauthorized: Invalid token format"
 				);
 			}
 
-			// Get the token from header
-			const token = authorizationHeader.substring(7, authorizationHeader.length);
-
-			// First verify if the token is valid before checking blacklist
+			// 4. Verify token
 			const decoded = jwt.verify(token, configs.JWT_KEY);
 
 			// Check if token is blacklisted
@@ -82,6 +98,7 @@ const verifyAuth = (roles = []) => {
 					"Unauthorized: Invalid token"
 				);
 			} else {
+				// Catch all other errors as 401/403 to prevent 500s during auth
 				request.log.error(`Auth verification error: ${error.message}`);
 				return sendErrorResponse(
 					reply,

@@ -21,7 +21,12 @@ class EscrowService {
      * @returns {Promise<Object>}
      */
     async releaseEscrow(orderId, adminId) {
-        const order = await Order.findById(orderId);
+        let order = await Order.findOne({ externalId: orderId });
+        if (!order && orderId.match(/^[0-9a-fA-F]{24}$/)) {
+            // Fallback to internal ID if valid objectId and not found by externalId
+            order = await Order.findById(orderId);
+        }
+
         if (!order) {
             throw new PaymentError("Order not found", "ORDER_NOT_FOUND", 404);
         }
@@ -36,7 +41,8 @@ class EscrowService {
 
         // Call PayoutService to handle the actual money movement
         // This will validate seller account, balance, and create Payout record + Stripe Transfer
-        const payout = await payoutService.processOrderPayout(orderId, adminId);
+        // Payout service expects orderId (internal _id), so we pass order._id
+        const payout = await payoutService.processOrderPayout(order._id, adminId);
 
         // Update Order Escrow Status
         order.escrowStatus = "released";
@@ -45,7 +51,7 @@ class EscrowService {
 
         return {
             success: true,
-            orderId: order._id,
+            orderId: order._id, // Return internal ID
             escrowStatus: "released",
             payoutId: payout.payoutId,
             stripeTransferId: payout.stripeTransferId
@@ -65,7 +71,12 @@ class EscrowService {
      * @returns {Promise<Object>}
      */
     async refundEscrow(orderId, adminId, reason = "admin_check_refund") {
-        const order = await Order.findById(orderId);
+        let order = await Order.findOne({ externalId: orderId });
+        if (!order && orderId.match(/^[0-9a-fA-F]{24}$/)) {
+            // Fallback to internal ID
+            order = await Order.findById(orderId);
+        }
+
         if (!order) {
             throw new PaymentError("Order not found", "ORDER_NOT_FOUND", 404);
         }

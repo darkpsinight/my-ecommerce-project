@@ -67,8 +67,14 @@
       }
     },
     {
-      "label": "Run Project",
-      "dependsOn": ["Backend", "Buyer", "Seller Dashboard", "Support Dashboard", "Admin Dashboard"],
+      "label": "▶️ Run Project",
+      "dependsOn": [
+        "Backend",
+        "Buyer",
+        "Seller Dashboard",
+        "Support Dashboard",
+        "Admin Dashboard"
+      ],
       "group": {
         "kind": "build",
         "isDefault": true

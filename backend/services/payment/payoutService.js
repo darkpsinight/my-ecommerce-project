@@ -21,6 +21,7 @@ class PayoutService {
      * @returns {Promise<Object>} - The completed payout object
      */
     async processOrderPayout(orderId, adminId) {
+        console.log("[DEBUG] processOrderPayout entered");
         // 1. Validation & Order Retrieval
         const order = await Order.findById(orderId);
         if (!order) {
@@ -36,30 +37,12 @@ class PayoutService {
             );
         }
 
-        // STRICT: No existing payout for this order
-        const existingPayout = await Payout.findOne({ orderId });
-        if (existingPayout) {
-            // If failed, we might allow retry, but for now strict "One Payout" per order unless handled.
-            // Plan says: "No existing Payout for this orderId". 
-            // If previous failed, Admin might need to manually intervene or we delete the failed one? 
-            // For now, block.
-            if (existingPayout.status === "FAILED") {
-                // Re-throw specific error so admin knows it failed before
-                throw new PaymentError(
-                    `Payout previously failed for order ${orderId}. Protocol requires manual intervention.`,
-                    "PAYMENT_PREVIOUSLY_FAILED",
-                    409
-                );
-            }
-            throw new PaymentError(
-                `Payout already exists for order ${orderId}. Status: ${existingPayout.status}`,
-                "PAYMENT_ALREADY_EXISTS",
-                409
-            );
-        }
+        // Calculate expected payout amount (cents)
+        const payoutAmountCents = Math.round(order.totalAmount * 100);
+        console.log("[DEBUG] payoutAmountCents defined:", payoutAmountCents);
 
-        // 2. Validate Stripe Account
-        const sellerStripeAccount = await StripeAccount.getBySellerId(order.sellerId);
+        // 2. Validate Stripe Account (Explicit Lookup)
+        const sellerStripeAccount = await StripeAccount.findOne({ sellerId: order.sellerId });
         if (!sellerStripeAccount || !sellerStripeAccount.isFullyVerified()) {
             throw new PaymentError(
                 `Seller ${order.sellerId} does not have a verified Stripe account.`,
@@ -68,70 +51,75 @@ class PayoutService {
             );
         }
 
-        // STRICT: Currency Match
-        // We assume Stripe Account currency matches Order currency for simplicity in this step, 
-        // or Stripe handles conversion. But Requirement 8 says: 
-        // "Currency must exactly match the original charge currency."
-        // So we validate Payout Currency (Order Currency) == Stripe Account Default Currency? 
-        // Or just ensure we send Order Currency. 
-        // We will fail if they don't match only if we know for sure. 
-        // For Custom accounts, 'default_currency' is a good check.
-        // However, Stripe Clean accounts can accept multiple currencies. 
-        // We'll enforce that we are sending the Order.currency.
+        // 3. Check for Existing Payout & Handle Retry
+        let payout = await Payout.findOne({ orderId });
 
-        // 3. Ledger Balance Check
-        // We need to verify that we have "locked" funds for this SPECIFIC order.
-        // Aggregation: Sum(amount) where type='escrow_lock', status='locked', related_order_id=order._id
-        const ledgerBalance = await LedgerEntry.aggregate([
-            {
-                $match: {
-                    user_uid: order.sellerId,
-                    role: "seller",
-                    type: "escrow_lock",
-                    status: "locked",
-                    related_order_id: order._id
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalAmount: { $sum: "$amount" }
-                }
+        if (payout) {
+            // BRANCH 1: Active Payout Exists (BLOCK)
+            if (payout.status === "COMPLETED" || payout.status === "PENDING") {
+                throw new PaymentError(
+                    `Payout already exists for order ${orderId}. Status: ${payout.status}`,
+                    "PAYMENT_ALREADY_EXISTS",
+                    409
+                );
             }
-        ]);
 
-        const lockedAmount = ledgerBalance.length > 0 ? ledgerBalance[0].totalAmount : 0;
+            // BRANCH 2: Failed Payout Exists (RETRY)
+            if (payout.status === "FAILED") {
+                // Safety: Limit max retries
+                const MAX_RETRIES = 3;
+                const currentRetries = payout.retryAttemptCount || 0;
 
-        // We expect Order.totalAmount (units) -> Ledger (cents).
-        // LedgerService creates it as Math.round(order.totalAmount * 100).
-        // So we compare lockedAmount vs payoutAmount.
+                if (currentRetries >= MAX_RETRIES) {
+                    throw new PaymentError(
+                        `Max retry attempts (${MAX_RETRIES}) exceeded for order ${orderId}. Protocol requires manual database intervention.`,
+                        "MAX_RETRIES_EXCEEDED",
+                        409
+                    );
+                }
 
-        // Calculate expected payout amount
-        const payoutAmountCents = Math.round(order.totalAmount * 100);
+                // Archive the failure details
+                payout.payoutHistory.push({
+                    attemptAt: payout.updatedAt,
+                    adminId: payout.adminId,
+                    stripeTransferId: payout.stripeTransferId,
+                    failureReason: payout.failureReason,
+                    status: payout.status
+                });
 
-        if (lockedAmount < payoutAmountCents) {
-            throw new PaymentError(
-                `Insufficient locked escrow balance. Locked: ${lockedAmount}, Required: ${payoutAmountCents}`,
-                "INSUFFICIENT_ESCROW_FUNDS",
-                400
-            );
+                // Reset for new attempt
+                payout.status = "PENDING";
+                payout.retryAttemptCount = currentRetries + 1;
+                payout.adminId = adminId; // Set to CURRENT admin retrying
+                payout.failureReason = undefined;
+                payout.stripeTransferId = undefined; // Will be set on success
+                payout.metadata = {
+                    ...payout.metadata,
+                    lastRetryBy: adminId,
+                    lastRetryAt: new Date(),
+                    retryReason: "admin_manual_retry"
+                };
+
+                await payout.save();
+            }
+        } else {
+            // BRANCH 3: No Payout Exists (NEW)
+            console.log("[DEBUG] creating new payout record with amount:", payoutAmountCents);
+            payout = new Payout({
+                adminId,
+                sellerId: order.sellerId,
+                amount: payoutAmountCents,
+                currency: order.currency.toUpperCase(),
+                orderId: order._id,
+                status: "PENDING"
+            });
+            await payout.save();
         }
 
-        // 4. Create Payout Record (PENDING)
-        const payout = new Payout({
-            adminId,
-            sellerId: order.sellerId,
-            amount: payoutAmountCents,
-            currency: order.currency.toUpperCase(),
-            orderId: order._id,
-            status: "PENDING"
-        });
-
-        await payout.save();
-
-        // 5. Execute Stripe Transfer
+        // 4. Execute Stripe Transfer
         let transfer;
         try {
+            console.log("[DEBUG] calling createTransferToSeller with amount:", payoutAmountCents);
             // metadata includes payoutId and orderId mandatory fields
             transfer = await this.stripeAdapter.createTransferToSeller(
                 order.externalId, // escrowId reference
@@ -152,18 +140,19 @@ class PayoutService {
             throw stripeError; // Re-throw to caller
         }
 
-        // 6. Atomic Transaction: Ledger Update + Payout Complete
+        // 5. Atomic Transaction: Ledger Update + Payout Complete
         // This is the "Stripe Success -> Ledger Debit" phase.
         const session = await mongoose.startSession();
         session.startTransaction();
 
         try {
-            // Create Ledger Entry (Debit)
+            // Create Ledger Entry
+            console.log("[DEBUG] creating LedgerEntry with amount:", payoutAmountCents);
             const ledgerEntry = new LedgerEntry({
                 user_uid: order.sellerId,
                 role: "seller",
                 type: "payout",
-                amount: -payoutAmountCents, // Debit
+                amount: payoutAmountCents, // POSITIVE per instruction
                 currency: order.currency.toUpperCase(),
                 status: "settled",
                 related_order_id: order._id,
@@ -192,9 +181,6 @@ class PayoutService {
 
         } catch (dbError) {
             // CRITICAL: Stripe succeeded but DB failed.
-            // The Payout is left as PENDING (since we didn't save COMPLETED outside transaction).
-            // Ledger Entry is NOT created (rolled back).
-            // Funds are moved in Stripe but not recorded in Ledger.
             await session.abortTransaction();
             session.endSession();
 
@@ -206,9 +192,6 @@ class PayoutService {
                 error: dbError.message
             });
 
-            // We do NOT fail the response entirely if possible, or we throw a specific Critical Error?
-            // Requirement: "Emit CRITICAL error for reconciliation". 
-            // We throw a wrapper error so the caller knows it's a critical reconcile state.
             const criticalError = new Error("CRITICAL: Stripe Transfer succeeded but DB update failed. Manual Reconciliation Required.");
             criticalError.type = "CRITICAL_RECONCILIATION_REQUIRED";
             criticalError.details = {

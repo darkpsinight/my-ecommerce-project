@@ -200,6 +200,26 @@ const adminRoutes = async (fastify, opts) => {
 
 	// Escrow Management Routes
 	const { releaseEscrow, refundEscrow } = require("../handlers/escrowHandlers");
+	const { getAllOrders } = require("../handlers/orderHandlers");
+
+	fastify.route({
+		method: "GET",
+		url: "/orders",
+		schema: {
+			querystring: {
+				type: "object",
+				properties: {
+					page: { type: "integer" },
+					limit: { type: "integer" },
+					status: { type: "string" },
+					escrowStatus: { type: "string" },
+					search: { type: "string" }
+				}
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: getAllOrders,
+	});
 
 	fastify.route({
 		method: "POST",

@@ -427,8 +427,7 @@ const getBuyerPurchasedCodes = async (request, reply) => {
     // Build query for completed orders
     const query = {
       buyerId: user.uid,
-      status: "completed",
-      deliveryStatus: "delivered"
+      status: "completed"
     };
 
     const sortObj = {};
@@ -561,7 +560,7 @@ const getOrderById = async (request, reply) => {
     }
 
     // Include codes in response for completed orders
-    if (order.status === "completed" && order.deliveryStatus === "delivered") {
+    if (order.status === "completed") {
       order = await Order.findById(order._id)
         .select("+orderItems.purchasedCodes.code +orderItems.purchasedCodes.iv")
         .populate("orderItems.listingId", "title platform region");
@@ -659,11 +658,64 @@ const decryptCode = async (request, reply) => {
   }
 };
 
+// @route   GET /api/v1/admin/orders
+// @desc    Get all orders for admin
+// @access  Private (admin only)
+const getAllOrders = async (request, reply) => {
+  request.log.info("handlers/getAllOrders - START");
+  try {
+    const { page = 1, limit = 10, status, escrowStatus, sortBy = "createdAt", sortOrder = "desc", search } = request.query;
+
+    const query = {};
+    if (status) query.status = status;
+    if (escrowStatus) query.escrowStatus = escrowStatus;
+
+    // Search by external ID or MongoDB ID
+    if (search) {
+      if (/^[0-9a-fA-F]{24}$/.test(search)) {
+        query.$or = [{ _id: search }, { externalId: search }];
+      } else {
+        query.externalId = search; // Exact match for UUID
+      }
+    }
+
+    const sort = {};
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+    const skip = (page - 1) * limit;
+
+    const orders = await Order.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate("orderItems.listingId", "title");
+
+    const total = await Order.countDocuments(query);
+
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "Orders retrieved successfully",
+      data: {
+        orders,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      }
+    });
+  } catch (error) {
+    request.log.error(`Error getting all orders: ${error.message}`);
+    return sendErrorResponse(reply, 500, "Failed to get orders");
+  }
+};
+
 module.exports = {
   createOrder,
   getBuyerOrders,
   getSellerOrders,
   getBuyerPurchasedCodes,
   getOrderById,
-  decryptCode
+  decryptCode,
+  getAllOrders
 };

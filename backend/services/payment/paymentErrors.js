@@ -22,12 +22,12 @@ class PaymentError extends Error {
   }
 }
 
-class StripeError extends PaymentError {
+class StripeDomainError extends PaymentError {
   constructor(stripeError) {
     const message = stripeError.message || "Stripe error occurred";
     const code = stripeError.code || "STRIPE_ERROR";
     const statusCode = stripeError.statusCode || 400;
-    
+
     super(message, code, statusCode, {
       type: stripeError.type,
       param: stripeError.param,
@@ -35,16 +35,24 @@ class StripeError extends PaymentError {
       declineCode: stripeError.decline_code,
       requestId: stripeError.requestId
     });
-    
-    this.name = "StripeError";
+
+    this.name = "StripeDomainError";
+    this.source = "stripe"; // Explicit source preservation
+    this.type = stripeError.type;
+    this.stripeCode = stripeError.code; // Explicit code preservation
     this.originalError = stripeError;
   }
 }
 
+// ... existing error classes ...
+
+// Error handling utilities
+
+
 class InsufficientFundsError extends PaymentError {
   constructor(availableAmount, requestedAmount, currency = "USD") {
     super(
-      `Insufficient funds. Available: ${availableAmount/100} ${currency}, Requested: ${requestedAmount/100} ${currency}`,
+      `Insufficient funds. Available: ${availableAmount / 100} ${currency}, Requested: ${requestedAmount / 100} ${currency}`,
       "INSUFFICIENT_FUNDS",
       400,
       { availableAmount, requestedAmount, currency }
@@ -89,17 +97,17 @@ class PaymentErrorHandler {
   static handleStripeError(error) {
     // Convert Stripe errors to our custom error format
     if (error.type === "StripeCardError") {
-      return new StripeError(error);
+      return new StripeDomainError(error);
     }
-    
+
     if (error.type === "StripeInvalidRequestError") {
-      return new StripeError(error);
+      return new StripeDomainError(error);
     }
-    
+
     if (error.type === "StripeAPIError") {
-      return new StripeError(error);
+      return new StripeDomainError(error);
     }
-    
+
     if (error.type === "StripeConnectionError") {
       return new PaymentError(
         "Unable to connect to payment processor",
@@ -108,7 +116,7 @@ class PaymentErrorHandler {
         { originalError: error.message }
       );
     }
-    
+
     if (error.type === "StripeAuthenticationError") {
       return new PaymentError(
         "Payment processor authentication failed",
@@ -117,35 +125,35 @@ class PaymentErrorHandler {
         { originalError: error.message }
       );
     }
-    
+
     // Default Stripe error handling
-    return new StripeError(error);
+    return new StripeDomainError(error);
   }
 
   static async withRetry(operation, maxRetries = 3, baseDelay = 1000) {
     let lastError;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error) {
         lastError = error;
-        
+
         // Don't retry certain types of errors
         if (this.shouldNotRetry(error)) {
           throw error;
         }
-        
+
         if (attempt === maxRetries) {
           break;
         }
-        
+
         // Exponential backoff with jitter
         const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000;
         await this.sleep(delay);
       }
     }
-    
+
     throw new PaymentError(
       `Operation failed after ${maxRetries} attempts: ${lastError.message}`,
       "MAX_RETRIES_EXCEEDED",
@@ -162,16 +170,16 @@ class PaymentErrorHandler {
       "WEBHOOK_VERIFICATION_FAILED",
       "IDEMPOTENCY_CONFLICT"
     ];
-    
+
     if (error.code && nonRetryableErrors.includes(error.code)) {
       return true;
     }
-    
+
     // Don't retry 4xx errors (client errors)
     if (error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -189,9 +197,9 @@ class PaymentErrorHandler {
       },
       context
     };
-    
+
     console.error("Payment Error:", JSON.stringify(errorLog, null, 2));
-    
+
     // In production, you might want to send this to a logging service
     // like Winston, Sentry, or CloudWatch
   }
@@ -199,7 +207,7 @@ class PaymentErrorHandler {
 
 module.exports = {
   PaymentError,
-  StripeError,
+  StripeDomainError,
   InsufficientFundsError,
   AccountNotVerifiedError,
   WebhookVerificationError,

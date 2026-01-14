@@ -119,7 +119,21 @@ class LedgerService {
         try {
             const createdEntries = [];
 
+
+
             for (const order of orders) {
+                // Strict Order-Level Idempotency
+                // If ANY reversal exists for this order, we skip.
+                const alreadyRefunded = await LedgerEntry.findOne({
+                    related_order_id: order._id,
+                    type: { $in: ["escrow_reversal", "seller_reversal"] }
+                }).session(session);
+
+                if (alreadyRefunded) {
+                    console.log(`[LedgerService] Info: Order ${order._id} already refunded. Skipping.`);
+                    continue; // Skip this order
+                }
+
                 // Check payout status
                 const payout = await Payout.findOne({ orderId: order._id }).session(session);
                 const isPaidOut = payout && (payout.status === 'COMPLETED' || payout.status === 'PENDING');
@@ -155,23 +169,33 @@ class LedgerService {
             }
 
             // Platform Entry (Captures the "money out" event from Platform Stripe Account)
-            const platformEntry = new LedgerEntry({
-                user_uid: "PLATFORM",
-                role: "platform",
-                type: "refund",
-                amount: -refundObject.amount,
-                currency: refundObject.currency.toUpperCase(),
-                status: "settled",
+            // Strict PaymentIntent-Level Idempotency for Platform Refund
+            const existingPlatformRefund = await LedgerEntry.findOne({
                 related_payment_intent_id: paymentIntent.id,
-                description: `Refund payout for PI ${paymentIntent.id}`,
-                metadata: {
-                    refundId: refundObject.id
-                },
-                externalId: uuidv4()
-            });
+                type: "refund"
+            }).session(session);
 
-            await platformEntry.save({ session });
-            createdEntries.push(platformEntry);
+            if (!existingPlatformRefund) {
+                const platformEntry = new LedgerEntry({
+                    user_uid: "PLATFORM",
+                    role: "platform",
+                    type: "refund",
+                    amount: -refundObject.amount,
+                    currency: refundObject.currency.toUpperCase(),
+                    status: "settled",
+                    related_payment_intent_id: paymentIntent.id,
+                    description: `Refund payout for PI ${paymentIntent.id}`,
+                    metadata: {
+                        refundId: refundObject.id
+                    },
+                    externalId: uuidv4()
+                });
+
+                await platformEntry.save({ session });
+                createdEntries.push(platformEntry);
+            } else {
+                console.log(`[LedgerService] Info: Platform refund for PI ${paymentIntent.id} already recorded. Skipping.`);
+            }
 
             await session.commitTransaction();
             session.endSession();
@@ -265,15 +289,58 @@ class LedgerService {
     }
 
     /**
+     * READ-ONLY: Gets STRICT Available Balance for a specific currency.
+     * Used for Payout Eligibility (Step 10).
+     * @param {String} sellerUid 
+     * @param {String} currency (ISO 3-letter)
+     * @returns {Promise<Number>} Available amount in CENTS
+     */
+    async getAvailableBalance(sellerUid, currency) {
+        if (!currency) throw new Error("Currency is required for Payout Eligibility checks");
+
+        const result = await LedgerEntry.aggregate([
+            {
+                $match: {
+                    user_uid: sellerUid,
+                    role: "seller",
+                    currency: currency.toUpperCase()
+                }
+            },
+            {
+                $group: {
+                    _id: "$type",
+                    totalAmount: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const buckets = {
+            seller_reversal: 0,
+            escrow_release_credit: 0,
+            payout_reservation: 0,
+            payout_fail_reversal: 0
+        };
+
+        result.forEach(group => {
+            if (buckets[group._id] !== undefined) {
+                buckets[group._id] = group.totalAmount;
+            }
+        });
+
+        // Available = Credits (Release + FailReversal) + Debits (SellerReversal + Reservation)
+        const total = buckets.seller_reversal +
+            buckets.escrow_release_credit +
+            buckets.payout_reservation +
+            buckets.payout_fail_reversal;
+
+        return total;
+    }
+
+    /**
      * READ-ONLY: Aggregates seller balance by status.
      * Does NOT move money.
-     * 
-     * NEW LOGIC (Step 5):
-     * Locked = escrow_lock + escrow_reversal + payout (pending/completed are debits from lock)
-     * Available = seller_reversal (debt) + [future: available_credit]
-     * 
-     * @param {String} sellerUid 
-     * @returns {Promise<Object>} { available, locked, total } in CENTS
+     * WARNING: Aggregates across currencies if multiple exist!
+     * Use getAvailableBalance(uid, currency) for operations.
      */
     async getSellerBalance(sellerUid) {
         const result = await LedgerEntry.aggregate([

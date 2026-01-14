@@ -4,6 +4,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const { User } = require('../models/user');
 const { SellerProfile } = require('../models/sellerProfile');
+const { StripeAccount } = require('../models/stripeAccount');
 const { Order } = require('../models/order');
 const { LedgerEntry } = require('../models/ledgerEntry');
 const holdCalculator = require('../services/payment/holdCalculator');
@@ -21,6 +22,7 @@ async function testPayoutEligibility() {
         // 1. Setup Test Data
         const testSuffix = uuidv4().substring(0, 8);
         const sellerUid = `test_seller_${testSuffix}`;
+        const stripeAccountId = `acct_test_${testSuffix}`;
 
         console.log(`Creating test seller: ${sellerUid}`);
         const sellerProfile = new SellerProfile({
@@ -98,7 +100,7 @@ async function testPayoutEligibility() {
         const check = payoutEligibilityService.checkEligibility(orderC, sellerProfile);
         console.log(`Suspended Check: ${JSON.stringify(check)}`);
         if (check.isEligible) throw new Error('Gate failed to block Suspended seller');
-        if (check.status !== 'MATURE_HELD') throw new Error('Wrong status for Suspended seller');
+        if (check.status !== 'INELIGIBLE_SUSPENDED') throw new Error(`Wrong status for Suspended seller. Got: ${check.status}`);
 
         // 5. Test Ledger Release
         console.log('\n🧪 Test 4: Ledger Release');
@@ -128,10 +130,84 @@ async function testPayoutEligibility() {
         console.log('Second Release Result:', result2);
         if (!result2.skipped) throw new Error('Idempotency check failed');
 
-        console.log('\n✅ ALL TESTS PASSED');
+        // 7. Step 10: Test Seller Payout Eligibility (Balance & Compliance)
+        console.log('\n🧪 Test 6: Step 10 Payout Eligibility');
+
+        // A. Setup Stripe Account (Missing)
+        let eligibility = await payoutEligibilityService.checkSellerPayoutEligibility(sellerUid, 'USD');
+        console.log('Case A (No Stripe Acct):', eligibility.state);
+        // Expect INELIGIBLE_COMPLIANCE (Missing capabilities)
+        if (eligibility.state !== 'INELIGIBLE_COMPLIANCE') throw new Error(`Expected INELIGIBLE_COMPLIANCE, got ${eligibility.state}`);
+
+        // B. Setup Stripe Account (Pending)
+        const stripeAccount = new StripeAccount({
+            sellerId: sellerUid,
+            stripeAccountId: stripeAccountId,
+            country: 'US',
+            status: 'pending',
+            payoutsEnabled: false,
+            chargesEnabled: false,
+            detailsSubmitted: false
+        });
+        await stripeAccount.save();
+
+        eligibility = await payoutEligibilityService.checkSellerPayoutEligibility(sellerUid, 'USD');
+        console.log('Case B (Pending Stripe Acct):', eligibility.state);
+        if (eligibility.state !== 'INELIGIBLE_COMPLIANCE') throw new Error('Expected INELIGIBLE_COMPLIANCE for pending account');
+
+        // C. Setup Stripe Account (Verified) but No Funds
+        stripeAccount.status = 'verified';
+        stripeAccount.payoutsEnabled = true;
+        stripeAccount.chargesEnabled = true;
+        stripeAccount.detailsSubmitted = true;
+        await stripeAccount.save();
+
+        eligibility = await payoutEligibilityService.checkSellerPayoutEligibility(sellerUid, 'USD');
+        console.log('Case C (Verified, Sufficient Funds):', eligibility.state);
+        // We released 60000 cents previously (Test 4).
+        // Wait, Test 4 created `escrow_release_credit` (+60000) for this seller?
+        // Yes, `orderC` had `sellerUid`.
+        // So balance SHOULD be 60000.
+        // Let's check context.
+        console.log('   Context:', eligibility.context);
+
+        if (eligibility.state !== 'ELIGIBLE') {
+            // If we have funds, it should be ELIGIBLE.
+            // Unless Step 4 failed or used different UID?
+            // Step 4 used `orderC` with `sellerUid`.
+            // Ledger has +60000 'available'.
+            // Min threshold 100.
+            throw new Error(`Expected ELIGIBLE, got ${eligibility.state}`);
+        }
+
+        // D. Low Funds
+        // Create a fake debit to reduce balance below threshold ($1)
+        // Balance is 60000. Debit 59950. Remaining 50 cents.
+        const drainEntry = new LedgerEntry({
+            user_uid: sellerUid,
+            role: 'seller',
+            type: 'payout_reservation',
+            amount: -59950,
+            currency: 'USD',
+            status: 'locked', // Should be 'available' logic?
+            // Wait, 'payout_reservation' IS the debit from available.
+            // LedgerService.getAvailableBalance counts 'payout_reservation' as negative.
+            related_order_id: orderC._id,
+            description: 'Drain',
+            externalId: uuidv4()
+        });
+        await drainEntry.save();
+
+        eligibility = await payoutEligibilityService.checkSellerPayoutEligibility(sellerUid, 'USD');
+        console.log('Case D (Low Funds 50c):', eligibility.state);
+        console.log('   Balance:', eligibility.context.availableBalance);
+        if (eligibility.state !== 'INELIGIBLE_BALANCE') throw new Error(`Expected INELIGIBLE_BALANCE, got ${eligibility.state}`);
+
+        console.log('\n✅ ALL PAYOUT ELIGIBILITY TESTS PASSED');
 
     } catch (err) {
         console.error('❌ TEST FAILED:', err);
+        process.exit(1);
     } finally {
         await mongoose.disconnect();
     }

@@ -319,6 +319,39 @@ class StripeAdapter extends PaymentAdapter {
     }
   }
 
+  /**
+ * Checks if a seller is capable of receiving payouts.
+ * Abstracted for PayoutEligibilityService.
+ * @param {string} sellerId 
+ * @returns {Promise<{payoutsEnabled: boolean, accountStatus: string, missingCapabilities: string[]}>}
+ */
+  async getPayoutCapabilities(sellerId) {
+    const account = await StripeAccount.findOne({ sellerId });
+    if (!account) {
+      return {
+        payoutsEnabled: false,
+        accountStatus: 'missing',
+        missingCapabilities: ['ACCOUNT_MISSING']
+      };
+    }
+
+    // Refresh if stale? For now, read DB state synced via webhooks.
+
+    // Determine missing capabilities
+    const missing = [];
+    if (!account.chargesEnabled) missing.push('CHARGES_DISABLED');
+    if (!account.payoutsEnabled) missing.push('PAYOUTS_DISABLED');
+    if (account.status !== 'verified') missing.push('VERIFICATION_PENDING');
+    if (account.currentlyDue && account.currentlyDue.length > 0) missing.push('REQUIREMENTS_DUE');
+
+    return {
+      payoutsEnabled: account.payoutsEnabled && account.status === 'verified',
+      accountStatus: account.status,
+      missingCapabilities: missing
+    };
+  }
+
+
   async createTopUpIntent(buyerId, amountCents, currency = "USD", metadata = {}) {
     try {
       this.validateAmount(amountCents);

@@ -51,6 +51,11 @@ class PaymentAdapter {
     throw new Error("processWebhookEvent must be implemented by payment adapter");
   }
 
+  // Capabilities
+  async getPayoutCapabilities(sellerId) {
+    throw new Error("getPayoutCapabilities must be implemented by payment adapter");
+  }
+
   // Utility Methods
   generateIdempotencyKey(prefix = "idem") {
     const timestamp = Date.now();

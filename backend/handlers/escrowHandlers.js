@@ -2,6 +2,7 @@ const { Order } = require("../models/order");
 const { User } = require("../models/user");
 const { SellerProfile } = require("../models/sellerProfile");
 const ledgerService = require("../services/payment/ledgerService");
+const escrowService = require("../services/payment/escrowService");
 
 const releaseEscrow = async (request, reply) => {
     // ... identifying existing code ...
@@ -96,15 +97,85 @@ const forceReleaseFunds = async (request, reply) => {
     }
 };
 
+const { AuditLog } = require("../models/auditLog");
+
 const refundEscrow = async (request, reply) => {
-    // ... existing ...
     const { orderId } = request.params;
-    // ...
+    const adminId = request.user.uid;
+    const reason = request.body?.reason || "admin_manual_refund";
+
     try {
-        const result = await escrowService.refundEscrow(orderId, request.user.uid, request.body?.reason);
+        const result = await escrowService.refundEscrow(orderId, adminId, reason);
+
+        // Best-effort Audit Log (Success)
+        AuditLog.create({
+            action: "ADMIN_REFUND_ESCROW",
+            actorId: adminId,
+            targetId: orderId,
+            targetType: "Order",
+            status: "SUCCESS",
+            metadata: {
+                reason,
+                refundId: result.refundId
+            }
+        }).catch(err => request.log.error(`Failed to write success audit log: ${err.message}`));
+
         reply.send(result);
     } catch (err) {
-        reply.code(500).send({ message: err.message });
+        request.log.error(err);
+
+        // 1. Determine Error Source & Status
+        let status = 500;
+        let errorCode = "INTERNAL_SERVER_ERROR";
+        let source = "backend";
+        let message = err.message || "An unexpected error occurred processing the refund.";
+
+        // Handle Known Business Errors (PaymentError)
+        if (err.name === 'PaymentError') {
+            status = err.statusCode || 400;
+            errorCode = err.code || "PAYMENT_ERROR";
+            message = err.message;
+        }
+
+        const { StripeDomainError } = require("../services/payment/paymentErrors");
+
+        // Handle Stripe Errors (Strict Domain Type Check)
+        if (err instanceof StripeDomainError) {
+            source = "stripe";
+            errorCode = err.stripeCode || err.code || "STRIPE_ERROR";
+
+            // Map specific Stripe failures to 422
+            if (errorCode === 'resource_missing' || errorCode === 'payment_intent_unexpected_state') {
+                status = 422;
+            } else {
+                status = 400;
+            }
+        }
+
+        // 2. Best-effort Audit Log (Failure)
+        AuditLog.create({
+            action: "ADMIN_REFUND_ESCROW",
+            actorId: adminId,
+            targetId: orderId,
+            targetType: "Order",
+            status: "FAILURE",
+            errorCode: errorCode,
+            errorMessage: message,
+            metadata: {
+                reason,
+                originalError: err.message,
+                stripeCode: err.code
+            }
+        }).catch(auditErr => request.log.error(`Failed to write failure audit log: ${auditErr.message}`));
+
+        // 3. Structured API Response
+        reply.code(status).send({
+            success: false,
+            errorCode,
+            message,
+            source,
+            orderExternalId: orderId // Echo back input
+        });
     }
 };
 

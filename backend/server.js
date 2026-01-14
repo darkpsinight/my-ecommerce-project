@@ -30,6 +30,7 @@ const helmet = require("fastify-helmet");
 const { adminRoutes } = require("./routes/admin");
 const publicRoutes = require("./routes/public");
 const { sellerRoutes } = require("./routes/seller");
+const { sellerFinancialRoutes } = require("./routes/sellerFinancials");
 const { listingsRoutes } = require("./routes/listings");
 const { imageUploadRoutes } = require("./routes/imageUpload");
 const { walletRoutes } = require("./routes/wallet");
@@ -130,6 +131,7 @@ fastify.register(publicRoutes, { prefix: "/api/v1/public" });
 
 // Register seller routes
 fastify.register(sellerRoutes, { prefix: "/api/v1/seller" });
+fastify.register(sellerFinancialRoutes, { prefix: "/api/v1/seller" });
 
 // Register listings routes
 fastify.register(listingsRoutes, { prefix: "/api/v1/listings" });

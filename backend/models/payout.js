@@ -80,6 +80,9 @@ const payoutSchema = new mongoose.Schema({
   failureReason: {
     type: String
   },
+  failureCode: {
+    type: String
+  },
 
   metadata: {
     type: mongoose.Schema.Types.Mixed,

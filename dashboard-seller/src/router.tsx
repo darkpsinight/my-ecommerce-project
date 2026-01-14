@@ -13,11 +13,11 @@ import OAuthCallback from './pages/OAuthCallback';
 import { AnalyticsProviderWrapper } from 'src/content/Dashboards/Analytics/context/AnalyticsContext';
 
 const Loader = (Component) => (props) =>
-  (
-    <Suspense fallback={<SuspenseLoader />}>
-      <Component {...props} />
-    </Suspense>
-  );
+(
+  <Suspense fallback={<SuspenseLoader />}>
+    <Component {...props} />
+  </Suspense>
+);
 
 // Pages
 
@@ -27,6 +27,7 @@ const Login = Loader(lazy(() => import('src/content/pages/Auth/Login')));
 // Dashboards
 
 const Crypto = Loader(lazy(() => import('src/content/Dashboards/Crypto')));
+const Financials = Loader(lazy(() => import('src/content/Dashboards/Financials')));
 const Listings = Loader(lazy(() => import('src/content/Dashboards/Listings')));
 const Analytics = Loader(lazy(() => import('src/content/Dashboards/Analytics')));
 
@@ -168,6 +169,10 @@ const routes: RouteObject[] = [
       {
         path: 'crypto',
         element: <Crypto />
+      },
+      {
+        path: 'financials',
+        element: <Financials />
       },
       {
         path: 'analytics',

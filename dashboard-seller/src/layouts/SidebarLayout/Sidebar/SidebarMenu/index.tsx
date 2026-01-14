@@ -15,6 +15,7 @@ import { NavLink as RouterLink, useLocation } from 'react-router-dom';
 import { SidebarContext } from 'src/contexts/SidebarContext';
 
 import DesignServicesTwoToneIcon from '@mui/icons-material/DesignServicesTwoTone';
+import AccountBalanceTwoToneIcon from '@mui/icons-material/AccountBalanceTwoTone';
 import BrightnessLowTwoToneIcon from '@mui/icons-material/BrightnessLowTwoTone';
 import MmsTwoToneIcon from '@mui/icons-material/MmsTwoTone';
 import TableChartTwoToneIcon from '@mui/icons-material/TableChartTwoTone';
@@ -160,9 +161,9 @@ const SubMenuWrapper = styled(Box)(
                 background: ${theme.colors.alpha.trueWhite[100]};
                 opacity: 0;
                 transition: ${theme.transitions.create([
-                  'transform',
-                  'opacity'
-                ])};
+    'transform',
+    'opacity'
+  ])};
                 width: 6px;
                 height: 6px;
                 transform: scale(0);
@@ -233,6 +234,17 @@ function SidebarMenu() {
                   startIcon={<ListAltTwoToneIcon />}
                 >
                   Listings
+                </Button>
+              </ListItem>
+              <ListItem component="div">
+                <Button
+                  disableRipple
+                  component={RouterLink}
+                  onClick={closeSidebar}
+                  to="/dashboards/financials"
+                  startIcon={<AccountBalanceTwoToneIcon />}
+                >
+                  Financials
                 </Button>
               </ListItem>
               <ListItem component="div" className="Mui-children">

@@ -197,6 +197,21 @@ const orderSchema = new mongoose.Schema({
   },
   escrowReleasedAt: {
     type: Date
+  },
+  // Step 6: Payout Eligibility & Holds
+  holdStartAt: {
+    type: Date,
+    index: true
+  },
+  releaseExpectedAt: {
+    type: Date,
+    index: true
+  },
+  eligibilityStatus: {
+    type: String,
+    enum: ["PENDING_MATURITY", "MATURE_HELD", "ELIGIBLE_FOR_PAYOUT"],
+    default: "PENDING_MATURITY",
+    index: true
   }
 }, {
   timestamps: true

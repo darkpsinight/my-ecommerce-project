@@ -55,10 +55,26 @@ const payoutSchema = new mongoose.Schema({
   // State
   status: {
     type: String,
-    enum: ["PENDING", "COMPLETED", "FAILED"],
+    enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"],
     default: "PENDING",
     required: true,
     index: true
+  },
+
+  // Step 7: Execution Hardening Fields
+  reservedAt: {
+    type: Date
+  },
+  processingAt: {
+    type: Date
+  },
+  idempotencyKey: {
+    type: String,
+    unique: true,
+    sparse: true // Allow null for old records or pending ones if generated late
+  },
+  ledgerReservationId: {
+    type: String // ID of the 'payout_reservation' ledger entry
   },
 
   failureReason: {

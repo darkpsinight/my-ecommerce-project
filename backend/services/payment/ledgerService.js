@@ -295,10 +295,13 @@ class LedgerService {
         const buckets = {
             escrow_lock: 0,
             escrow_reversal: 0,
-            payout: 0,
+            payout: 0, // Legacy/Direct Payouts
             seller_reversal: 0,
-            escrow_release: 0, // Legacy/unused in this flow but kept for safety
-            refund: 0 // Shouldn't happen for seller role but safe to init
+            escrow_release: 0,
+            escrow_release_debit: 0,
+            escrow_release_credit: 0,
+            payout_reservation: 0,   // New: Debit from Available
+            payout_fail_reversal: 0  // New: Credit to Available
         };
 
         result.forEach(group => {
@@ -308,20 +311,96 @@ class LedgerService {
         });
 
         // 1. Locked Balance
-        // Credits (Locks) + Debits (Reversals/Payouts)
-        // Note: Reversals and Payouts are negative numbers in DB.
-        const locked = buckets.escrow_lock + buckets.escrow_reversal + buckets.payout;
+        // Credits (Locks) + Debits (Reversals/Payouts/ReleaseDebits)
+        const locked = buckets.escrow_lock + buckets.escrow_reversal + buckets.payout + buckets.escrow_release_debit;
 
         // 2. Available Balance
-        // Currently only Debits (Seller Reversals for post-payout refunds)
-        // Future: Add { type: 'escrow_release', status: 'available' } here if we had auto-release
-        const available = buckets.seller_reversal + buckets.escrow_release;
+        // Debits (Seller Reversals + Payout Reservations) + Credits (ReleaseCredits + FailReversals)
+        // Note: Reservations are negative, Reversals are positive. Simply summing works.
+        const available = buckets.seller_reversal + buckets.escrow_release_credit + buckets.payout_reservation + buckets.payout_fail_reversal;
 
         return {
             available,
             locked,
             total: available + locked
         };
+    }
+
+    /**
+     * Executes the release of funds from Escrow (Locked) to Available (Wallet).
+     * This is the L3 Execution Step.
+     * 
+     * @param {Object} order - The Order document
+     * @param {Number} amountCents - Amount to release in cents
+     * @returns {Promise<Object>} The created ledger entries
+     */
+    async releaseFunds(order, amountCents) {
+        const Session = await mongoose.startSession();
+        Session.startTransaction();
+
+        try {
+            // 1. Idempotency Check (Critical)
+            // Check if funds have already been released for this order
+            const existingRelease = await LedgerEntry.findOne({
+                related_order_id: order._id,
+                type: 'escrow_release_credit'
+            }).session(Session);
+
+            if (existingRelease) {
+                console.log(`[LedgerService] Info: Funds already released for order ${order._id}`);
+                await Session.abortTransaction();
+                Session.endSession();
+                return { skipped: true, reason: 'Already released' };
+            }
+
+            // 2. Create Debit Entry (Remove from Locked)
+            // Type: escrow_release_debit, Status: locked, Amount: -X
+            const debitEntry = new LedgerEntry({
+                user_uid: order.sellerId,
+                role: 'seller',
+                type: 'escrow_release_debit',
+                amount: -Math.abs(amountCents),
+                currency: order.currency.toUpperCase(),
+                status: 'locked',
+                related_order_id: order._id,
+                related_payment_intent_id: order.paymentIntentId,
+                description: `Release debit for Order ${order.externalId}`,
+                externalId: require('uuid').v4(),
+                metadata: {
+                    action: 'fund_release_debit'
+                }
+            });
+            await debitEntry.save({ session: Session });
+
+            // 3. Create Credit Entry (Add to Available)
+            // Type: escrow_release_credit, Status: available, Amount: +X
+            const creditEntry = new LedgerEntry({
+                user_uid: order.sellerId,
+                role: 'seller',
+                type: 'escrow_release_credit',
+                amount: Math.abs(amountCents),
+                currency: order.currency.toUpperCase(),
+                status: 'available',
+                related_order_id: order._id,
+                related_payment_intent_id: order.paymentIntentId,
+                description: `Funds released for Order ${order.externalId}`,
+                externalId: require('uuid').v4(),
+                metadata: {
+                    action: 'fund_release_credit'
+                }
+            });
+            await creditEntry.save({ session: Session });
+
+            await Session.commitTransaction();
+            Session.endSession();
+
+            return { success: true, debitEntry, creditEntry };
+
+        } catch (error) {
+            await Session.abortTransaction();
+            Session.endSession();
+            throw error;
+        }
     }
 }
 

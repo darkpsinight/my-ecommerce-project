@@ -100,6 +100,19 @@ const sellerProfileSchema = new mongoose.Schema({
     unique: true,
     default: uuidv4,
     index: true
+  },
+  // Step 6: Risk & Payout Eligibility
+  sellerLevel: {
+    type: String,
+    enum: ["TIER_C", "TIER_B", "TIER_A"],
+    default: "TIER_C",
+    index: true
+  },
+  riskStatus: {
+    type: String,
+    enum: ["ACTIVE", "UNDER_REVIEW", "SUSPENDED"],
+    default: "ACTIVE",
+    index: true
   }
 }, {
   timestamps: true

@@ -252,6 +252,59 @@ const adminRoutes = async (fastify, opts) => {
 		preHandler: verifyAuth(["admin"], true),
 		handler: refundEscrow,
 	});
+	// Force Release funds (Admin Safety Valve)
+	// Bypasses time holds but respects seller risk status.
+	const { forceReleaseFunds } = require("../handlers/escrowHandlers");
+	fastify.route({
+		method: "POST",
+		url: "/orders/:orderId/escrow/force-release",
+		schema: {
+			params: {
+				type: "object",
+				properties: { orderId: { type: "string" } },
+				required: ["orderId"]
+			},
+			body: {
+				type: "object",
+				properties: { reason: { type: "string" } } // Optional audit reason
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: forceReleaseFunds,
+	});
+
+	// Alias for consistency (Optional, keeping as per request history)
+	fastify.route({
+		method: "POST",
+		url: "/orders/:orderId/force-release",
+		schema: {
+			params: {
+				type: "object",
+				properties: { orderId: { type: "string" } },
+				required: ["orderId"]
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: forceReleaseFunds,
+	});
+
+	// Payout Management Routes
+	const { triggerManualPayout } = require("../handlers/payoutHandlers");
+
+	// Trigger Payout (Step 7 Execution Entry Point)
+	fastify.route({
+		method: "POST",
+		url: "/payouts/order/:orderId",
+		schema: {
+			params: {
+				type: "object",
+				properties: { orderId: { type: "string" } },
+				required: ["orderId"]
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: triggerManualPayout,
+	});
 };
 
 module.exports = {

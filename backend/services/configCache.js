@@ -1,5 +1,6 @@
 const { Config } = require("../models/config");
-const { configs } = require("../configs");
+// Defer destructuring to avoid circular dependency issues
+const configModule = require("../configs");
 
 class ConfigCache {
     constructor() {
@@ -16,7 +17,7 @@ class ConfigCache {
             }
 
             const dbConfigs = await Config.find({}).lean();
-            
+
             // Clear existing cache
             this.cache.clear();
 
@@ -81,11 +82,11 @@ class ConfigCache {
                             // Get the key from cache using _id
                             const deletedKey = Array.from(this.cache.entries())
                                 .find(([_, value]) => value._id.toString() === change.documentKey._id.toString())?.[0];
-                            
+
                             if (deletedKey) {
                                 this.delete(deletedKey);
                                 // Reset to environment value
-                                configs[deletedKey] = process.env[deletedKey];
+                                configModule.configs[deletedKey] = process.env[deletedKey];
                             }
                             break;
                     }
@@ -108,7 +109,7 @@ class ConfigCache {
                     msg: "Error in config change stream",
                     error: error.message
                 });
-                
+
                 // Attempt to reconnect after a delay
                 setTimeout(() => {
                     this.setupChangeStream(fastify);
@@ -126,9 +127,9 @@ class ConfigCache {
 
     // Update runtime config with new values
     updateRuntimeConfig(config) {
-        const originalValue = configs[config.key];
+        const originalValue = configModule.configs[config.key];
         const valueType = typeof originalValue;
-        
+
         // Convert value based on type
         let convertedValue = config.value;
         switch (valueType) {
@@ -147,36 +148,36 @@ class ConfigCache {
                 break;
         }
 
-        configs[config.key] = convertedValue;
+        configModule.configs[config.key] = convertedValue;
     }
 
     // Update derived configurations
     updateDerivedConfigs() {
         // Update SMTP configuration status
-        configs.IS_SMTP_CONFIGURED = !!(
-            configs.SMTP_HOST &&
-            configs.SMTP_PORT &&
-            configs.SMTP_EMAIL &&
-            configs.SMTP_PASSWORD &&
-            configs.FROM_EMAIL &&
-            configs.FROM_NAME
+        configModule.configs.IS_SMTP_CONFIGURED = !!(
+            configModule.configs.SMTP_HOST &&
+            configModule.configs.SMTP_PORT &&
+            configModule.configs.SMTP_EMAIL &&
+            configModule.configs.SMTP_PASSWORD &&
+            configModule.configs.FROM_EMAIL &&
+            configModule.configs.FROM_NAME
         );
 
         // Update HTTP protocol
-        if (configs.HTTP_PROTOCOL) {
-            configs.HTTP_PROTOCOL = configs.HTTP_PROTOCOL.toLowerCase();
-            if (!["http", "https"].includes(configs.HTTP_PROTOCOL)) {
-                configs.HTTP_PROTOCOL = false;
+        if (configModule.configs.HTTP_PROTOCOL) {
+            configModule.configs.HTTP_PROTOCOL = configModule.configs.HTTP_PROTOCOL.toLowerCase();
+            if (!["http", "https"].includes(configModule.configs.HTTP_PROTOCOL)) {
+                configModule.configs.HTTP_PROTOCOL = false;
             }
         }
 
         // Update app details configuration status
-        configs.APP_DETAILS_CONFIGURED = !!(
-            configs.APP_NAME &&
-            configs.APP_DOMAIN &&
-            configs.APP_CONFIRM_EMAIL_REDIRECT &&
-            configs.APP_RESET_PASSWORD_REDIRECT &&
-            configs.APP_REACTIVATE_ACCOUNT_URL
+        configModule.configs.APP_DETAILS_CONFIGURED = !!(
+            configModule.configs.APP_NAME &&
+            configModule.configs.APP_DOMAIN &&
+            configModule.configs.APP_CONFIRM_EMAIL_REDIRECT &&
+            configModule.configs.APP_RESET_PASSWORD_REDIRECT &&
+            configModule.configs.APP_REACTIVATE_ACCOUNT_URL
         );
     }
 

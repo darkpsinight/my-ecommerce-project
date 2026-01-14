@@ -31,7 +31,13 @@ const ledgerEntrySchema = new mongoose.Schema({
       "seller_reversal", // Post-payout refund (Available -> Debt)
       "dispute_open",    // Notification only
       "dispute_won",     // Notification only
-      "dispute_lost"     // Notification only
+      "dispute_lost",    // Notification only
+      // Step 6: Payout Eligibility
+      "escrow_release_debit",  // Debit from Locked (-X)
+      "escrow_release_credit", // Credit to Available (+X)
+      // Step 7: Payout Execution Hardening
+      "payout_reservation",    // Debit from Available (-X) [Phase 1]
+      "payout_fail_reversal"   // Credit to Available (+X) [Rollback]
     ],
     required: true,
     index: true

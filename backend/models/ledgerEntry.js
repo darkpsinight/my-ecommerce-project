@@ -37,7 +37,8 @@ const ledgerEntrySchema = new mongoose.Schema({
       "escrow_release_credit", // Credit to Available (+X)
       // Step 7: Payout Execution Hardening
       "payout_reservation",    // Debit from Available (-X) [Phase 1]
-      "payout_fail_reversal"   // Credit to Available (+X) [Rollback]
+      "payout_fail_reversal",   // Credit to Available (+X) [Rollback]
+      "payout_reservation_release" // Release of Reservation Marker (0) [Step 11]
     ],
     required: true,
     index: true

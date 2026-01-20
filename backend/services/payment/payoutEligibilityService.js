@@ -30,7 +30,7 @@ class PayoutEligibilityService {
             'EUR': 100, // €1.00
             'GBP': 100  // £1.00
         };
-        this.COOLDOWN_HOURS = 24;
+        this.COOLDOWN_MS = configs.PAYOUT_FAILURE_COOLDOWN_SECONDS * 1000;
     }
 
     /**
@@ -128,7 +128,7 @@ class PayoutEligibilityService {
         }).sort({ updatedAt: -1 });
 
         if (lastFailedPayout) {
-            const cooldownMs = this.COOLDOWN_HOURS * 60 * 60 * 1000;
+            const cooldownMs = this.COOLDOWN_MS;
             const unlockTime = new Date(lastFailedPayout.updatedAt.getTime() + cooldownMs);
 
             if (now < unlockTime) {

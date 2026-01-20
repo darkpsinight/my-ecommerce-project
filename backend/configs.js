@@ -59,6 +59,7 @@ const configs = {
 	WALLET_DEFAULT_CURRENCY: process.env.WALLET_DEFAULT_CURRENCY || "USD",
 	WALLET_MIN_FUNDING_AMOUNT: Number(process.env.WALLET_MIN_FUNDING_AMOUNT) || 5,
 	WALLET_MAX_FUNDING_AMOUNT: Number(process.env.WALLET_MAX_FUNDING_AMOUNT) || 1000,
+	PAYOUT_FAILURE_COOLDOWN_SECONDS: Number(process.env.PAYOUT_FAILURE_COOLDOWN_SECONDS) || 900,
 
 	get ACCOUNT_DELETION_DELAY() {
 		// If minutes are specified, use that for testing

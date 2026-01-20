@@ -49,6 +49,7 @@ const fastifyCsrf = require("fastify-csrf");
 const fastifyCookie = require("fastify-cookie");
 const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
 const { setupListingExpirationCron } = require("./jobs/listingExpirationCron");
+const { setupPayoutSchedulerJob } = require("./jobs/payoutSchedulerJob");
 const { configCache } = require("./services/configCache");
 const {
   registerWithFastify: registerImageKitWithFastify,
@@ -244,6 +245,7 @@ const start = async () => {
       // Setup cron jobs
       setupAccountDeletionCron(fastify);
       setupListingExpirationCron(fastify);
+      setupPayoutSchedulerJob(fastify);
 
       if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
         fastify.swagger();

@@ -60,6 +60,7 @@ const configs = {
 	WALLET_MIN_FUNDING_AMOUNT: Number(process.env.WALLET_MIN_FUNDING_AMOUNT) || 5,
 	WALLET_MAX_FUNDING_AMOUNT: Number(process.env.WALLET_MAX_FUNDING_AMOUNT) || 1000,
 	PAYOUT_FAILURE_COOLDOWN_SECONDS: Number(process.env.PAYOUT_FAILURE_COOLDOWN_SECONDS) || 900,
+	PAYOUT_SCHEDULER_CRON: process.env.PAYOUT_SCHEDULER_CRON || "0 2 * * *",
 
 	get ACCOUNT_DELETION_DELAY() {
 		// If minutes are specified, use that for testing

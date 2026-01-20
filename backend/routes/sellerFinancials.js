@@ -53,13 +53,39 @@ const sellerFinancialRoutes = async (fastify, opts) => {
             try {
                 const options = {
                     page: parseInt(request.query.page) || 1,
-                    limit: parseInt(request.query.limit) || 20
+                    limit: parseInt(request.query.limit) || 20,
+                    status: request.query.status,
+                    currency: request.query.currency,
+                    startDate: request.query.startDate,
+                    endDate: request.query.endDate
                 };
 
                 const result = await SellerFinancialService.getPayouts(request.user.uid, options);
                 return reply.send(result);
             } catch (error) {
                 request.log.error(`Error fetching payouts: ${error}`);
+                return reply.code(500).send({ message: 'Server Error' });
+            }
+        }
+    });
+
+    // GET /seller/payouts/:payoutId
+    fastify.route({
+        method: "GET",
+        url: "/payouts/:payoutId",
+        preHandler: verifyAuth(["seller"]),
+        handler: async (request, reply) => {
+            try {
+                const { payoutId } = request.params;
+                const result = await SellerFinancialService.getPayoutDetail(request.user.uid, payoutId);
+
+                if (!result) {
+                    return reply.code(404).send({ message: 'Payout not found' });
+                }
+
+                return reply.send(result);
+            } catch (error) {
+                request.log.error(`Error fetching payout detail: ${error}`);
                 return reply.code(500).send({ message: 'Server Error' });
             }
         }

@@ -200,16 +200,35 @@ class SellerFinancialService {
      * @param {Object} options 
      */
     static async getPayouts(sellerUid, options = {}) {
-        const { page = 1, limit = 20 } = options;
+        const {
+            page = 1,
+            limit = 20,
+            status,
+            currency,
+            startDate,
+            endDate
+        } = options;
+
         const skip = (page - 1) * limit;
         const query = { sellerId: sellerUid };
+
+        if (status) query.status = status;
+        if (currency) query.currency = currency;
+
+        // Date range filter
+        if (startDate || endDate) {
+            query.createdAt = {};
+            if (startDate) query.createdAt.$gte = new Date(startDate);
+            if (endDate) query.createdAt.$lte = new Date(endDate);
+        }
 
         const [payouts, total] = await Promise.all([
             Payout.find(query)
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(Number(limit))
-                .populate('orderId', 'externalId'), // Populate to get public order IDs
+                // Strict field selection - NO admin fields, NO execution timing (except createdAt/updatedAt)
+                .select('payoutId amount currency status createdAt updatedAt failureReason stripeTransferId'),
             Payout.countDocuments(query)
         ]);
 
@@ -218,13 +237,8 @@ class SellerFinancialService {
             amount: p.amount,
             currency: p.currency,
             status: p.status,
-            initiatedAt: p.createdAt,
-            processedAt: p.processedAt,
-            // Design asks for array of orderIds. Payout model is currently 1:1 but design prepared for 1:N.
-            // We return array.
-            orderIds: p.orderId ? [p.orderId.externalId] : [],
-            failureCode: p.failureCode || (p.status === 'FAILED' ? 'UNKNOWN_ERROR' : null),
-            failureMessage: p.failureReason
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt
         }));
 
         return {
@@ -235,6 +249,44 @@ class SellerFinancialService {
                 pages: Math.ceil(total / limit)
             }
         };
+    }
+
+    /**
+     * Get single payout detail
+     * @param {string} sellerUid 
+     * @param {string} payoutId 
+     */
+    static async getPayoutDetail(sellerUid, payoutId) {
+        // Ownership check is implicit in the query
+        const payout = await Payout.findOne({
+            payoutId,
+            sellerId: sellerUid
+        }).select('payoutId amount currency status createdAt updatedAt failureReason stripeTransferId');
+
+        if (!payout) {
+            return null;
+        }
+
+        // Construct response with conditional fields
+        const response = {
+            payoutId: payout.payoutId,
+            amount: payout.amount,
+            currency: payout.currency,
+            status: payout.status,
+            createdAt: payout.createdAt,
+            updatedAt: payout.updatedAt
+        };
+
+        // Add conditional fields based on status
+        if (payout.status === 'COMPLETED' && payout.stripeTransferId) {
+            response.stripeTransferId = payout.stripeTransferId;
+        }
+
+        if (payout.status === 'FAILED' && payout.failureReason) {
+            response.failureReason = payout.failureReason;
+        }
+
+        return response;
     }
 }
 

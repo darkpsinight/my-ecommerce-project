@@ -1,5 +1,6 @@
 const { Order } = require("../models/order");
 const payoutService = require("../services/payment/payoutService");
+const payoutEligibilityService = require("../services/payment/payoutEligibilityService");
 
 // OFFICIAL PAYOUT EXECUTION ENTRY POINT
 // Step 7: 3-Phase Commit Payout Trigger
@@ -73,6 +74,25 @@ const triggerManualPayout = async (request, reply) => {
     }
 };
 
+// READ-ONLY: Check Payout Eligibility
+// Exposes Step 10 Logic to Admin
+const checkPayoutEligibility = async (request, reply) => {
+    const { sellerUid, currency } = request.body;
+    // validation is handled by schema or basic check here
+    if (!sellerUid || !currency) {
+        return reply.code(400).send({ message: "sellerUid and currency are required" });
+    }
+
+    try {
+        const result = await payoutEligibilityService.checkSellerPayoutEligibility(sellerUid, currency);
+        return reply.send(result);
+    } catch (error) {
+        request.log.error(`[Admin] Eligibility Check Failed: ${error.message}`, error);
+        return reply.code(500).send({ message: "Internal Server Error" });
+    }
+};
+
 module.exports = {
-    triggerManualPayout
+    triggerManualPayout,
+    checkPayoutEligibility
 };

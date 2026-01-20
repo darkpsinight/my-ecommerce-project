@@ -295,45 +295,46 @@ class LedgerService {
      * @param {String} currency (ISO 3-letter)
      * @returns {Promise<Number>} Available amount in CENTS
      */
+    /**
+     * READ-ONLY: Gets STRICT Available Balance for a specific currency.
+     * Used for Payout Eligibility (Step 10).
+     * 
+     * Invariant: Available Balance = (escrow_release_credit + payout_fail_reversal) - (seller_reversal + payout_reservation)
+     * All types are signed correctly in DB, so we simply SUM them.
+     * 
+     * @param {String} sellerUid 
+     * @param {String} currency (ISO 3-letter)
+     * @returns {Promise<Number>} Available amount in CENTS
+     */
     async getAvailableBalance(sellerUid, currency) {
         if (!currency) throw new Error("Currency is required for Payout Eligibility checks");
+
+        // Strict inclusion list
+        const ALLOWED_TYPES = [
+            "escrow_release_credit", // (+) Released funds
+            "payout_fail_reversal",  // (+) Returned funds from failed payout
+            "seller_reversal",       // (-) Debt from refunds/disputes
+            "payout_reservation"     // (-) Pending payout deduction
+        ];
 
         const result = await LedgerEntry.aggregate([
             {
                 $match: {
                     user_uid: sellerUid,
                     role: "seller",
-                    currency: currency.toUpperCase()
+                    currency: currency.toUpperCase(),
+                    type: { $in: ALLOWED_TYPES }
                 }
             },
             {
                 $group: {
-                    _id: "$type",
+                    _id: null, // Global sum for this currency
                     totalAmount: { $sum: "$amount" }
                 }
             }
         ]);
 
-        const buckets = {
-            seller_reversal: 0,
-            escrow_release_credit: 0,
-            payout_reservation: 0,
-            payout_fail_reversal: 0
-        };
-
-        result.forEach(group => {
-            if (buckets[group._id] !== undefined) {
-                buckets[group._id] = group.totalAmount;
-            }
-        });
-
-        // Available = Credits (Release + FailReversal) + Debits (SellerReversal + Reservation)
-        const total = buckets.seller_reversal +
-            buckets.escrow_release_credit +
-            buckets.payout_reservation +
-            buckets.payout_fail_reversal;
-
-        return total;
+        return result.length > 0 ? result[0].totalAmount : 0;
     }
 
     /**

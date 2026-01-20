@@ -1,9 +1,26 @@
 const holdCalculator = require('./holdCalculator');
 const { SellerProfile } = require('../../models/sellerProfile');
 const { User } = require('../../models/user');
+const { Payout } = require('../../models/payout');
+const { Dispute } = require('../../models/dispute');
 const ledgerService = require('./ledgerService');
 const StripeAdapter = require('./stripeAdapter');
 const { configs } = require('../../configs');
+
+/**
+ * Step 10: Strict Payout Eligibility
+ */
+const ELIGIBILITY_STATES = {
+    ELIGIBLE: 'ELIGIBLE',
+    INELIGIBLE_KYC_PENDING: 'INELIGIBLE_KYC_PENDING',
+    INELIGIBLE_SUSPENDED: 'INELIGIBLE_SUSPENDED',
+    INELIGIBLE_BALANCE_LOW: 'INELIGIBLE_BALANCE_LOW',
+    INELIGIBLE_NEGATIVE_BALANCE: 'INELIGIBLE_NEGATIVE_BALANCE',
+    INELIGIBLE_COOLDOWN: 'INELIGIBLE_COOLDOWN',
+    INELIGIBLE_DISPUTE_LOCK: 'INELIGIBLE_DISPUTE_LOCK',
+    INELIGIBLE_NO_CAPABILITIES: 'INELIGIBLE_NO_CAPABILITIES',
+    INELIGIBLE_NO_FUNDS: 'INELIGIBLE_NO_FUNDS'
+};
 
 class PayoutEligibilityService {
     constructor() {
@@ -13,93 +30,158 @@ class PayoutEligibilityService {
             'EUR': 100, // €1.00
             'GBP': 100  // £1.00
         };
+        this.COOLDOWN_HOURS = 24;
     }
 
     /**
      * Helper to resolve SellerProfile from UID string.
      */
     async _getSellerProfile(sellerUid) {
-        // UID -> User -> SellerProfile
         const user = await User.findOne({ uid: sellerUid });
         if (!user) return null;
         return await SellerProfile.findOne({ userId: user._id });
     }
 
     /**
-     * Step 10: Check if a Seller is Eligible for Payout (Global Level).
+     * Main Entry Point: Deterministic Payout Eligibility Check
      * Answers: "Is payout allowed right now for this currency?"
      * 
      * @param {string} sellerUid 
      * @param {string} currency (ISO 3-letter)
-     * @returns {Promise<PayoutEligibilityResult>}
+     * @returns {Promise<Object>} Deterministic Eligibility Result
      */
     async checkSellerPayoutEligibility(sellerUid, orderCurrency) {
         const currency = orderCurrency.toUpperCase();
         const now = new Date();
 
-        // 1. Default Response Structure
+        // 1. Initialize Response Structure
         const result = {
-            isEligible: false,
-            state: 'ELIGIBLE', // Tentative
-            context: {
+            eligibility_state: ELIGIBILITY_STATES.INELIGIBLE_SUSPENDED, // Default safe state
+            payout_allowed: false,
+            blocking_reasons: [],
+            next_possible_payout_at: null,
+            financials: {
                 currency,
-                availableBalance: 0,
-                minThreshold: this.MIN_THRESHOLDS[currency] || 100,
-                missingCapabilities: []
-            },
-            checkedAt: now
+                gross_available_balance_cents: 0,
+                net_eligible_amount_cents: 0,
+                min_threshold_cents: this.MIN_THRESHOLDS[currency] || 100
+            }
         };
 
-        // 2. Killswitch Check
-        // Assuming config might have a global killswitch, defaulted to true here
-        // if (configs.PAYOUTS_ENABLED === false) return ineligible...
+        // 2. Killswitch Check (Global Config)
+        if (configs.PAYOUTS_ENABLED === false) {
+            result.blocking_reasons.push('PLATFORM_PAYOUTS_DISABLED');
+            // Return immediately, nothing else matters
+            return result;
+        }
 
-        // 3. Seller Profile Check (Suspension)
+        // 3. Seller Profile Check (Suspension & KYC)
         const sellerProfile = await this._getSellerProfile(sellerUid);
         if (!sellerProfile) {
-            result.state = 'INELIGIBLE_SUSPENDED'; // Or Not Found
-            result.context.missingCapabilities.push('PROFILE_NOT_FOUND');
+            result.blocking_reasons.push('SELLER_NOT_FOUND');
             return result;
         }
 
         if (sellerProfile.riskStatus !== 'ACTIVE') {
-            result.state = 'INELIGIBLE_SUSPENDED';
-            result.context.sellerStatus = sellerProfile.riskStatus;
+            result.eligibility_state = ELIGIBILITY_STATES.INELIGIBLE_SUSPENDED;
+            result.blocking_reasons.push(`RISK_STATUS_${sellerProfile.riskStatus}`);
+            // Hard Stop
             return result;
         }
 
-        // 4. Compliance/Capability Check (Abstracted)
-        const capabilities = await this.paymentAdapter.getPayoutCapabilities(sellerUid);
-        if (!capabilities.payoutsEnabled) {
-            result.state = 'INELIGIBLE_COMPLIANCE';
-            result.context.missingCapabilities = capabilities.missingCapabilities;
+        // 4. Dispute Lock (Canonical Source: Dispute Model)
+        // Any active dispute blocks ALL payouts.
+        const activeDisputes = await Dispute.countDocuments({
+            sellerId: sellerUid,
+            status: { $in: ['OPEN', 'UNDER_REVIEW', 'WARNING_NEEDS_RESPONSE', 'NEEDS_RESPONSE'] }
+        });
+
+        if (activeDisputes > 0) {
+            result.eligibility_state = ELIGIBILITY_STATES.INELIGIBLE_DISPUTE_LOCK;
+            result.blocking_reasons.push('ACTIVE_DISPUTES_FOUND');
+            // Hard Stop
             return result;
         }
 
-        // 5. Ledger Balance Check (Per Currency)
+        // 5. Compliance Gate (Stripe Capabilities)
+        // This is a compliance check, not a financial one.
+        try {
+            const capabilities = await this.paymentAdapter.getPayoutCapabilities(sellerUid);
+            if (!capabilities.payoutsEnabled) {
+                result.eligibility_state = ELIGIBILITY_STATES.INELIGIBLE_NO_CAPABILITIES;
+                result.blocking_reasons.push(...(capabilities.missingCapabilities || ['STRIPE_RESTRICTED']));
+                // Hard Stop
+                return result;
+            }
+        } catch (err) {
+            result.eligibility_state = ELIGIBILITY_STATES.INELIGIBLE_NO_CAPABILITIES;
+            result.blocking_reasons.push('STRIPE_CONNECTION_ERROR');
+            return result;
+        }
+
+        // 6. Cooldown Check (Last Failed Payout)
+        // 24h cooldown after any failed payout for this currency
+        const lastFailedPayout = await Payout.findOne({
+            sellerId: sellerUid,
+            currency: currency,
+            status: 'FAILED'
+        }).sort({ updatedAt: -1 });
+
+        if (lastFailedPayout) {
+            const cooldownMs = this.COOLDOWN_HOURS * 60 * 60 * 1000;
+            const unlockTime = new Date(lastFailedPayout.updatedAt.getTime() + cooldownMs);
+
+            if (now < unlockTime) {
+                result.eligibility_state = ELIGIBILITY_STATES.INELIGIBLE_COOLDOWN;
+                result.blocking_reasons.push('PAYOUT_FAILURE_COOLDOWN');
+                result.next_possible_payout_at = unlockTime.toISOString();
+                // Hard Stop
+                return result;
+            }
+        }
+
+        // 7. Financial Check (Strict Ledger Invariants)
+        // Get Strict Available Balance (Sum of specific types)
         const availableBalance = await ledgerService.getAvailableBalance(sellerUid, currency);
-        result.context.availableBalance = availableBalance;
+        result.financials.gross_available_balance_cents = availableBalance;
 
-        if (availableBalance <= 0) {
-            result.state = 'INELIGIBLE_NO_FUNDS';
+        // Negative Balance Safety
+        if (availableBalance < 0) {
+            result.eligibility_state = ELIGIBILITY_STATES.INELIGIBLE_NEGATIVE_BALANCE;
+            result.blocking_reasons.push('NEGATIVE_LEDGER_BALANCE');
+            result.financials.net_eligible_amount_cents = 0; // Cannot pay out debt
             return result;
         }
 
-        if (availableBalance < result.context.minThreshold) {
-            result.state = 'INELIGIBLE_BALANCE';
+        // Zero Funds
+        if (availableBalance === 0) {
+            result.eligibility_state = ELIGIBILITY_STATES.INELIGIBLE_NO_FUNDS;
+            result.blocking_reasons.push('NO_FUNDS_AVAILABLE');
             return result;
         }
 
-        // 6. All Gates Passed
-        result.isEligible = true;
-        result.state = 'ELIGIBLE';
+        // Threshold Check
+        const minThreshold = result.financials.min_threshold_cents;
+        if (availableBalance < minThreshold) {
+            result.eligibility_state = ELIGIBILITY_STATES.INELIGIBLE_BALANCE_LOW;
+            result.blocking_reasons.push('BELOW_MIN_THRESHOLD');
+            result.financials.net_eligible_amount_cents = 0; // Not eligible yet
+            return result;
+        }
+
+        // 8. Success: Eligible
+        // Platform keeps 0%, so Net Eligible = Gross Available
+        result.eligibility_state = ELIGIBILITY_STATES.ELIGIBLE;
+        result.payout_allowed = true;
+        result.financials.net_eligible_amount_cents = availableBalance;
+        result.next_possible_payout_at = now.toISOString(); // Now
 
         return result;
     }
 
     /**
-     * Checks if an order is eligible for payout release.
-     * This is the L2 Gatekeeper.
+     * Checks if an order is eligible for payout release (Escrow -> Ledger).
+     * This is the L2 Gatekeeper for funds BECOMING available.
      * 
      * @param {Object} order - The Order document
      * @param {Object} sellerProfile - The SellerProfile document
@@ -111,7 +193,7 @@ class PayoutEligibilityService {
             return {
                 isEligible: false,
                 reason: `Seller is ${sellerProfile.riskStatus}`,
-                status: 'INELIGIBLE_SUSPENDED' // Strict Step 10 State
+                status: 'INELIGIBLE_SUSPENDED'
             };
         }
 
@@ -127,7 +209,6 @@ class PayoutEligibilityService {
         // 3. Hold Window Check
         const now = new Date();
         if (!order.releaseExpectedAt) {
-            // Should have been set at delivery. If missing, assume ineligible/pending calc.
             return {
                 isEligible: false,
                 reason: 'Release date not set',
@@ -145,9 +226,6 @@ class PayoutEligibilityService {
 
         // 4. Ledger Check (Implicit)
         // If we are here, it's time to release.
-        // We do NOT check "Available Balance" here; this service says "You are allowed to move TO available".
-        // PayoutService checks Available Balance.
-
         return {
             isEligible: true,
             reason: 'Eligible for release',

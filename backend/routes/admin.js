@@ -289,7 +289,7 @@ const adminRoutes = async (fastify, opts) => {
 	});
 
 	// Payout Management Routes
-	const { triggerManualPayout } = require("../handlers/payoutHandlers");
+	const { triggerManualPayout, checkPayoutEligibility } = require("../handlers/payoutHandlers");
 
 	// Trigger Payout (Step 7 Execution Entry Point)
 	fastify.route({
@@ -304,6 +304,24 @@ const adminRoutes = async (fastify, opts) => {
 		},
 		preHandler: verifyAuth(["admin"], true),
 		handler: triggerManualPayout,
+	});
+
+	// Check Payout Eligibility (Step 10 Read-Only)
+	fastify.route({
+		method: "POST",
+		url: "/payouts/eligibility",
+		schema: {
+			body: {
+				type: "object",
+				properties: {
+					sellerUid: { type: "string" },
+					currency: { type: "string" }
+				},
+				required: ["sellerUid", "currency"]
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: checkPayoutEligibility,
 	});
 };
 

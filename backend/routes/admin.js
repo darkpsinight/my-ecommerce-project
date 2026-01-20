@@ -342,6 +342,44 @@ const adminRoutes = async (fastify, opts) => {
 		preHandler: verifyAuth(["admin"], true),
 		handler: checkPayoutEligibility,
 	});
+
+	// Step 12: Admin Payout Visibility & Audit (Read-Only)
+	const { listPayouts, getPayoutDetail } = require("../handlers/payoutReadHandler");
+
+	fastify.route({
+		method: "GET",
+		url: "/payouts",
+		schema: {
+			querystring: {
+				type: "object",
+				properties: {
+					page: { type: "integer" },
+					limit: { type: "integer" },
+					status: { type: "string" },
+					sellerId: { type: "string" },
+					currency: { type: "string" },
+					startDate: { type: "string" },
+					endDate: { type: "string" }
+				}
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: listPayouts,
+	});
+
+	fastify.route({
+		method: "GET",
+		url: "/payouts/:payoutId",
+		schema: {
+			params: {
+				type: "object",
+				properties: { payoutId: { type: "string" } },
+				required: ["payoutId"]
+			}
+		},
+		preHandler: verifyAuth(["admin"], true),
+		handler: getPayoutDetail,
+	});
 };
 
 module.exports = {

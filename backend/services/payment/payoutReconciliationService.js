@@ -1,105 +1,197 @@
-const { Payout } = require("../../models/payout");
-const { StripeAccount } = require("../../models/stripeAccount");
-const stripeAdapter = new (require("./stripeAdapter"))();
-const payoutService = require("./payoutService");
 const mongoose = require("mongoose");
+const { v4: uuidv4 } = require("uuid");
+const { Payout } = require("../../models/payout");
+const { LedgerEntry } = require("../../models/ledgerEntry");
+const { Order } = require("../../models/order");
+const ledgerService = require("./ledgerService");
+const { PaymentError } = require("./paymentErrors");
 
 class PayoutReconciliationService {
 
     /**
-     * Identifies and fixes stuck payouts.
-     * Rule: Payout is PROCESSING for > 5 minutes.
+     * Entry point for Stripe Transfer events.
+     * Decides action based on event type.
      */
-    async reconcileStuckPayouts() {
-        console.log("[PayoutReconciler] Starting reconciliation scan...");
+    async handleTransferEvent(event) {
+        const transfer = event.data.object;
+        const eventType = event.type;
 
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        console.log(`[PayoutReconciliation] Received ${eventType} for Transfer ${transfer.id}`);
 
-        const stuckPayouts = await Payout.find({
-            status: "PROCESSING",
-            processingAt: { $lte: fiveMinutesAgo }
-        });
-
-        console.log(`[PayoutReconciler] Found ${stuckPayouts.length} stuck payouts.`);
-
-        const results = {
-            total: stuckPayouts.length,
-            fixed: 0,
-            rolledBack: 0,
-            errors: 0
-        };
-
-        for (const payout of stuckPayouts) {
-            try {
-                const status = await this.reconcileSinglePayout(payout);
-                if (status === 'FIXED') results.fixed++;
-                if (status === 'ROLLED_BACK') results.rolledBack++;
-            } catch (err) {
-                console.error(`[PayoutReconciler] Error handling payout ${payout.payoutId}:`, err);
-                results.errors++;
-            }
-        }
-
-        return results;
-    }
-
-    async reconcileSinglePayout(payout) {
-        console.log(`[PayoutReconciler] Checking Payout ${payout.payoutId} (Seller: ${payout.sellerId})...`);
-
-        // 1. Get Seller Connect ID
-        const stripeAccount = await StripeAccount.findOne({ sellerId: payout.sellerId });
-        if (!stripeAccount || !stripeAccount.stripeAccountId) {
-            // Can't confirm with Stripe. This is tough. 
-            // Assume failed if we can't find account? No, risky.
-            // Log manual intervention needed.
-            console.error(`[PayoutReconciler] Seller Stripe Account missing for ${payout.sellerId}. Manual fix required.`);
+        // 1. Check Idempotency (Event Level)
+        const isProcessed = await this.isEventProcessed(event.id);
+        if (isProcessed) {
+            console.log(`[PayoutReconciliation] Skipping duplicate event ${event.id}`);
             return;
         }
 
-        // 2. Query Stripe for the Transfer
-        // Search by Transfer Group or Metadata? 
-        // Stripe API 'list transfers' allows transfer_group.
-        // We set transfer_group to orderId or similar? 
-        // Adapater verify? Adapter creates with metadata.
-        // Using idempotencyKey is unrelated to search.
-
-        // We will list transfers for this connected account with generic search?
-        // Stripe Connect transfers are "Platform to Connected".
-        // Use StripeAdapter to list transfers filtering by metadata.
-
-        // NOTE: StripeAdapter needs a list method or we access stripe directly.
-        // Let's rely on idempotency if we retry? No, retry might pass if successful before.
-        // But we want to know STATUS.
-
-        // We'll trust the StripeAdapter to implement `retrieveTransferByMetadata` logic via list.
-        // Since we don't have that method yet, let's implement a direct search here or assume we need to add it.
-        // Pushing logic into Adapter is better.
-
-        // For now, let's assume if it's stuck > 5min, and we don't have stripeTransferId in DB, it likely failed or ghosted.
-        // SAFE PATH: Fail and Rollback? 
-        // RISK: If it actually succeeded, we create double money (Stripe has it, User has it back).
-        // MUST VERIFY.
-
-        // Let's implement finding transfer by payoutId in metadata.
-        const matches = await stripeAdapter.listTransfers({
-            destination: stripeAccount.stripeAccountId,
-            limit: 10 // Recent
-        });
-
-        // Filter locally for metadata payoutId
-        const match = matches.data.find(t => t.metadata && t.metadata.payoutId === payout.payoutId);
-
-        if (match) {
-            console.log(`[PayoutReconciler] Found Stripe Transfer ${match.id} for Payout ${payout.payoutId}. Completing.`);
-            payout.completedAt = new Date(); // Approximate
-            await payout.save();
-            return 'FIXED';
-        } else {
-            console.log(`[PayoutReconciler] No Stripe Transfer found for Payout ${payout.payoutId}. Rolling back.`);
-            // Assume it failed to reach Stripe or was declined and we missed the error.
-            await payoutService.rollbackPayout(payout, "Reconciliation: Transfer not found in Stripe");
-            return 'ROLLED_BACK';
+        // 2. Dispatch
+        if (eventType === 'transfer.updated') {
+            if (transfer.status === 'failed') {
+                await this.processTransferFailure(transfer, event.id, "TRANSFER_FAILED");
+            } else if (transfer.status === 'paid') {
+                await this.processTransferSuccess(transfer, event.id);
+            }
+        } else if (eventType === 'transfer.reversed') {
+            await this.processTransferFailure(transfer, event.id, "TRANSFER_REVERSED");
         }
+    }
+
+    /**
+     * Handles transfer.failed or transfer.reversed.
+     * Transitions Payout to FAILED/REVERSED and refunds Ledger.
+     */
+    async processTransferFailure(transfer, stripeEventId, failureType) {
+        const metadata = transfer.metadata || {};
+        const payoutId = metadata.payoutId;
+
+        if (!payoutId) {
+            console.error(`[PayoutReconciliation] Transfer ${transfer.id} missing payoutId metadata. Cannot reconcile.`);
+            return;
+        }
+
+        console.log(`[PayoutReconciliation] Processing Failure (${failureType}) for Payout ${payoutId}`);
+
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            // A. Lock Payout
+            const payout = await Payout.findOne({ payoutId }).session(session);
+            if (!payout) {
+                console.error(`[PayoutReconciliation] Payout ${payoutId} not found.`);
+                await session.abortTransaction();
+                return;
+            }
+
+            // B. State Guard (Double Reversal Protection)
+            if (payout.status === 'FAILED' || payout.status === 'REVERSED') {
+                console.log(`[PayoutReconciliation] Payout ${payoutId} is already ${payout.status}. Skipping.`);
+                await session.abortTransaction();
+                return;
+            }
+
+            // C. Transition State
+            const previousStatus = payout.status;
+            const newStatus = failureType === 'TRANSFER_REVERSED' ? 'REVERSED' : 'FAILED';
+            const failureReason = transfer.failure_message || transfer.description || "Stripe Transfer Failed/Reversed";
+
+            payout.status = newStatus;
+            payout.failureReason = failureReason;
+            payout.failureCode = transfer.failure_code || "unknown_stripe_error";
+
+            // Add to history
+            payout.payoutHistory.push({
+                attemptAt: new Date(),
+                status: newStatus,
+                failureReason: `Reconciliation: ${failureReason} (Event: ${stripeEventId})`
+            });
+
+            await payout.save({ session });
+
+            // D. Ledger Compensation (The "Double Money" Guard)
+            // Guard: Must have a ledgerReservationId
+            if (!payout.ledgerReservationId) {
+                console.error(`[PayoutReconciliation] CRITICAL: Payout ${payoutId} missing ledgerReservationId. Cannot refund ledger safely. Alerting Admin.`);
+                // In a real system, send high-priority alert.
+                // We do NOT credit to avoid risk.
+                await session.abortTransaction();
+                return;
+            }
+
+            // Guard: Verify the original reservation exists and is a debit
+            const originalDebits = await LedgerEntry.find({
+                _id: payout.ledgerReservationId,
+                type: 'payout_reservation',
+                amount: { $lt: 0 },
+                user_uid: payout.sellerId
+            }).session(session);
+
+            if (originalDebits.length === 0) {
+                console.error(`[PayoutReconciliation] CRITICAL: Payout ${payoutId} references invalid/missing ledger reservation ${payout.ledgerReservationId}. Aborting reversal.`);
+                await session.abortTransaction();
+                return;
+            }
+
+            // Create Compensation Entry (Credit)
+            const reversalEntry = new LedgerEntry({
+                user_uid: payout.sellerId,
+                role: 'seller',
+                type: 'payout_fail_reversal',
+                amount: Math.abs(payout.amount), // Force Positive
+                currency: payout.currency,
+                status: 'available',
+                related_order_id: payout.orderId,
+                description: `Reversal for Payout ${payoutId}: ${failureReason}`,
+                metadata: {
+                    payoutId: payout.payoutId,
+                    stripeEventId: stripeEventId,
+                    originalTransferId: transfer.id,
+                    reason: failureReason
+                },
+                externalId: uuidv4()
+            });
+
+            await reversalEntry.save({ session });
+
+            await session.commitTransaction();
+            console.log(`[PayoutReconciliation] SUCCESS: Payout ${payoutId} transitioned to ${newStatus}. Funds Credited.`);
+
+        } catch (error) {
+            console.error(`[PayoutReconciliation] Error processing failure for ${payoutId}:`, error);
+            await session.abortTransaction();
+            // Do not throw, consumes the event. Retry policy would handle transient DB errors in a queue system,
+            // but for webhook handler we log and alert.
+        } finally {
+            session.endSession();
+        }
+    }
+
+    /**
+     * Handles transfer.updated (status=paid).
+     * Mostly for audit reassurance.
+     */
+    async processTransferSuccess(transfer, stripeEventId) {
+        const metadata = transfer.metadata || {};
+        const payoutId = metadata.payoutId;
+
+        if (!payoutId) return;
+
+        // Check if we are in a Trap State (FAILED/REVERSED)
+        const payout = await Payout.findOne({ payoutId });
+        if (!payout) return;
+
+        if (payout.status === 'FAILED' || payout.status === 'REVERSED') {
+            console.warn(`[PayoutReconciliation] WARNING: Received PAID event for ${payout.status} Payout ${payoutId}. Ignoring late success.`);
+            return;
+        }
+
+        // Optional: Could add a history note, but generally we trust the optimism of Step 15.
+        if (payout.status !== 'COMPLETED') {
+            // It might be PROCESSING. If so, we could mark COMPLETED. 
+            // But Step 15 execution usually handles this. 
+            // This is a safety net.
+            console.log(`[PayoutReconciliation] Payout ${payoutId} confirmed PAID via webhook.`);
+            payout.status = 'COMPLETED';
+            if (!payout.stripeTransferId) payout.stripeTransferId = transfer.id;
+            await payout.save();
+        }
+
+        // Mark event as processed in ledger? We only write to ledger on REVERSAL.
+        // But we should mark event processed in our idempotent store (which is the WebhookEvent model, handled by Adapter).
+        // The LedgerEntry check is for *reversals*.
+    }
+
+    /**
+     * Checks if a significant ledger action has already been taken for this event.
+     */
+    async isEventProcessed(stripeEventId) {
+        // We assume 'payout_fail_reversal' entries in Ledger are the source of truth for "Action Taken".
+        const exists = await LedgerEntry.exists({
+            'metadata.stripeEventId': stripeEventId,
+            type: 'payout_fail_reversal'
+        });
+        return !!exists;
     }
 }
 

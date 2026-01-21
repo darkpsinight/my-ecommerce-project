@@ -15,6 +15,7 @@ const { WebhookEvent } = require("../../models/webhookEvent");
 const { Order } = require("../../models/order");
 const { LedgerEntry } = require("../../models/ledgerEntry");
 const ledgerService = require("./ledgerService");
+const payoutReconciliationService = require("./payoutReconciliationService");
 const { configs } = require("../../configs");
 
 console.log("🔥 STRIPE ADAPTER FILE LOADED:", __filename);
@@ -751,6 +752,14 @@ class StripeAdapter extends PaymentAdapter {
         case "transfer.updated":
           console.log("🔄 StripeAdapter: Handling transfer.updated");
           await this.handleTransferUpdated(event);
+          // Step 16: Route to Reconciliation Service for Settlement Checks
+          await payoutReconciliationService.handleTransferEvent(webhookEvent.rawData);
+          break;
+
+        case "transfer.reversed":
+          console.log("🔄 StripeAdapter: Handling transfer.reversed");
+          // Step 16: Route to Reconciliation Service
+          await payoutReconciliationService.handleTransferEvent(webhookEvent.rawData);
           break;
 
         case "account.updated":

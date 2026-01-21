@@ -380,9 +380,6 @@ const adminRoutes = async (fastify, opts) => {
 		preHandler: verifyAuth(["admin"], true),
 		handler: getPayoutDetail,
 	});
-
-	// Step 18: Financial Observability Routes
-	fastify.register(require("./admin/financialObservability"), { prefix: "/financials" });
 };
 
 module.exports = {

@@ -38,7 +38,10 @@ const ledgerEntrySchema = new mongoose.Schema({
       // Step 7: Payout Execution Hardening
       "payout_reservation",    // Debit from Available (-X) [Phase 1]
       "payout_fail_reversal",   // Credit to Available (+X) [Rollback]
-      "payout_reservation_release" // Release of Reservation Marker (0) [Step 11]
+      "payout_reservation_release", // Release of Reservation Marker (0) [Step 11]
+      // Step 17: Admin Remediation
+      "admin_correction_credit", // Manual credit to available (+X)
+      "admin_correction_debit"   // Manual debit from available (-X)
     ],
     required: true,
     index: true

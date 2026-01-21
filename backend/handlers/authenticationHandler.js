@@ -85,7 +85,7 @@ const registerUser = async (request, reply) => {
   if (configs.CHECK_ADMIN) {
     const count = await User.countDocuments();
     if (!count) {
-      roles = ["admin", "buyer", "seller", "support"]; // first user should have access to all roles and all resources
+      roles = ["super_admin","admin", "buyer", "seller", "support"]; // first user should have access to all roles and all resources
     }
   }
 

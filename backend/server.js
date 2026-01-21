@@ -50,6 +50,7 @@ const fastifyCookie = require("fastify-cookie");
 const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
 const { setupListingExpirationCron } = require("./jobs/listingExpirationCron");
 const { setupPayoutSchedulerJob } = require("./jobs/payoutSchedulerJob");
+const adminRemediationRoutes = require("./routes/adminRemediation");
 const { configCache } = require("./services/configCache");
 const {
   registerWithFastify: registerImageKitWithFastify,
@@ -126,6 +127,12 @@ fastify.register(oauth2Routes, { prefix: "/api/v1/auth/oauth" });
 
 // Register admin routes
 fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
+
+// Register admin remediation routes (Step 17)
+fastify.register(adminRemediationRoutes, {
+  prefix: '/api/v1/admin/remediation'
+});
+
 
 // Register public routes
 fastify.register(publicRoutes, { prefix: "/api/v1/public" });

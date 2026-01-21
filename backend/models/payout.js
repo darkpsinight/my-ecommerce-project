@@ -101,7 +101,18 @@ const payoutSchema = new mongoose.Schema({
     stripeTransferId: { type: String },
     failureReason: { type: String },
     status: { type: String }
-  }]
+  }],
+
+  // Step 15: Automated Execution Traceability
+  scheduleId: {
+    type: String,
+    index: true
+  },
+  executionSource: {
+    type: String,
+    enum: ["MANUAL", "AUTOMATED"],
+    default: "MANUAL"
+  }
 }, {
   timestamps: true
 });

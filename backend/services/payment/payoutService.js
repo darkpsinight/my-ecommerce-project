@@ -18,7 +18,7 @@ class PayoutService {
      * STRICT: One order -> One payout.
      * Implements Step 7: Safe 3-Phase Commit Protocol
      */
-    async processOrderPayout(orderId, adminId) {
+    async processOrderPayout(orderId, adminId, options = {}) {
         console.log("[PayoutService] Starting 3-Phase Payout for Order:", orderId);
 
         // 1. Validation & Order Retrieval
@@ -90,7 +90,10 @@ class PayoutService {
                 status: "PROCESSING",
                 idempotencyKey: `payout_${order._id}_${Date.now()}`, // Unique key
                 reservedAt: new Date(),
-                processingAt: new Date()
+                processingAt: new Date(),
+                // Metadata from Automation
+                scheduleId: options.scheduleId,
+                executionSource: options.executionSource || "MANUAL"
             });
             await payout.save({ session });
 

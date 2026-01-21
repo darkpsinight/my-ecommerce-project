@@ -36,7 +36,7 @@ const payoutScheduleSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ["SCHEDULED", "SKIPPED", "CANCELLED", "CONSUMED"],
+        enum: ["SCHEDULED", "PROCESSING", "SKIPPED", "CANCELLED", "CONSUMED"],
         required: true,
         index: true
     },

@@ -33,11 +33,10 @@ Any deviation must be explicitly approved and documented.
 
 All code **must belong to exactly one layer**.
 
-/domain → Pure business rules (no IO, no frameworks)
-/application → Use-cases, workflows, orchestration
-/infrastructure→ External systems (DB, Stripe, email, queues)
-/interfaces → HTTP, CLI, Admin UI, Webhooks
-
+/domain → Pure business rules (no IO, no frameworks)  
+/application → Use-cases, workflows, orchestration  
+/infrastructure → External systems (DB, Stripe, email, queues)  
+/interfaces → HTTP, CLI, Admin UI, Webhooks  
 
 ### Dependency Rules (Strict)
 - `domain` → depends on nothing
@@ -54,22 +53,21 @@ All code **must belong to exactly one layer**.
 - **PROHIBITED:** Single files inside category folders.
 - **REQUIRED:** Every feature gets its own folder.
 
-❌ /jobs/reconcileStripe.js
-✅ /jobs/reconcile-stripe/reconcile-stripe.ts
-
+❌ `/services/dispute.service.js`  
+❌ `/services/dispute.js`  
+✅ `/services/dispute/dispute.js`
 
 ### 3.2 Feature Folder Structure (Canonical)
 Each feature folder must follow this pattern:
 
 feature-name/
-├─ index.ts # public exports only
-├─ handler.ts # entry point
-├─ service.ts # internal logic
-├─ types.ts # local types only
+├─ index.ts        # public exports only
+├─ handler.ts      # entry point (if applicable)
+├─ feature-name.ts # core logic (service implied by folder)
+├─ types.ts        # local types only
 ├─ tests/
-│ └─ feature-name.ts
-└─ README.md # optional but recommended
-
+│  └─ feature-name.test.ts
+└─ README.md       # optional but recommended
 
 ---
 
@@ -91,18 +89,22 @@ feature-name/
 ## 5. Naming Conventions (Non-Negotiable)
 
 - **Folders:** lowercase, kebab-case
-- **Files:** camelCase or kebab-case (match local convention)
-- **Jobs:** `<feature>.job.ts`
-- **Handlers:** `<feature>.handler.ts` (Handler context is implied by folder)
-- **Services:** `<feature>.ts` (service context is implied by folder)
+- **Feature folders:** semantic domain name (`dispute`, `escrow-freeze`)
+- **Files inside feature folders:**
+  - Primary logic: `<feature>.ts`
+  - Handler: `handler.ts`
+  - Index: `index.ts`
+- **Jobs:** `<job-name>.job.ts`
 - **Tests:** `*.test.ts` or `*.spec.ts`
+- **Redundant suffixes are forbidden** (`.service.ts`, `.manager.ts`, `.controller.ts`)  
+  Context is derived from **folder + layer**, not filename.
 
 ---
 
 ## 6. Test Structure Rules
 
 - Tests must **mirror the source structure**.
-- Tests live **next to the feature**, never globally unless shared.
+- Tests live **inside the feature folder**, never globally unless shared.
 - Every feature with logic **must** have at least one test or a documented exemption.
 
 ---
@@ -125,7 +127,8 @@ Before creating or modifying files, the agent MUST:
 1. Declare the **exact absolute path**
 2. Justify the **chosen layer**
 3. Confirm **dependency direction is respected**
-4. Verify no root or category-level violations occur
+4. Verify **file naming matches folder-implied context**
+5. Verify no root or category-level violations occur
 
 If any rule conflicts, **STOP and request clarification**.
 

@@ -216,6 +216,12 @@ const orderSchema = new mongoose.Schema({
     enum: ["PENDING_MATURITY", "MATURE_HELD", "ELIGIBLE_FOR_PAYOUT", "ELIGIBLE"],
     default: "PENDING_MATURITY",
     index: true
+  },
+  // Step 22: Dispute Freeze Flag
+  isDisputed: {
+    type: Boolean,
+    default: false,
+    index: true
   }
 }, {
   timestamps: true

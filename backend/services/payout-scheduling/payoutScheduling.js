@@ -59,7 +59,8 @@ class PayoutSchedulingService {
      */
     async findEligibleOrders() {
         return await Order.find({
-            eligibilityStatus: 'ELIGIBLE'
+            eligibilityStatus: 'ELIGIBLE',
+            isDisputed: { $ne: true } // Step 22: GUARD
         });
     }
 
@@ -70,6 +71,12 @@ class PayoutSchedulingService {
      * 3. Updates Order status.
      */
     async processOrder(order) {
+        // Step 22: HARD BLOCK (Service Level)
+        if (order.isDisputed) {
+            console.warn(`[PayoutScheduling] BLOCKED disputed order ${order._id}`);
+            return 'SKIPPED_DISPUTED';
+        }
+
         // A. Idempotency Check
         const existingSchedule = await PayoutSchedule.findOne({ orderId: order._id });
         if (existingSchedule) {

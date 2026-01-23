@@ -8,6 +8,14 @@ const disputeSchema = new mongoose.Schema({
         unique: true,
         default: uuidv4
     },
+    // Standard External ID for API Consistency
+    externalId: {
+        type: String,
+        required: true,
+        unique: true,
+        default: uuidv4,
+        index: true
+    },
     // Stripe Dispute ID (for mapping)
     stripeDisputeId: {
         type: String,
@@ -74,6 +82,8 @@ const disputeSchema = new mongoose.Schema({
 
 // Index for getting active disputes for a seller
 disputeSchema.index({ sellerId: 1, status: 1 });
+// Index for looking up dispute by orderId
+disputeSchema.index({ orderId: 1 });
 
 const Dispute = mongoose.model('Dispute', disputeSchema);
 

@@ -50,13 +50,20 @@ class EscrowMaturityService {
                 eligibilityStatus: "PENDING_MATURITY",
                 status: "completed",
                 deliveryStatus: "delivered",
-                deliveredAt: { $exists: true }
+                deliveredAt: { $exists: true },
+                isDisputed: { $ne: true } // Step 22: NEW GUARD (Query Level)
             }).limit(100); // Batch limit for safety
 
             stats.scanned = candidates.length;
 
             for (const order of candidates) {
                 try {
+                    // Step 22: NEW GUARD (Service Level - Authoritative)
+                    if (order.isDisputed) {
+                        console.warn(`[EscrowMaturity] SKIPPING disputed order ${order._id}`);
+                        continue;
+                    }
+
                     if (this.checkMaturityCriteria(order)) {
                         stats.eligible++;
 

@@ -4,11 +4,57 @@ trigger: always_on
 
 # Security & Secret Management Policy
 
-## 1. Environment Variables
-- **CRITICAL:** Never hard-code API keys, passwords, or secrets into any source code, test scripts, or documentation.
-- All secrets must be accessed via `.env` files using `process.env` (Node) or equivalent environment loaders.
-- In backend only, if needs to use .env key/value, read and import from backend\configs.js.
+## 1. Environment Variables (Hard Rule)
 
-## 2. File Handling
-- Before creating any file that might contain sensitive data, verify it is listed in the `.gitignore`.
-- Do not print/log full environment variables or secrets to the console or logs.
+- **CRITICAL:** Secrets must never be hard-coded in source code, tests, scripts, or documentation.
+- Backend code **must NOT** access `process.env` directly.
+- `process.env` access is **EXCLUSIVELY ALLOWED** in:
+  - `backend/configs.js`
+
+### Required Pattern
+- `backend/configs.js` is the **single source of truth** for all environment variables.
+- All backend modules must import configuration values from `backend/configs.js`.
+- No other backend file may reference `.env` or `process.env`.
+
+Example (conceptual):
+- ✅ `import { STRIPE_SECRET } from "../configs"`
+- ❌ `process.env.STRIPE_SECRET`
+
+Reading from `.env` is permitted **only** inside `backend/configs.js`.
+
+---
+
+## 2. File Handling & Git Hygiene
+
+- Before creating any file that may contain sensitive data, verify it is covered by `.gitignore`.
+- Never commit:
+  - `.env`
+  - credential dumps
+  - tokens, private keys, secrets, or temporary auth files
+- Do not log or print:
+  - full environment variables
+  - secret values
+  - access tokens
+  - private identifiers
+
+---
+
+## 3. Logging & Diagnostics
+
+- Logs must be **redacted by default**.
+- Secrets must never appear in:
+  - console output
+  - log files
+  - error traces
+  - test snapshots
+
+---
+
+## 4. Enforcement Rule (Agent)
+
+Before writing or modifying backend code, the agent MUST:
+1. Confirm whether configuration access is required
+2. Route all configuration through `backend/configs.js`
+3. Verify no `process.env` usage exists outside that file
+
+If a violation is detected, **STOP and request correction**.

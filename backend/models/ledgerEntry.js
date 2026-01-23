@@ -41,7 +41,10 @@ const ledgerEntrySchema = new mongoose.Schema({
       "payout_reservation_release", // Release of Reservation Marker (0) [Step 11]
       // Step 17: Admin Remediation
       "admin_correction_credit", // Manual credit to available (+X)
-      "admin_correction_debit"   // Manual debit from available (-X)
+      "admin_correction_debit",   // Manual debit from available (-X)
+      // Step 23.1: Buyer Wallet Ledger (Structural Placeholders - DEV ONLY)
+      "wallet_credit_placeholder", // Abstract credit to Buyer Available (+)
+      "wallet_debit_placeholder"   // Abstract debit from Buyer Available (-)
     ],
     required: true,
     index: true

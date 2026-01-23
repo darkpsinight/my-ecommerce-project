@@ -47,16 +47,13 @@ const { sendSuccessResponse } = require("./utils/responseHelpers");
 const { getRefreshTokenOptns } = require("./models/refreshToken");
 const fastifyCsrf = require("fastify-csrf");
 const fastifyCookie = require("fastify-cookie");
-const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
-const { setupListingExpirationCron } = require("./jobs/listingExpirationCron");
-const { setupPayoutSchedulerJob } = require("./jobs/payoutSchedulerJob");
-const { setupIntegrityMonitor } = require("./jobs/financial-integrity/integrity-monitor.job");
 const adminRemediationRoutes = require("./routes/adminRemediation");
 const adminFinancialRoutes = require("./routes/adminFinancials");
 const { configCache } = require("./services/configCache");
 const {
   registerWithFastify: registerImageKitWithFastify,
 } = require("./handlers/imageUploadHandler");
+const { initializeJobs } = require("./jobs");
 
 // fastify-helmet adds various HTTP headers for security
 if (configs.ENVIRONMENT !== keywords.DEVELOPMENT_ENV) {
@@ -254,11 +251,8 @@ const start = async () => {
 
       await fastify.listen(configs.PORT, configs.HOST);
 
-      // Setup cron jobs
-      setupAccountDeletionCron(fastify);
-      setupListingExpirationCron(fastify);
-      setupPayoutSchedulerJob(fastify);
-      setupIntegrityMonitor(fastify);
+      // Setup cron jobs using central loader
+      initializeJobs(fastify);
 
       if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
         fastify.swagger();

@@ -207,9 +207,13 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     index: true
   },
+  eligibleAt: {
+    type: Date
+  },
   eligibilityStatus: {
     type: String,
-    enum: ["PENDING_MATURITY", "MATURE_HELD", "ELIGIBLE_FOR_PAYOUT"],
+    // ELIGIBLE_FOR_PAYOUT kept as legacy alias. ELIGIBLE is the canonical forward state.
+    enum: ["PENDING_MATURITY", "MATURE_HELD", "ELIGIBLE_FOR_PAYOUT", "ELIGIBLE"],
     default: "PENDING_MATURITY",
     index: true
   }

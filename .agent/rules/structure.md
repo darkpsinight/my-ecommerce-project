@@ -93,8 +93,8 @@ feature-name/
 - **Folders:** lowercase, kebab-case
 - **Files:** camelCase or kebab-case (match local convention)
 - **Jobs:** `<feature>.job.ts`
-- **Handlers:** `<feature>.handler.ts`
-- **Services:** `<feature>.service.ts`
+- **Handlers:** `<feature>.handler.ts` (Handler context is implied by folder)
+- **Services:** `<feature>.ts` (service context is implied by folder)
 - **Tests:** `*.test.ts` or `*.spec.ts`
 
 ---

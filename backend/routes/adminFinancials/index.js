@@ -1,4 +1,4 @@
-const FinancialObservabilityService = require("../../services/financialObservability.service");
+const FinancialObservabilityService = require("../../services/financialObservability");
 const { verifyAuth } = require("../../plugins/authVerify");
 
 // Schema definitions for documentation/validation (Simplified for internal admin use)

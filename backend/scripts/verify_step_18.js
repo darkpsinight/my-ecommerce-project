@@ -1,7 +1,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { connectDB } = require('../models/connectDB');
-const FinancialObservabilityService = require('../services/financialObservability.service');
+const FinancialObservabilityService = require('../services/financialObservability');
 const { runIntegrityMonitor } = require('../jobs/financial-integrity/integrity-monitor.job');
 const { LedgerEntry } = require('../models/ledgerEntry');
 const { v4: uuidv4 } = require('uuid');

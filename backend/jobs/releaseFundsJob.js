@@ -3,7 +3,7 @@ const { Order } = require('../models/order');
 const { SellerProfile } = require('../models/sellerProfile');
 const ledgerService = require('../services/payment/ledgerService');
 const payoutEligibilityService = require('../services/payment/payoutEligibilityService');
-const mongoose = require('mongoose');
+const { configs } = require("../configs");
 
 /**
  * Job: Release Funds for Mature Orders
@@ -17,8 +17,10 @@ const mongoose = require('mongoose');
  * 5. Update Order Status (ELIGIBLE_FOR_PAYOUT)
  */
 const startReleaseFundsJob = () => {
-    // Run every hour at minute 0
-    cron.schedule('0 * * * *', async () => {
+    console.log(`[Job] Starting RELEASE_FUNDS_JOB with schedule: ${configs.RELEASE_FUNDS_CRON}`);
+
+    // Run every 5 minutes
+    cron.schedule(configs.RELEASE_FUNDS_CRON, async () => {
         console.log('[ReleaseFundsJob] Starting execution...');
 
         try {

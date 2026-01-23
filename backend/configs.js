@@ -63,6 +63,7 @@ const configs = {
 	PAYOUT_SCHEDULER_CRON: process.env.PAYOUT_SCHEDULER_CRON || "0 2 * * *",
 	ESCROW_MATURITY_SECONDS: Number(process.env.ESCROW_MATURITY_SECONDS) || 60,
 	ESCROW_MATURITY_CRON: process.env.ESCROW_MATURITY_CRON || "* * * * *",
+	RELEASE_FUNDS_CRON: process.env.RELEASE_FUNDS_CRON || "*/5 * * * *",
 
 	get ACCOUNT_DELETION_DELAY() {
 		// If minutes are specified, use that for testing

@@ -10,6 +10,14 @@ const payoutScheduleSchema = new mongoose.Schema({
         index: true
     },
 
+    orderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Order",
+        required: true,
+        unique: true, // 1-to-1 Mapping
+        index: true
+    },
+
     sellerId: {
         type: String, // UID
         required: true,
@@ -23,6 +31,7 @@ const payoutScheduleSchema = new mongoose.Schema({
     },
 
     // Idempotency Window: "YYYY-MM-DD"
+    // Kept for record-keeping of WHEN it was scheduled
     windowDate: {
         type: String,
         required: true,
@@ -48,6 +57,8 @@ const payoutScheduleSchema = new mongoose.Schema({
     },
 
     // Orders locked for this batch
+    // COMPATIBILITY: Will always contain exactly one ID (the same as orderId)
+    // Kept to prevent breaking Step 15 Service/Worker which iterates this array.
     includedOrderIds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Order"
@@ -56,7 +67,7 @@ const payoutScheduleSchema = new mongoose.Schema({
     // Aggregates for convenience
     totalCount: {
         type: Number,
-        default: 0
+        default: 1 // Always 1 for 1-to-1
     },
 
     totalAmount: {
@@ -67,9 +78,8 @@ const payoutScheduleSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Compound Unique Index for Window Idempotency
-// One schedule per seller per currency per day
-payoutScheduleSchema.index({ sellerId: 1, currency: 1, windowDate: 1 }, { unique: true });
+// Unique Index on orderId to ensure strict 1-to-1
+payoutScheduleSchema.index({ orderId: 1 }, { unique: true });
 
 const PayoutSchedule = mongoose.model("PayoutSchedule", payoutScheduleSchema);
 

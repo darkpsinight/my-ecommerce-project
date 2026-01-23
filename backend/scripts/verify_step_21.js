@@ -59,7 +59,8 @@ async function verifyPipeline() {
 
     // Connect DB
     if (mongoose.connection.readyState === 0) {
-        await mongoose.connect(process.env.MONGO_URI || configs.MONGO_URI);
+        const uri = process.env.MONGO_URI || configs.MONGO_URI || 'mongodb+srv://6ju9YS4WAJHfpEz:xb2HkTPTdEfqEmy@codesale.re1zy.mongodb.net/?retryWrites=true&w=majority&appName=codeSale';
+        await mongoose.connect(uri);
         console.log("DB Connected.");
     }
 
@@ -151,16 +152,18 @@ async function verifyPipeline() {
         if (orderEligible.eligibilityStatus !== 'ELIGIBLE') throw new Error("Order did not transition to ELIGIBLE");
 
 
-        // 3. GAP FILL: FUND RELEASE
-        // PayoutService requires Available funds. EscrowMaturity (Step 19) does not release funds.
-        // We manually release them to simulate the intended business rule achievement.
-        console.log("\n--- 3. FUND RELEASE (Gap Fill) ---");
-        const releaseRes = await ledgerService.releaseFunds(orderEligible, 10000); // 10000 cents
-        if (!releaseRes.success && !releaseRes.skipped) throw new Error("Fund Release Failed");
+        // 3. AUTOMATED FUND RELEASE (Step 19)
+        // Funds should have been released automatically by EscrowMaturityService above.
+        // We verify the balance to confirm automation worked.
+        console.log("\n--- 3. VERIFY AUTOMATED FUND RELEASE ---");
 
         const balancereleased = await ledgerService.getSellerBalance(sellerId);
-        console.log(`Balance after Release: Available=${balancereleased.available}, Locked=${balancereleased.locked}`);
-        if (balancereleased.available !== 10000) throw new Error("Funds not available after release!");
+        console.log(`Balance after Maturity: Available=${balancereleased.available}, Locked=${balancereleased.locked}`);
+
+        if (balancereleased.available !== 10000) {
+            console.error("DEBUG: Available Balance is " + balancereleased.available + ", expected 10000");
+            throw new Error("Funds not available! Automatic release failed.");
+        }
 
 
         // 4. PAYOUT SCHEDULING (Step 20)

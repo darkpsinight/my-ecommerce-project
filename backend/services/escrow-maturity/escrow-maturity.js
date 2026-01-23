@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { Order } = require("../../models/order");
 const { configs } = require("../../configs");
+const ledgerService = require("../payment/ledgerService");
 
 class EscrowMaturityService {
     /**
@@ -59,14 +60,26 @@ class EscrowMaturityService {
                     if (this.checkMaturityCriteria(order)) {
                         stats.eligible++;
 
-                        // Perform transition
-                        order.eligibilityStatus = "ELIGIBLE";
-                        order.eligibleAt = new Date();
+                        // CRITICAL: Release Funds FIRST (Strict Order)
+                        // This absorbs the legacy releaseFundsJob logic.
+                        const releaseAmountCents = Math.round(order.totalAmount * 100);
+                        const ledgerResult = await ledgerService.releaseFunds(order, releaseAmountCents);
 
-                        await order.save();
+                        // Only transition status if ledger operation succeeded or was already done
+                        if (ledgerResult.success || (ledgerResult.skipped && ledgerResult.reason === 'Already released')) {
+                            // Perform transition
+                            order.eligibilityStatus = "ELIGIBLE";
+                            order.eligibleAt = new Date();
+                            order.escrowReleasedAt = new Date(); // Track precise release time
 
-                        console.log(`[EscrowMaturity] Order ${order.externalId} matured. PENDING_MATURITY -> ELIGIBLE`);
-                        stats.processed++;
+                            await order.save();
+
+                            console.log(`[EscrowMaturity] Order ${order.externalId} matured & funds released. PENDING_MATURITY -> ELIGIBLE`);
+                            stats.processed++;
+                        } else {
+                            console.error(`[EscrowMaturity] Failed to release funds for ${order.externalId}. Status update skipped.`);
+                            stats.errors++;
+                        }
                     }
                 } catch (err) {
                     console.error(`[EscrowMaturity] Error processing order ${order._id}:`, err);

@@ -50,7 +50,9 @@ const fastifyCookie = require("fastify-cookie");
 const { setupAccountDeletionCron } = require("./jobs/accountDeletionCron");
 const { setupListingExpirationCron } = require("./jobs/listingExpirationCron");
 const { setupPayoutSchedulerJob } = require("./jobs/payoutSchedulerJob");
+const { setupIntegrityMonitor } = require("./jobs/financial-integrity/integrity-monitor.job");
 const adminRemediationRoutes = require("./routes/adminRemediation");
+const adminFinancialRoutes = require("./routes/adminFinancials");
 const { configCache } = require("./services/configCache");
 const {
   registerWithFastify: registerImageKitWithFastify,
@@ -132,6 +134,9 @@ fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
 fastify.register(adminRemediationRoutes, {
   prefix: '/api/v1/admin/remediation'
 });
+
+// Register admin financial observability routes (Step 18)
+fastify.register(adminFinancialRoutes, { prefix: "/api/v1/admin" });
 
 
 // Register public routes
@@ -253,6 +258,7 @@ const start = async () => {
       setupAccountDeletionCron(fastify);
       setupListingExpirationCron(fastify);
       setupPayoutSchedulerJob(fastify);
+      setupIntegrityMonitor(fastify);
 
       if (configs.ENVIRONMENT.toLowerCase() === keywords.DEVELOPMENT_ENV) {
         fastify.swagger();

@@ -55,7 +55,7 @@ All code **must belong to exactly one layer**.
 - **REQUIRED:** Every feature gets its own folder.
 
 ❌ /jobs/reconcileStripe.js
-✅ /jobs/reconcile-stripe/reconcile-stripe.job.ts
+✅ /jobs/reconcile-stripe/reconcile-stripe.ts
 
 
 ### 3.2 Feature Folder Structure (Canonical)
@@ -67,7 +67,7 @@ feature-name/
 ├─ service.ts # internal logic
 ├─ types.ts # local types only
 ├─ tests/
-│ └─ feature-name.test.ts
+│ └─ feature-name.ts
 └─ README.md # optional but recommended
 
 

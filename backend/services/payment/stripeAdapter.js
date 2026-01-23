@@ -18,10 +18,8 @@ const ledgerService = require("./ledgerService");
 const payoutReconciliationService = require("./payoutReconciliationService");
 const { configs } = require("../../configs");
 
-console.log("🔥 STRIPE ADAPTER FILE LOADED:", __filename);
 class StripeAdapter extends PaymentAdapter {
   constructor(config = {}) {
-    console.log("🔥 STRIPE ADAPTER INSTANCE CREATED FROM:", __filename);
     super(config);
 
     // Initialize Stripe lazily to avoid environment variable issues
@@ -723,7 +721,6 @@ class StripeAdapter extends PaymentAdapter {
   }
 
   async processWebhookEvent(webhookEvent) {
-    console.log("🔥 PROCESSING IN FILE:", __filename);
     try {
       const event = webhookEvent.rawData;
 

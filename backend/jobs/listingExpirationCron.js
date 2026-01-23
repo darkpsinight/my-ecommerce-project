@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const { Listing } = require('../models/listing');
 const { determineListingStatus } = require('../utils/listingHelpers');
+const { configs } = require('../configs');
 
 /**
  * Updates listing statuses based on their codes and expiration dates
@@ -105,7 +106,7 @@ const updateListingStatuses = async (fastify) => {
  */
 const setupListingExpirationCron = (fastify) => {
   // Run every 10 minutes
-  cron.schedule('*/10 * * * *', async () => {
+  cron.schedule(configs.LISTING_EXPIRATION_CRON, async () => {
     fastify.log.info('Running scheduled task: updating listing statuses');
     await updateListingStatuses(fastify);
   });

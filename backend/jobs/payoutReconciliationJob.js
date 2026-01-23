@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const payoutReconciliationService = require('../services/payment/payoutReconciliationService');
+const { configs } = require('../configs');
 
 /**
  * Job: Reconcile Stuck Payouts
@@ -10,7 +11,7 @@ const payoutReconciliationService = require('../services/payment/payoutReconcili
  */
 const startPayoutReconciliationJob = () => {
     // Run every 10 minutes
-    cron.schedule('*/10 * * * *', async () => {
+    cron.schedule(configs.PAYOUT_RECONCILIATION_CRON, async () => {
         console.log('[PayoutReconcilerJob] Starting execution...');
         try {
             const results = await payoutReconciliationService.reconcileStuckPayouts();

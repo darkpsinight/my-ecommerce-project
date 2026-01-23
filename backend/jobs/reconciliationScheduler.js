@@ -48,7 +48,7 @@ class ReconciliationScheduler {
 
   scheduleHourlyReconciliation() {
     // Run every hour at minute 15 (e.g., 1:15, 2:15, etc.)
-    const job = cron.schedule("15 * * * *", async () => {
+    const job = cron.schedule(configs.STRIPE_RECONCILE_CRON_HOURLY, async () => {
       await this.runHourlyReconciliation();
     }, {
       scheduled: false,
@@ -62,7 +62,7 @@ class ReconciliationScheduler {
 
   scheduleDailyReconciliation() {
     // Run daily at 2:30 AM UTC
-    const job = cron.schedule("30 2 * * *", async () => {
+    const job = cron.schedule(configs.STRIPE_RECONCILE_CRON_DAILY, async () => {
       await this.runDailyReconciliation();
     }, {
       scheduled: false,
@@ -90,7 +90,7 @@ class ReconciliationScheduler {
 
   scheduleWebhookReconciliation() {
     // Run webhook reconciliation every 30 minutes
-    const job = cron.schedule("*/30 * * * *", async () => {
+    const job = cron.schedule(configs.STRIPE_RECONCILE_CRON_WEBHOOK, async () => {
       await this.runWebhookReconciliation();
     }, {
       scheduled: false,

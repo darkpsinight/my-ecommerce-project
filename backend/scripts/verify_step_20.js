@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { Order } = require("../models/order");
 const { PayoutSchedule } = require("../models/PayoutSchedule");
 const { User } = require("../models/user");
-const payoutSchedulingService = require("../services/payout-scheduling/payoutScheduling.service");
+const payoutSchedulingService = require("../services/payout-scheduling/payoutScheduling");
 const { v4: uuidv4 } = require("uuid");
 
 const MONGO_URI = process.env.MONGO_URI;

@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const payoutSchedulingService = require('../../services/payout-scheduling/payoutScheduling.service');
+const payoutSchedulingService = require('../../services/payout-scheduling/payoutScheduling');
 const { configs } = require('../../configs');
 
 /**

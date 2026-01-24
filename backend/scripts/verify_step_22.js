@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: './backend/.env' });
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 const { Order } = require('../models/order');

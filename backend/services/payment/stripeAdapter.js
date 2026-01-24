@@ -485,6 +485,36 @@ class StripeAdapter extends PaymentAdapter {
     }
   }
 
+  /**
+   * DEV/TEST ONLY: Confirm a PaymentIntent server-side with a test card.
+   * Primitive wrapper only. No business logic.
+   * @param {string} paymentIntentId 
+   * @returns {Promise<Object>} Confirmed PaymentIntent
+   */
+  async confirmPaymentIntentServerSide(paymentIntentId) {
+    try {
+      const stripe = this.getStripe();
+
+      // Primitive: Confirm with test card "pm_card_visa"
+      // This is a synchronous confirmation attempt.
+      const paymentIntent = await PaymentErrorHandler.withRetry(async () => {
+        return await stripe.paymentIntents.confirm(paymentIntentId, {
+          payment_method: 'pm_card_visa',
+          return_url: 'https://example.com/return'
+        });
+      });
+
+      return paymentIntent;
+
+    } catch (error) {
+      PaymentErrorHandler.logError(error, {
+        method: "confirmPaymentIntentServerSide",
+        paymentIntentId
+      });
+      throw PaymentErrorHandler.handleStripeError(error);
+    }
+  }
+
   // Transfer Methods
   async createTransferToSeller(escrowId, amountCents, sellerId, stripeAccountId, metadata = {}) {
     try {

@@ -67,13 +67,31 @@
       }
     },
     {
+      "label": "Stripe Webhooks",
+      "type": "shell",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "stripe_launcher.bat"
+      ],
+      "options": {
+        "cwd": "D:/My docs/Web/Project associate files/Stripe_CLI"
+      },
+      "presentation": {
+        "group": "split-group",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
       "label": "▶️ Run Project",
       "dependsOn": [
         "Backend",
         "Buyer",
         "Seller Dashboard",
         "Support Dashboard",
-        "Admin Dashboard"
+        "Admin Dashboard",
+        "Stripe Webhooks"
       ],
       "group": {
         "kind": "build",

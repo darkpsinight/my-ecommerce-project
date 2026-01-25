@@ -6,7 +6,8 @@ const {
   createTopUpRequest,
   createCheckoutSession,
   confirmPayment,
-  getTransactions
+  getTransactions,
+  fundWallet
 } = require("../handlers/walletHandlers");
 const WalletFeatureFlagMiddleware = require("../middleware/walletFeatureFlagMiddleware");
 const { configs } = require("../configs");
@@ -28,6 +29,29 @@ const rateLimits = {
 };
 
 const walletRoutes = async (fastify, opts) => {
+  // Fund Wallet (Step 23.3 - Controlled Exposure for DEV)
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.sensitive
+    },
+    method: "POST",
+    url: "/fund",
+    preHandler: verifyAuth(["buyer"]), // Strictly buyer only
+    schema: {
+      description: "Fund wallet (DEV ONLY - Step 23.3)",
+      tags: ["Wallet"],
+      body: {
+        type: "object",
+        properties: {
+          amount: { type: "integer", minimum: 1 },
+          currency: { type: "string", default: "USD" }
+        },
+        required: ["amount"]
+      }
+    },
+    handler: fundWallet
+  });
+
   // Get wallet information
   fastify.route({
     config: {

@@ -87,6 +87,42 @@ const getWallet = async (request, reply) => {
   }
 };
 
+// @route   POST /api/v1/wallet/fund
+// @desc    Fund wallet using Stripe (DEV ONLY)
+// @access  Private (buyer role required)
+const fundWallet = async (request, reply) => {
+  request.log.info("handlers/fundWallet");
+
+  try {
+    const { amount, currency = "USD" } = request.body;
+    const buyerUid = request.user.uid;
+
+    if (!amount || !Number.isInteger(amount) || amount <= 0) {
+      return sendErrorResponse(reply, 400, "Amount must be a positive integer (cents)");
+    }
+
+    // Delegate to WalletFundingService
+    const WalletFundingService = require("../services/payment/walletFunding");
+    const result = await WalletFundingService.fundWallet(buyerUid, amount, currency);
+
+    return sendSuccessResponse(reply, {
+      statusCode: 200,
+      message: "Wallet funded successfully",
+      data: result
+    });
+
+  } catch (error) {
+    request.log.error(`Error funding wallet: ${error.message}`);
+
+    // Handle specific errors potentially thrown by service
+    // For now generic 500 is safe as this is DEV-only
+    return sendErrorResponse(reply, 500, "Failed to fund wallet", {
+      metadata: { error: error.message }
+    });
+  }
+};
+
+
 // @route   POST /api/v1/wallet/topup_request
 // @desc    Create wallet top-up request using new payment adapter with feature flag routing
 // @access  Private (buyer role required)
@@ -142,7 +178,7 @@ const createTopUpRequest = async (request, reply) => {
     if (topUpMethod.method === "stripe_connect") {
       // Use new payment processor
       const paymentProcessor = new PaymentProcessor();
-      
+
       const topUpRequest = {
         amountCents: Math.round(amount * 100),
         currency: currency.toUpperCase(),
@@ -154,7 +190,7 @@ const createTopUpRequest = async (request, reply) => {
       };
 
       const processorResult = await paymentProcessor.createWalletTopUpIntent(topUpRequest);
-      
+
       result = {
         clientSecret: processorResult.clientSecret,
         paymentIntentId: processorResult.paymentIntentId,
@@ -592,5 +628,6 @@ module.exports = {
   createTopUpRequest,
   createCheckoutSession,
   confirmPayment,
-  getTransactions
+  getTransactions,
+  fundWallet
 };

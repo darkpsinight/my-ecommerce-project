@@ -48,20 +48,20 @@ const WalletButton: React.FC = () => {
     if (loading) {
       return (
         <div className="flex items-center gap-1">
-          <div className="animate-spin rounded-full h-3 w-3 border border-blue border-t-transparent"/>
+          <div className="animate-spin rounded-full h-3 w-3 border border-blue border-t-transparent" />
           <span>Loading...</span>
         </div>
       );
     }
-    
+
     if (error) {
       return "Balance Error";
     }
-    
+
     if (wallet) {
-      return formatCurrency(wallet.balance, '$');
+      return formatCurrency(wallet.balance / 100, '$');
     }
-    
+
     return "$0.00";
   };
 

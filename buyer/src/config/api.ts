@@ -19,9 +19,10 @@ export const AUTH_API = {
 
 export const WALLET_API = {
     GET_WALLET: `${API_URL}/wallet`,
-    CREATE_PAYMENT_INTENT: `${API_URL}/wallet/payment-intent`,
-    CREATE_CHECKOUT_SESSION: `${API_URL}/wallet/checkout-session`,
-    CONFIRM_PAYMENT: `${API_URL}/wallet/confirm-payment`,
+    FUND: `${API_URL}/wallet/fund`,
+    CREATE_PAYMENT_INTENT: `${API_URL}/wallet/payment-intent`, // Keeping for backward compatibility if needed
+    CREATE_CHECKOUT_SESSION: `${API_URL}/wallet/checkout-session`, // Keeping for backward compatibility if needed
+    CONFIRM_PAYMENT: `${API_URL}/wallet/confirm-payment`, // Keeping for backward compatibility if needed
     GET_TRANSACTIONS: `${API_URL}/wallet/transactions`,
 };
 

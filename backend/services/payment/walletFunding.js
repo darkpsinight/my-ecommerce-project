@@ -33,18 +33,40 @@ class WalletFundingService {
 
         console.log("💳 WalletFundingService: Created PaymentIntent", { paymentIntentId });
 
-        // 2. Confirm PaymentIntent Server-Side (Primitive)
-        // This simulates the client-side confirmation in a real flow, but done here for Step 23.2 backend-only scope.
-        const confirmedIntent = await stripeAdapter.confirmPaymentIntentServerSide(paymentIntentId);
+        // 2. Return Client Secret for Frontend Confirmation
+        return {
+            success: true,
+            clientSecret: intentResult.clientSecret,
+            paymentIntentId: paymentIntentId,
+            requiresConfirmation: true
+        };
+    }
 
-        if (confirmedIntent.status !== 'succeeded') {
-            throw new Error(`PaymentIntent verification failed. Status: ${confirmedIntent.status}`);
+    /**
+     * Step 23.5: Process Confirmed Funding
+     * Called after client-side confirmation or webhook.
+     * 
+     * @param {string} paymentIntentId 
+     * @returns {Promise<Object>}
+     */
+    async processConfirmedFunding(paymentIntentId) {
+        if (!paymentIntentId) throw new Error("PaymentIntent ID is required");
+
+        console.log(`🔄 WalletFundingService: Verifying funding for ${paymentIntentId}`);
+
+        // 1. Retrieve and Verify from Stripe
+        // We reuse the adapter to get the instance, but fetch directly to ensure we have the full object with metadata
+        const stripe = stripeAdapter.getStripe();
+        const fullPaymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+        if (fullPaymentIntent.status !== 'succeeded') {
+            throw new Error(`PaymentIntent verification failed. Status: ${fullPaymentIntent.status}`);
         }
 
-        console.log("✅ WalletFundingService: PaymentIntent Confirmed", { status: confirmedIntent.status });
+        console.log("✅ WalletFundingService: PaymentIntent Verified Succeeded");
 
-        // 3. Delegate to Idempotent Processor
-        return await this.processFundingSuccess(confirmedIntent);
+        // 2. Delegate to Idempotent Processor
+        return await this.processFundingSuccess(fullPaymentIntent);
     }
 
     /**
@@ -85,22 +107,22 @@ class WalletFundingService {
         // B. Create Ledger Entry
         console.log(`📝 WalletFundingService: Creating Ledger Entry for ${buyerId}`);
 
+        // Handle string vs number for amount/originalAmount
+        const originalAmount = paymentIntent.metadata.originalAmount;
+        const amountToCredit = originalAmount ? parseInt(originalAmount, 10) : paymentIntent.amount;
+
         await LedgerEntry.create({
             user_uid: buyerId,
             role: "buyer",
             type: "wallet_credit_placeholder",
-            // Use originalAmount from metadata if available (to exclude grossed-up fees)
-            // Fallback to paymentIntent.amount if not found (unexpected but safe default)
-            amount: paymentIntent.metadata.originalAmount
-                ? parseInt(paymentIntent.metadata.originalAmount, 10)
-                : paymentIntent.amount,
+            amount: amountToCredit,
             currency: paymentIntent.currency.toUpperCase(),
             status: "available",
             related_payment_intent_id: paymentIntentId,
             description: "Wallet funding via Stripe",
             metadata: {
                 source: "wallet_funding_service",
-                step: "23.2"
+                step: "23.5"
             }
         });
 

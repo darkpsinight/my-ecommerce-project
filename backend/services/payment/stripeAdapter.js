@@ -485,35 +485,8 @@ class StripeAdapter extends PaymentAdapter {
     }
   }
 
-  /**
-   * DEV/TEST ONLY: Confirm a PaymentIntent server-side with a test card.
-   * Primitive wrapper only. No business logic.
-   * @param {string} paymentIntentId 
-   * @returns {Promise<Object>} Confirmed PaymentIntent
-   */
-  async confirmPaymentIntentServerSide(paymentIntentId) {
-    try {
-      const stripe = this.getStripe();
-
-      // Primitive: Confirm with test card "pm_card_visa"
-      // This is a synchronous confirmation attempt.
-      const paymentIntent = await PaymentErrorHandler.withRetry(async () => {
-        return await stripe.paymentIntents.confirm(paymentIntentId, {
-          payment_method: 'pm_card_visa',
-          return_url: 'https://example.com/return'
-        });
-      });
-
-      return paymentIntent;
-
-    } catch (error) {
-      PaymentErrorHandler.logError(error, {
-        method: "confirmPaymentIntentServerSide",
-        paymentIntentId
-      });
-      throw PaymentErrorHandler.handleStripeError(error);
-    }
-  }
+  // Method confirmPaymentIntentServerSide removed for safety.
+  // Real client-side confirmation is required.
 
   // Transfer Methods
   async createTransferToSeller(escrowId, amountCents, sellerId, stripeAccountId, metadata = {}) {
@@ -878,7 +851,15 @@ class StripeAdapter extends PaymentAdapter {
 
             console.log("📒 Ledger entries created");
           } else {
-            console.warn("⚠️ No orders found for PaymentIntent, skipping ledger creation (expected for topups/pure-platform)", { paymentIntentId: paymentIntent.id });
+            // CHECK FOR WALLET TOPUP
+            const isWalletTopup = paymentIntent.metadata.type === 'wallet_topup';
+            if (isWalletTopup) {
+              console.log("💰 WALLET TOPUP DETECTED via Operation");
+              const WalletFundingService = require("./walletFunding");
+              await WalletFundingService.processFundingSuccess(paymentIntent);
+            } else {
+              console.warn("⚠️ No orders found for PaymentIntent, skipping ledger creation (expected for pure-platform)", { paymentIntentId: paymentIntent.id });
+            }
           }
         } else {
           console.log("ℹ️ Ledger entries already exist for this payment intent", { paymentIntentId: paymentIntent.id });

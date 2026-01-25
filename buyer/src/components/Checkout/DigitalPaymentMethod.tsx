@@ -10,7 +10,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import StripeCheckoutForm from "./StripeCheckoutForm";
 
 // Initialize Stripe outside component to avoid recreation
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 interface CartItem {
   id: string;
@@ -49,6 +49,7 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [walletBalance, setWalletBalance] = useState(0);
+  const [loadingBalance, setLoadingBalance] = useState(true);
 
   // Stripe state
   const [stripeClientSecrets, setStripeClientSecrets] = useState<string[]>([]);
@@ -59,35 +60,36 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
   useEffect(() => {
     const fetchWalletBalance = async () => {
       try {
+        setLoadingBalance(true);
         const response = await walletApi.getWallet();
         if (response.success) {
-          setWalletBalance(response.data.wallet.balance);
+          // API returns cents. Convert to dollars for usage in UI.
+          setWalletBalance(response.data.wallet.balance / 100);
         }
       } catch (error) {
         console.error("Failed to fetch wallet balance", error);
+        toast.error("Could not verify wallet balance");
+      } finally {
+        setLoadingBalance(false);
       }
     };
 
     fetchWalletBalance();
   }, []);
 
+  const hasInsufficientFunds = walletBalance < totalPrice;
+
   const handleWalletPayment = async () => {
     if (isProcessing) return;
 
-    // Check if wallet has sufficient balance
-    if (walletBalance < totalPrice) {
-      toast.error(
-        `Insufficient wallet balance. You need $${(
-          totalPrice - walletBalance
-        ).toFixed(2)} more.`
-      );
+    if (hasInsufficientFunds) {
+      toast.error(`Insufficient wallet balance. Please add funds.`);
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      // ... (Existing wallet logic)
       const orderCartItems = cartItems.map((item) => ({
         listingId: item.listingId || item.id,
         quantity: item.quantity,
@@ -145,7 +147,11 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
             <h3 className="font-medium text-xl text-dark">Payment Method</h3>
           </div>
           <div className="p-4 sm:p-6 lg:p-8.5 space-y-4">
-            <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'wallet' ? 'border-blue bg-blue/5' : 'border-gray-200 hover:border-blue/50'}`}>
+
+            {/* Wallet Option */}
+            <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'wallet' ? 'border-blue bg-blue/5' : 'border-gray-200 hover:border-blue/50'
+              } ${hasInsufficientFunds ? 'opacity-75 bg-gray-50' : ''}`}
+            >
               <input
                 type="radio"
                 name="paymentMethod"
@@ -154,11 +160,23 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
                 onChange={() => setPaymentMethod('wallet')}
                 className="w-5 h-5 text-blue focus:ring-blue"
               />
-              <span className="ml-3 font-medium text-dark">Wallet Balance</span>
-              <span className="ml-auto font-bold text-dark">${walletBalance.toFixed(2)}</span>
+              <div className="ml-3 flex-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-dark">Wallet Balance</span>
+                  <span className={`font-bold ${hasInsufficientFunds ? 'text-red' : 'text-dark'}`}>
+                    ${walletBalance.toFixed(2)}
+                  </span>
+                </div>
+                {hasInsufficientFunds && (
+                  <p className="text-red text-xs mt-1">Insufficient balance for this order</p>
+                )}
+              </div>
             </label>
 
-            <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'stripe' ? 'border-blue bg-blue/5' : 'border-gray-200 hover:border-blue/50'}`}>
+            {/* Stripe Option */}
+            <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'stripe' ? 'border-blue bg-blue/5' : 'border-gray-200 hover:border-blue/50'
+              }`}
+            >
               <input
                 type="radio"
                 name="paymentMethod"
@@ -166,13 +184,12 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
                 checked={paymentMethod === 'stripe'}
                 onChange={() => {
                   setPaymentMethod('stripe');
-                  setIsStripeReady(false); // Reset if switching back
+                  setIsStripeReady(false);
                 }}
                 className="w-5 h-5 text-blue focus:ring-blue"
               />
               <span className="ml-3 font-medium text-dark">Credit/Debit Card</span>
               <div className="ml-auto flex gap-2">
-                {/* Icons for Visa/Mastercard could go here */}
                 <span className="text-gray-400 text-sm">Via Stripe</span>
               </div>
             </label>
@@ -182,23 +199,24 @@ const DigitalPaymentMethod: React.FC<DigitalPaymentMethodProps> = ({
         {/* Dynamic Content based on Selection */}
         {paymentMethod === 'wallet' ? (
           <div className="bg-white shadow-1 rounded-[10px] p-6">
-            {/* Wallet Logic Visuals (simplified from original for brevity, keeping core logic) */}
             <div className="flex justify-between items-center mb-4">
               <span className="text-gray-600">Total to pay:</span>
               <span className="text-xl font-bold">${totalPrice.toFixed(2)}</span>
             </div>
 
-            {walletBalance < totalPrice ? (
-              <div className="p-3 bg-red/10 text-red border border-red/20 rounded-lg text-sm mb-4">
-                Insufficient funds. Please top up or use a card.
+            {hasInsufficientFunds ? (
+              <div className="p-4 bg-red/10 text-red border border-red/20 rounded-lg text-sm mb-4">
+                <p className="font-bold mb-1">Insufficient Wallet Balance</p>
+                <p>You have ${walletBalance.toFixed(2)} but need <strong>${totalPrice.toFixed(2)}</strong>.</p>
+                <p className="mt-2 text-dark">Please go to your <a href="/wallet" className="underline font-semibold text-blue hover:text-blue-dark">Wallet</a> to add funds.</p>
               </div>
             ) : (
               <button
                 onClick={handleWalletPayment}
                 disabled={isProcessing}
-                className="w-full bg-blue text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-dark transition-colors"
+                className="w-full bg-blue text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-dark transition-colors disabled:opacity-70"
               >
-                {isProcessing ? "Processing..." : `Pay $${totalPrice.toFixed(2)}`}
+                {isProcessing ? "Processing..." : `Pay $${totalPrice.toFixed(2)} with Wallet`}
               </button>
             )}
           </div>

@@ -56,7 +56,7 @@ export interface WalletData {
 
 export interface TransactionData {
   externalId: string;
-  type: 'funding' | 'purchase' | 'refund' | 'withdrawal';
+  type: 'wallet_credit_placeholder' | 'wallet_debit_purchase' | 'wallet_credit_deposit' | 'funding' | 'purchase' | 'refund' | 'withdrawal';
   amount: number;
   currency: string;
   status: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
@@ -76,6 +76,23 @@ export interface WalletResponse {
   };
 }
 
+export interface FundWalletData {
+  amount: number;
+  currency: string;
+}
+
+export interface FundWalletResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    balance?: number;
+    paymentIntentId: string;
+    clientSecret?: string;
+    requiresConfirmation?: boolean;
+  };
+}
+
+// ... keeping other legacy interfaces for safety ...
 export interface PaymentIntentResponse {
   success: boolean;
   message: string;
@@ -138,8 +155,8 @@ export interface ConfirmPaymentData {
 export interface GetTransactionsParams {
   page?: number;
   limit?: number;
-  type?: 'funding' | 'purchase' | 'refund' | 'withdrawal';
-  status?: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+  type?: string;
+  status?: string;
 }
 
 // API functions
@@ -153,6 +170,23 @@ export const walletApi = {
       throw error.response?.data || {
         success: false,
         message: 'Failed to fetch wallet information',
+        statusCode: 500
+      };
+    }
+  },
+
+  // Fund wallet directly
+  fundWallet: async (data: FundWalletData): Promise<FundWalletResponse> => {
+    try {
+      const response = await axiosInstance.post<FundWalletResponse>(
+        WALLET_API.FUND,
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || {
+        success: false,
+        message: 'Failed to find wallet',
         statusCode: 500
       };
     }

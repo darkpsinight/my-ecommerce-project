@@ -17,7 +17,9 @@ class WalletLedgerService {
         // Allowed types for Buyer Wallet (Step 23.1 Placeholders)
         const ALLOWED_TYPES = [
             "wallet_credit_placeholder", // (+)
-            "wallet_debit_placeholder"   // (-)
+            "wallet_debit_placeholder",   // (-)
+            "wallet_credit_deposit",      // (+) Funding
+            "wallet_debit_purchase"       // (-) Spending
         ];
 
         // Signed aggregation

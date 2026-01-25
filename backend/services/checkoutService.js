@@ -5,6 +5,7 @@ const { User } = require("../models/user");
 const { StripeAccount } = require("../models/stripeAccount");
 const { Listing } = require("../models/listing");
 const StripeAdapter = require("./payment/stripeAdapter");
+const WalletSpendingService = require("./payment/walletSpendingService");
 
 class CheckoutService {
     constructor() {
@@ -13,9 +14,14 @@ class CheckoutService {
 
     /**
      * Process a checkout request for a user's cart
-     * Split items by seller, create Stripe PaymentIntents, and create Orders
+     * Split items by seller, create Stripe PaymentIntents OR process Wallet transactions, and create Orders
+     * 
+     * @param {String} userId
+     * @param {Object} options - { paymentMethod: 'stripe' | 'wallet' }
      */
-    async createCheckoutSession(userId) {
+    async createCheckoutSession(userId, options = {}) {
+        const paymentMethod = options.paymentMethod || 'stripe'; // Default to Stripe for backward compatibility
+
         // 1. Get and Validate Cart
         const cart = await Cart.findByUserId(userId).populate({
             path: 'items.listingObjectId',
@@ -54,10 +60,9 @@ class CheckoutService {
         });
 
         const checkoutGroupId = uuidv4();
-        const clientSecrets = [];
         const orders = [];
 
-        // 3. Calculate Total and Create Single PaymentIntent
+        // 3. Calculate Total
         let totalCartAmount = 0;
         let currency = 'USD'; // Default or derived from items
 
@@ -67,67 +72,148 @@ class CheckoutService {
 
         const amountCents = Math.round(totalCartAmount * 100);
 
-        // Single Platform Charge
-        const payment = await this.stripeAdapter.createPaymentIntentOnPlatform(
-            amountCents,
-            currency,
-            {
-                checkoutGroupId,
-                orderType: "marketplace_checkout",
-                buyerId: userId,
-                // We don't link specific sellerId here because it's a multi-seller cart
-                // We rely on the checkoutGroupId or subsequent Orders to track sellers
+        // --- PAYMENT BRANCHING ---
+
+        if (paymentMethod === 'wallet') {
+            // Wallet Specific Flow
+
+            // 4a. Create Orders FIRST (Pending State or Processing State? Plan says Processing)
+            // But if wallet fails, we must rollback. 
+            // Better to create objects in memory or use transaction? 
+            // CheckoutService isn't transactional currently.
+            // We will create orders as 'pending' (like Stripe), then execute wallet, then update.
+
+            for (const [sellerId, group] of Object.entries(sellerGroups)) {
+                // Seller Validations check (Stripe Account existence)
+                // Even for wallet, we need a connected account to eventually PAY them.
+                const stripeAccount = await StripeAccount.getBySellerId(sellerId);
+                if (!stripeAccount) {
+                    throw new Error(`Seller ${sellerId} account not found`);
+                }
+
+                const orderItems = group.items.map(item => ({
+                    listingId: item.listingObjectId._id,
+                    title: item.title,
+                    platform: item.listingObjectId.platform || "Unknown",
+                    region: item.listingObjectId.region || "Global",
+                    quantity: item.quantity,
+                    expirationGroups: item.expirationGroups,
+                    unitPrice: item.discountedPrice || item.price,
+                    totalPrice: (item.discountedPrice || item.price) * item.quantity,
+                    purchasedCodes: []
+                }));
+
+                const orderData = {
+                    buyerId: userId,
+                    sellerId,
+                    orderItems,
+                    totalAmount: group.totalAmount,
+                    currency: group.currency,
+                    paymentMethod: "wallet", // Distinct method
+                    paymentIntentId: `pending_wallet_${checkoutGroupId}`, // Temp ID, will solve via WalletService
+                    checkoutGroupId,
+                    status: "pending"
+                };
+
+                const order = await Order.createOrder(orderData);
+                orders.push(order);
             }
-        );
 
-        // 4. Create Orders for each seller group
-        for (const [sellerId, group] of Object.entries(sellerGroups)) {
-            // Validate Seller Account exists in our DB (optional but good for consistency)
-            // We don't strictly need them to be Stripe verified to TAKE money on the platform (Step 2),
-            // but we need them verified to eventually PAY them (Step 3). 
-            // Keeping the check to ensure we don't sell for invalid sellers.
-            const stripeAccount = await StripeAccount.getBySellerId(sellerId);
-            if (!stripeAccount) {
-                // Soft error or skip? Requirements say "minimal changes". 
-                // If we fail here, the whole checkout fails, which is safer.
-                throw new Error(`Seller ${sellerId} account not found`);
+            // 5a. Process Wallet Transaction (Atomic)
+            try {
+                const walletResult = await WalletSpendingService.processWalletPurchase(userId, orders);
+
+                // 6a. Success - Transition Orders to Processing + Update PI ID
+                for (const order of orders) {
+                    order.paymentIntentId = walletResult.paymentId;
+                    order.status = "processing";
+                    order.processedAt = new Date();
+                    // Escrow status usually set in handlePaymentSuccess, but let's be explicit
+                    // Actually handlePaymentSuccess does: escrowStatus = 'held'
+                    await order.save();
+                }
+
+                // 7a. Trigger Delivery (Simulate Webhook)
+                // We restart standard flow: handlePaymentSuccess
+                // This function expects a paymentIntentId and finds orders by it.
+                // We updated orders with the new walletResult.paymentId.
+                await this.handlePaymentSuccess(walletResult.paymentId);
+
+                return {
+                    success: true,
+                    checkoutGroupId,
+                    clientSecrets: [], // No client secret for wallet
+                    orders: orders.map(o => o.externalId),
+                    method: 'wallet'
+                };
+
+            } catch (error) {
+                // Rollback orders if wallet fails?
+                // Or leave them as failed/pending?
+                // Ideally we delete them to avoid clutter or mark failed.
+                console.error("Wallet Payment Failed:", error);
+                await Order.deleteMany({ checkoutGroupId }); // Clean up pending orders
+                throw error;
             }
 
-            const orderItems = group.items.map(item => ({
-                listingId: item.listingObjectId._id,
-                title: item.title,
-                platform: item.listingObjectId.platform || "Unknown",
-                region: item.listingObjectId.region || "Global",
-                quantity: item.quantity,
-                expirationGroups: item.expirationGroups,
-                unitPrice: item.discountedPrice || item.price,
-                totalPrice: (item.discountedPrice || item.price) * item.quantity,
-                purchasedCodes: []
-            }));
+        } else {
+            // --- STRIPE FLOW (Existing) ---
 
-            const orderData = {
-                buyerId: userId,
-                sellerId,
-                orderItems,
-                totalAmount: group.totalAmount,
-                currency: group.currency,
-                paymentMethod: "stripe",
-                paymentIntentId: payment.paymentIntentId, // Same PI for all orders
+            // 4b. Create Stripe PaymentIntent
+            const payment = await this.stripeAdapter.createPaymentIntentOnPlatform(
+                amountCents,
+                currency,
+                {
+                    checkoutGroupId,
+                    orderType: "marketplace_checkout",
+                    buyerId: userId,
+                }
+            );
+
+            // 5b. Create Orders
+            for (const [sellerId, group] of Object.entries(sellerGroups)) {
+                // Seller Validation
+                const stripeAccount = await StripeAccount.getBySellerId(sellerId);
+                if (!stripeAccount) {
+                    throw new Error(`Seller ${sellerId} account not found`);
+                }
+
+                const orderItems = group.items.map(item => ({
+                    listingId: item.listingObjectId._id,
+                    title: item.title,
+                    platform: item.listingObjectId.platform || "Unknown",
+                    region: item.listingObjectId.region || "Global",
+                    quantity: item.quantity,
+                    expirationGroups: item.expirationGroups,
+                    unitPrice: item.discountedPrice || item.price,
+                    totalPrice: (item.discountedPrice || item.price) * item.quantity,
+                    purchasedCodes: []
+                }));
+
+                const orderData = {
+                    buyerId: userId,
+                    sellerId,
+                    orderItems,
+                    totalAmount: group.totalAmount,
+                    currency: group.currency,
+                    paymentMethod: "stripe",
+                    paymentIntentId: payment.paymentIntentId, // Same PI for all orders
+                    checkoutGroupId,
+                    status: "pending"
+                };
+
+                const order = await Order.createOrder(orderData);
+                orders.push(order);
+            }
+
+            // 6b. Return Result
+            return {
+                success: true,
                 checkoutGroupId,
-                status: "pending"
+                clientSecrets: [payment.clientSecret], // Single secret
+                orders: orders.map(o => o.externalId)
             };
-
-            const order = await Order.createOrder(orderData);
-            orders.push(order);
         }
-
-        // 5. Return result
-        return {
-            success: true,
-            checkoutGroupId,
-            clientSecrets: [payment.clientSecret], // Single secret
-            orders: orders.map(o => o.externalId)
-        };
     }
 
     /**

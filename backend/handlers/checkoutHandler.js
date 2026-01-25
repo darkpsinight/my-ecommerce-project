@@ -3,7 +3,10 @@ const CheckoutService = require("../services/checkoutService");
 const createCheckoutSession = async (request, reply) => {
     try {
         const userId = request.user.uid;
-        const result = await CheckoutService.createCheckoutSession(userId);
+        // Step 23.4: Accept paymentMethod
+        const { paymentMethod } = request.body || {};
+
+        const result = await CheckoutService.createCheckoutSession(userId, { paymentMethod });
 
         return reply.code(200).send({
             success: true,

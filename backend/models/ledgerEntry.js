@@ -44,7 +44,9 @@ const ledgerEntrySchema = new mongoose.Schema({
       "admin_correction_debit",   // Manual debit from available (-X)
       // Step 23.1: Buyer Wallet Ledger (Structural Placeholders - DEV ONLY)
       "wallet_credit_placeholder", // Abstract credit to Buyer Available (+)
-      "wallet_debit_placeholder"   // Abstract debit from Buyer Available (-)
+      "wallet_debit_placeholder",   // Abstract debit from Buyer Available (-)
+      "wallet_credit_deposit",     // Funding via Stripe
+      "wallet_debit_purchase"      // Spending via Checkout
     ],
     required: true,
     index: true

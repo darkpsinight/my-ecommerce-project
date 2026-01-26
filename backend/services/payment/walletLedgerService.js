@@ -173,6 +173,87 @@ class WalletLedgerService {
             metadata: tx.metadata
         }));
     }
+    /**
+     * Executes a wallet purchase by creating a debit ledger entry.
+     * Enforces non-negative balance invariant.
+     * 
+     * @param {String} buyerUid 
+     * @param {Number} amountCents (Positive Integer)
+     * @param {String} currency 
+     * @param {String} description 
+     * @param {Object} metadata 
+     * @returns {Promise<Object>} The created ledger entry
+     */
+    async chargeBuyer(buyerUid, amountCents, currency, description, metadata = {}) {
+        if (!buyerUid) throw new Error("Buyer UID is required");
+        if (!amountCents || amountCents <= 0) throw new Error("Positive amount is required");
+
+        const currencyUpper = currency.toUpperCase();
+
+        // 1. Check Balance (Optimistic, not locking)
+        const currentBalance = await this.getBuyerBalance(buyerUid, currencyUpper);
+        if (currentBalance < amountCents) {
+            throw new Error(`Insufficient funds. Available: ${currentBalance}, Required: ${amountCents}`);
+        }
+
+        // 2. Create Debit Entry
+        const entry = await LedgerEntry.create({
+            user_uid: buyerUid,
+            role: "buyer",
+            type: "wallet_debit_purchase",
+            amount: -Math.abs(amountCents), // Debit is negative
+            currency: currencyUpper,
+            status: "available",
+            description: description || "Purchase",
+            metadata: {
+                ...metadata,
+                timestamp: new Date()
+            }
+        });
+
+        // 3. Verify Invariant (Post-Auth Check)
+        // If race condition caused negative balance, this could catch it (eventually consistent)
+        // In a strict financial system, we might want atomic transactions or optimistic concurrency control on a balance document.
+        // For now, this mimics the "assertWalletInvariants" strategy.
+        await this.assertWalletInvariants(buyerUid, currencyUpper);
+
+        return entry;
+    }
+
+    /**
+     * Locks funds for the seller in escrow.
+     * Used for Wallet Checkout.
+     * 
+     * @param {String} sellerUid 
+     * @param {Number} amountCents 
+     * @param {String} currency 
+     * @param {Object} order - The Order document
+     * @returns {Promise<Object>} The created ledger entry
+     */
+    async lockFundsForSeller(sellerUid, amountCents, currency, order) {
+        if (!sellerUid) throw new Error("Seller UID is required");
+
+        const currencyUpper = currency.toUpperCase();
+
+        // Create Escrow Lock Entry
+        // Mirrors LedgerService.recordPaymentSuccess behavior for Seller
+        const entry = await LedgerEntry.create({
+            user_uid: sellerUid,
+            role: "seller",
+            type: "escrow_lock",
+            amount: Math.abs(amountCents), // Positive quantity locked
+            currency: currencyUpper,
+            status: "locked",
+            description: `Escrow lock for Order ${order.externalId} (Wallet Payment)`,
+            related_order_id: order._id,
+            metadata: {
+                order_external_id: order.externalId,
+                source: "wallet_checkout"
+            },
+        });
+
+        return entry;
+    }
 }
 
 module.exports = new WalletLedgerService();

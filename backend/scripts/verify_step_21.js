@@ -59,7 +59,7 @@ async function verifyPipeline() {
 
     // Connect DB
     if (mongoose.connection.readyState === 0) {
-        const uri = process.env.MONGO_URI || configs.MONGO_URI || 'mongodb+srv://6ju9YS4WAJHfpEz:xb2HkTPTdEfqEmy@codesale.re1zy.mongodb.net/?retryWrites=true&w=majority&appName=codeSale';
+        const uri = process.env.MONGO_URI || configs.MONGO_URI;
         await mongoose.connect(uri);
         console.log("DB Connected.");
     }

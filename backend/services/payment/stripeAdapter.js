@@ -266,7 +266,7 @@ class StripeAdapter extends PaymentAdapter {
           metadata: {
             ...metadata,
             createdBy: "stripe-connect-migration",
-            type: "platform_charge",
+            type: metadata.type ?? "platform_charge",
             originalAmount: originalAmountCents.toString(),
             stripeFeeEst: stripeFeeCents.toString(),
             buyerPaysFees: buyerPaysFees.toString()
@@ -814,6 +814,19 @@ class StripeAdapter extends PaymentAdapter {
       operationFound: !!operation,
       metadata: paymentIntent.metadata
     });
+
+    // ─────────────────────────────────────────────
+    // Case 0: Wallet Topup (Fast Path)
+    // ─────────────────────────────────────────────
+    if (paymentIntent.metadata?.type === "wallet_topup") {
+      console.log("💰 WALLET TOPUP DETECTED (Fast Path)", { paymentIntentId: paymentIntent.id });
+
+      // Lazy load service to avoid circular dependencies
+      const WalletFundingService = require("./walletFunding");
+      await WalletFundingService.processFundingSuccess(paymentIntent);
+
+      return; // SKIP Order lookup
+    }
 
     // ─────────────────────────────────────────────
     // Case 1: Normal marketplace checkout (Step 2+3)

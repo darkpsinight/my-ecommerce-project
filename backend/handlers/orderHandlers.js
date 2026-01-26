@@ -281,39 +281,43 @@ const processStripePayment = async (user, order, amount) => {
 // Helper function to process wallet payment
 const processWalletPayment = async (user, order, amount) => {
   try {
-    // Get user wallet
-    const wallet = await Wallet.getWalletByUserId(user._id);
-    if (!wallet) {
+    const walletLedgerService = require("../services/payment/walletLedgerService");
+
+    // Amount is in dollars (float), need CENTS for ledger
+    const amountCents = Math.round(amount * 100);
+    const currency = "USD";
+
+    // 1. Check Balance via Ledger (CENTS)
+    const currentBalanceCents = await walletLedgerService.getBuyerBalance(user.uid, currency);
+
+    if (currentBalanceCents < amountCents) {
       return {
         success: false,
-        error: "Wallet not found"
+        error: `Insufficient wallet balance. Available: $${(currentBalanceCents / 100).toFixed(2)}, Required: $${amount.toFixed(2)}`
       };
     }
 
-    // Check if wallet has sufficient balance
-    if (wallet.balance < amount) {
-      return {
-        success: false,
-        error: `Insufficient wallet balance. Available: $${wallet.balance}, Required: $${amount}`
-      };
-    }
+    // 2. Charge via Ledger (Debit Buyer)
+    const ledgerEntry = await walletLedgerService.chargeBuyer(
+      user.uid,
+      amountCents,
+      currency,
+      `Purchase for Order #${order.externalId}`,
+      { orderId: order._id.toString(), orderExternalId: order.externalId }
+    );
 
-    // Deduct amount from wallet
-    await wallet.deductFunds(amount);
-
-    // Create transaction record
-    const transaction = await Transaction.createPurchaseTransaction({
-      walletId: wallet._id,
-      userId: user._id,
-      amount,
-      currency: "USD",
-      relatedOrderId: order._id,
-      balanceBefore: wallet.balance + amount // Balance before deduction
-    });
+    // 3. Lock Funds for Seller (Escrow)
+    // The buyer has paid, we must now lock these funds for the seller.
+    await walletLedgerService.lockFundsForSeller(
+      order.sellerId,
+      amountCents,
+      currency,
+      order
+    );
 
     return {
       success: true,
-      transactionId: transaction._id
+      transactionId: ledgerEntry._id // Use Ledger Entry ID as Transaction ID
     };
 
   } catch (error) {

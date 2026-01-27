@@ -73,7 +73,10 @@ async function runIntegrityMonitor() {
         });
 
         for (const res of oldReservations) {
-            const payout = await Payout.findOne({ ledgerReservationId: res.externalId });
+            // Step 25.X Fix: Check BOTH UUID (New) and ObjectId (Legacy) to prevent false positives
+            const payout = await Payout.findOne({
+                ledgerReservationId: { $in: [res.externalId, res._id.toString()] }
+            });
             if (!payout) {
                 const msg = `ORPHANED_RESERVATION: LedgerEntry ${res.externalId} has no linked Payout`;
                 violations.push(msg);

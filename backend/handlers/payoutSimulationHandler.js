@@ -144,7 +144,7 @@ const executeManualPayout = async (request, reply) => {
             reservationLedgerId = reservationEntry._id;
 
             // Link
-            payout.ledgerReservationId = reservationEntry._id;
+            payout.ledgerReservationId = reservationEntry.externalId;
             await payout.save({ session: sessionA });
         }
 

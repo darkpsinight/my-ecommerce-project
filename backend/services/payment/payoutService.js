@@ -114,7 +114,7 @@ class PayoutService {
             await reservationLedgerEntry.save({ session });
 
             // Link reservation to payout
-            payout.ledgerReservationId = reservationLedgerEntry._id;
+            payout.ledgerReservationId = reservationLedgerEntry.externalId;
             await payout.save({ session });
 
             await session.commitTransaction();

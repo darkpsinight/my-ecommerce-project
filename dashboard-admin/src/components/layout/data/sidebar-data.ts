@@ -19,6 +19,7 @@ import {
   MessagesSquare,
   ShieldCheck,
   ShoppingCart,
+  Scale, // Added for disputes
 } from 'lucide-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 import { ClerkLogo } from '@/assets/clerk-logo'
@@ -81,6 +82,11 @@ export const sidebarData: SidebarData = {
           title: 'Orders',
           url: '/orders',
           icon: ShoppingCart,
+        },
+        {
+          title: 'Disputes',
+          url: '/disputes',
+          icon: Scale,
         },
         {
           title: 'Secured by Clerk',

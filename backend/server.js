@@ -49,6 +49,7 @@ const fastifyCsrf = require("fastify-csrf");
 const fastifyCookie = require("fastify-cookie");
 const adminRemediationRoutes = require("./routes/adminRemediation");
 const adminFinancialRoutes = require("./routes/adminFinancials");
+const { adminDisputeRoutes } = require("./routes/adminDisputes");
 const { configCache } = require("./services/configCache");
 const {
   registerWithFastify: registerImageKitWithFastify,
@@ -135,6 +136,10 @@ fastify.register(adminRemediationRoutes, {
 // Register admin financial observability routes (Step 18)
 fastify.register(adminFinancialRoutes, { prefix: "/api/v1/admin" });
 
+// Register Admin Dispute Routes (Step 25.1)
+fastify.register(adminDisputeRoutes, {
+  prefix: "/api/v1/admin/disputes",
+});
 
 // Register public routes
 fastify.register(publicRoutes, { prefix: "/api/v1/public" });

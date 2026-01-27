@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
 	dateOfBirth: {
 		type: Date,
 		validate: {
-			validator: function(value) {
+			validator: function (value) {
 				// Must be at least 13 years old
 				if (!value) return true; // Allow null/undefined
 				const thirteenYearsAgo = new Date();
@@ -68,7 +68,7 @@ const userSchema = new mongoose.Schema({
 		enum: ["buyer", "admin", "support", "seller"],
 		default: ["buyer"],
 		validate: {
-			validator: function(roles) {
+			validator: function (roles) {
 				// Ensure at least one role is present
 				return roles && roles.length > 0;
 			},
@@ -120,7 +120,7 @@ const userSchema = new mongoose.Schema({
 			enum: [
 				"organic",
 				"google_ads",
-				"facebook_ads", 
+				"facebook_ads",
 				"instagram_ads",
 				"twitter_ads",
 				"linkedin_ads",
@@ -159,7 +159,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Pre-save middleware for validation
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
 	// Ensure roles array is not empty
 	if (!this.roles || this.roles.length === 0) {
 		this.roles = ["buyer"]; // Default to buyer role
@@ -168,12 +168,12 @@ userSchema.pre('save', function(next) {
 });
 
 // Instance method to check if user has a specific role
-userSchema.methods.hasRole = function(roleToCheck) {
+userSchema.methods.hasRole = function (roleToCheck) {
 	return this.roles && this.roles.includes(roleToCheck);
 };
 
 // Instance method to add a role
-userSchema.methods.addRole = function(newRole) {
+userSchema.methods.addRole = function (newRole) {
 	if (!this.roles) {
 		this.roles = [];
 	}
@@ -183,7 +183,7 @@ userSchema.methods.addRole = function(newRole) {
 };
 
 // Instance method to remove a role
-userSchema.methods.removeRole = function(roleToRemove) {
+userSchema.methods.removeRole = function (roleToRemove) {
 	if (this.roles && this.roles.length > 1) { // Ensure at least one role remains
 		this.roles = this.roles.filter(role => role !== roleToRemove);
 	}
@@ -203,7 +203,7 @@ userSchema.methods.getJWT = function () {
 		},
 		configs.JWT_KEY,
 		{
-			expiresIn: "15m",
+			expiresIn: configs.JWT_ACCESS_EXPIRATION,
 		}
 	);
 };

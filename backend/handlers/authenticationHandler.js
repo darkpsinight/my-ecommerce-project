@@ -85,7 +85,7 @@ const registerUser = async (request, reply) => {
   if (configs.CHECK_ADMIN) {
     const count = await User.countDocuments();
     if (!count) {
-      roles = ["super_admin","admin", "buyer", "seller", "support"]; // first user should have access to all roles and all resources
+      roles = ["super_admin", "admin", "buyer", "seller", "support"]; // first user should have access to all roles and all resources
     }
   }
 
@@ -782,7 +782,7 @@ const getAccount = async (request, reply) => {
   try {
     const user = request.user;
     const userModel = request.userModel;
-    
+
     return sendSuccessResponse(reply, {
       statusCode: 200,
       message: "User Found",
@@ -1048,10 +1048,25 @@ const getJWTFromRefresh = async (request, reply) => {
     return sendErrorResponse(reply, 400, "Invalid Refresh Token");
   }
 
-  const jwtToken = user.getJWT();
+  // Strict: Revalidate user status from DB
+  if (user.isDeactivated) {
+    // Revoke the token to prevent future attempts
+    rft.revoke(request.ipAddress);
+    await rft.save();
+    return sendErrorResponse(reply, 403, "Account is deactivated");
+  }
+
+  // Issue new tokens (Strict Rotation)
+  // 1. Revoke the OLD refresh token
   rft.revoke(request.ipAddress);
-  rft.save();
+  await rft.save();
+
+  // 2. Generate NEW refresh token
   const newRefreshToken = await getRefreshToken(user, request.ipAddress);
+
+  // 3. Generate NEW access token (with latest roles from DB)
+  const jwtToken = user.getJWT();
+
   const verifyToken = await reply.generateCsrf();
   return sendSuccessResponse(
     reply,
@@ -1474,15 +1489,15 @@ const updateProfile = async (request, reply) => {
         if (isNaN(dob.getTime())) {
           return sendErrorResponse(reply, 400, "Please enter a valid date of birth");
         }
-        
+
         // Must be at least 13 years old
         const thirteenYearsAgo = new Date();
         thirteenYearsAgo.setFullYear(thirteenYearsAgo.getFullYear() - 13);
-        
+
         if (dob > thirteenYearsAgo) {
           return sendErrorResponse(reply, 400, "You must be at least 13 years old");
         }
-        
+
         updates.dateOfBirth = dob;
       } else {
         updates.dateOfBirth = null;

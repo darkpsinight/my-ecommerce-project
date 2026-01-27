@@ -305,7 +305,7 @@ const authenticationRoutes = async (fastify, opts) => {
     method: "POST",
     url: "/refresh",
     schema: authenticationSchema.refreshJWTToken,
-    preValidation: fastify.csrfProtection,
+
     preHandler: [rateLimiter(rateLimits.auth), verifyRefresh],
     handler: getJWTFromRefresh,
   });

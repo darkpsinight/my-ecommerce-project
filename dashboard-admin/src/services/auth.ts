@@ -1,25 +1,6 @@
-import axios from 'axios'
+import { apiClient } from '@/lib/api-client'
 import { AUTH_API } from '@/config/api'
-import { getCookie } from '@/lib/cookies'
-
-const ACCESS_TOKEN = 'admin_auth_token'
-
-// Function to get token from cookie directly
-const getAuthToken = (): string | null => {
-  try {
-    const cookieValue = getCookie(ACCESS_TOKEN)
-    
-    if (!cookieValue) {
-      return null
-    }
-    // The token is stored as JSON string in cookie
-    const token = JSON.parse(cookieValue)
-    const result = token && token.trim() !== '' ? token : null
-    return result
-  } catch (_error) {
-    return null
-  }
-}
+import { useAuthStore } from '@/stores/auth-store'
 
 export interface LoginResponse {
   statusCode: number
@@ -48,8 +29,7 @@ export interface LoginCredentials {
 class AuthService {
   private static instance: AuthService
 
-  // Private constructor for singleton pattern
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -60,20 +40,22 @@ class AuthService {
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      const response = await axios.post(
-        AUTH_API.SIGNIN,
-        credentials,
-        {
-          withCredentials: true // Enable sending/receiving cookies
-        }
-      )
-      return response.data
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
+      // Login still uses apiClient (whitelist ensures no loop)
+      const response = await apiClient.post(AUTH_API.SIGNIN, credentials)
+      const data = response.data
+
+      // Update store
+      if (data.token) {
+        useAuthStore.getState().auth.setAccessToken(data.token)
+      }
+
+      return data
+    } catch (error: any) {
+      if (error.response) {
         const loginError = new Error(
-          error.response?.data?.message || 'Login failed, try again later'
+          error.response.data?.message || 'Login failed'
         ) as Error & LoginError
-        loginError.metadata = error.response?.data?.metadata
+        loginError.metadata = error.response.data?.metadata
         throw loginError
       }
       throw error
@@ -81,25 +63,12 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    // Get token using the helper function to avoid circular dependency
-    const token = getAuthToken()
-
-    if (!token) {
-      throw new Error('No authentication token found')
+    try {
+      await apiClient.post(AUTH_API.LOGOUT)
+    } finally {
+      // Always reset store even if server call fails
+      useAuthStore.getState().auth.reset()
     }
-    
-    // Send request to backend to clear the HTTP-only cookie and blacklist token
-    await axios.post(
-      AUTH_API.LOGOUT,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        withCredentials: true
-      }
-    )
   }
 }
 

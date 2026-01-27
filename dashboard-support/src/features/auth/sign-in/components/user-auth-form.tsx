@@ -6,8 +6,7 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { IconFacebook, IconGithub } from '@/assets/brand-icons'
 import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/stores/auth-store'
-import { AUTH_API } from '@/config/api'
+import { authService } from '@/services/auth'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -37,7 +36,6 @@ export function UserAuthForm({
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
   const search = useSearch({ from: '/(auth)/sign-in' })
-  const { setAccessToken, setUser } = useAuthStore((state) => state.auth)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,47 +47,22 @@ export function UserAuthForm({
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
-    
+
     // Make actual API call to support-signin endpoint
     const loginUser = async () => {
       try {
-        const response = await fetch(AUTH_API.SIGNIN, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: data.email,
-            password: data.password,
-          }),
+        await authService.login({
+          email: data.email,
+          password: data.password,
         })
 
-        const result = await response.json()
-
-        if (!response.ok) {
-          throw new Error(result.message || 'Login failed')
-        }
-
-        // Extract user data from JWT token (you might want to decode it properly)
-        const token = result.token
-        const user = {
-          accountNo: result.uid || 'unknown',
-          email: data.email,
-          role: ['support'],
-          exp: Date.now() + (24 * 60 * 60 * 1000), // 24 hours from now
-        }
-        
-        // Set authentication state
-        setAccessToken(token)
-        setUser(user)
-        
         // Show success message
         toast.success('Login successful!')
-        
+
         // Redirect to intended page or dashboard
         const redirectTo = search.redirect || '/'
-        navigate({ to: redirectTo })
-        
+        navigate({ to: redirectTo, replace: true })
+
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Login error:', error)

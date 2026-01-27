@@ -4,14 +4,25 @@ import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ location }) => {
-    // Get the current auth state
-    const { accessToken } = useAuthStore.getState().auth
-    
-    // Check if user is authenticated
-    const isAuthenticated = Boolean(accessToken && accessToken.trim() !== '')
-    
-    // If not authenticated, redirect to sign-in with the current path as redirect parameter
-    if (!isAuthenticated) {
+    let { accessToken, user } = useAuthStore.getState().auth
+
+    if (!accessToken) {
+      const success = await useAuthStore.getState().auth.initAuth()
+      if (!success) {
+        throw redirect({
+          to: '/sign-in',
+          search: {
+            redirect: location.href,
+          },
+        })
+      }
+      accessToken = useAuthStore.getState().auth.accessToken
+      user = useAuthStore.getState().auth.user
+    }
+
+    // 3. Strict Role Enforcement (Support Only)
+    if (!user?.roles.includes('support')) {
+      useAuthStore.getState().auth.reset()
       throw redirect({
         to: '/sign-in',
         search: {

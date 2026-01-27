@@ -9,6 +9,14 @@ const adminDisputeRoutes = async (fastify, opts) => {
         preHandler: verifyAuth(['admin'], true),
         handler: listDisputes
     });
+
+    // Get Dispute Detail
+    fastify.route({
+        method: 'GET',
+        url: '/:disputeId',
+        preHandler: verifyAuth(['admin'], true),
+        handler: require('../handlers/adminDisputeHandler').getDisputeDetail
+    });
 };
 
 module.exports = { adminDisputeRoutes };

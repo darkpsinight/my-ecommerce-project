@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import {
     Table,
     TableBody,
@@ -14,6 +15,7 @@ import { formatCurrency } from '../../../utils/format'
 import { Loader2 } from 'lucide-react'
 
 export function DisputeList() {
+    const navigate = useNavigate()
     const [disputes, setDisputes] = useState<Dispute[]>([])
     const [loading, setLoading] = useState(true)
     const [page, setPage] = useState(1)
@@ -77,9 +79,13 @@ export function DisputeList() {
                                     </TableRow>
                                 ) : (
                                     disputes.map((dispute) => (
-                                        <TableRow key={dispute.disputeId}>
+                                        <TableRow
+                                            key={dispute.disputeId}
+                                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                            onClick={() => navigate({ to: `/disputes/${dispute.disputeId}` })}
+                                        >
                                             <TableCell className="font-medium font-mono text-xs">{dispute.disputeId}</TableCell>
-                                            <TableCell className="font-mono text-xs">{dispute.orderId}</TableCell>
+                                            <TableCell className="font-mono text-xs">{dispute.orderPublicId}</TableCell>
                                             <TableCell>{dispute.reason}</TableCell>
                                             <TableCell>
                                                 {/* Amount is in cents */}

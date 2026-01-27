@@ -2,10 +2,8 @@ import { ADMIN_API, ApiResponse } from '@/config/api'
 import { apiClient } from '@/lib/api-client'
 
 export interface Dispute {
-    _id: string
     disputeId: string
-    orderId: string
-    externalId: string
+    orderPublicId: string
     sellerId: string
     buyerId: string
     amount: number // in cents
@@ -32,6 +30,31 @@ interface DisputesResponse {
         total: number
         pages: number
     }
+}
+
+export interface OrderSnapshot {
+    orderPublicId: string
+    totalAmount: number
+    currency: string
+    escrowStatus: string
+    holdStartAt?: string
+    escrowHeldAt?: string
+}
+
+export interface TimelineEvent {
+    id: string
+    timestamp: string
+    actor: 'SYSTEM' | 'ADMIN'
+    action: string
+    message: string
+    metadata?: any
+}
+
+export interface DisputeDetailResponse {
+    dispute: Dispute
+    orderSnapshot: OrderSnapshot | null
+    timeline: TimelineEvent[]
+    messages: any[] // Always empty in Step 25.2
 }
 
 class DisputesService {
@@ -83,6 +106,21 @@ class DisputesService {
             return disputesData
         } catch (error) {
             console.error('getDisputes error:', error)
+            throw error
+        }
+    }
+
+    async getDisputeDetail(disputeId: string): Promise<DisputeDetailResponse | null> {
+        try {
+            const response = await apiClient.get<ApiResponse<DisputeDetailResponse>>(`${ADMIN_API.DISPUTES}/${disputeId}`)
+
+            if (!response.data.success || !response.data.data) {
+                return null
+            }
+
+            return response.data.data
+        } catch (error) {
+            console.error('getDisputeDetail error:', error)
             throw error
         }
     }

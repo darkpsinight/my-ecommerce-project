@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import { Order } from "@/services/orders";
 import { getStatusColor, getStatusDotColor, getFormattedOrderId } from "../utils/orderUtils";
 import { FaShoppingBasket } from "react-icons/fa";
@@ -60,21 +61,31 @@ const OrderCardHeader: React.FC<OrderCardHeaderProps> = ({ order, formatDate, is
           </div>
         </div>
         <div className="flex flex-col gap-3">
-          {/* Status Badge */}
-          <div className="flex items-center">
+          {/* Status Badge & Dispute Button */}
+          <div className="flex items-center justify-between">
             <span className={`inline-flex items-center px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold shadow-1 ${getStatusColor(order.status)} w-fit`}>
               <div className={`w-2 h-2 rounded-full mr-2 ${getStatusDotColor(order.status)}`}></div>
               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
             </span>
+
+            {order.isDisputed && (
+              <Link
+                href={`/disputes/${order.disputeId || order.externalId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold py-2 px-4 rounded-full shadow-sm transition-colors"
+              >
+                View Dispute
+              </Link>
+            )}
           </div>
-          
+
           {/* Review Button and Price - Different layouts for small vs large screens */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* Small screens: Review button and price on same line */}
             <div className="flex sm:hidden items-center justify-between w-full">
               {order.status === 'completed' && (
-                <ReviewButton 
-                  orderId={order.externalId} 
+                <ReviewButton
+                  orderId={order.externalId}
                   canReview={reviewStatus.canReview}
                   isChecking={reviewStatus.isChecking}
                   hasExistingReview={reviewStatus.hasExistingReview}
@@ -86,12 +97,12 @@ const OrderCardHeader: React.FC<OrderCardHeaderProps> = ({ order, formatDate, is
                 </span>
               </div>
             </div>
-            
+
             {/* Large screens: Original layout */}
             <div className="hidden sm:flex sm:items-center gap-3">
               {order.status === 'completed' && (
-                <ReviewButton 
-                  orderId={order.externalId} 
+                <ReviewButton
+                  orderId={order.externalId}
                   canReview={reviewStatus.canReview}
                   isChecking={reviewStatus.isChecking}
                   hasExistingReview={reviewStatus.hasExistingReview}

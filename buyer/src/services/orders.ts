@@ -169,6 +169,8 @@ export interface Order {
   createdAt: string;
   deliveredAt?: string;
   seller?: Seller;
+  isDisputed?: boolean;
+  disputeId?: string;
 }
 
 export interface CreateOrderResponse {
@@ -315,12 +317,19 @@ class OrdersService {
       orders: string[];
     }
   }> {
-    const response = await axiosInstance.post(`/checkout`);
+    const response = await axiosInstance.post<{
+      success: boolean;
+      data: {
+        checkoutGroupId: string;
+        clientSecrets: string[];
+        orders: string[];
+      }
+    }>(`/checkout`);
     return response.data;
   }
 
   async confirmPayment(paymentIntentId: string): Promise<{ success: boolean; status: string }> {
-    const response = await axiosInstance.post(`/checkout/confirm`, { paymentIntentId });
+    const response = await axiosInstance.post<{ success: boolean; status: string }>(`/checkout/confirm`, { paymentIntentId });
     return response.data;
   }
 }

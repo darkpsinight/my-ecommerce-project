@@ -50,6 +50,8 @@ const fastifyCookie = require("fastify-cookie");
 const adminRemediationRoutes = require("./routes/adminRemediation");
 const adminFinancialRoutes = require("./routes/adminFinancials");
 const { adminDisputeRoutes } = require("./routes/adminDisputes");
+const { disputeChatRoutes } = require("./routes/disputeChat");
+const { adminDisputeChatRoutes } = require("./routes/adminDisputeChat");
 const { configCache } = require("./services/configCache");
 const {
   registerWithFastify: registerImageKitWithFastify,
@@ -139,6 +141,16 @@ fastify.register(adminFinancialRoutes, { prefix: "/api/v1/admin" });
 // Register Admin Dispute Routes (Step 25.1)
 fastify.register(adminDisputeRoutes, {
   prefix: "/api/v1/admin/disputes",
+});
+
+// Register Dispute Chat Routes (User) - Step 25.3
+fastify.register(disputeChatRoutes, {
+  prefix: "/api/v1/disputes"
+});
+
+// Register Dispute Chat Routes (Admin) - Step 25.3
+fastify.register(adminDisputeChatRoutes, {
+  prefix: "/api/v1/admin/disputes"
 });
 
 // Register public routes

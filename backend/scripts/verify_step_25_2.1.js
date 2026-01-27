@@ -23,7 +23,7 @@ const connectDB = async () => {
 
 async function verifyStep25X() {
     await connectDB();
-    console.log("\n--- STARTING VERIFICATION Step 25.X ---");
+    console.log("\n--- STARTING VERIFICATION Step 25.2.1 ---");
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -80,7 +80,7 @@ async function verifyStep25X() {
             status: "locked",
             related_order_id: new mongoose.Types.ObjectId(),
             description: "New Reservation",
-            metadata: { test: "25.X" },
+            metadata: { test: "25.2.1" },
             externalId: uuidv4(),
             createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000) // > 24h old
         });

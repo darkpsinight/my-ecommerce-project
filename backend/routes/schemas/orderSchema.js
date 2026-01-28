@@ -685,6 +685,102 @@ const orderSchema = {
         }
       }
     }
+  },
+
+  getOrderMessages: {
+    description: "Get messages for an order",
+    tags: ["orders"],
+    summary: "Get order messages",
+    params: {
+      type: "object",
+      required: ["orderId"],
+      properties: {
+        orderId: {
+          type: "string",
+          description: "Order ID (External UUID or Mongo ID)"
+        }
+      }
+    },
+    response: {
+      200: {
+        description: "Messages retrieved successfully",
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          data: {
+            type: "object",
+            properties: {
+              messages: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    _id: { type: "string" },
+                    orderId: { type: "string" },
+                    senderUserId: { type: "string" },
+                    senderUserUid: { type: "string" },
+                    senderRole: { type: "string", enum: ["buyer", "seller"] },
+                    messageText: { type: "string" },
+                    isSystem: { type: "boolean" },
+                    createdAt: { type: "string" }
+                  }
+                }
+              },
+              isDisputed: { type: "boolean" }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  postOrderMessage: {
+    description: "Post a message to an order chat",
+    tags: ["orders"],
+    summary: "Post order message",
+    params: {
+      type: "object",
+      required: ["orderId"],
+      properties: {
+        orderId: {
+          type: "string",
+          description: "Order ID (External UUID or Mongo ID)"
+        }
+      }
+    },
+    body: {
+      type: "object",
+      required: ["messageText"],
+      properties: {
+        messageText: {
+          type: "string",
+          maxLength: 2000,
+          minLength: 1
+        }
+      }
+    },
+    response: {
+      201: {
+        description: "Message sent successfully",
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          message: { type: "string" },
+          data: {
+            type: "object",
+            properties: {
+              _id: { type: "string" },
+              orderId: { type: "string" },
+              senderUserId: { type: "string" },
+              senderUserUid: { type: "string" },
+              senderRole: { type: "string" },
+              messageText: { type: "string" },
+              createdAt: { type: "string" }
+            }
+          }
+        }
+      }
+    }
   }
 };
 

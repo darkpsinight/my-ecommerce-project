@@ -14,6 +14,7 @@ export const useUserInfo = () => {
       const decodedToken = decodeToken(token);
       if (decodedToken) {
         dispatch(setUserInfo({
+          uid: decodedToken.uid,
           email: decodedToken.email,
           name: decodedToken.name,
           roles: decodedToken.roles,
@@ -23,7 +24,7 @@ export const useUserInfo = () => {
     } else if (!token && userInfo) {
       dispatch(clearUserInfo());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   return { userInfo };

@@ -8,6 +8,10 @@ const {
   getOrderById,
   decryptCode
 } = require("../handlers/orderHandlers");
+const {
+  getOrderMessages,
+  postOrderMessage
+} = require("../handlers/orderChatHandler");
 
 // Rate limiting configurations
 const rateLimits = {
@@ -110,7 +114,7 @@ const orderRoutes = async (fastify, opts) => {
 
         // Check if user has any completed orders containing this product
         const Order = request.mongo.db.collection("orders");
-        
+
         const hasPurchased = await Order.findOne({
           buyerId: userId,
           status: "completed",
@@ -129,6 +133,30 @@ const orderRoutes = async (fastify, opts) => {
         });
       }
     }
+  });
+
+  // Get order messages
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.read
+    },
+    method: "GET",
+    url: "/:orderId/messages",
+    preHandler: verifyAuth(["buyer", "seller"]),
+    schema: orderSchema.getOrderMessages,
+    handler: getOrderMessages
+  });
+
+  // Post order message
+  fastify.route({
+    config: {
+      rateLimit: rateLimits.create
+    },
+    method: "POST",
+    url: "/:orderId/messages",
+    preHandler: verifyAuth(["buyer", "seller"]),
+    schema: orderSchema.postOrderMessage,
+    handler: postOrderMessage
   });
 };
 

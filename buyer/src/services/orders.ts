@@ -299,6 +299,33 @@ class OrdersService {
     return response.data;
   }
 
+  export interface OrderMessage {
+  _id: string;
+  orderId: string;
+  senderUserId: string; // ObjectId
+  senderUserUid: string; // External UID
+  senderRole: 'buyer' | 'seller';
+  messageText: string;
+  isSystem: boolean;
+  createdAt: string;
+}
+
+export interface GetOrderMessagesResponse {
+  success: boolean;
+  data: {
+    messages: OrderMessage[];
+    isDisputed: boolean;
+  };
+}
+
+export interface PostOrderMessageResponse {
+  success: boolean;
+  message: string;
+  data: OrderMessage;
+}
+
+  async hasUserPurchasedProduct(productId: string): Promise < boolean > {
+
   async hasUserPurchasedProduct(productId: string): Promise<boolean> {
     try {
       const response = await axiosInstance.get<{ success: boolean, hasPurchased: boolean }>(`${this.baseUrl}/has-purchased/${productId}`);
@@ -308,30 +335,41 @@ class OrdersService {
       return false;
     }
   }
+}
 
-  async createCheckoutSession(): Promise<{
+  async getOrderMessages(orderId: string): Promise < GetOrderMessagesResponse > {
+  const response = await axiosInstance.get<GetOrderMessagesResponse>(`${this.baseUrl}/${orderId}/messages`);
+  return response.data;
+}
+
+  async postOrderMessage(orderId: string, messageText: string): Promise < PostOrderMessageResponse > {
+  const response = await axiosInstance.post<PostOrderMessageResponse>(`${this.baseUrl}/${orderId}/messages`, { messageText });
+  return response.data;
+}
+
+  async createCheckoutSession(): Promise < {
+  success: boolean;
+  data: {
+    checkoutGroupId: string;
+    clientSecrets: string[];
+    orders: string[];
+  }
+} > {
+  const response = await axiosInstance.post<{
     success: boolean;
     data: {
       checkoutGroupId: string;
       clientSecrets: string[];
       orders: string[];
     }
-  }> {
-    const response = await axiosInstance.post<{
-      success: boolean;
-      data: {
-        checkoutGroupId: string;
-        clientSecrets: string[];
-        orders: string[];
-      }
-    }>(`/checkout`);
-    return response.data;
-  }
+  }>(`/checkout`);
+  return response.data;
+}
 
-  async confirmPayment(paymentIntentId: string): Promise<{ success: boolean; status: string }> {
-    const response = await axiosInstance.post<{ success: boolean; status: string }>(`/checkout/confirm`, { paymentIntentId });
-    return response.data;
-  }
+  async confirmPayment(paymentIntentId: string): Promise < { success: boolean; status: string } > {
+  const response = await axiosInstance.post<{ success: boolean; status: string }>(`/checkout/confirm`, { paymentIntentId });
+  return response.data;
+}
 }
 
 export const ordersApi = new OrdersService();

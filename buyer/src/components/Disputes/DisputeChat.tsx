@@ -15,7 +15,7 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const user = useSelector((state: RootState) => state.authReducer.user);
+    const user = useSelector((state: RootState) => state.userInfoReducer.info);
 
     const fetchMessages = async () => {
         try {
@@ -92,10 +92,10 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
                     return (
                         <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                             <div className={`max-w-[80%] rounded-lg p-3 ${isMe
-                                    ? 'bg-blue-600 text-white rounded-br-none'
-                                    : isAdmin
-                                        ? 'bg-purple-100 border border-purple-200 text-purple-900 rounded-bl-none'
-                                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
+                                ? 'bg-blue-600 text-white rounded-br-none'
+                                : isAdmin
+                                    ? 'bg-purple-100 border border-purple-200 text-purple-900 rounded-bl-none'
+                                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
                                 }`}>
                                 <div className="flex justify-between items-center mb-1 gap-4">
                                     <span className={`text-xs font-bold ${isMe ? 'text-blue-100' : 'text-gray-500'}`}>
@@ -128,8 +128,8 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
                         type="submit"
                         disabled={sending || !newMessage.trim()}
                         className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${sending || !newMessage.trim()
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700'
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700'
                             }`}
                     >
                         {sending ? 'Sending...' : 'Send'}

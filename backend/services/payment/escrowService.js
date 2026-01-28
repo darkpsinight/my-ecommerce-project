@@ -18,9 +18,10 @@ class EscrowService {
      * 
      * @param {String} orderId 
      * @param {String} adminId 
+     * @param {Object} options - Optional flags (e.g. { bypassMaturity: true })
      * @returns {Promise<Object>}
      */
-    async releaseEscrow(orderId, adminId) {
+    async releaseEscrow(orderId, adminId, options = {}) {
         let order = await Order.findOne({ externalId: orderId });
         if (!order && orderId.match(/^[0-9a-fA-F]{24}$/)) {
             // Fallback to internal ID if valid objectId and not found by externalId
@@ -42,7 +43,7 @@ class EscrowService {
         // Call PayoutService to handle the actual money movement
         // This will validate seller account, balance, and create Payout record + Stripe Transfer
         // Payout service expects orderId (internal _id), so we pass order._id
-        const payout = await payoutService.processOrderPayout(order._id, adminId);
+        const payout = await payoutService.processOrderPayout(order._id, adminId, options);
 
         // Update Order Escrow Status
         order.escrowStatus = "released";

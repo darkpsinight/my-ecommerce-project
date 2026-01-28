@@ -194,7 +194,7 @@ const releaseEscrow = async (request, reply) => {
     // EscrowService: "Fallback to internal ID if valid objectId". So passing dispute.orderId.toString() works.
 
     try {
-        const escrowResult = await require('../services/payment/escrowService').releaseEscrow(dispute.orderId.toString(), adminUid);
+        const escrowResult = await require('../services/payment/escrowService').releaseEscrow(dispute.orderId.toString(), adminUid, { bypassMaturity: true });
 
         // Update Dispute to CLOSED/RESOLVED
         dispute.status = 'CLOSED'; // or WON/LOST based on context, but release to seller usually implies Seller Won

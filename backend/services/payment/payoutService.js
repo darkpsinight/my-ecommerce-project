@@ -30,7 +30,10 @@ class PayoutService {
         }
 
         // 1b. Check Eligibility (Step 6 Gate)
-        if (order.eligibilityStatus !== 'ELIGIBLE_FOR_PAYOUT') {
+        const isEligible = order.eligibilityStatus === 'ELIGIBLE_FOR_PAYOUT';
+        const isBypassAllowed = options.bypassMaturity === true && order.eligibilityStatus === 'PENDING_MATURITY';
+
+        if (!isEligible && !isBypassAllowed) {
             throw new PaymentError(`Funds not released. Status: ${order.eligibilityStatus}`, "FUNDS_NOT_RELEASED", 400);
         }
 

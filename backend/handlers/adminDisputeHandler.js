@@ -159,7 +159,186 @@ const getDisputeDetail = async (request, reply) => {
     });
 };
 
+
+
+/**
+ * Release Escrow to Seller (Dispute Resolution)
+ * POST /api/v1/admin/disputes/:disputeId/release
+ */
+const releaseEscrow = async (request, reply) => {
+    const { disputeId } = request.params;
+    const { justification } = request.body;
+    const adminUid = request.user.uid;
+
+    if (!justification) {
+        return sendSuccessResponse(reply, { statusCode: 400, message: "Justification is required" });
+    }
+
+    const dispute = await Dispute.findOne({ disputeId });
+    if (!dispute) {
+        return sendSuccessResponse(reply, { statusCode: 404, message: "Dispute not found" });
+    }
+
+    // Call Escrow Service
+    // Note: EscrowService expects internal Order ID often, but we can pass external if it handles it.
+    // Looking at EscrowService.releaseEscrow logic: it takes orderId and tries to find by externalId or internalId.
+    // Dispute stores orderId as ObjectId. We should resolve specifically to be safe.
+
+    // Actually, EscrowService.releaseEscrow takes (orderId, adminId). 
+    // It does `Order.findOne({ externalId: orderId })`.
+    // It's safer to pass the externalId if we have it, or the ObjectId string. 
+    // Dispute model has orderId (ObjectId).
+    // Let's rely on EscrowService strict lookup.
+
+    // We need the order's externalId to be clean? 
+    // EscrowService: "Fallback to internal ID if valid objectId". So passing dispute.orderId.toString() works.
+
+    try {
+        const escrowResult = await require('../services/payment/escrowService').releaseEscrow(dispute.orderId.toString(), adminUid);
+
+        // Update Dispute to CLOSED/RESOLVED
+        dispute.status = 'CLOSED'; // or WON/LOST based on context, but release to seller usually implies Seller Won
+        dispute.metadata = {
+            ...dispute.metadata,
+            resolution: 'RELEASE_TO_SELLER',
+            resolvedAt: new Date(),
+            resolvedBy: adminUid,
+            justification
+        };
+        await dispute.save();
+
+        // Audit Log
+        await require('../models/auditLog').AuditLog.create({
+            action: 'ADMIN_RELEASE_ESCROW',
+            actorId: adminUid,
+            actorRole: 'admin', // or support
+            targetId: disputeId,
+            targetType: 'Dispute',
+            metadata: {
+                orderId: dispute.orderId.toString(),
+                escrowStatusBefore: 'held',
+                escrowStatusAfter: 'released',
+                justification,
+                payoutId: escrowResult.payoutId
+            }
+        });
+
+        return sendSuccessResponse(reply, {
+            statusCode: 200,
+            message: "Escrow released to seller",
+            data: { disputeStatus: dispute.status }
+        });
+    } catch (error) {
+        request.log.error(error);
+        return sendSuccessResponse(reply, {
+            statusCode: error.statusCode || 500,
+            message: error.message
+        });
+    }
+};
+
+/**
+ * Refund to Buyer Wallet (Dispute Resolution)
+ * POST /api/v1/admin/disputes/:disputeId/refund-wallet
+ */
+const refundToWallet = async (request, reply) => {
+    const { disputeId } = request.params;
+    const { justification } = request.body;
+    const adminUid = request.user.uid;
+
+    if (!justification) {
+        return sendSuccessResponse(reply, { statusCode: 400, message: "Justification is required" });
+    }
+
+    const dispute = await Dispute.findOne({ disputeId });
+    if (!dispute) {
+        return sendSuccessResponse(reply, { statusCode: 404, message: "Dispute not found" });
+    }
+
+    try {
+        const result = await require('../services/payment/escrowService').refundToWallet(dispute.orderId.toString(), adminUid, justification);
+
+        // Audit Log
+        await require('../models/auditLog').AuditLog.create({
+            action: 'ADMIN_REFUND_TO_WALLET',
+            actorId: adminUid,
+            actorRole: 'admin',
+            targetId: disputeId,
+            targetType: 'Dispute',
+            metadata: {
+                orderId: dispute.orderId.toString(),
+                escrowStatusBefore: 'held',
+                escrowStatusAfter: result.newStatus,
+                ledgerEntryId: result.ledgerEntryId,
+                justification
+            }
+        });
+
+        return sendSuccessResponse(reply, {
+            statusCode: 200,
+            message: "Refunded to buyer wallet",
+            data: result
+        });
+    } catch (error) {
+        request.log.error(error);
+        return sendSuccessResponse(reply, {
+            statusCode: error.statusCode || 500,
+            message: error.message
+        });
+    }
+};
+
+/**
+ * Extend Dispute Hold
+ * POST /api/v1/admin/disputes/:disputeId/extend
+ */
+const extendDispute = async (request, reply) => {
+    const { disputeId } = request.params;
+    const { days, justification } = request.body;
+    const adminUid = request.user.uid;
+
+    if (!days || !Number.isInteger(days) || days <= 0) {
+        return sendSuccessResponse(reply, { statusCode: 400, message: "Valid days (positive integer) required" });
+    }
+
+    const dispute = await Dispute.findOne({ disputeId });
+    if (!dispute) {
+        return sendSuccessResponse(reply, { statusCode: 404, message: "Dispute not found" });
+    }
+
+    const oldDate = dispute.evidenceDueBy || new Date();
+    const newDate = new Date(oldDate);
+    newDate.setDate(newDate.getDate() + days);
+
+    dispute.evidenceDueBy = newDate;
+    await dispute.save();
+
+    // Audit Log
+    await require('../models/auditLog').AuditLog.create({
+        action: 'ADMIN_EXTEND_DISPUTE',
+        actorId: adminUid,
+        actorRole: 'admin',
+        targetId: disputeId,
+        targetType: 'Dispute',
+        metadata: {
+            daysExtended: days,
+            oldDate,
+            newDate,
+            justification
+        }
+    });
+
+    return sendSuccessResponse(reply, {
+        statusCode: 200,
+        message: `Dispute extended by ${days} days`,
+        data: { evidenceDueBy: newDate }
+    });
+};
+
 module.exports = {
     listDisputes,
-    getDisputeDetail
+    getDisputeDetail,
+    releaseEscrow,
+    refundToWallet,
+    extendDispute
 };

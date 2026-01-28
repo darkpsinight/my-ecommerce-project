@@ -138,6 +138,97 @@ class EscrowService {
             refundId: refundResult.refundId
         };
     }
+    /**
+     * Refunds the order amount to the buyer's wallet.
+     * STRICTLY:
+     * - No Stripe Refund.
+     * - Credit Buyer Wallet.
+     * - Update Order & Dispute status.
+     * 
+     * @param {String} orderId - External ID or Internal ID
+     * @param {String} adminUid 
+     * @param {String} justification 
+     * @returns {Promise<Object>}
+     */
+    async refundToWallet(orderId, adminUid, justification) {
+        const { Dispute } = require("../../models/dispute");
+        const { v4: uuidv4 } = require('uuid');
+
+        let order = await Order.findOne({ externalId: orderId });
+        if (!order && orderId.match(/^[0-9a-fA-F]{24}$/)) {
+            order = await Order.findById(orderId);
+        }
+
+        if (!order) {
+            throw new PaymentError("Order not found", "ORDER_NOT_FOUND", 404);
+        }
+
+        // 1. Prerequisite Checks
+        if (order.escrowStatus !== "held") {
+            throw new PaymentError(
+                `Order is not in held status (current: ${order.escrowStatus})`,
+                "INVALID_ESCROW_STATUS",
+                400
+            );
+        }
+
+        // Check for OPEN dispute
+        const dispute = await Dispute.findOne({ orderId: order._id, status: 'OPEN' });
+        if (!dispute) {
+            throw new PaymentError("No OPEN dispute found for this order", "NO_OPEN_DISPUTE", 400);
+        }
+
+        // 2. Create Ledger Entry (Credit Buyer Wallet)
+        // We do NOT call Stripe. Funds remain in platform Stripe account (Platform Liability).
+        const ledgerEntryId = uuidv4();
+        const amount = order.totalAmount; // Assuming totalAmount is in cents
+
+        const ledgerEntry = new (require("../../models/ledgerEntry").LedgerEntry)({
+            user_uid: order.buyerId, // Assuming string UID stored on order or we resolve it. order.buyerId is listed in order schema as String (user uid) usually.
+            role: "buyer",
+            type: "wallet_credit_refund",
+            amount: amount, // Positive
+            currency: order.currency,
+            status: "available",
+            description: `Refund to Wallet: ${justification}`,
+            related_order_id: order._id,
+            metadata: {
+                paymentIntentId: order.paymentIntentId, // Reference original payment
+                disputeId: dispute.disputeId,
+                adminUid: adminUid,
+                justification: justification,
+                source: "admin_dispute_resolution"
+            },
+            externalId: ledgerEntryId
+        });
+
+        await ledgerEntry.save();
+
+        // 3. Update Order Status
+        order.escrowStatus = "refunded";
+        order.status = "refunded";
+        order.escrowReleasedAt = new Date();
+        order.errorMessage = `Refunded to Wallet by admin ${adminUid}: ${justification}`;
+        await order.save();
+
+        // 4. Update Dispute Status
+        dispute.status = 'CLOSED';
+        dispute.metadata = {
+            ...dispute.metadata,
+            resolution: 'REFUND_TO_WALLET',
+            resolvedAt: new Date(),
+            resolvedBy: adminUid,
+            justification: justification
+        };
+        await dispute.save();
+
+        return {
+            success: true,
+            ledgerEntryId: ledgerEntryId,
+            newStatus: "refunded",
+            disputeStatus: "CLOSED"
+        };
+    }
 }
 
 module.exports = new EscrowService();

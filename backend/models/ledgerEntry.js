@@ -46,7 +46,8 @@ const ledgerEntrySchema = new mongoose.Schema({
       "wallet_credit_placeholder", // Abstract credit to Buyer Available (+)
       "wallet_debit_placeholder",   // Abstract debit from Buyer Available (-)
       "wallet_credit_deposit",     // Funding via Stripe
-      "wallet_debit_purchase"      // Spending via Checkout
+      "wallet_debit_purchase",      // Spending via Checkout
+      "wallet_credit_refund"        // Refund (Strictly scoped for balance)
     ],
     required: true,
     index: true

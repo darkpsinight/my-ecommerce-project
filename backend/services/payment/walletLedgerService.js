@@ -19,7 +19,8 @@ class WalletLedgerService {
             "wallet_credit_placeholder", // (+)
             "wallet_debit_placeholder",   // (-)
             "wallet_credit_deposit",      // (+) Funding
-            "wallet_debit_purchase"       // (-) Spending
+            "wallet_debit_purchase",      // (-) Spending
+            "wallet_credit_refund"        // (+) Refund (Strictly scoped for balance)
         ];
 
         // Signed aggregation

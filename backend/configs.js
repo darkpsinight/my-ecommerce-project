@@ -159,7 +159,7 @@ const configs = {
 	// Background Jobs & Cron (NEW — ADDED ONLY)
 	// ======================================================
 
-	CRON_ENABLED: process.env.CRON_ENABLED === "1",
+	CRON_ENABLED: process.env.CRON_ENABLED !== "0",
 	APP_TIMEZONE: process.env.APP_TIMEZONE || "UTC",
 
 	// Stripe Reconciliation

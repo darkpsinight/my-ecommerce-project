@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const payoutSchedulerService = require('../services/payout-scheduling/payoutScheduling');
+const { assertCronEnabled } = require("../utils/cronGuard");
 const { configs } = require('../configs');
 
 /**
@@ -12,6 +13,7 @@ const setupPayoutSchedulerJob = (fastify) => {
     const schedule = configs.PAYOUT_SCHEDULER_CRON;
 
     cron.schedule(schedule, async () => {
+        if (!assertCronEnabled("PAYOUT_SCHEDULER")) return;
         fastify.log.info('[PayoutSchedulerJob] Starting daily payout scheduling...');
 
         try {

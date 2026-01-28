@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { LedgerEntry } = require("../../models/ledgerEntry");
 const { Payout } = require("../../models/payout");
+const { assertCronEnabled } = require("../../utils/cronGuard");
 
 /**
  * Financial Integrity Monitor Job (Read-Only)
@@ -103,6 +104,7 @@ const setupIntegrityMonitor = (fastify) => {
     const cron = require('node-cron');
 
     cron.schedule(schedule, async () => {
+        if (!assertCronEnabled("INTEGRITY_MONITOR")) return;
         fastify.log.info('[IntegrityMonitor] Starting scheduled integrity scan...');
         try {
             await runIntegrityMonitor();

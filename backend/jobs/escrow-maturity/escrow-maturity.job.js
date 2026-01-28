@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const EscrowMaturityService = require("../../services/escrow-maturity/escrow-maturity");
 
 const { configs } = require("../../configs");
+const { assertCronEnabled } = require("../../utils/cronGuard");
 
 // Job configuration
 const JOB_NAME = "ESCROW_MATURITY_MONITOR";
@@ -17,6 +18,7 @@ const escrowMaturityJob = {
         console.log(`[Job] ${JOB_NAME} started (cron: ${schedule})`);
 
         cron.schedule(schedule, async () => {
+            if (!assertCronEnabled("ESCROW_MATURITY")) return;
             console.log(`[Job] Running ${JOB_NAME}...`);
             try {
                 const stats = await EscrowMaturityService.processMaturityBatch();

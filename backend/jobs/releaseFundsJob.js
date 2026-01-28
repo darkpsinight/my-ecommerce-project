@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const { configs } = require("../configs");
+const { assertCronEnabled } = require("../utils/cronGuard");
 const EscrowMaturityService = require('../services/escrow-maturity/escrow-maturity');
 
 /**
@@ -18,6 +19,7 @@ const startReleaseFundsJob = () => {
 
     // Run per config schedule (e.g. every 5 min)
     cron.schedule(configs.RELEASE_FUNDS_CRON, async () => {
+        if (!assertCronEnabled("RELEASE_FUNDS")) return;
         console.log('[ReleaseFundsJob] Starting execution (Delegating to EscrowMaturityService)...');
 
         try {

@@ -1,5 +1,6 @@
 const cron = require("node-cron");
 const StripeReconciliationService = require("./reconcileStripe");
+const { assertCronEnabled } = require("../utils/cronGuard");
 const PaymentLogger = require("../services/payment/paymentLogger");
 const { configs } = require("../configs");
 
@@ -49,6 +50,7 @@ class ReconciliationScheduler {
   scheduleHourlyReconciliation() {
     // Run every hour at minute 15 (e.g., 1:15, 2:15, etc.)
     const job = cron.schedule(configs.STRIPE_RECONCILE_CRON_HOURLY, async () => {
+      if (!assertCronEnabled("STRIPE_RECONCILIATION_HOURLY")) return;
       await this.runHourlyReconciliation();
     }, {
       scheduled: false,
@@ -63,6 +65,7 @@ class ReconciliationScheduler {
   scheduleDailyReconciliation() {
     // Run daily at 2:30 AM UTC
     const job = cron.schedule(configs.STRIPE_RECONCILE_CRON_DAILY, async () => {
+      if (!assertCronEnabled("STRIPE_RECONCILIATION_DAILY")) return;
       await this.runDailyReconciliation();
     }, {
       scheduled: false,
@@ -77,6 +80,7 @@ class ReconciliationScheduler {
   scheduleWeeklyReconciliation() {
     // Run weekly on Sunday at 3:00 AM UTC
     const job = cron.schedule("0 3 * * 0", async () => {
+      if (!assertCronEnabled("STRIPE_RECONCILIATION_WEEKLY")) return;
       await this.runWeeklyReconciliation();
     }, {
       scheduled: false,
@@ -91,6 +95,7 @@ class ReconciliationScheduler {
   scheduleWebhookReconciliation() {
     // Run webhook reconciliation every 30 minutes
     const job = cron.schedule(configs.STRIPE_RECONCILE_CRON_WEBHOOK, async () => {
+      if (!assertCronEnabled("STRIPE_RECONCILIATION_WEBHOOK")) return;
       await this.runWebhookReconciliation();
     }, {
       scheduled: false,
@@ -105,7 +110,7 @@ class ReconciliationScheduler {
   async runHourlyReconciliation() {
     try {
       console.log("Starting hourly reconciliation...");
-      
+
       const result = await this.reconciliationService.runFullReconciliation({
         timeRange: 2, // Last 2 hours
         batchSize: 50,
@@ -133,7 +138,7 @@ class ReconciliationScheduler {
   async runDailyReconciliation() {
     try {
       console.log("Starting daily reconciliation...");
-      
+
       const result = await this.reconciliationService.runFullReconciliation({
         timeRange: 25, // Last 25 hours (overlap for safety)
         batchSize: 100,
@@ -164,7 +169,7 @@ class ReconciliationScheduler {
   async runWeeklyReconciliation() {
     try {
       console.log("Starting weekly reconciliation...");
-      
+
       const result = await this.reconciliationService.runFullReconciliation({
         timeRange: 168, // Last 7 days
         batchSize: 200,
@@ -193,7 +198,7 @@ class ReconciliationScheduler {
   async runWebhookReconciliation() {
     try {
       console.log("Starting webhook reconciliation...");
-      
+
       const result = await this.reconciliationService.runFullReconciliation({
         timeRange: 1, // Last hour
         batchSize: 100,
@@ -221,7 +226,7 @@ class ReconciliationScheduler {
   async runManualReconciliation(options = {}) {
     try {
       console.log("Starting manual reconciliation with options:", options);
-      
+
       const result = await this.reconciliationService.runFullReconciliation({
         timeRange: options.timeRange || 24,
         batchSize: options.batchSize || 100,
@@ -246,7 +251,7 @@ class ReconciliationScheduler {
   async runDryRunReconciliation(timeRange = 24) {
     try {
       console.log(`Starting dry-run reconciliation for last ${timeRange} hours...`);
-      
+
       const result = await this.reconciliationService.runFullReconciliation({
         timeRange,
         batchSize: 100,
@@ -356,8 +361,8 @@ class ReconciliationScheduler {
         {
           summary,
           week: this.getWeekIdentifier(),
-          status: summary.successRate >= 95 ? "healthy" : 
-                  summary.successRate >= 90 ? "warning" : "critical"
+          status: summary.successRate >= 95 ? "healthy" :
+            summary.successRate >= 90 ? "warning" : "critical"
         }
       );
 
@@ -443,7 +448,7 @@ class ReconciliationScheduler {
 
   getNextRunTimes() {
     const nextRuns = {};
-    
+
     for (const [name, job] of this.jobs) {
       try {
         // This is a simplified version - node-cron doesn't expose next run time directly

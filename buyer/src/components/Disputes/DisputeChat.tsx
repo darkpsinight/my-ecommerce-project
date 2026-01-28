@@ -69,16 +69,16 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
 
     return (
         <div className="flex flex-col h-[600px] border border-gray-200 rounded-lg bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-lg font-semibold text-gray-800">Dispute Conversation</h3>
-                <p className="text-sm text-gray-500">Messages are final and cannot be deleted.</p>
+            <div className="p-4 border-b border-gray-3 bg-gray-1">
+                <h3 className="text-lg font-semibold text-gray-7">Dispute Conversation</h3>
+                <p className="text-sm text-gray-5">Messages are final and cannot be deleted.</p>
             </div>
 
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" style={{ maxHeight: '500px', minHeight: '400px' }}>
-                {error && <div className="text-red-500 text-center">{error}</div>}
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-1" style={{ maxHeight: '500px', minHeight: '400px' }}>
+                {error && <div className="text-red-DEFAULT text-center">{error}</div>}
 
                 {messages.length === 0 && !error && (
-                    <div className="text-center text-gray-400 py-10">
+                    <div className="text-center text-gray-4 py-10">
                         No messages yet. Start the conversation.
                     </div>
                 )}
@@ -90,16 +90,16 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
                     return (
                         <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                             <div className={`max-w-[80%] rounded-lg p-3 ${isMe
-                                ? 'bg-blue-600 text-white rounded-br-none'
+                                ? 'bg-blue text-white rounded-br-none'
                                 : isAdmin
-                                    ? 'bg-purple-100 border border-purple-200 text-purple-900 rounded-bl-none'
-                                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
+                                    ? 'bg-purple/10 border border-purple/20 text-purple-dark rounded-bl-none'
+                                    : 'bg-white border border-gray-3 text-gray-7 rounded-bl-none'
                                 }`}>
                                 <div className="flex justify-between items-center mb-1 gap-4">
-                                    <span className={`text-xs font-bold ${isMe ? 'text-blue-100' : 'text-gray-500'}`}>
+                                    <span className={`text-xs font-bold ${isMe ? 'text-blue-light-5' : 'text-gray-5'}`}>
                                         {isAdmin ? 'CodeSale Support' : (isMe ? 'You' : msg.senderRole)}
                                     </span>
-                                    <span className={`text-xs ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>
+                                    <span className={`text-xs ${isMe ? 'text-blue-light-4' : 'text-gray-4'}`}>
                                         {new Date(msg.createdAt).toLocaleString()}
                                     </span>
                                 </div>
@@ -126,8 +126,8 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
                         type="submit"
                         disabled={sending || !newMessage.trim()}
                         className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${sending || !newMessage.trim()
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700'
+                            ? 'bg-gray-4 cursor-not-allowed'
+                            : 'bg-blue hover:bg-blue-dark'
                             }`}
                     >
                         {sending ? 'Sending...' : 'Send'}

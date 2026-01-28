@@ -210,6 +210,7 @@ const releaseEscrow = async (request, reply) => {
         // Audit Log
         await require('../models/auditLog').AuditLog.create({
             action: 'ADMIN_RELEASE_ESCROW',
+            status: 'SUCCESS',
             actorId: adminUid,
             actorRole: 'admin', // or support
             targetId: disputeId,
@@ -261,6 +262,7 @@ const refundToWallet = async (request, reply) => {
         // Audit Log
         await require('../models/auditLog').AuditLog.create({
             action: 'ADMIN_REFUND_TO_WALLET',
+            status: 'SUCCESS',
             actorId: adminUid,
             actorRole: 'admin',
             targetId: disputeId,
@@ -316,6 +318,7 @@ const extendDispute = async (request, reply) => {
     // Audit Log
     await require('../models/auditLog').AuditLog.create({
         action: 'ADMIN_EXTEND_DISPUTE',
+        status: 'SUCCESS',
         actorId: adminUid,
         actorRole: 'admin',
         targetId: disputeId,

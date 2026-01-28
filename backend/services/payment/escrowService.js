@@ -181,7 +181,7 @@ class EscrowService {
         // 2. Create Ledger Entry (Credit Buyer Wallet)
         // We do NOT call Stripe. Funds remain in platform Stripe account (Platform Liability).
         const ledgerEntryId = uuidv4();
-        const amount = order.totalAmount; // Assuming totalAmount is in cents
+        const amount = dispute.amount; // Use integer minor units from Dispute
 
         const ledgerEntry = new (require("../../models/ledgerEntry").LedgerEntry)({
             user_uid: order.buyerId, // Assuming string UID stored on order or we resolve it. order.buyerId is listed in order schema as String (user uid) usually.

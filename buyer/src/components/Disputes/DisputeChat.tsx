@@ -14,7 +14,7 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const user = useSelector((state: RootState) => state.userInfoReducer.info);
 
     const fetchMessages = async () => {
@@ -40,12 +40,10 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
     }, [disputeId]);
 
     useEffect(() => {
-        scrollToBottom();
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
     }, [messages]);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -76,7 +74,7 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
                 <p className="text-sm text-gray-500">Messages are final and cannot be deleted.</p>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" style={{ maxHeight: '500px', minHeight: '400px' }}>
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" style={{ maxHeight: '500px', minHeight: '400px' }}>
                 {error && <div className="text-red-500 text-center">{error}</div>}
 
                 {messages.length === 0 && !error && (
@@ -110,7 +108,7 @@ const DisputeChat: React.FC<DisputeChatProps> = ({ disputeId }) => {
                         </div>
                     );
                 })}
-                <div ref={messagesEndRef} />
+
             </div>
 
             <form onSubmit={handleSend} className="p-4 border-t border-gray-200 bg-white">

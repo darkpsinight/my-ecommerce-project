@@ -108,58 +108,105 @@ Buyer signals supported at backend level:
 
 ---
 
-### 🔴 Step 25.6 — Support / Admin Escrow & Dispute UI  
+### 🔴 Step 25.6 — Support / Admin Escrow & Dispute UI
+
 **(STEP A — CURRENT ACTIVE STEP)** 🚧
 
 ### Goal
-Allow Support/Admin to resolve disputes **without database access**.
+
+Allow Support/Admin to resolve disputes **without database access** and **without backend changes**.
 
 ---
 
-#### 25.6.1 Admin/Support READ APIs
-- `GET /admin/disputes`
-- `GET /admin/disputes/:disputeId`
-- Includes:
-  - Dispute metadata
-  - Order snapshot
-  - Buyer & seller info
-  - Escrow state
-  - Full chat history (read-only)
+#### Scope clarification (important)
+
+This step is **frontend-focused**. Backend APIs listed below already exist and must only be consumed.
 
 ---
 
-#### 25.6.2 Admin/Support ACTION APIs
-- Release escrow
-- Refund buyer
-- Extend hold
-- Idempotent
-- Fully audited
+#### 25.6.1 Admin/Support READ APIs (ALREADY IMPLEMENTED)
+
+* `GET /admin/disputes`
+* `GET /admin/disputes/:disputeId`
+* Data consumed by UI only; no backend changes allowed
+* Includes:
+
+  * Dispute metadata
+  * Order snapshot
+  * Buyer & seller info
+  * Escrow state
+  * Full chat history (read-only)
 
 ---
 
-#### 25.6.3 Support Dashboard UI
-- Dispute list
-- Filters/status
-- Entry point to dispute detail
+#### 25.6.2 Admin/Support ACTION APIs (ALREADY IMPLEMENTED)
+
+* Release escrow
+* Refund buyer
+* Extend hold
+* Idempotent
+* Fully audited
+* UI must handle loading, error, and confirmation states
 
 ---
 
-#### 25.6.4 Dispute Detail UI (Support/Admin)
+#### 25.6.3 Support Dashboard UI (NEW — REQUIRED)
+
+* Dispute list page
+* Status / state filters
+* Basic columns:
+
+  * Dispute ID
+  * Order ID
+  * Status
+  * Escrow state
+  * Created at
+* Row click navigates to dispute detail
+
+---
+
+#### 25.6.4 Dispute Detail UI (Support/Admin) (NEW — REQUIRED)
+
 Sections:
+
 1. Dispute summary
 2. Order snapshot
-3. Buyer ↔ Seller chat (read-only)
-4. Escrow action buttons (confirmation required)
+3. Buyer & Seller identities
+4. Buyer ↔ Seller chat (read-only)
+5. Escrow state visibility
 
 ---
 
-#### 25.6.5 Verification
-- Support resolves disputes without DB access
-- Ledger updates verified
-- Unauthorized users blocked
+#### 25.6.5 Escrow Action Controls (UI)
 
-**Exit:**  
-Support/Admin can fully and safely resolve disputes.
+* Action buttons:
+
+  * Release escrow
+  * Refund buyer
+  * Extend hold
+* Confirmation modal required
+* Disabled during request
+* Idempotency-safe retry handling
+
+---
+
+#### 25.6.6 Route & Role Enforcement (UI)
+
+* Support-only and Admin-only routes enforced at frontend
+* Buyer/Seller roles must be hard-blocked
+* Unauthorized access results in redirect or error state
+
+---
+
+#### 25.6.7 Verification
+
+* Support resolves disputes without DB access
+* Escrow actions reflect correctly in ledger
+* Refund updates buyer wallet
+* Unauthorized users blocked at route level
+
+**Exit:**
+Support/Admin can fully and safely resolve disputes via UI only.
 
 ---
 

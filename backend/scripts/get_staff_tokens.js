@@ -10,20 +10,16 @@ async function main() {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('✅ Connected to MongoDB');
 
-        const usersToFind = [
-            { email: 'admin@test.com', label: 'ADMIN' },
-            { email: 'support@test.com', label: 'SUPPORT' }
-        ];
+        console.log('\nFetching all users from database...');
+        const users = await User.find({});
+        console.log(`Found ${users.length} users.`);
+        console.log('===================================================');
 
-        for (const target of usersToFind) {
-            const user = await User.findOne({ email: target.email });
+        if (users.length === 0) {
+            console.log("No users found in the database.");
+        }
 
-            if (!user) {
-                console.log(`\n❌ User ${target.email} not found. Run 'node backend/scripts/createTestSupportAdmin.js' first.`);
-                continue;
-            }
-
-            // Payload matches verifyAuth expectations
+        for (const user of users) {
             const payload = {
                 uid: user.uid,
                 _id: user._id,
@@ -33,15 +29,20 @@ async function main() {
 
             const token = jwt.sign(payload, process.env.JWT_KEY || configs.JWT_KEY, { expiresIn: '24h' });
 
-            console.log(`\n>>> ${target.label} TOKEN (${target.email}) <<<`);
+            console.log(`\nUser: ${user.email}`);
+            console.log(`Roles: [${user.roles.join(', ')}]`);
+            console.log('Token:');
             console.log(token);
             console.log('---------------------------------------------------');
         }
 
-        process.exit(0);
+        console.log("DONE");
     } catch (err) {
         console.error(err);
         process.exit(1);
+    } finally {
+        // Ensure connection is closed
+        await mongoose.connection.close();
     }
 }
 
